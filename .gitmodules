@@ -1,0 +1,27 @@
+[submodule "deps/zstd"]
+	path = deps/zstd
+	url = https://github.com/facebook/zstd
+[submodule "deps/lwip"]
+	path = deps/lwip
+	url = https://gitea.husarion.com/husarion/husarnet-lwip.git
+[submodule "deps/lwip-contrib"]
+	path = deps/lwip-contrib
+	url = https://git.savannah.nongnu.org/git/lwip/lwip-contrib.git
+[submodule "deps/libsodium"]
+	path = deps/libsodium
+	url = https://github.com/jedisct1/libsodium
+[submodule "deps/mingw-std-threads"]
+	path = deps/mingw-std-threads
+	url = https://github.com/meganz/mingw-std-threads
+[submodule "deps/Catch2"]
+	path = deps/Catch2
+	url = https://github.com/catchorg/Catch2
+[submodule "deps/ArduinoJson"]
+	path = deps/ArduinoJson
+	url = https://github.com/bblanchon/ArduinoJson.git
+[submodule "deps/sqlite3"]
+	path = deps/sqlite3
+	url = https://gitea.husarion.com/husarion/sqlite3-dist.git
+[submodule "deps/c-ares"]
+	path = deps/c-ares
+	url = https://github.com/c-ares/c-ares.git

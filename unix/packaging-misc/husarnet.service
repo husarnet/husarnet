@@ -1,0 +1,12 @@
+[Unit]
+Description=Husarnet
+After=network-pre.target
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/husarnet daemon
+Environment=HUSARNET_VERBOSE=1
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target

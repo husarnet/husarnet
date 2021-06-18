@@ -1,0 +1,7 @@
+[husarnet]
+name=Husarnet
+baseurl=https://install.husarnet.com/yum/
+enabled=1
+skip_if_unavailable=1
+gpgcheck=1
+gpgkey=https://install.husarnet.com/repo.key

@@ -1,0 +1,21 @@
+build/
+default_wifi_config.h
+/notes.md
+/husarnet.c
+__pycache__/
+.mypy_cache/
+/deb-build
+/id?
+/build-win
+/build-gui-*
+
+# Visual Studio Core
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Local History for Visual Studio Code
+.history/

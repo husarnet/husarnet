@@ -1,0 +1,10 @@
+[Unit]
+Description=Husarnet L2 tunnel
+After=husarnet.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/husarnet l2-setup
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,5 @@
+include(${CMAKE_CURRENT_LIST_DIR}/common/common.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/deps/sqlite3.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/deps/zstd.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/deps/sodium.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/core/core.cmake)

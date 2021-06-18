@@ -1,0 +1,9 @@
+[Unit]
+Description=Refresh Husarnet Self-hosted License Daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
