@@ -180,14 +180,18 @@ void serviceMain(bool doFork=false) {
 
     std::string configDir = prepareConfigDir();
 
-    if (access((configDir + "id").c_str(), R_OK) != 0) {
+    if (access(FileStorage::idFilePath(configDir).c_str(), R_OK) != 0) {
         FileStorage::generateAndWriteId(configDir);
+    }
+    if (access(FileStorage::httpSecretFilePath(configDir).c_str(), R_OK) != 0) {
+        FileStorage::generateAndWriteHttpSecret(configDir);
     }
 
     if (chdir(configDir.c_str()) != 0) {
         LOG("failed to chdir to config dir");
         exit(1);
     }
+    std::string httpSecret = FileStorage::readHttpSecret(configDir);
     configDir = "./";
 
     ServiceHelper::startServiceHelperProc(configDir);
@@ -215,7 +219,7 @@ void serviceMain(bool doFork=false) {
     }
     // if license not found -> pull the default one from app.husarnet.com
     BaseConfig *baseConfig;
-    auto path = configDir + "/license.json";
+    auto path = FileStorage::licenseFilePath(configDir);
     std::ifstream input(path);
     if (input.is_open()) {
       std::string str((std::istreambuf_iterator<char>(input)),
@@ -241,7 +245,7 @@ void serviceMain(bool doFork=false) {
 
     NgSocket* sock = NgSocketSecure::create(identity, baseConfig);
 
-    Settings settings (configDir + "/settings.json");
+    Settings settings (FileStorage::settingsFilePath(configDir));
     settings.loadInto(sock->options);
 
     if (usingSmartcard) {
@@ -251,7 +255,7 @@ void serviceMain(bool doFork=false) {
     }
 
     ConfigTable* configTable = createSqliteConfigTable(configDir + "config.db");
-    ConfigManager configManager (identity, baseConfig, configTable, ServiceHelper::updateHostsFile, sock);
+    ConfigManager configManager (identity, baseConfig, configTable, ServiceHelper::updateHostsFile, sock, httpSecret);
 
     sock->options->isPeerAllowed = [&](DeviceId id) {
         return configManager.isPeerAllowed(id);
@@ -315,7 +319,7 @@ void serviceMain(bool doFork=false) {
     }
 
     // important: no messages will be processed until we call `runHusarnet`
-    bindControlSocket(configManager, configDir + "/control.sock");
+    bindControlSocket(configManager, FileStorage::controlSocketPath(configDir));
 
     systemdNotify();
 

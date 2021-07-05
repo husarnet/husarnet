@@ -7,11 +7,12 @@
 #include "service_helper.h"
 #include "sockets.h"
 #include "util.h"
+#include "filestorage.h"
 
 #define ARDUINOJSON_ENABLE_STD_STRING 1
 #include <ArduinoJson.h>
 
-ConfigManager::ConfigManager(Identity* identity, BaseConfig* baseConfig, ConfigTable* configTable, HostsFileUpdateFunc hostsFileUpdateFunc, NgSocket* sock): identity(identity), baseConfig(baseConfig), sock(sock), hostsFileUpdateFunc(hostsFileUpdateFunc), configTable(configTable) {
+ConfigManager::ConfigManager(Identity* identity, BaseConfig* baseConfig, ConfigTable* configTable, HostsFileUpdateFunc hostsFileUpdateFunc, NgSocket* sock, std::string httpSecret): identity(identity), baseConfig(baseConfig), sock(sock), hostsFileUpdateFunc(hostsFileUpdateFunc), configTable(configTable), httpSecret(httpSecret) {
 
 }
 
@@ -402,9 +403,237 @@ void ConfigManager::websetupThread() {
     }
 }
 
+bool ConfigManager::is_secret_valid(const httplib::Request &req, httplib::Response &res) {
+    if (!req.has_param("secret") || req.get_param_value("secret") != httpSecret)
+    {
+        res.set_content("Invalid control secret", "text/plain");
+        return false;
+    }
+
+    return true;
+}
+
+void ConfigManager::httpThread()
+{
+    httplib::Server svr;
+    svr.Get("/hi", [](const httplib::Request &, httplib::Response &res)
+            { res.set_content("Hello World!", "text/plain"); });
+
+    svr.Get("/control/whitelist/ls", [&](const httplib::Request &, httplib::Response &res)
+            {
+                LOG("remote command: %s", "whitelist-ls");
+                std::vector<ConfigRow> values = configTable->listValuesForNetwork("manual", "whitelist");
+                std::string response = "";
+                for (auto value : values)
+                {
+                    response += value.key + "\n";
+                }
+                res.set_content(response.c_str(), "text/plain");
+            });
+
+    svr.Get("/control/status", [&](const httplib::Request &req, httplib::Response &res)
+            { res.set_content(sock->info().c_str(), "text/plain"); });
+
+    svr.Get("/control/status-json", [&](const httplib::Request &, httplib::Response &res)
+            { res.set_content(getStatusJson().c_str(), "text/plain"); });
+
+    svr.Post("/control/join", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOGV("control command: join");
+                 if(!is_secret_valid(req, res)) { return; }
+
+                 if (req.has_param("code") && req.has_param("hostname"))
+                 {
+                     std::string code = req.get_param_value("code");
+                     std::string hostname = req.get_param_value("hostname");
+                     joinNetwork(code, hostname);
+                     res.set_content("ok", "text/plain");
+                 }
+                 else
+                 {
+                     res.set_content("Invalid command", "text/plain");
+                 }
+             });
+
+    svr.Post("/control/reset-received-init-response", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOGV("control command: reset-received-init-response");
+                 if(!is_secret_valid(req, res)) { return; }
+
+                 initResponseReceived = false;
+                 res.set_content("ok", "text/plain");
+             });
+
+    svr.Post("/control/has-received-init-response", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOGV("control command: has-received-init-response");
+                 if(!is_secret_valid(req, res)) { return; }
+
+                 initResponseReceived ? res.set_content("yes", "text/plain") : res.set_content("no", "text/plain");
+             });
+
+    svr.Post("/control/whitelist/add", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOGV("control command: whitelist-add");
+                 if(!is_secret_valid(req, res)) { return; }
+
+                 try
+                 {
+                     if (req.has_param("address"))
+                     {
+                         std::string addr = decodeHex(req.get_param_value("address"));
+                         if (addr.size() != 16)
+                         {
+                             res.set_content("fail", "text/plain");
+                         }
+                         else
+                         {
+                             configTable->insert(ConfigRow{"manual", "whitelist", IpAddress::fromBinary(addr).str(), "1"});
+                             res.set_content("ok", "text/plain");
+                         }
+                     }
+                     else
+                     {
+                         res.set_content("fail", "text/plain");
+                     }
+                 }
+                 catch (ConfigEditFailed &err)
+                 {
+                     LOG("could not edit configuration: %s", err.what());
+                     res.set_content("fail-config", "text/plain");
+                 }
+             });
+
+    svr.Post("/control/whitelist/rm", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOGV("control command: whitelist-rm");
+                 if(!is_secret_valid(req, res)) { return; }
+
+                 try
+                 {
+                     if (req.has_param("address"))
+                     {
+                         std::string addr = decodeHex(req.get_param_value("address"));
+                         if (addr.size() != 16)
+                         {
+                             res.set_content("fail", "text/plain");
+                         }
+                         else
+                         {
+                             configTable->remove(ConfigRow{"manual", "whitelist", IpAddress::fromBinary(addr).str(), "1"});
+                             res.set_content("ok", "text/plain");
+                         }
+                     }
+                     else
+                     {
+                         res.set_content("fail", "text/plain");
+                     }
+                 }
+                 catch (ConfigEditFailed &err)
+                 {
+                     LOG("could not edit configuration: %s", err.what());
+                     res.set_content("fail-config", "text/plain");
+                 }
+             });
+
+    svr.Post("/control/whitelist/enable", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOGV("control command: whitelist-enable");
+                 if(!is_secret_valid(req, res)) { return; }
+
+                 try
+                 {
+                     configSet("manual", "whitelist-enabled", "true");
+                     res.set_content("ok", "text/plain");
+                 }
+                 catch (ConfigEditFailed &err)
+                 {
+                     LOG("could not edit configuration: %s", err.what());
+                     res.set_content("fail-config", "text/plain");
+                 }
+             });
+
+    svr.Post("/control/whitelist/disable", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOGV("control command: whitelist-disable");
+                 if(!is_secret_valid(req, res)) { return; }
+
+                 try
+                 {
+                     configSet("manual", "whitelist-enabled", "false");
+                     res.set_content("ok", "text/plain");
+                 }
+                 catch (ConfigEditFailed &err)
+                 {
+                     LOG("could not edit configuration: %s", err.what());
+                     res.set_content("fail-config", "text/plain");
+                 }
+             });
+
+    svr.Post("/control/host/add", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOGV("control command: host-add");
+                 if(!is_secret_valid(req, res)) { return; }
+
+                 try
+                 {
+                     if (req.has_param("hostname") && req.has_param("address"))
+                     {
+                         std::string addr = req.get_param_value("address");
+                         std::string hostname = req.get_param_value("hostname");
+                         ConfigRow row{"manual", "host", hostname, IpAddress::parse(addr).str()};
+                         configTable->insert(row);
+                         updateHosts();
+                         res.set_content("ok", "text/plain");
+                     }
+                     else
+                     {
+                         res.set_content("bad-command", "text/plain");
+                     }
+                 }
+                 catch (ConfigEditFailed &err)
+                 {
+                     LOG("could not edit configuration: %s", err.what());
+                     res.set_content("fail-config", "text/plain");
+                 }
+             });
+
+    svr.Post("/control/host/rm", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOGV("control command: host-rm");
+                 if(!is_secret_valid(req, res)) { return; }
+
+                 try
+                 {
+                     if (req.has_param("hostname") && req.has_param("address"))
+                     {
+                         std::string addr = req.get_param_value("address");
+                         std::string hostname = req.get_param_value("hostname");
+                         ConfigRow row{"manual", "host", hostname, IpAddress::parse(addr).str()};
+                         configTable->remove(row);
+                         updateHosts();
+                         res.set_content("ok", "text/plain");
+                     }
+                     else
+                     {
+                         res.set_content("bad-command", "text/plain");
+                     }
+                 }
+                 catch (ConfigEditFailed &err)
+                 {
+                     LOG("could not edit configuration: %s", err.what());
+                     res.set_content("fail-config", "text/plain");
+                 }
+             });
+
+    svr.listen("127.0.0.1", 9999);
+}
+
 void ConfigManager::runHusarnet() {
     websetupBindSocket();
     GIL::startThread([this]() { this->websetupThread(); }, "websetup", 6000);
+    std::thread t1([this]() { this->httpThread(); });
+
 
     while (true) {
         sock->periodic();

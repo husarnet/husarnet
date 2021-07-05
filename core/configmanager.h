@@ -4,6 +4,7 @@
 #include "husarnet.h"
 #include "port.h"
 #include "threads_port.h"
+#include "httplib.h"
 #include <unordered_set>
 #include <vector>
 
@@ -15,11 +16,13 @@ class ConfigManager {
 
     std::string joinCode;
     std::string joinAsHostname;
+    std::string httpSecret;
     bool initResponseReceived = false;
     int websetupFd = -1;
 
     void sendWebsetupUdp(InetAddress address, std::string body);
     void websetupThread();
+    void httpThread();
     void websetupBindSocket();
     void sendInitRequest();
     std::string getStatusJson();
@@ -28,8 +31,9 @@ class ConfigManager {
     HostsFileUpdateFunc hostsFileUpdateFunc;
     std::string configGet(std::string networkId, std::string key, std::string defaultValue);
     void configSet(std::string networkId, std::string key, std::string value);
+    bool is_secret_valid(const httplib::Request &req, httplib::Response &res);
 public:
-    ConfigManager(Identity* identity, BaseConfig* baseConfig, ConfigTable* configTable, HostsFileUpdateFunc hostsFileUpdateFunc, NgSocket* sock);
+    ConfigManager(Identity* identity, BaseConfig* baseConfig, ConfigTable* configTable, HostsFileUpdateFunc hostsFileUpdateFunc, NgSocket* sock, std::string httpSecret);
     ConfigManager(const ConfigManager&) = delete;
 
     ConfigTable* configTable;

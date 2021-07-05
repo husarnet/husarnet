@@ -25,3 +25,6 @@
 [submodule "deps/c-ares"]
 	path = deps/c-ares
 	url = https://github.com/c-ares/c-ares.git
+[submodule "cpp-httplib"]
+	path = deps/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib.git

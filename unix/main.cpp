@@ -9,7 +9,10 @@
 #include "smartcard_client.h"
 #include "sockets.h"
 #include "util.h"
+#include "httplib.h"
 #include "license_management.h"
+#include "http_handling.h"
+#include "filestorage.h"
 #include <fstream>
 #include <iostream>
 #include <sys/un.h>
@@ -69,12 +72,18 @@ void printUsage() {
 }
 
 std::string sendMsg(std::string msg) {
+    //httplib::Client cli("http://localhost:9999");
+    //auto res = cli.Get("/hi");
+    //std::cout << res->status;
+    //std::cout << res->body;
+  
+    ////
     int fd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
 
     sockaddr_un servaddr = {0};
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sun_family = AF_UNIX;
-    strncpy(servaddr.sun_path, (configDir + "control.sock").c_str(), sizeof(servaddr.sun_path) - 1);
+    strncpy(servaddr.sun_path, (FileStorage::controlSocketPath(configDir)).c_str(), sizeof(servaddr.sun_path) - 1);
 
     if (connect(fd, (sockaddr*)&servaddr, sizeof(servaddr)) != 0) {
         if (getuid() == 0) {
@@ -107,7 +116,7 @@ void sendMsgChecked(std::string msg) {
 }
 
 std::string getMyId() {
-    std::ifstream f (configDir + "/id");
+    std::ifstream f (FileStorage::idFilePath(configDir));
     if (!f.good()) {
         LOG("Failed to access configuration file.");
         if (getuid() != 0) LOG("Please run as root.");
@@ -129,7 +138,7 @@ void print_websetup_message(const std::string &dashboardUrl, std::string webtoke
 void l2setup() {
     if (system("ip link del hnetl2 2>/dev/null") != 0) {}
 
-    std::ifstream f ("/var/lib/husarnet/id");
+    std::ifstream f (FileStorage::idFilePath(configDir));
     if (!f.good()) { LOG("failed to open identity file"); exit(1); }
     std::string ip;
     f >> ip;
@@ -148,7 +157,7 @@ void l2setup() {
 }
 
 BaseConfig* loadBaseConfig() {
-  auto path = configDir + "/license.json";
+  auto path = FileStorage::licenseFilePath(configDir);
   std::ifstream input(path);
   if (input.is_open()) {
     std::string str((std::istreambuf_iterator<char>(input)),
@@ -170,7 +179,7 @@ std::string parseVersion(std::string info){
 
 void removeLicense() {
     std::string configDir = prepareConfigDir();
-    std::string licensePath = configDir + "license.json";
+    std::string licensePath = FileStorage::licenseFilePath(configDir);
 
     unlink(licensePath.c_str());
 }
@@ -205,7 +214,7 @@ int main(int argc, const char** args) {
     }
 
     configDir = (getenv("HUSARNET_CONFIG") ? getenv("HUSARNET_CONFIG") : "/var/lib/husarnet/");
-
+    httplib::Client cli("http://localhost:9999");
     std::string cmd = args[1];
     if (cmd == "daemon") {
         serviceMain();
@@ -224,15 +233,26 @@ int main(int argc, const char** args) {
             print_websetup_message(baseConfig->getDashboardUrl(), getWebsetupData());
         }
     } else if (cmd == "join" && (argc == 3 || argc == 4)) {
-        getWebsetupData();
-
-        sendMsg("reset-received-init-response\n");
-
-        while (sendMsg("has-received-init-response\n") != "yes") {
+       getWebsetupData();
+       auto params = get_http_params_with_secret(configDir);
+        auto res = cli.Post("/control/reset-received-init-response", params);
+        if(is_invalid_response(res)){
+            handle_invalid_response(res);
+            return 1;
+        }
+        sleep(2);
+        while ( (res=cli.Post("/control/has-received-init-response", params)) && (! is_invalid_response(res)) && res->body != "yes") {
             LOG("joining...");
             std::string code = args[2];
             std::string hostname = (argc == 4) ? args[3] : "";
-            sendMsg("join\n" + code + "\n" + hostname);
+            auto params = get_http_params_with_secret(configDir);
+            params.emplace("code", code);
+            params.emplace("hostname", hostname);
+            auto res = cli.Post("/control/join", params);
+            if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+            }
 
             sleep(2);
         }
@@ -245,8 +265,29 @@ int main(int argc, const char** args) {
                 LOG ("invalid IP address");
                 printUsage();
             }
-            sendMsgChecked("host-" + subcmd + "\n" + ip.str() + " " + name);
-            sendMsgChecked("whitelist-" + subcmd + "\n" + encodeHex(ip.toBinary()));
+            httplib::Params params1 = get_http_params_with_secret(configDir);
+            params1.emplace("hostname", name);
+            params1.emplace("address", ip.str());
+            auto res1 = cli.Post(("/control/host/"+subcmd).c_str(), params1);
+            if(is_invalid_response(res1)){
+                handle_invalid_response(res1);
+                return 1;
+            }
+            if(res1->body != "ok"){
+                LOG("Husarnet daemon returned error (%s). Check log.", res1->body.c_str());
+                exit(1);
+            }
+            httplib::Params params2 = get_http_params_with_secret(configDir);
+            params2.emplace("address", encodeHex(ip.toBinary()));
+            auto res2 = cli.Post(("/control/whitelist/"+subcmd).c_str(), params2);
+            if(is_invalid_response(res2)){
+                handle_invalid_response(res2);
+                return 1;
+            }
+            if(res2->body != "ok"){
+                LOG("Husarnet daemon returned error (%s). Check log.", res2->body.c_str());
+                exit(1);
+            }
         } else {
             printUsage();
         }
@@ -259,34 +300,82 @@ int main(int argc, const char** args) {
                     LOG ("invalid IP address");
                     printUsage();
                 }
-                sendMsgChecked("whitelist-" + subcmd + "\n" + encodeHex(ip.toBinary()));
+                httplib::Params params = get_http_params_with_secret(configDir);
+                params.emplace("address", encodeHex(ip.toBinary()));
+                auto res = cli.Post(("/control/whitelist/"+subcmd).c_str(), params);
+                if(is_invalid_response(res)){
+                    handle_invalid_response(res);
+                    return 1;
+                }
+                if(res->body != "ok"){
+                    LOG("Husarnet daemon returned error (%s). Check log.", res->body.c_str());
+                    exit(1);
+                }
             }
         } else if (subcmd == "enable" && argc == 3) {
-            sendMsgChecked("whitelist-enable\n");
+            auto params = get_http_params_with_secret(configDir);
+            auto res = cli.Post("/control/whitelist/enable", params);
+            if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+            }
+            if(res->body != "ok"){
+                LOG("Husarnet daemon returned error (%s). Check log.", res->body.c_str());
+                exit(1);
+            }
         } else if (subcmd == "disable" && argc==4) {
             std::string flag = args[3];
             if (flag == "--noinput") {
-                sendMsgChecked("whitelist-disable\n");
+                auto params = get_http_params_with_secret(configDir);
+                auto res = cli.Post("/control/whitelist/disable", params);
+                if(is_invalid_response(res)){
+                    handle_invalid_response(res);
+                    return 1;
+                }
+                if(res->body != "ok"){
+                    LOG("Husarnet daemon returned error (%s). Check log.", res->body.c_str());
+                    exit(1);
+                }
             } else {
                 std::cout << "Disabling whitelist may pose some risks, make sure You know what You do.\n If You wish to disable whitelist run this with --noinput option"; 
             }
         }else if (subcmd == "disable" && argc == 3) {
             std::cout << "Disabling whitelist may pose some risks, make sure You know what You do.\n If You wish to disable whitelist run this with --noinput option";
         } else if (subcmd == "ls" && argc == 3) {
-            std::cout << sendMsg("whitelist-ls\n") << std::endl;
+            auto res = cli.Get("/control/whitelist/ls");
+            if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+            }
+            std::cout << res->body << std::endl;
         }else {
             printUsage();
         }
     } else if (cmd == "init-websetup" && argc == 3) {
         sendMsgChecked("set-websetup-token\n" + std::string(args[2]));
     } else if (cmd == "status") {
-        std::cout << sendMsg("status\n") << std::endl;
+        auto res = cli.Get("/control/status");
+        if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+        }
+        std::cout << res->body << std::endl;
     } else if (cmd == "status-json") {
-        std::cout << sendMsg("status-json\n") << std::endl;
+        auto res = cli.Get("/control/status-json");
+        if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+        }
+        std::cout << res->body << std::endl;
     } else if (cmd == "l2-setup") {
         l2setup();
     } else if (cmd == "version") {
-         std::cout << parseVersion(sendMsg("status\n")) << std::endl;
+        auto res = cli.Get("/control/status");
+        if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+        }
+         std::cout << parseVersion(res->body) << std::endl;
     } else if (cmd == "setup-server" && argc == 3) {
         if (std::string(args[2]) == "default") {
             removeLicense();
