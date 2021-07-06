@@ -9,8 +9,12 @@
 #include <vector>
 #include "fstring.h"
 #include "string_view.h"
+#include "logmanager.h"
 #include "port.h"
 int64_t currentTime();
+
+
+extern LogManager* globalLogManager;
 
 #ifdef __ANDROID__
 #include <android/log.h>
@@ -22,10 +26,12 @@ int64_t currentTime();
 #ifdef _WIN32
 #define LOG(msg, x...) do { fprintf(stderr, "[%lld] %s: " msg "\n", (long long int)currentTime(), getThreadName(), ##x); fflush(stderr); } while(0)
 #else
-#define LOG(msg, x...) do { fprintf(stderr, "[%lld] " msg "\n", (long long int)currentTime(), ##x); fflush(stderr); } while(0)
+#define LOG(msg, x...) do { fprintf(stderr, "[%lld] " msg "\n", (long long int)currentTime(), ##x); fflush(stderr); if(globalLogManager!=nullptr){ char buf[1024]; snprintf(buf,1024,"[%lld] " msg "\n", (long long int)currentTime(), ##x);globalLogManager->insert(buf);} } while(0)
 #endif
-
-#define LOGV(msg, x...) do { if (husarnetVerbose) LOG(msg, ##x); } while(0)
+// globalLogManager->insert("["+std::to_string((long long int)currentTime())+"] "+msg);
+#define LOGV1(msg, x...) do { if (globalLogManager!=nullptr) { if (globalLogManager->getVerbosity()>=1) {LOG(msg, ##x);}} else {LOG(msg, ##x); } } while(0)
+#define LOGV2(msg, x...) do { if (globalLogManager!=nullptr) { if (globalLogManager->getVerbosity()>=2) {LOG(msg, ##x);}} else {LOG(msg, ##x); } } while(0)
+#define LOGV(msg, x...) do { if (globalLogManager!=nullptr) { if (globalLogManager->getVerbosity()>=3) {LOG(msg, ##x);}} else {LOG(msg, ##x); } } while(0)
 #endif
 
 #define LOG_DEBUG(msg, x...) //LOG(msg, ##x)

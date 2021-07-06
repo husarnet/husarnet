@@ -1,6 +1,8 @@
 #include "util.h"
 #include <climits>
 
+LogManager* globalLogManager = nullptr;
+
 std::vector<std::string> splitWhitespace(std::string s) {
     std::vector<std::string> res;
     res.push_back("");
