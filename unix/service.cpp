@@ -25,6 +25,7 @@
 #include "smartcard_client.h"
 #include "base_config.h"
 #include "license_management.h"
+#include "logmanager.h"
 
 #include <sys/prctl.h>
 #include <sys/syscall.h>
@@ -253,9 +254,10 @@ void serviceMain(bool doFork=false) {
         if (ua != "" && ua.back() != '\n') ua += "\n";
         ua += "smartcard\n";
     }
-
+    LogManager* logManager = new LogManager(500);
+    globalLogManager = logManager;
     ConfigTable* configTable = createSqliteConfigTable(configDir + "config.db");
-    ConfigManager configManager (identity, baseConfig, configTable, ServiceHelper::updateHostsFile, sock, httpSecret);
+    ConfigManager configManager (identity, baseConfig, configTable, ServiceHelper::updateHostsFile, sock, httpSecret, logManager);
 
     sock->options->isPeerAllowed = [&](DeviceId id) {
         return configManager.isPeerAllowed(id);
