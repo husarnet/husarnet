@@ -21,6 +21,7 @@ fpm \
     --deb-recommends "husarnet-ros" \
     --conflicts "husarnet-ros = 1.0.0" \
     --after-install ${base_dir}/unix/packaging-misc/post-install-script.sh \
+     --after-remove ${base_dir}/unix/packaging-misc/post-remove-script.sh \
     --package ${build_dir}/husarnet-${arch}.${package} \
     --force \
     --chdir ${output_dir}
