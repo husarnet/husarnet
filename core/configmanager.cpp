@@ -92,6 +92,8 @@ IpAddress ConfigManager::resolveHostname(std::string hostname) {
         return IpAddress{};
 }
 
+
+
 void ConfigManager::updateHosts() {
     std::vector<std::pair<IpAddress, std::string>> hosts;
     std::unordered_set<std::string> mappedHosts;
@@ -462,7 +464,24 @@ void ConfigManager::httpThread()
             });
 
     svr.Get("/control/status", [&](const httplib::Request &req, httplib::Response &res)
-            { res.set_content(sock->info().c_str(), "text/plain"); });
+            {
+                std::map<std::string, std::string> hosts = std::map<std::string, std::string>();
+                for (std::string netId : configTable->listNetworks())
+                {
+                    for (auto row : configTable->listValuesForNetwork(netId, "host"))
+                    {
+                        std::string address = row.value;
+                        std::string hostname = row.key;
+                        if (hosts.find(address) == hosts.end())
+                        {
+                           hosts.insert(std::pair<std::string, std::string> (address, hostname));
+                        } else {
+                            hosts.find(address)->second += " " + hostname;
+                        }
+                    }
+                }
+                res.set_content(sock->info(hosts).c_str(), "text/plain");
+            });
 
     svr.Get("/control/status-json", [&](const httplib::Request &, httplib::Response &res)
             { res.set_content(getStatusJson().c_str(), "text/plain"); });

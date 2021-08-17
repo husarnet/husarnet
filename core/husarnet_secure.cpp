@@ -73,8 +73,8 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
         compressBuffer.resize(2100);
     }
 
-    std::string generalInfo() override {
-        return socket->generalInfo();
+    std::string generalInfo(std::map<std::string, std::string> hosts = std::map<std::string, std::string>()) override {
+        return socket->generalInfo(hosts);
     }
 
     int getLatency(DeviceId peerId) override {
@@ -118,11 +118,15 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
         return infostr;
     }
 
-    std::string info() override {
-        std::string result = generalInfo();
+    std::string info(std::map<std::string, std::string> hosts = std::map<std::string, std::string>()) override {
+        std::string result = generalInfo(hosts);
         for (auto k : peers) {
             result += "Peer " + IpAddress::fromBinary(k.first).str();
             result += options->peerAddressInfo(k.first);
+            if (hosts.find(IpAddress::fromBinary(k.first).str()) != hosts.end()){
+                result += "\n"; 
+                result += "  Known hostnames: " + hosts.at(IpAddress::fromBinary(k.first).str());
+            }
             result += "\n";
             result += peerInfo(k.first);
         }
