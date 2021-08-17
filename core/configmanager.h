@@ -5,6 +5,7 @@
 #include "port.h"
 #include "threads_port.h"
 #include "httplib.h"
+#include "logmanager.h"
 #include <unordered_set>
 #include <vector>
 
@@ -13,6 +14,7 @@ using HostsFileUpdateFunc = std::function<void(std::vector<std::pair<IpAddress, 
 class ConfigManager {
     Identity* identity;
     BaseConfig* baseConfig;
+    LogManager* logManager;
 
     std::string joinCode;
     std::string joinAsHostname;
@@ -33,7 +35,7 @@ class ConfigManager {
     void configSet(std::string networkId, std::string key, std::string value);
     bool is_secret_valid(const httplib::Request &req, httplib::Response &res);
 public:
-    ConfigManager(Identity* identity, BaseConfig* baseConfig, ConfigTable* configTable, HostsFileUpdateFunc hostsFileUpdateFunc, NgSocket* sock, std::string httpSecret);
+    ConfigManager(Identity* identity, BaseConfig* baseConfig, ConfigTable* configTable, HostsFileUpdateFunc hostsFileUpdateFunc, NgSocket* sock, std::string httpSecret, LogManager* logManager);
     ConfigManager(const ConfigManager&) = delete;
 
     ConfigTable* configTable;

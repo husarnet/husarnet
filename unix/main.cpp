@@ -15,6 +15,7 @@
 #include "filestorage.h"
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <sys/un.h>
 #include <unistd.h>
 
@@ -64,6 +65,24 @@ void printUsage() {
 
   husarnet version
     Displays version currently in use.
+
+  husarnet verbosity
+    Displays current log verbosity.
+
+  husarnet verbosity [0-3]
+    Changes current verbosity level
+
+  husarnet logs 
+    Displays latest logs kept in memory
+
+  husarnet logs size [size]
+    Changes how many logs should be kept in memory
+
+  husarnet logs size
+    Displays maximum number of logs that are kept in memory (if exceeded new logs override older)
+
+  husarnet logs current
+    Displays current number of logs kept in memory
 
   husarnet status-json
     Retruns the same information that husarnet status returns but in json format.  
@@ -376,6 +395,73 @@ int main(int argc, const char** args) {
                 return 1;
         }
          std::cout << parseVersion(res->body) << std::endl;
+    } else if (cmd == "verbosity" && argc >= 3) {
+        std::string tmp = args[2];
+        std::istringstream reader(tmp);
+        uint verbosity;
+        reader >> verbosity;
+        auto params = get_http_params_with_secret(configDir);
+        params.emplace("verbosity",std::to_string(verbosity));
+        auto res = cli.Post("/control/logs/verbosity", params);
+        if(is_invalid_response(res)){
+            handle_invalid_response(res);
+            return 1;
+        }
+            if(res->body != "ok"){
+            LOG("Husarnet daemon returned error (%s). Check log.", res->body.c_str());
+            exit(1);
+        }
+    } else if (cmd == "verbosity") {
+        auto res = cli.Get("/control/logs-verbosity");
+        if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+        }
+        std::cout << res->body << std::endl;
+    } else if (cmd == "logs" && argc == 4) {
+        std::string subcmd = args[2];
+        std::string size = args[3];
+        if (subcmd == "size"){
+            auto params = get_http_params_with_secret(configDir);
+            params.emplace("size",size);
+            auto res = cli.Post("/control/logs/size", params);
+            if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+            }
+            if(res->body != "ok"){
+                LOG("Husarnet daemon returned error (%s). Check log.", res->body.c_str());
+                exit(1);
+            }
+        } else {
+            printUsage();
+        }
+    } else if (cmd == "logs" && argc == 3) {
+        std::string subcmd = args[2];
+        if (subcmd == "size") {
+            auto res = cli.Get("/control/logs/size");
+            if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+        }
+        std::cout << res->body << std::endl;
+        } else if (subcmd == "current") {
+            auto res = cli.Get("/control/logs/currentSize");
+            if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+            }
+        std::cout << res->body << std::endl;
+        } else {
+            printUsage();
+        }
+    }else if (cmd == "logs" && argc < 3 ) {
+        auto res = cli.Get("/control/logs");
+        if(is_invalid_response(res)){
+                handle_invalid_response(res);
+                return 1;
+        }
+        std::cout << res->body << std::endl;
     } else if (cmd == "setup-server" && argc == 3) {
         if (std::string(args[2]) == "default") {
             removeLicense();

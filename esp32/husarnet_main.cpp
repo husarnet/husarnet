@@ -259,10 +259,12 @@ extern "C" void husarnet_start() {
     auto threadFunc = [identity, baseConfig, d]() {
         GIL::init();
         d->init2();
-
+        LogManager* logManager = new LogManager(10);
+        globalLogManager = logManager;
         NgSocket* sock = NgSocketSecure::create(identity, baseConfig);
         ConfigTable* configTable = createMemoryConfigTable(readConfigData(), writeConfigData);
-        ConfigManager configManager (identity, baseConfig, configTable, updateHostsFile, sock);
+
+        ConfigManager configManager (identity, baseConfig, configTable, updateHostsFile, sock, FileStorage::generateRandomString(20), logManager);
         globalConfigManager = &configManager;
 
         sock->options->isPeerAllowed = [&](DeviceId id) {
@@ -309,6 +311,13 @@ extern "C" void husarnet_retrieve_license(const char* hostname) {
     InetAddress address{ip, 80};
     std::string license = requestLicense(address);
     writeBlob("license", license);
+}
+
+extern "C" const char* get_logs() {
+    if (globalLogManager) {
+        return globalLogManager->getLogs().c_str();
+    }
+    return "";
 }
 
 extern "C" const char* husarnet_get_hostname() {
