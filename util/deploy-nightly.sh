@@ -1,7 +1,7 @@
 #!/bin/bash
 source $(dirname "$0")/bash-base.sh
 
-golden_path="/var/www/golden"
+golden_path="$HOME/golden"
 golden_tar_path="${golden_path}/tgz"
 golden_rpm_path="${golden_path}/rpm"
 aptly_config_path="${base_dir}/deploy/aptly.conf"
@@ -31,7 +31,7 @@ aptly snapshot create husarnet-${package_version} from repo install-nightly
 aptly publish switch -component=husarnet -batch all husarnet-${package_version}
 
 echo "[==] Building new repo"
-rm -rf ${working_path} || true
+rm -rf ${working_path}/* || true
 mkdir -p ${working_path}/tgz
 mkdir -p ${working_path}/yum
 mkdir -p ${working_path}/deb
