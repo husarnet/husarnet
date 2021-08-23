@@ -47,8 +47,4 @@ sed "s=husarnet.com/husarnet.repo=husarnet.com/husarnet-nightly.repo=" -i ${work
 
 sed "s=install.husarnet=nightly.husarnet=" ${working_path}/husarnet.repo > ${working_path}/husarnet-nightly.repo
 
-echo "[==] Setting up permissions..."
-
-chgrp -R www-data ${working_path}
-
 echo "[==] Done, and should work."
