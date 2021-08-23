@@ -53,7 +53,7 @@ jobs:
           name: packages
 
       - name: Deploy to Husarnet nightly repository
-        run: ./deploy-nightly.sh
+        run: ./util/deploy-nightly.sh
 
 
   push_docker_images:
