@@ -10,6 +10,7 @@
 #include "string_view.h"
 #include <functional>
 #include <vector>
+#include <map>
 
 #ifdef NDEBUG
 #error "NDEBUG should not be defined"
@@ -44,9 +45,9 @@ struct NgSocket {
     NgSocketOptions* options = new NgSocketOptions;
     NgSocketDelegate* delegate = nullptr;
 
-    virtual std::string generalInfo() { return ""; }
+    virtual std::string generalInfo(std::map<std::string, std::string> hosts = std::map<std::string, std::string>()) { return ""; }
     virtual std::string peerInfo(DeviceId id) { return ""; }
-    virtual std::string info() { return ""; }
+    virtual std::string info(std::map<std::string, std::string> hosts = std::map<std::string, std::string>()) { return ""; }
     virtual int getLatency(DeviceId peer) { return -1; }
 
     static NgSocket* create(Identity* id, BaseConfig *baseConfig);

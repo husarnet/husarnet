@@ -207,10 +207,13 @@ struct NgSocketImpl : public NgSocket {
         }
     }
 
-    std::string generalInfo() override {
+    std::string generalInfo(std::map<std::string, std::string> hosts = std::map<std::string, std::string>()) override {
         std::string info;
         info += "Version: " HUSARNET_VERSION "\n";
         info += "Husarnet IP address: " + IpAddress::fromBinary(deviceId).str() + "\n";
+        if (hosts.find(IpAddress::fromBinary(deviceId).str()) != hosts.end()){
+                info += "Known hostnames: " + hosts.at(IpAddress::fromBinary(deviceId).str()) + "\n";
+            }
 
         if (!isBaseUdp()) {
             if (currentTime() - lastBaseTcpMessage > UDP_BASE_TIMEOUT)

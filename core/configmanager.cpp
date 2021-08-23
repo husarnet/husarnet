@@ -8,12 +8,12 @@
 #include "sockets.h"
 #include "util.h"
 #include "filestorage.h"
+#include <sstream>
 
 #define ARDUINOJSON_ENABLE_STD_STRING 1
 #include <ArduinoJson.h>
 
-ConfigManager::ConfigManager(Identity* identity, BaseConfig* baseConfig, ConfigTable* configTable, HostsFileUpdateFunc hostsFileUpdateFunc, NgSocket* sock, std::string httpSecret): identity(identity), baseConfig(baseConfig), sock(sock), hostsFileUpdateFunc(hostsFileUpdateFunc), configTable(configTable), httpSecret(httpSecret) {
-
+ConfigManager::ConfigManager(Identity* identity, BaseConfig* baseConfig, ConfigTable* configTable, HostsFileUpdateFunc hostsFileUpdateFunc, NgSocket* sock, std::string httpSecret, LogManager* logManager = nullptr): identity(identity), baseConfig(baseConfig), sock(sock), hostsFileUpdateFunc(hostsFileUpdateFunc), configTable(configTable), httpSecret(httpSecret), logManager(logManager) {
 }
 
 bool ConfigManager::isPeerAllowed(DeviceId id) {
@@ -92,6 +92,8 @@ IpAddress ConfigManager::resolveHostname(std::string hostname) {
         return IpAddress{};
 }
 
+
+
 void ConfigManager::updateHosts() {
     std::vector<std::pair<IpAddress, std::string>> hosts;
     std::unordered_set<std::string> mappedHosts;
@@ -139,7 +141,7 @@ std::string ConfigManager::handleControlPacket(std::string data) {
     std::string cmd = data.substr(0, s);
     std::string payload = data.substr(s + 1);
 
-    if (cmd != "status" && cmd != "status-json" && cmd != "whitelist-ls")
+    if (cmd != "status" && cmd != "status-json" && cmd != "whitelist-ls" && cmd != "logs" && cmd != "get-verbosity" && cmd != "logs-size" && cmd != "logs-current")
         LOGV ("control command: %s", cmd.c_str());
 
     try {
@@ -189,6 +191,36 @@ std::string ConfigManager::handleControlPacket(std::string data) {
         return sock->info();
     } else if (cmd == "status-json") {
         return getStatusJson();
+    } else if (cmd == "logs") {
+        return logManager->getLogs();
+    } else if (cmd == "get-verbosity") {
+        return std::to_string(logManager->getVerbosity());
+    } else if (cmd == "logs-size") {
+        return std::to_string(logManager->getSize());
+    } else if (cmd == "logs-current") {
+        return std::to_string(logManager->getCurrentSize());
+    } else if(cmd == "verbosity") {
+        std::istringstream reader(payload);
+        uint verbosity;
+        reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
+        try{
+        reader >> verbosity;
+        logManager->setVerbosity(verbosity);
+        return "ok";
+        } catch (std::ios_base::failure e){
+            return "fail";
+        }
+    } else if(cmd == "logs-size") {
+        std::istringstream reader(payload);
+        uint size;
+        reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
+        try{
+        reader >> size;
+        logManager->setSize(size);
+        return "ok";
+        } catch (std::ios_base::failure e) {
+            return "fail";
+        }
     } else if (cmd == "join") {
         int pos = payload.find("\n");
         std::string code = payload.substr(0, pos);
@@ -432,14 +464,43 @@ void ConfigManager::httpThread()
             });
 
     svr.Get("/control/status", [&](const httplib::Request &req, httplib::Response &res)
-            { res.set_content(sock->info().c_str(), "text/plain"); });
+            {
+                std::map<std::string, std::string> hosts = std::map<std::string, std::string>();
+                for (std::string netId : configTable->listNetworks())
+                {
+                    for (auto row : configTable->listValuesForNetwork(netId, "host"))
+                    {
+                        std::string address = row.value;
+                        std::string hostname = row.key;
+                        if (hosts.find(address) == hosts.end())
+                        {
+                           hosts.insert(std::pair<std::string, std::string> (address, hostname));
+                        } else {
+                            hosts.find(address)->second += " " + hostname;
+                        }
+                    }
+                }
+                res.set_content(sock->info(hosts).c_str(), "text/plain");
+            });
 
     svr.Get("/control/status-json", [&](const httplib::Request &, httplib::Response &res)
             { res.set_content(getStatusJson().c_str(), "text/plain"); });
 
+    svr.Get("/control/logs", [&](const httplib::Request &, httplib::Response &res)
+            { res.set_content(logManager->getLogs(), "text/plain"); });
+
+    svr.Get("/control/logs/verbosity", [&](const httplib::Request &, httplib::Response &res)
+            { res.set_content(std::to_string(logManager->getVerbosity()), "text/plain"); });
+
+    svr.Get("/control/logs/size", [&](const httplib::Request &, httplib::Response &res)
+            { res.set_content(std::to_string(logManager->getSize()), "text/plain"); });
+
+    svr.Get("/control/logs/currentSize", [&](const httplib::Request &, httplib::Response &res)
+            { res.set_content(std::to_string(logManager->getCurrentSize()), "text/plain"); });
+
     svr.Post("/control/join", [&](const httplib::Request &req, httplib::Response &res)
              {
-                 LOGV("control command: join");
+                 LOG("control command: join");
                  if(!is_secret_valid(req, res)) { return; }
 
                  if (req.has_param("code") && req.has_param("hostname"))
@@ -457,16 +518,82 @@ void ConfigManager::httpThread()
 
     svr.Post("/control/reset-received-init-response", [&](const httplib::Request &req, httplib::Response &res)
              {
-                 LOGV("control command: reset-received-init-response");
+                 LOG("control command: reset-received-init-response");
                  if(!is_secret_valid(req, res)) { return; }
 
                  initResponseReceived = false;
                  res.set_content("ok", "text/plain");
              });
 
+    svr.Post("/control/logs/size", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOG("control command: logs-size");
+                 if (!is_secret_valid(req, res))
+                 {
+                     return;
+                 }
+
+                 if (req.has_param("size"))
+                 {
+                     std::string param = req.get_param_value("size");
+                     std::istringstream reader(param);
+                     uint size;
+                     reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
+                     try
+                     {
+                         reader >> size;
+                         logManager->setSize(size);
+                         res.set_content("ok", "text/plain");
+                     }
+                     catch (std::ios_base::failure e)
+                     {
+                         res.set_content("fail", "text/plain");
+                     }
+                 }
+                 else
+                 {
+                     res.set_content("bad-command", "text/plain");
+                 }
+
+                 res.set_content("ok", "text/plain");
+             });
+
+     svr.Post("/control/logs/verbosity", [&](const httplib::Request &req, httplib::Response &res)
+             {
+                 LOG("control command: logs-verbosity");
+                 if (!is_secret_valid(req, res))
+                 {
+                     return;
+                 }
+
+                 if (req.has_param("verbosity"))
+                 {
+                     std::string param = req.get_param_value("verbosity");
+                     std::istringstream reader(param);
+                     uint verbosity;
+                     reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
+                     try
+                     {
+                         reader >> verbosity;
+                         logManager->setVerbosity(verbosity);
+                         res.set_content("ok", "text/plain");
+                     }
+                     catch (std::ios_base::failure e)
+                     {
+                         res.set_content("fail", "text/plain");
+                     }
+                 }
+                 else
+                 {
+                     res.set_content("bad-command", "text/plain");
+                 }
+
+                 res.set_content("ok", "text/plain");
+             });
+
     svr.Post("/control/has-received-init-response", [&](const httplib::Request &req, httplib::Response &res)
              {
-                 LOGV("control command: has-received-init-response");
+                 LOG("control command: has-received-init-response");
                  if(!is_secret_valid(req, res)) { return; }
 
                  initResponseReceived ? res.set_content("yes", "text/plain") : res.set_content("no", "text/plain");
@@ -474,7 +601,7 @@ void ConfigManager::httpThread()
 
     svr.Post("/control/whitelist/add", [&](const httplib::Request &req, httplib::Response &res)
              {
-                 LOGV("control command: whitelist-add");
+                 LOG("control command: whitelist-add");
                  if(!is_secret_valid(req, res)) { return; }
 
                  try
@@ -506,7 +633,7 @@ void ConfigManager::httpThread()
 
     svr.Post("/control/whitelist/rm", [&](const httplib::Request &req, httplib::Response &res)
              {
-                 LOGV("control command: whitelist-rm");
+                 LOG("control command: whitelist-rm");
                  if(!is_secret_valid(req, res)) { return; }
 
                  try
@@ -538,7 +665,7 @@ void ConfigManager::httpThread()
 
     svr.Post("/control/whitelist/enable", [&](const httplib::Request &req, httplib::Response &res)
              {
-                 LOGV("control command: whitelist-enable");
+                 LOG("control command: whitelist-enable");
                  if(!is_secret_valid(req, res)) { return; }
 
                  try
@@ -555,7 +682,7 @@ void ConfigManager::httpThread()
 
     svr.Post("/control/whitelist/disable", [&](const httplib::Request &req, httplib::Response &res)
              {
-                 LOGV("control command: whitelist-disable");
+                 LOG("control command: whitelist-disable");
                  if(!is_secret_valid(req, res)) { return; }
 
                  try
@@ -572,7 +699,7 @@ void ConfigManager::httpThread()
 
     svr.Post("/control/host/add", [&](const httplib::Request &req, httplib::Response &res)
              {
-                 LOGV("control command: host-add");
+                 LOG("control command: host-add");
                  if(!is_secret_valid(req, res)) { return; }
 
                  try
@@ -600,7 +727,7 @@ void ConfigManager::httpThread()
 
     svr.Post("/control/host/rm", [&](const httplib::Request &req, httplib::Response &res)
              {
-                 LOGV("control command: host-rm");
+                 LOG("control command: host-rm");
                  if(!is_secret_valid(req, res)) { return; }
 
                  try
