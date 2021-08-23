@@ -10,14 +10,14 @@ working_path="/var/www/install"
 echo "[==] Adding tar files"
 mkdir -p ${golden_tar_path}
 for arch in ${unix_archs}; do
-  cp release/husarnet-${package_version}-${arch}.tar ${golden_tar_path}
+  cp husarnet-${package_version}-${arch}.tar ${golden_tar_path}
   ln -fs husarnet-${package_version}-${arch}.tar ${golden_tar_path}/husarnet-latest-${arch}.tar
 done
 
 echo "[==] Adding rpm files"
 mkdir -p ${golden_rpm_path}
 for arch in ${unix_archs}; do
-  cp release/husarnet-${package_version}-${arch}.rpm ${golden_rpm_path}
+  cp husarnet-${package_version}-${arch}.rpm ${golden_rpm_path}
   rpmsign --define "_gpg_name contact@husarnet.com" --addsign ${golden_rpm_path}/husarnet-${package_version}-${arch}.rpm
 done
 
@@ -26,7 +26,7 @@ createrepo_c ${golden_rpm_path}/
 gpg -u 87D016FBEC48A791AA4AF675197D62F68A4C7BD6 --no-tty --batch --yes --detach-sign --armor ${golden_rpm_path}/repodata/repomd.xml
 
 echo "[==] Adding deb files"
-aptly repo add install-nightly release
+aptly repo add install-nightly .
 aptly snapshot create husarnet-${package_version} from repo install-nightly
 aptly publish switch -component=husarnet -batch all husarnet-${package_version}
 
