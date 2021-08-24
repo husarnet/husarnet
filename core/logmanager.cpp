@@ -57,6 +57,7 @@ void LogManager::insert(std::string log){
             itr = itr->next;
             delete tmp; 
         }
+        return;
     }
 
     LogElement* itr = first->next;

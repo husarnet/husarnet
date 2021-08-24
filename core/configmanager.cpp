@@ -207,10 +207,10 @@ std::string ConfigManager::handleControlPacket(std::string data) {
         reader >> verbosity;
         logManager->setVerbosity(verbosity);
         return "ok";
-        } catch (std::ios_base::failure e){
+        } catch (std::ios_base::failure &e){
             return "fail";
         }
-    } else if(cmd == "logs-size") {
+    } else if(cmd == "logs-resize") {
         std::istringstream reader(payload);
         uint size;
         reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
@@ -218,7 +218,7 @@ std::string ConfigManager::handleControlPacket(std::string data) {
         reader >> size;
         logManager->setSize(size);
         return "ok";
-        } catch (std::ios_base::failure e) {
+        } catch (std::ios_base::failure &e) {
             return "fail";
         }
     } else if (cmd == "join") {
@@ -247,7 +247,7 @@ std::string ConfigManager::handleControlPacket(std::string data) {
         LOG("invalid control command %s", cmd.c_str());
         return "fail";
     }
-    } catch(ConfigEditFailed& err) {
+    } catch(ConfigEditFailed &err) {
         LOG("could not edit configuration: %s", err.what());
         return "fail-config";
     }
@@ -318,7 +318,7 @@ std::string ConfigManager::handleWebsetupPacket(InetAddress addr, std::string da
     } else {
         return (seqnum + "bad-command");
     }
-    } catch(ConfigEditFailed& err) {
+    } catch(ConfigEditFailed &err) {
         LOG("could not edit configuration: %s", err.what());
         return (seqnum + "fail-config");
     }
@@ -545,7 +545,7 @@ void ConfigManager::httpThread()
                          logManager->setSize(size);
                          res.set_content("ok", "text/plain");
                      }
-                     catch (std::ios_base::failure e)
+                     catch (std::ios_base::failure &e)
                      {
                          res.set_content("fail", "text/plain");
                      }
@@ -578,7 +578,7 @@ void ConfigManager::httpThread()
                          logManager->setVerbosity(verbosity);
                          res.set_content("ok", "text/plain");
                      }
-                     catch (std::ios_base::failure e)
+                     catch (std::ios_base::failure &e)
                      {
                          res.set_content("fail", "text/plain");
                      }
