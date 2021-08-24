@@ -53,7 +53,7 @@ jobs:
       - name: Deploy to Husarnet nightly repository
         run: ./util/deploy.sh nightly
 
-
+  # Note: nightly release will push to private dockerhub repo
   push_docker_images:
     runs-on: ubuntu-latest
 
@@ -83,6 +83,6 @@ jobs:
           file: ./unix/docker-misc/Dockerfile
           platforms: linux/arm64/v8, linux/amd64, linux/arm/v7
           push: true
-          tags: husarnet/husarnet
+          tags: husarnet/priv_ci
           #cache-from: type=registry,ref=
           #cache-to: type=inline
