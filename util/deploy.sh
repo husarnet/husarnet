@@ -48,8 +48,8 @@ createrepo_c ${golden_rpm_path}/
 gpg -u 87D016FBEC48A791AA4AF675197D62F68A4C7BD6 --no-tty --batch --yes --detach-sign --armor ${golden_rpm_path}/repodata/repomd.xml
 
 echo "[==] Adding deb files"
-aptly repo add install-nightly .
-aptly snapshot create husarnet-${package_version} from repo install-nightly
+aptly repo add install-${deploy_target} .
+aptly snapshot create husarnet-${package_version} from repo install-${deploy_target}
 aptly publish switch -component=husarnet -batch all husarnet-${package_version}
 
 echo "[==] Building new repo"
