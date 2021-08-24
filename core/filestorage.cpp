@@ -20,13 +20,34 @@ std::ifstream openFile(std::string name) {
 Identity* readIdentity(std::string configDir) {
     std::ifstream f = openFile(idFilePath(configDir));
     if (!f.good()) exit(1);
-    std::string ip, pubkeyS, privkeyS;
-    f >> ip >> pubkeyS >> privkeyS;
-    auto identity = new StdIdentity;
-    identity->pubkey = decodeHex(pubkeyS);
-    identity->privkey = decodeHex(privkeyS);
-    identity->deviceId = IpAddress::parse(ip.c_str()).toBinary();
-    return identity;
+    if (f.peek() == std::ifstream::traits_type::eof()) {
+        f.close();
+        LOG("generating ID...");
+        auto p = NgSocketCrypto::generateId();
+
+        std::ofstream fp (idFilePath(configDir));
+        if (!fp.good()) {
+            LOG("failed to write: %s", configDir.c_str());
+            exit(1);
+        }
+
+        fp << IpAddress::fromBinary(NgSocketCrypto::pubkeyToDeviceId(p.first)).str()
+           << " " << encodeHex(p.first) << " " << encodeHex(p.second) << std::endl;
+        auto identity = new StdIdentity;
+        identity->pubkey = p.first;
+        identity->privkey = p.second;
+        identity->deviceId = IpAddress::parse(IpAddress::fromBinary(NgSocketCrypto::pubkeyToDeviceId(p.first)).str().c_str()).toBinary();
+        return identity;
+
+    } else {
+        std::string ip, pubkeyS, privkeyS;
+        f >> ip >> pubkeyS >> privkeyS;
+        auto identity = new StdIdentity;
+        identity->pubkey = decodeHex(pubkeyS);
+        identity->privkey = decodeHex(privkeyS);
+        identity->deviceId = IpAddress::parse(ip.c_str()).toBinary();
+        return identity;
+    }
 }
 
 void generateAndWriteId(std::string configDir) {
