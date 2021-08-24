@@ -1,6 +1,28 @@
 #!/bin/bash
 source $(dirname "$0")/bash-base.sh
 
+if [ "$#" -ne 1 ]; then
+    echo "Usage: ${0} <deploy-target>"
+    exit 1
+fi
+
+deploy_target=${1}
+
+case ${deploy_target} in
+  nightly)
+    echo "Deploying to nightly repo"
+    ;;
+
+  main)
+    echo "Deploying to main repo"
+    ;;
+
+  *)
+    echo "Unknown destination. Please have in mind that this script MUST be run in a deployment-specific container."
+    exit 2
+    ;;
+esac
+
 golden_path="$HOME/golden"
 golden_tar_path="${golden_path}/tgz"
 golden_rpm_path="${golden_path}/rpm"
@@ -41,10 +63,12 @@ cp -R ${golden_rpm_path}/.  ${working_path}/yum/
 cp -R $HOME/.aptly/public/. ${working_path}/deb/
 cp -R ${base_dir}/deploy/static/. ${working_path}/
 
-echo "[==] Make some extra files for the nightly repository."
-sed "s=install.husarnet=nightly.husarnet=" ${working_path}/install.sh > ${working_path}/install-nightly.sh
-sed "s=husarnet.com/husarnet.repo=husarnet.com/husarnet-nightly.repo=" -i ${working_path}/install-nightly.sh
+if [ "${deploy_target}" == "nightly" ]; then
+  echo "[==] Make some extra files for the nightly repository."
+  sed "s=install.husarnet=nightly.husarnet=" ${working_path}/install.sh > ${working_path}/install-nightly.sh
+  sed "s=husarnet.com/husarnet.repo=husarnet.com/husarnet-nightly.repo=" -i ${working_path}/install-nightly.sh
 
-sed "s=install.husarnet=nightly.husarnet=" ${working_path}/husarnet.repo > ${working_path}/husarnet-nightly.repo
+  sed "s=install.husarnet=nightly.husarnet=" ${working_path}/husarnet.repo > ${working_path}/husarnet-nightly.repo
+fi
 
 echo "[==] Done, and should work."

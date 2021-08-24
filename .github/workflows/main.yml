@@ -1,15 +1,11 @@
-name: CI
+name: Build & test
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
 jobs:
+  # When changing build_and_test steps remember to sync the steps with the other YAMLs
   build_and_test:
     runs-on: ubuntu-latest
 
@@ -31,60 +27,26 @@ jobs:
       # Temporarily disable SA to check the other thing
       # - name: Run static analysis (cppcheck)
       #   run: ./util/test-cppcheck.sh
-
-      - name: Save artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: packages
-          path: ./build/release
-
-  release_nightly:
+  bump_version:
     needs: build_and_test
 
-    runs-on: [self-hosted, linux, nightly]
-
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
-
-      - name: Fetch artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: packages
-
-      - name: Deploy to Husarnet nightly repository
-        run: ./util/deploy-nightly.sh
-
-
-  push_docker_images:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+      - uses: actions/checkout@v2
         with:
-          version: latest
+          ref: ${{ github.head_ref }}
 
-      - name: Login to Docker Registry
-        uses: docker/login-action@v1
+      - uses: actions/setup-python@v2
         with:
-          registry: docker.io
-          username: ${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}
-          password: ${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}
+          python-version: '3.x'
 
-      - name: Build and push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./unix/docker-misc/Dockerfile
-          platforms: linux/arm64/v8, linux/amd64, linux/arm/v7
-          push: true
-          tags: husarnet/husarnet
-          #cache-from: type=registry,ref=
-          #cache-to: type=inline
+      - name: Bump version
+        run: python ./util/version-bump.py
+
+      - name: Push version bump on top of PR-ed branch
+        run: |
+          git config --global user.name 'Husarnet CI man'
+          git config --global user.email 'szymon.niemiec@husarnet.com'
+          git commit -am "Automatic version bump. The PR branch is ready to be merged."
+          git push
