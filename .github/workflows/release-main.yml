@@ -25,9 +25,8 @@ jobs:
       - name: Run UTs
         run: ./util/test-unit.sh
 
-      # Temporarily disable SA to check the other thing
-      # - name: Run static analysis (cppcheck)
-      #   run: ./util/test-cppcheck.sh
+      - name: Run static analysis (cppcheck)
+        run: ./util/test-cppcheck.sh
 
       - name: Save artifacts
         uses: actions/upload-artifact@v2
