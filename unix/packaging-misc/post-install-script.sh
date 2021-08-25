@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -uo pipefail
 
 # Check whether system is *running* systemd
 pidof -q systemd || false
