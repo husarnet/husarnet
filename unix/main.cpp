@@ -260,8 +260,9 @@ int main(int argc, const char** args) {
             return 1;
         }
         sleep(2);
+        int attemptsBeforeTimeout = 7;
+        bool timedOut = false;
         while ( (res=cli.Post("/control/has-received-init-response", params)) && (! is_invalid_response(res)) && res->body != "yes") {
-            LOG("joining...");
             std::string code = args[2];
             std::string hostname = (argc == 4) ? args[3] : "";
             auto params = get_http_params_with_secret(configDir);
@@ -272,8 +273,18 @@ int main(int argc, const char** args) {
                 handle_invalid_response(res);
                 return 1;
             }
-
+            if (attemptsBeforeTimeout == 0) {
+              timedOut = true;
+              LOG("Request timed out.\nCommon reasons:\n1) This device is already added by Join Code to another network (maybe by another user)\n2) You have exceeded maximum number of devices for your plan - upgrade your account at https://app.husarnet.com/billing/account/\n3) If you use self-hosted Husarnet infrastructure make sure your Husarnet Client is configured to use it (eg. sudo husarnet setup-server app.husarnet.mydomain.com)\nIf the problem persists, find more information here: https://husarnet.com/docs/tutorial-troubleshooting/");
+              break;
+            }
+            attemptsBeforeTimeout--;
+            LOG("joining...");
             sleep(2);
+        }
+
+        if (!timedOut) {
+          LOG("done.");
         }
     } else if ((cmd == "host" || cmd == "hosts") && argc >= 3) {
         std::string subcmd = args[2];
