@@ -260,7 +260,7 @@ int main(int argc, const char** args) {
             return 1;
         }
         sleep(2);
-        int attemptsBeforeTimeout = 5;
+        int attemptsBeforeTimeout = 7;
         bool timedOut = false;
         while ( (res=cli.Post("/control/has-received-init-response", params)) && (! is_invalid_response(res)) && res->body != "yes") {
             std::string code = args[2];
