@@ -48,7 +48,9 @@ jobs:
       - uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
           prerelease: false
+          automatic_release_tag: "latest"
           files: |
             *.deb
             *.tar
@@ -85,7 +87,7 @@ jobs:
           file: ./unix/docker-misc/Dockerfile
           platforms: linux/arm64/v8, linux/amd64, linux/arm/v7
           push: true
-          tags: husarnet/priv_ci
+          tags: husarnet/husarnet
           #cache-from: type=registry,ref=
           #cache-to: type=inline
 
