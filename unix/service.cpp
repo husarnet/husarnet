@@ -134,6 +134,7 @@ void iptablesInsert(std::string rule) {
         LOG("setting iptables failed");
         exit(1);
     }
+    FileStorage::saveIp6tablesRuleForDeletion("/var/lib/husarnet/", rule);
 }
 
 void systemdNotify() {
