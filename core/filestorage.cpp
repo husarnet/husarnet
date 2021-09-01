@@ -77,6 +77,19 @@ void generateAndWriteHttpSecret(std::string configDir)
     f << secret << std::endl;
 }
 
+void saveIp6tablesRuleForDeletion(std::string configDir, std::string rule)
+{
+    LOG("Saving Ip6talbes rules for later deletion...");
+    std::ofstream f(ip6tablesRulesLogPath(configDir), std::ios_base::app);
+    if (!f.good())
+    {
+
+        LOG("failed to write: %s", configDir.c_str());
+        exit(1);
+    }
+    f << rule << std::endl;
+}
+
 std::string readHttpSecret(std::string configDir)
 {
     std::ifstream f = openFile(httpSecretFilePath(configDir));

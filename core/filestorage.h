@@ -9,11 +9,13 @@ inline const std::string httpSecretFilePath(const std::string configDir) { retur
 inline const std::string settingsFilePath(const std::string configDir) { return configDir + "settings.json"; }
 inline const std::string licenseFilePath(const std::string configDir) { return configDir + "license.json"; }
 inline const std::string controlSocketPath(const std::string configDir) { return configDir + "control.sock"; }
+inline const std::string ip6tablesRulesLogPath(const std::string configDir) {return configDir + "ip6tables_rules"; }
 
 std::ifstream openFile(std::string name);
 Identity* readIdentity(std::string configDir);
 void generateAndWriteId(std::string configDir);
 void generateAndWriteHttpSecret(std::string configDir);
+void saveIp6tablesRuleForDeletion(std::string configDir, std::string rule);
 std::string readHttpSecret(std::string configDir);
 std::string generateRandomString(const int length);
 
