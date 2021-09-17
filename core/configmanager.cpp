@@ -537,10 +537,10 @@ void ConfigManager::httpThread()
                  {
                      std::string param = req.get_param_value("size");
                      std::istringstream reader(param);
-                     uint16_t size;
                      reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
                      try
                      {
+                         uint16_t size;
                          reader >> size;
                          logManager->setSize(size);
                          res.set_content("ok", "text/plain");
@@ -570,10 +570,10 @@ void ConfigManager::httpThread()
                  {
                      std::string param = req.get_param_value("verbosity");
                      std::istringstream reader(param);
-                     uint16_t verbosity;
                      reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
                      try
                      {
+                         uint16_t verbosity;
                          reader >> verbosity;
                          logManager->setVerbosity(verbosity);
                          res.set_content("ok", "text/plain");
