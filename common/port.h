@@ -8,7 +8,7 @@
 #endif // ESP_PLATFORM
 
 #ifdef _WIN32
-#include "port_windows.h"
+#include "windows/port_windows.h"
 #endif // _WIN32
 
 #include <string>
@@ -42,6 +42,9 @@
 
 #ifndef SOCKFUNC_close
 #define SOCKFUNC_close SOCKFUNC(close)
+inline int renameFile(const char* src, const char* dst) {
+    return rename(src, dst);
+}
 #endif // SOCKFUNC_close
 
 // performance profiler
@@ -50,9 +53,6 @@
 // ---
 
 
-inline int renameFile(const char* src, const char* dst) {
-    return rename(src, dst);
-}
 
 inline int copyFile(const char* src, const char* dst) {
     #ifdef __linux__

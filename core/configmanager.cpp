@@ -201,7 +201,7 @@ std::string ConfigManager::handleControlPacket(std::string data) {
         return std::to_string(logManager->getCurrentSize());
     } else if(cmd == "verbosity") {
         std::istringstream reader(payload);
-        uint verbosity;
+        uint16_t verbosity;
         reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
         try{
         reader >> verbosity;
@@ -212,7 +212,7 @@ std::string ConfigManager::handleControlPacket(std::string data) {
         }
     } else if(cmd == "logs-resize") {
         std::istringstream reader(payload);
-        uint size;
+        uint16_t size;
         reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
         try{
         reader >> size;
@@ -537,7 +537,7 @@ void ConfigManager::httpThread()
                  {
                      std::string param = req.get_param_value("size");
                      std::istringstream reader(param);
-                     uint size;
+                     uint16_t size;
                      reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
                      try
                      {
@@ -570,7 +570,7 @@ void ConfigManager::httpThread()
                  {
                      std::string param = req.get_param_value("verbosity");
                      std::istringstream reader(param);
-                     uint verbosity;
+                     uint16_t verbosity;
                      reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
                      try
                      {

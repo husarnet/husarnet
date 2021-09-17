@@ -8,11 +8,12 @@
 #include <chrono>
 #include <vector>
 #include "global_lock.h"
-
+#include <iostream>
 bool husarnetVerbose = true;
 
-InetAddress ipFromSockaddr(sockaddr* st) {
-    if (st->sa_family == AF_INET) {
+InetAddress ipFromSockaddr(sockaddr_storage* st) {
+    std::cout << st->ss_family << "DUPPA\n";
+    if (st->ss_family == AF_INET) {
         struct sockaddr_in* st4 = (sockaddr_in*)(st);
         InetAddress r {};
         r.ip.data[10] = 0xFF; // ipv4-mapped ipv6
@@ -20,7 +21,7 @@ InetAddress ipFromSockaddr(sockaddr* st) {
         memcpy((char*)r.ip.data.data() + 12, &st4->sin_addr, 4);
         r.port = htons(st4->sin_port);
         return r;
-    } else if (st->sa_family == AF_INET6) {
+    } else if (st->ss_family == AF_INET6) {
         struct sockaddr_in6* st6 = (sockaddr_in6*)(st);
         InetAddress r {};
         memcpy(r.ip.data.data(), &st6->sin6_addr, 16);
@@ -62,7 +63,7 @@ std::vector<IpAddress> getLocalAddresses() {
     while (current_adapter) {
         PIP_ADAPTER_UNICAST_ADDRESS current = current_adapter->FirstUnicastAddress;
         while (current) {
-            InetAddress addr = ipFromSockaddr(current->Address.lpSockaddr);
+            InetAddress addr = ipFromSockaddr(reinterpret_cast<sockaddr_storage*>(current->Address.lpSockaddr));
             // LOG("detected IP: %s", addr.str().c_str());
             result.push_back(addr.ip);
             current = current->Next;
@@ -96,4 +97,29 @@ void initPort() {
     GIL::init();
     WSADATA wsaData;
     WSAStartup(0x202, &wsaData);
+}
+
+IpAddress resolveIp(std::string hostname) {
+    struct addrinfo* result = nullptr;
+    int error;
+
+    error = SOCKFUNC(getaddrinfo)(hostname.c_str(), "443", NULL, &result);
+    if (error != 0) {
+        return IpAddress();
+    }
+
+    for (struct addrinfo* res = result; res != NULL; res = res->ai_next) {
+        if (res->ai_family == AF_INET || res->ai_family == AF_INET6) {
+            sockaddr_storage ss {};
+            ss.ss_family = res->ai_family;
+            assert (sizeof(sockaddr_storage) >= res->ai_addrlen);
+            memcpy(&ss, res->ai_addr, res->ai_addrlen);
+            SOCKFUNC(freeaddrinfo)(result);
+            return ipFromSockaddr(&ss).ip;
+        }
+    }
+
+    SOCKFUNC(freeaddrinfo)(result);
+
+    return IpAddress();
 }

@@ -55,6 +55,8 @@ cmake --build ${build_dir}
 
 cmake --build ${build_dir} --target install
 
-cp ${output_dir}/usr/bin/husarnet ${bin_dir}/husarnet
+if [[ -f "${output_dir}/usr/bin/husarnet" ]]; then
+  cp ${output_dir}/usr/bin/husarnet ${bin_dir}/husarnet
+fi
 
 popd

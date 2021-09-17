@@ -39,7 +39,7 @@ void LogManager::insert(std::string log){
     delete tmp;
 };
 
- void LogManager::setSize(uint size){
+ void LogManager::setSize(uint16_t size){
     if(size >= currentSize){
         this->size = size;
         return;
@@ -81,18 +81,18 @@ void LogManager::insert(std::string log){
 
  };
 
-   void LogManager::setVerbosity(uint verb){
+   void LogManager::setVerbosity(uint16_t verb){
        verbosity = verb;
    };
 
-   uint LogManager::getVerbosity(){
+   uint16_t LogManager::getVerbosity(){
        return verbosity;
    };
 
-    uint LogManager::getSize(){
+    uint16_t LogManager::getSize(){
         return size;
     };
 
-    uint LogManager::getCurrentSize(){
+    uint16_t LogManager::getCurrentSize(){
         return currentSize;
     };

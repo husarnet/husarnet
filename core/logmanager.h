@@ -9,20 +9,18 @@ class LogManager{
         LogElement* prev;
         explicit LogElement(std::string log): log(log), next(nullptr), prev(nullptr) {};
     };
-    uint size;
-    uint currentSize;
+    uint16_t size;
+    uint16_t currentSize;
     LogElement* first;
     LogElement* last;
-    uint verbosity;
+    uint16_t verbosity;
     public:
-    explicit LogManager(uint size): size(size), currentSize(0), first(nullptr), last(nullptr), verbosity(3) {};
+    explicit LogManager(uint16_t size): size(size), currentSize(0), first(nullptr), last(nullptr), verbosity(3) {};
     std::string getLogs();
-    void setSize(uint size);
+    void setSize(uint16_t size);
     void insert(std::string log);
-    void setVerbosity(uint verb);
-    uint getVerbosity();
-    uint getSize();
-    uint getCurrentSize();
-
-    
+    void setVerbosity(uint16_t verb);
+    uint16_t getVerbosity();
+    uint16_t getSize();
+    uint16_t getCurrentSize();
 };
