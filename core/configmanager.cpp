@@ -201,23 +201,23 @@ std::string ConfigManager::handleControlPacket(std::string data) {
         return std::to_string(logManager->getCurrentSize());
     } else if(cmd == "verbosity") {
         std::istringstream reader(payload);
-        uint16_t verbosity;
         reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
-        try{
-        reader >> verbosity;
-        logManager->setVerbosity(verbosity);
-        return "ok";
+        try {
+          uint16_t verbosity;
+          reader >> verbosity;
+          logManager->setVerbosity(verbosity);
+          return "ok";
         } catch (std::ios_base::failure &e){
             return "fail";
         }
     } else if(cmd == "logs-resize") {
         std::istringstream reader(payload);
-        uint16_t size;
         reader.exceptions(std::istringstream::failbit | std::istringstream::badbit);
-        try{
-        reader >> size;
-        logManager->setSize(size);
-        return "ok";
+        try {
+          uint16_t size;
+          reader >> size;
+          logManager->setSize(size);
+          return "ok";
         } catch (std::ios_base::failure &e) {
             return "fail";
         }

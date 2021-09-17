@@ -157,7 +157,7 @@ void serviceMain() {
     configTable->open();
     LegacyFileStorage::migrateToConfigTable(configTable, configDir);
 
-    LogManager* logManager = new LogManager(500);
+    LogManager* logManager = new LogManager(100);
     globalLogManager = logManager;
     ConfigManager configManager (identity, baseConfig, configTable, ServiceHelper::updateHostsFile, sock, httpSecret, logManager);
 
