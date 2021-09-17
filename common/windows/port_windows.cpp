@@ -8,11 +8,10 @@
 #include <chrono>
 #include <vector>
 #include "global_lock.h"
-#include <iostream>
+
 bool husarnetVerbose = true;
 
 InetAddress ipFromSockaddr(sockaddr_storage* st) {
-    std::cout << st->ss_family << "DUPPA\n";
     if (st->ss_family == AF_INET) {
         struct sockaddr_in* st4 = (sockaddr_in*)(st);
         InetAddress r {};
