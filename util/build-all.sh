@@ -28,7 +28,7 @@ cp ${build_base}/amd64/unix/tests ${build_tests_base}/unit-tests
 
 # Windows builds
 
-# ${util_base}/build-cmake.sh win64 windows
+${util_base}/build-cmake.sh win64 windows
 # ${util_base}/build-cmake.sh win32 windows
 
 # ESP32 builds
