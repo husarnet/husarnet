@@ -42,10 +42,13 @@
 
 #ifndef SOCKFUNC_close
 #define SOCKFUNC_close SOCKFUNC(close)
+#endif // SOCKFUNC_close
+
+#ifndef _WIN32
 inline int renameFile(const char* src, const char* dst) {
     return rename(src, dst);
 }
-#endif // SOCKFUNC_close
+#endif
 
 // performance profiler
 #define hperf_compute()
