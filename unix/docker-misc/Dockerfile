@@ -13,7 +13,7 @@ RUN ln -sf /usr/include/asm-generic /usr/include/asm
 RUN ./util/build-cmake.sh $TARGETPLATFORM
 
 # stage 2
-FROM debian:stable-slim
+FROM ubuntu:hirsute
 
 RUN apt-get update -y && apt-get install -y iptables procps iproute2
 RUN update-alternatives --set ip6tables /usr/sbin/ip6tables-nft

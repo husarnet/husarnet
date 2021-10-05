@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -uo pipefail
 
 catch() {
   if [ "$1" != "0" ]; then
@@ -25,7 +25,7 @@ daemon_pid=$!
 
 # Wait until the daemon is ready
 while true; do
-    if [ $(husarnet status 2>&1 | grep "control socket" | wc -l) -eq 0 ]; then
+    if [ $(husarnet status 2>&1 | grep "request failed" | wc -l) -eq 0 ]; then
         break
     elif [ ! -e /proc/${daemon_pid} ]; then
         echo "Daemon has quit unexpectedly!"
