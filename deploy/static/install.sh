@@ -14,7 +14,7 @@ install_yum() {
 }
 
 install_deb() {
-    apt-get install -y curl apt-transport-https
+    apt-get install -y curl apt-transport-https ca-certificates
     curl https://install.husarnet.com/repo.key | apt-key add -
     echo 'deb https://install.husarnet.com/deb/ all husarnet' > /etc/apt/sources.list.d/husarnet.list
     apt-get update || true
