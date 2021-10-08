@@ -23,7 +23,9 @@ fi
 
 daemon_pid=$!
 
-# Wait until the daemon is ready
+# Waiting until Husarnet daemon is ready
+echo "[step 1/3] Waiting for Husarnet daemon to start"
+
 while true; do
     if [ $(husarnet status 2>&1 | grep "request failed" | wc -l) -eq 0 ]; then
         break
@@ -31,12 +33,29 @@ while true; do
         echo "Daemon has quit unexpectedly!"
         exit 2
     else
-        echo "Waiting for the husarnet daemon to start"
+        echo "..."
         sleep 1
     fi
 done
 
-# Join the network
+echo "done"
+echo ""
+
+# Waiting until Base Server connection is established
+echo "[step 2/3] Waiting for Base Server connection"
+
+while [ $(husarnet status | grep "ERROR" | wc -l) -gt 0 ]; 
+do 
+    echo "..."
+    sleep 1
+done
+
+echo "done"
+echo ""
+
+# Joining the network
+echo "[step 3/3] Joining to Husarnet network"
+
 husarnet join ${JOINCODE} ${HOSTNAME}
 
 # Print status
