@@ -14,7 +14,7 @@ void handle_invalid_response(const httplib::Result &result)
 {
     if (result.error() != httplib::Error::Success)
     {
-        std::cout << "The request failed. Make sure that demon is running" << std::endl;
+        std::cout << "The request failed. Make sure that demon is running. (Error kind: " << httplib::to_string(result.error()) << ")" << std::endl;
     }
 }
 
