@@ -439,6 +439,7 @@ bool ConfigManager::is_secret_valid(const httplib::Request &req, httplib::Respon
     if (!req.has_param("secret") || req.get_param_value("secret") != httpSecret)
     {
         res.set_content("Invalid control secret", "text/plain");
+        LOG("Got an invalid secret via the HTTP control API.");
         return false;
     }
 
@@ -753,7 +754,17 @@ void ConfigManager::httpThread()
                  }
              });
 
-    svr.listen("127.0.0.1", 9999);
+    if(!svr.bind_to_port("127.0.0.1", 9999)) {
+        LOG("Unable to bind HTTP thread to port 127.0.0.1:9999. Exiting!");
+        exit(1);
+    } else {
+        LOG("HTTP thread bound to socket. Will start handling the connections.");
+    }
+
+    if(!svr.listen_after_bind()) {
+        LOG("HTTP thread finished unexpectedly. Exiting!");
+        exit(1);
+    }
 }
 
 void ConfigManager::runHusarnet() {

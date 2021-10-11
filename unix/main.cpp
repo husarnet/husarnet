@@ -24,6 +24,33 @@ static std::string configDir;
 void printUsage() {
     std::cerr << R"(Usage:
 
+  husarnet join [join code] [hostname]
+    Connect to Husarnet network with given join code as with specified hostname.
+
+  husarnet status
+    Displays current connectivity status.
+
+  husarnet wait
+    Wait until daemon is able to serve requests.
+
+  husarnet websetup
+    Run the node configuration utility in web browser.
+
+  husarnet daemon
+    Run the Husarnet daemon (typically started by systemd).
+    
+  husarnet logs 
+    Displays latest logs kept in memory
+
+  husarnet version
+    Displays version currently in use.
+
+  husarnet genid
+    Generate identity.
+
+  husarnet status-json
+    Retruns the same information that husarnet status returns but in json format.  
+
   husarnet whitelist add [address]
     Add fc94 IP address to whitelist.
 
@@ -39,23 +66,8 @@ void printUsage() {
   husarnet whitelist ls
     Lists all addresses added to whitelist.
 
-  husarnet status
-    Displays current connectivity status.
-
-  husarnet genid
-    Generate identity.
-
-  husarnet websetup
-    Run the node configuration utility in web browser.
-
-  husarnet daemon
-    Run the Husarnet daemon (typically started by systemd).
-    
   husarnet setup-server [address]
     Connect to other Husarnet Dashboards and Husarnet Base Servers (remember to restart Husarnet to enable new setting).
-
-  husarnet join [join code] [hostname]
-    Connect to Husarnet network with given join code as with specified hostname.
 
   husarnet host add [hostname] [address]
     Assign alternative hostanme to Husarnet address.
@@ -63,17 +75,11 @@ void printUsage() {
   husarnet host rm [hostname] [address]
     Remove alternative hostname.
 
-  husarnet version
-    Displays version currently in use.
-
   husarnet verbosity
     Displays current log verbosity.
 
   husarnet verbosity [0-3]
     Changes current verbosity level
-
-  husarnet logs 
-    Displays latest logs kept in memory
 
   husarnet logs size [size]
     Changes how many logs should be kept in memory
@@ -84,19 +90,11 @@ void printUsage() {
   husarnet logs current
     Displays current number of logs kept in memory
 
-  husarnet status-json
-    Retruns the same information that husarnet status returns but in json format.  
     )" << std::endl;
     exit(1);
 }
 
 std::string sendMsg(std::string msg) {
-    //httplib::Client cli("http://localhost:9999");
-    //auto res = cli.Get("/hi");
-    //std::cout << res->status;
-    //std::cout << res->body;
-  
-    ////
     int fd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
 
     sockaddr_un servaddr = {0};
@@ -189,7 +187,6 @@ BaseConfig* loadBaseConfig() {
 }
 
 std::string parseVersion(std::string info){
-
   std::size_t pos1 = info.find("Version:");
   std::size_t pos2 = info.find("\n");
   std::string version = info.substr(pos1+8,pos2-pos1-8); 
@@ -228,12 +225,15 @@ void refreshLicense() {
 
 int main(int argc, const char** args) {
     initPort();
+    
     if (argc < 2) {
         printUsage();
     }
 
     configDir = (getenv("HUSARNET_CONFIG") ? getenv("HUSARNET_CONFIG") : "/var/lib/husarnet/");
+
     httplib::Client cli("http://localhost:9999");
+    
     std::string cmd = args[1];
     if (cmd == "daemon") {
         serviceMain();
@@ -381,8 +381,6 @@ int main(int argc, const char** args) {
         }else {
             printUsage();
         }
-    } else if (cmd == "init-websetup" && argc == 3) {
-        sendMsgChecked("set-websetup-token\n" + std::string(args[2]));
     } else if (cmd == "status") {
         auto res = cli.Get("/control/status");
         if(is_invalid_response(res)){
@@ -483,6 +481,27 @@ int main(int argc, const char** args) {
         }
     } else if (cmd == "refresh-license") {
         refreshLicense();
+    } else if (cmd == "wait" ) {
+        const int limit=300;
+
+        std::cout << "Will wait for the deamon to become responsive for up to " << limit << " seconds." << std::endl;
+
+        int i=0;
+        for(; i<limit; i++) {
+            auto res = cli.Get("/ping");
+            if(is_invalid_response(res)){
+                std::cout << "." << std::flush;
+                sleep(1);
+                continue;
+            } else {
+                std::cout << "connection established!" << std::endl;
+                break;
+            }
+        }
+        if(i>=limit) {
+            std::cout << std::endl << "Unable to establish connection." << std::endl;
+            return 1;
+        }
     } else {
         printUsage();
     }
