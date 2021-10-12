@@ -2,12 +2,11 @@
 
 std::string LogManager::getLogs(){
     if(currentSize == 0) return "No logs to display";
-    LogElement* itr = first;
+    LogElement* itr = last;
     std::string result = "";
     while(itr != nullptr){
         result += itr->log;
-        result += "\n";
-        itr = itr->next;
+        itr = itr->prev;
     }
     return result;
 };
