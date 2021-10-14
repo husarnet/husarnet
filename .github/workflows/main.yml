@@ -1,5 +1,9 @@
 name: Build & test
 
+# NOTE:
+# TEMPORARILY BREAKING IN ORDER TO TEST WINDOWS
+# DON'T MAKE MISTAKE OF COMMITING THIS IN THAT STATE...
+
 on:
   pull_request:
     branches: [ master ]
@@ -18,35 +22,76 @@ jobs:
       - name: Build for all platforms and archs
         run: ./util/build-all.sh
 
-      - name: Prepare tests
-        run: ./util/test-prepare.sh
+      - name: Save artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages
+          path: ./build/release
 
-      - name: Run UTs
-        run: ./util/test-unit.sh
-
-      - name: Run static analysis (cppcheck)
-        run: ./util/test-cppcheck.sh
-
-  bump_version:
+  build_windows_installer:
     needs: build_and_test
 
-    runs-on: ubuntu-latest
+    runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v2
         with:
-          ref: ${{ github.head_ref }}
+          name: packages
 
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Bump version
-        run: python ./util/version-bump.py
-
-      - name: Push version bump on top of PR-ed branch
+      - name: Copy .exe and license to installer dir
         run: |
-          git config --global user.name 'Husarnet CI man'
-          git config --global user.email 'szymon.niemiec@husarnet.com'
-          git commit -am "Automatic version bump. The PR branch is ready to be merged."
-          git push
+          copy husarnet.exe windows\installer
+          copy LICENSE.txt windows\installer
+        shell: cmd
+
+      - name: Building the installer
+        run: |
+          "%programfiles(x86)%\Inno Setup 6\iscc.exe" windows\installer\script.iss
+        shell: cmd
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_installer
+          path: windows\installer\Output\husarnet-setup.exe
+
+  grab_installer:
+    needs: build_windows_installer
+
+    runs-on: [self-hosted, linux, prod]
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: windows_installer
+
+  # bump_version:
+  #   needs: build_and_test
+
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         ref: ${{ github.head_ref }}
+
+  #     - uses: actions/setup-python@v2
+  #       with:
+  #         python-version: '3.x'
+
+  #     - name: Bump version
+  #       run: python ./util/version-bump.py
+
+  #     - name: Push version bump on top of PR-ed branch
+  #       run: |
+  #         git config --global user.name 'Husarnet CI man'
+  #         git config --global user.email 'szymon.niemiec@husarnet.com'
+  #         git commit -am "Automatic version bump. The PR branch is ready to be merged."
+  #         git push
