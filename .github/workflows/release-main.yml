@@ -34,8 +34,38 @@ jobs:
           name: packages
           path: ./build/release
 
-  release_github:
+  build_windows_installer:
     needs: build_and_test
+
+    runs-on: windows-2019
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: packages
+
+      - name: Copy .exe and license to installer dir
+        run: |
+          copy husarnet.exe windows\installer
+          copy LICENSE.txt windows\installer
+        shell: cmd
+
+      - name: Building the installer
+        run: |
+          "%programfiles(x86)%\Inno Setup 6\iscc.exe" windows\installer\script.iss
+        shell: cmd
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_installer
+          path: windows\installer\Output\husarnet-setup.exe
+
+  release_github:
+    needs: [build_and_test, build_windows_installer]
 
     runs-on: ubuntu-latest
 
@@ -44,6 +74,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: packages
+
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: windows_installer
 
       - uses: marvinpinto/action-automatic-releases@latest
         with:
@@ -55,6 +90,7 @@ jobs:
             *.deb
             *.tar
             *.rpm
+            *.exe
 
   push_docker_images:
     needs: build_and_test

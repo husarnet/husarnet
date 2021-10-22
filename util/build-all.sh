@@ -31,6 +31,8 @@ cp ${build_base}/amd64/unix/tests ${build_tests_base}/unit-tests
 ${util_base}/build-cmake.sh win64 windows
 # ${util_base}/build-cmake.sh win32 windows
 
+cp ${build_base}/win64/windows/husarnet.exe ${release_base}/
+
 # ESP32 builds
 
 # ${util_base}/build-esp32.sh
