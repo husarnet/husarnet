@@ -3,7 +3,7 @@
 #include "ipaddress.h"
 #include <vector>
 
-#define HUSARNET_VERSION "2021.10.27.1"
+#define HUSARNET_VERSION "2021.10.29.1"
 
 __attribute__((unused)) static const InetAddress baseTcpAddresses[] = {
     {IpAddress::parse("188.165.23.196"), 443}, // ovh RBX (base-2)

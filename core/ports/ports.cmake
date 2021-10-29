@@ -61,7 +61,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 
   FetchContent_Declare(
     c-ares
-    SOURCE_DIR "${D}/../deps/c-ares"
+    SOURCE_DIR "${D}/../../deps/c-ares"
   )
 
   FetchContent_GetProperties(c-ares)
@@ -82,6 +82,6 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 endif()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL Windows)
-  include_directories(${D}/../deps/mingw-std-threads/)
+  include_directories(${D}/../../deps/mingw-std-threads/)
   target_link_libraries(husarnet_common iphlpapi shlwapi ws2_32)
 endif()
