@@ -232,7 +232,7 @@ int main(int argc, const char** args) {
 
     configDir = (getenv("HUSARNET_CONFIG") ? getenv("HUSARNET_CONFIG") : "/var/lib/husarnet/");
 
-    httplib::Client cli("http://localhost:9999");
+    httplib::Client cli("http://127.0.0.1:9999");
     
     std::string cmd = args[1];
     if (cmd == "daemon") {
