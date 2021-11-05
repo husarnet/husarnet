@@ -63,6 +63,10 @@ cp -R ${golden_rpm_path}/.  ${working_path}/yum/
 cp -R $HOME/.aptly/public/. ${working_path}/deb/
 cp -R ${base_dir}/deploy/static/. ${working_path}/
 
+# expose also windows installer exe
+cp husarnet-setup.exe ${working_path}/husarnet-${package_version}-setup.exe
+ln -fs ${working_path}/husarnet-${package_version}-setup.exe ${working_path}/husarnet-setup-latest.exe
+
 if [ "${deploy_target}" == "nightly" ]; then
   echo "[==] Make some extra files for the nightly repository."
   sed "s=install.husarnet=nightly.husarnet=" ${working_path}/install.sh > ${working_path}/install-nightly.sh
