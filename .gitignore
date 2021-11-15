@@ -9,7 +9,7 @@ __pycache__/
 /build-win
 /build-gui-*
 
-# Visual Studio Core
+# Visual Studio Code
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -19,3 +19,6 @@ __pycache__/
 
 # Local History for Visual Studio Code
 .history/
+
+tags
+compile_commands.json
