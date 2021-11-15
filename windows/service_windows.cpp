@@ -194,10 +194,8 @@ void serviceMain() {
     mySystem("netsh interface ipv6 add route fc94::/16 " + quotedName + " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001");
 
 
-    for (const char* iface : {"domain", "public", "private"}) {
-        std::string cmd = "powershell Set-NetFirewallProfile -name " + std::string(iface) + " -disabledinterfacealiases \"\"\"" + netshName + "\"\"\"";
-        mySystem((cmd).c_str());
-    }
+    std::string cmd = "powershell New-NetFirewallRule -DisplayName AllowHusarnet -Direction Inbound -Action Allow -LocalAddress fc94::/16 -RemoteAddress fc94::/16 -InterfaceAlias \"\"\"" + netshName + "\"\"\"";
+    mySystem((cmd).c_str());
 
     NgSocket* netDev = L2Unwrapper::wrap(netDevL3, winTap->getMac());
 
