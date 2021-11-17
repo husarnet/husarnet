@@ -316,8 +316,6 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
     }
 
     void sendDataPacket(DeviceId target, string_view data) override {
-        // ESP32: 2.5 ms
-
         Peer* peer = getOrCreatePeer(target);
         if (peer == nullptr) return;
         if (peer->negotiated) {
@@ -332,7 +330,6 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
     }
 
     void doSendDataPacket(Peer* peer, string_view data) {
-        // ESP32: 3.3 ms
         HPERF_RECORD(secure_enter);
         uint64_t seqnum = 0;
         assert(data.size() < 10240);
@@ -370,11 +367,6 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
                               (const unsigned char*)cleartextBuffer.data(), cleartextSize,
                               (const unsigned char*)nonce,
                               peer->txKey.data());
-
-        // ESP32: 4 ms
-
-        //const fstring<16> badId = decodeHex("fc947196e398fbfffe4661aa39e4b2b4");
-        //if (peer->id == badId) return;
 
         HPERF_RECORD(secure_exit);
         socket->sendDataPacket(peer->id, string_view(ciphertextBuffer).substr(0, ciphertextSize));

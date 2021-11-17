@@ -71,6 +71,7 @@ This project was possible thanks to:
 - @andrzejwl
 - @pidpawel
 - @konradpr
+- @ympek
 
 ## License
 

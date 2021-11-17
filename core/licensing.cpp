@@ -1,4 +1,4 @@
-#include "self_hosted.h"
+#include "licensing.h"
 #include "port.h"
 #include "util.h"
 
@@ -20,8 +20,6 @@ std::string requestLicense(InetAddress address) {
   size_t len = SOCKFUNC(recv)(sockfd, (char*)readBuffer.data(), readBuffer.size(), 0);
   size_t pos = readBuffer.find("\r\n\r\n");
 
-  // second condition makes no sense
-  // if (pos == std::string::npos || readBuffer.find("HTTP/1.1 200") != std::string::npos) {
   if (pos == std::string::npos) {
     LOG("invalid response from the server: %s", readBuffer.c_str());
     exit(1);

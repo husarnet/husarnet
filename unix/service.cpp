@@ -24,7 +24,7 @@
 #include "settings.h"
 #include "smartcard_client.h"
 #include "base_config.h"
-#include "license_management.h"
+#include "licensing_unix.h"
 #include "logmanager.h"
 
 #include <sys/prctl.h>
