@@ -6,6 +6,7 @@ import os.path
 husarnet_config_path = os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..', 'core', 'husarnet_config.h'))
 windows_installer_script_path = os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..', 'windows', 'installer', 'script.iss'))
 
+
 def get_new_version(line, today=None):
     if not today:
         today = subprocess.check_output(["date", '+%Y.%m.%d']).strip().decode()
@@ -48,13 +49,17 @@ def test():
     date_bump()
     rev_bump()
 
+version_to_insert = None
+
 def replace_in_file(filepath, eol_char):
+    global version_to_insert
     config = []
-    new_ver = get_new_version(line)
     with open(filepath, 'r') as f:
         for line in f:
             if line.startswith('#define HUSARNET_VERSION '):
-                config.append(bump_version(new_ver, line))
+                if not version_to_insert:
+                    version_to_insert = get_new_version(line)
+                config.append(bump_version(version_to_insert, line))
             else:
                 config.append(line.rstrip())
 
