@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Husarnet"
-#define HUSARNET_VERSION "2021.06.18.3"
+#define HUSARNET_VERSION "2021.11.17.1"
 #define MyAppPublisher "Husarnet Sp. z o.o."
 #define MyAppURL "https://husarnet.com"
 #define MyAppExeName "husarnet-gui.exe"
@@ -103,7 +103,7 @@ end;
 [Code]
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-    if CurStep = ssPostInstall 
+    if CurStep = ssPostInstall
      then EnvAddPath(ExpandConstant('{app}') +'\bin');
 end;
 
