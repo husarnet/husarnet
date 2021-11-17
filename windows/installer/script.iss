@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Husarnet"
-#define MyAppVersion "2021.06.18.3"
+#define HUSARNET_VERSION "2021.06.18.3"
 #define MyAppPublisher "Husarnet Sp. z o.o."
 #define MyAppURL "https://husarnet.com"
 #define MyAppExeName "husarnet-gui.exe"
@@ -12,8 +12,8 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{843C2149-4374-43E5-8D8E-DFD68C16F5AA}
 AppName={#MyAppName}
-AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
+AppVersion={#HUSARNET_VERSION}
+;AppVerName={#MyAppName} {#HUSARNET_VERSION}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}

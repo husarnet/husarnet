@@ -3,9 +3,8 @@ import subprocess
 import sys
 import os.path
 
-
 husarnet_config_path = os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..', 'core', 'husarnet_config.h'))
-
+installer_script_path = os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..', 'windows', 'installer', 'script.iss'))
 
 def bump_version(line, today=None):
     if not today:
@@ -21,7 +20,6 @@ def bump_version(line, today=None):
         new_version = 1
 
     return '#define HUSARNET_VERSION "' + today + '.' + str(new_version) + '"'
-
 
 def test():
     def date_bump():
@@ -44,19 +42,21 @@ def test():
     date_bump()
     rev_bump()
 
-
-def main():
+def replace_in_file(filepath, eol_char):
     config = []
-    with open(husarnet_config_path, 'r') as f:
+    with open(filepath, 'r') as f:
         for line in f:
             if line.startswith('#define HUSARNET_VERSION '):
                 config.append(bump_version(line))
             else:
                 config.append(line.rstrip())
 
-    with open(husarnet_config_path, 'w') as f:
-        f.write('\n'.join(config) + '\n')
+    with open(filepath, 'w') as f:
+        f.write(eol_char.join(config) + eol_char)
 
+def main():
+    replace_in_file(husarnet_config_path, '\n')
+    replace_in_file(installer_script_path, '\r\n')
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == "test":
