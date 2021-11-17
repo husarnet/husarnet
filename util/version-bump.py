@@ -6,7 +6,7 @@ import os.path
 husarnet_config_path = os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..', 'core', 'husarnet_config.h'))
 windows_installer_script_path = os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..', 'windows', 'installer', 'script.iss'))
 
-def bump_version(line, today=None):
+def get_new_version(line, today=None):
     if not today:
         today = subprocess.check_output(["date", '+%Y.%m.%d']).strip().decode()
 
@@ -19,13 +19,18 @@ def bump_version(line, today=None):
     else:
         new_version = 1
 
-    return '#define HUSARNET_VERSION "' + today + '.' + str(new_version) + '"'
+    return today + '.' + str(new_version)
+
+def bump_version(new_ver, line, today=None):
+    return '#define HUSARNET_VERSION "' + new_ver + '"'
 
 def test():
     def date_bump():
         today = '2021.04.10'
+        line = '#define HUSARNET_VERSION "2021.04.09.55"'
+        new_ver = get_new_version(line, today)
 
-        assert bump_version('#define HUSARNET_VERSION "2021.04.09.55"', today=today) == '#define HUSARNET_VERSION "2021.04.10.1"'
+        assert bump_version(new_ver, line, today) == '#define HUSARNET_VERSION "2021.04.10.1"'
 
     def rev_bump():
         today = '2021.04.09'
@@ -37,17 +42,19 @@ def test():
         ]
 
         for test in tests:
-            assert bump_version(test[0], today=today) == test[1]
+            new_ver = get_new_version(test[0], today)
+            assert bump_version(new_ver, test[0], today) == test[1]
 
     date_bump()
     rev_bump()
 
 def replace_in_file(filepath, eol_char):
     config = []
+    new_ver = get_new_version(line)
     with open(filepath, 'r') as f:
         for line in f:
             if line.startswith('#define HUSARNET_VERSION '):
-                config.append(bump_version(line))
+                config.append(bump_version(new_ver, line))
             else:
                 config.append(line.rstrip())
 
