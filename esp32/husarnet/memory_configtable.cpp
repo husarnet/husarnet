@@ -1,1 +1,0 @@
-../../core/memory_configtable.cpp

@@ -1,1 +1,0 @@
-../husarnet_main.cpp
