@@ -1,6 +1,6 @@
-#include "license_management.h"
+#include "licensing.h"
 #include "husarnet.h"
-#include "self_hosted.h"
+#include "licensing_unix.h"
 #include "util.h"
 #include "service.h"
 
