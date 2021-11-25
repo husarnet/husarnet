@@ -135,7 +135,7 @@ static void ares_local_callback(void* arg, int status, int timeouts, struct ares
     result->status = status;
 
     if(status != ARES_SUCCESS) {
-        LOG("DNS resolution failed. c-ares status code: %i", status);
+        LOG("DNS resolution failed. c-ares status code: %i (%s)", status, ares_strerror(status));
         return;
     }
 
@@ -166,8 +166,8 @@ IpAddress resolveIp(std::string hostname) {
         return IpAddress();
     }
 
-    struct ares_addrinfo_hints hints;
-    hints.ai_flags |= ARES_AI_NUMERICSERV;
+    struct ares_addrinfo_hints hints = {};
+    hints.ai_flags |= ARES_AI_NUMERICSERV | ARES_AI_NOSORT;
 
     ares_getaddrinfo(channel, hostname.c_str(),	"443", &hints, ares_local_callback, (void*)&result);
     ares_wait(channel);
