@@ -79,7 +79,7 @@ void generateAndWriteHttpSecret(std::string configDir)
 
 void saveIp6tablesRuleForDeletion(std::string configDir, std::string rule)
 {
-    LOG("Saving Ip6talbes rules for later deletion...");
+    LOG("Saving Ip6tables rules for later deletion...");
     std::ofstream f(ip6tablesRulesLogPath(configDir), std::ios_base::app);
     if (!f.good())
     {

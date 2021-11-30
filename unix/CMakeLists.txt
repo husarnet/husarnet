@@ -17,3 +17,7 @@ install(FILES
     packaging-misc/husarnet-license-refresh.service
     packaging-misc/husarnet-license-refresh.timer
     DESTINATION lib/systemd/system)
+install(FILES
+    packaging-misc/husarnet-completion.bash
+    RENAME husarnet
+    DESTINATION usr/share/bash-completion/completions)
