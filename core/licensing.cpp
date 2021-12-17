@@ -11,13 +11,15 @@ std::string requestLicense(InetAddress address) {
   std::string readBuffer;
   readBuffer.resize(8192);
 
-  std::string request = "GET /license.json HTTP/1.1\n"
-                        "Host: app.husarnet.com\n"
-                        "User-Agent: husarnet\n"
-                        "Accept: */*\n\n";
+  std::string request =
+      "GET /license.json HTTP/1.1\n"
+      "Host: app.husarnet.com\n"
+      "User-Agent: husarnet\n"
+      "Accept: */*\n\n";
 
   SOCKFUNC(send)(sockfd, request.data(), request.size(), 0);
-  size_t len = SOCKFUNC(recv)(sockfd, (char*)readBuffer.data(), readBuffer.size(), 0);
+  size_t len =
+      SOCKFUNC(recv)(sockfd, (char*)readBuffer.data(), readBuffer.size(), 0);
   size_t pos = readBuffer.find("\r\n\r\n");
 
   if (pos == std::string::npos) {
