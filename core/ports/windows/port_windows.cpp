@@ -1,3 +1,7 @@
+// port.h has to be the first include, newline afterwards prevents autoformatter
+// from sorting it
+#include "port.h"
+
 #include <iphlpapi.h>
 #include <mswsock.h>
 #include <ws2ipdef.h>
@@ -5,7 +9,6 @@
 #include <chrono>
 #include <vector>
 #include "global_lock.h"
-#include "port.h"
 #include "threads_port.h"
 #include "util.h"
 

@@ -1,9 +1,12 @@
 // Copyright (c) 2019 Husarion Sp. z o.o.
 // author: Michał Zieliński (zielmicha)
-//#define FD_ISSET(a, b) c
-#include "sockets.h"
-#include "global_lock.h"
+
+// port.h has to be the first include, newline afterwards prevents autoformatter
+// from sorting it
 #include "port.h"
+
+#include "global_lock.h"
+#include "sockets.h"
 #include "util.h"
 
 namespace OsSocket {
