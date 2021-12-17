@@ -1,4 +1,5 @@
 #include "licensing.h"
+#include "husarnet_config.h"
 #include "port.h"
 #include "util.h"
 

@@ -5,12 +5,6 @@
 
 #define HUSARNET_VERSION "2021.12.17.1"
 
-__attribute__((unused)) static const InetAddress baseTcpAddresses[] = {
-    {IpAddress::parse("188.165.23.196"), 443}, // ovh RBX (base-2)
-    // {IpAddress::parse("147.135.76.110"), 443}, // ovh US (base-3)
-    // {IpAddress::parse("51.254.25.193"), 443},  // fallback server
-};
-
 __attribute__((unused)) static const char *dashboardUrl = "https://app.husarnet.com";
 __attribute__((unused)) static const char *dashboardHostname = "app.husarnet.com";
 __attribute__((unused)) static const char *baseDnsAddress = "base.husarnet.com";

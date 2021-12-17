@@ -159,17 +159,7 @@ void serviceMain() {
 
   auto identity = FileStorage::readIdentity(configDir);
 
-  BaseConfig* baseConfig;
-  auto path = configDir + "/license.json";
-  std::ifstream input(path);
-  if (input.is_open()) {
-    std::string str((std::istreambuf_iterator<char>(input)),
-                    std::istreambuf_iterator<char>());
-    baseConfig = new BaseConfig(str);
-  } else {
-    baseConfig = new BaseConfig;
-  }
-
+  BaseConfig* baseConfig = BaseConfig::create(configDir);
   NgSocket* sock = NgSocketSecure::create(identity, baseConfig);
 
   ServiceHelper::startServiceHelperProc(configDir);

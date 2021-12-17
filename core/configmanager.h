@@ -14,11 +14,14 @@ using HostsFileUpdateFunc = std::function<void(std::vector<std::pair<IpAddress, 
 class ConfigManager {
     Identity* identity;
     BaseConfig* baseConfig;
+    NgSocket* sock;
+    HostsFileUpdateFunc hostsFileUpdateFunc;
+    ConfigTable* configTable;
+    std::string httpSecret;
     LogManager* logManager;
 
     std::string joinCode;
     std::string joinAsHostname;
-    std::string httpSecret;
     bool initResponseReceived = false;
     int websetupFd = -1;
 
@@ -29,8 +32,6 @@ class ConfigManager {
     void sendInitRequest();
     std::string getStatusJson();
     std::pair<IpAddress, std::string> getJoinInfo(std::string joinCode);
-    NgSocket* sock;
-    HostsFileUpdateFunc hostsFileUpdateFunc;
     std::string configGet(std::string networkId, std::string key, std::string defaultValue);
     void configSet(std::string networkId, std::string key, std::string value);
     bool is_secret_valid(const httplib::Request &req, httplib::Response &res);
@@ -38,7 +39,6 @@ public:
     ConfigManager(Identity* identity, BaseConfig* baseConfig, ConfigTable* configTable, HostsFileUpdateFunc hostsFileUpdateFunc, NgSocket* sock, std::string httpSecret, LogManager* logManager);
     ConfigManager(const ConfigManager&) = delete;
 
-    ConfigTable* configTable;
     bool shouldSendInitRequest = false;
 
     void updateHosts();

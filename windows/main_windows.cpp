@@ -102,9 +102,6 @@ int main(int argc, const char** args) {
     printUsage();
   }
 
-  // TODO load license.json if exists
-  BaseConfig* baseConfig = new BaseConfig;
-
   configDir = getConfigDir();
 
   std::string cmd = args[1];
@@ -119,6 +116,7 @@ int main(int argc, const char** args) {
               << " " << encodeHex(p.first) << " " << encodeHex(p.second)
               << std::endl;
   } else if (cmd == "websetup") {
+    BaseConfig* baseConfig = BaseConfig::create(configDir);
     if (argc > 2 && std::string(args[2]) == "--link-only") {
       std::cout << get_manage_url(baseConfig->getDashboardUrl(),
                                   getWebsetupData())

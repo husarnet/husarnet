@@ -12,14 +12,15 @@ class BaseConfig {
   std::vector<std::string> defaultWebsetupHosts;
   std::string defaultJoinHost;
 
-public:
-  BaseConfig();
-  explicit BaseConfig(const std::string &licenseFile);
+ public:
+  explicit BaseConfig(const std::string& licenseFile);
 
   bool isDefault() const;
-  const std::vector<InetAddress> &getBaseTcpAddresses() const;
-  const std::string &getDashboardUrl() const;
-  const std::string &getBaseDnsAddress() const;
-  const std::vector<std::string> &getDefaultWebsetupHosts() const;
-  const std::string &getDefaultJoinHost() const;
+  const std::vector<InetAddress>& getBaseTcpAddresses() const;
+  const std::string& getDashboardUrl() const;
+  const std::string& getBaseDnsAddress() const;
+  const std::vector<std::string>& getDefaultWebsetupHosts() const;
+  const std::string& getDefaultJoinHost() const;
+
+  static BaseConfig* create(const std::string);
 };
