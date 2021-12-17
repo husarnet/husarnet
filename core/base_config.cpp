@@ -5,10 +5,9 @@
 #include <ArduinoJson.h>
 #include <sodium.h>
 
-static const unsigned char *PUBLIC_KEY =
-    reinterpret_cast<const unsigned char *>(
-        "\x2a\x3f\x26\x7c\x2a\x68\xa6\x0f\x66\xf6\xaf\x2b\x0a\x42\x7b\x25"
-        "\xb5\x30\x7c\x23\x47\x80\x2d\xdf\x35\x24\xf4\x9a\xfe\x7d\x01\xe5");
+static const unsigned char* PUBLIC_KEY = reinterpret_cast<const unsigned char*>(
+    "\x2a\x3f\x26\x7c\x2a\x68\xa6\x0f\x66\xf6\xaf\x2b\x0a\x42\x7b\x25"
+    "\xb5\x30\x7c\x23\x47\x80\x2d\xdf\x35\x24\xf4\x9a\xfe\x7d\x01\xe5");
 
 BaseConfig::BaseConfig() {
   int baseAddressCount =
@@ -21,13 +20,13 @@ BaseConfig::BaseConfig() {
 
   int defaultWebsetupHostCount =
       sizeof(::defaultWebsetupHosts) / sizeof(::defaultWebsetupHosts[0]);
-  defaultWebsetupHosts = std::vector<std::string>(::defaultWebsetupHosts,
-                                                  ::defaultWebsetupHosts +
-                                                      defaultWebsetupHostCount);
+  defaultWebsetupHosts = std::vector<std::string>(
+      ::defaultWebsetupHosts,
+      ::defaultWebsetupHosts + defaultWebsetupHostCount);
   this->defaultJoinHost = ::defaultJoinHost;
 }
 
-static std::string getSignatureData(const DynamicJsonDocument &doc) {
+static std::string getSignatureData(const DynamicJsonDocument& doc) {
   std::string s;
   s.append("1\n");
   s.append(doc["installation_id"].as<std::string>() + "\n");
@@ -39,17 +38,16 @@ static std::string getSignatureData(const DynamicJsonDocument &doc) {
   for (auto address : doc["base_server_addresses"].as<JsonArray>()) {
     s.append(address.as<std::string>() + ",");
   }
-  s[s.size() - 1] = '\n'; // remove the last comma
+  s[s.size() - 1] = '\n';  // remove the last comma
   s.append(doc["issued"].as<std::string>() + "\n");
   s.append(doc["valid_until"].as<std::string>());
   return s;
 }
 
-static void verifySignature(const std::string &signature,
-                            const std::string &data) {
-  auto *signaturePtr =
-      reinterpret_cast<const unsigned char *>(signature.data());
-  auto *dataPtr = reinterpret_cast<const unsigned char *>(data.data());
+static void verifySignature(const std::string& signature,
+                            const std::string& data) {
+  auto* signaturePtr = reinterpret_cast<const unsigned char*>(signature.data());
+  auto* dataPtr = reinterpret_cast<const unsigned char*>(data.data());
   if (crypto_sign_ed25519_verify_detached(signaturePtr, dataPtr, data.size(),
                                           PUBLIC_KEY) != 0) {
     LOG("license file is invalid");
@@ -57,7 +55,7 @@ static void verifySignature(const std::string &signature,
   }
 }
 
-BaseConfig::BaseConfig(const std::string &licenseFile) {
+BaseConfig::BaseConfig(const std::string& licenseFile) {
   DynamicJsonDocument doc(4096);
   deserializeJson(doc, licenseFile);
 
@@ -77,23 +75,25 @@ BaseConfig::BaseConfig(const std::string &licenseFile) {
 }
 
 bool BaseConfig::isDefault() const {
-    return this->dashboardUrl == ::dashboardUrl;
+  return this->dashboardUrl == ::dashboardUrl;
 }
 
-const std::vector<InetAddress> &BaseConfig::getBaseTcpAddresses() const {
+const std::vector<InetAddress>& BaseConfig::getBaseTcpAddresses() const {
   return baseTcpAddresses;
 }
 
-const std::string &BaseConfig::getDashboardUrl() const { return dashboardUrl; }
+const std::string& BaseConfig::getDashboardUrl() const {
+  return dashboardUrl;
+}
 
-const std::string &BaseConfig::getBaseDnsAddress() const {
+const std::string& BaseConfig::getBaseDnsAddress() const {
   return baseDnsAddress;
 }
 
-const std::vector<std::string> &BaseConfig::getDefaultWebsetupHosts() const {
+const std::vector<std::string>& BaseConfig::getDefaultWebsetupHosts() const {
   return defaultWebsetupHosts;
 }
 
-const std::string &BaseConfig::getDefaultJoinHost() const {
+const std::string& BaseConfig::getDefaultJoinHost() const {
   return defaultJoinHost;
 }

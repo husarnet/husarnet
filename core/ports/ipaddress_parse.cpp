@@ -12,14 +12,13 @@ using u32_t = uint32_t;
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
-int husarnet_ip6addr_aton(const char *cp, uint8_t* result)
-{
+int husarnet_ip6addr_aton(const char* cp, uint8_t* result) {
   uint32_t addr[4];
   uint32_t addr_index, zero_blocks, current_block_index, current_block_value;
-  const char *s;
+  const char* s;
 
-  /* Count the number of colons, to count the number of blocks in a "::" sequence
-     zero_blocks may be 1 even if there are no :: sequences */
+  /* Count the number of colons, to count the number of blocks in a "::"
+     sequence zero_blocks may be 1 even if there are no :: sequences */
   zero_blocks = 8;
   for (s = cp; *s != 0; s++) {
     if (*s == ':') {
@@ -37,8 +36,7 @@ int husarnet_ip6addr_aton(const char *cp, uint8_t* result)
     if (*s == ':') {
       if (current_block_index & 0x1) {
         addr[addr_index++] |= current_block_value;
-      }
-      else {
+      } else {
         addr[addr_index] = current_block_value << 16;
       }
       current_block_index++;
@@ -70,9 +68,10 @@ int husarnet_ip6addr_aton(const char *cp, uint8_t* result)
       }
     } else if (isxdigit(*s)) {
       /* add current digit */
-      current_block_value = (current_block_value << 4) +
-          (isdigit(*s) ? (u32_t)(*s - '0') :
-          (u32_t)(10 + (islower(*s) ? *s - 'a' : *s - 'A')));
+      current_block_value =
+          (current_block_value << 4) +
+          (isdigit(*s) ? (u32_t)(*s - '0')
+                       : (u32_t)(10 + (islower(*s) ? *s - 'a' : *s - 'A')));
     } else {
       /* unexpected digit, space? CRLF? */
       break;
@@ -81,8 +80,7 @@ int husarnet_ip6addr_aton(const char *cp, uint8_t* result)
 
   if (current_block_index & 0x1) {
     addr[addr_index++] |= current_block_value;
-  }
-  else {
+  } else {
     addr[addr_index] = current_block_value << 16;
   }
 
@@ -99,8 +97,6 @@ int husarnet_ip6addr_aton(const char *cp, uint8_t* result)
   return 1;
 }
 
-
-
 /**
  * Check whether "cp" is a valid ascii representation
  * of an Internet address and convert to a binary address.
@@ -112,12 +108,11 @@ int husarnet_ip6addr_aton(const char *cp, uint8_t* result)
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
-int husarnet_ip4addr_aton(const char *cp, uint8_t* result)
-{
+int husarnet_ip4addr_aton(const char* cp, uint8_t* result) {
   uint32_t val;
   char c;
   uint32_t parts[4];
-  uint32_t *pp = parts;
+  uint32_t* pp = parts;
 
   c = *cp;
   for (;;) {
@@ -178,14 +173,13 @@ int husarnet_ip4addr_aton(const char *cp, uint8_t* result)
    * the number of parts specified.
    */
   switch (pp - parts + 1) {
-
     case 0:
-      return 0;       /* initial nondigit */
+      return 0; /* initial nondigit */
 
-    case 1:             /* a -- 32 bits */
+    case 1: /* a -- 32 bits */
       break;
 
-    case 2:             /* a.b -- 8.24 bits */
+    case 2: /* a.b -- 8.24 bits */
       if (val > 0xffffffUL) {
         return 0;
       }
@@ -195,7 +189,7 @@ int husarnet_ip4addr_aton(const char *cp, uint8_t* result)
       val |= parts[0] << 24;
       break;
 
-    case 3:             /* a.b.c -- 8.8.16 bits */
+    case 3: /* a.b.c -- 8.8.16 bits */
       if (val > 0xffff) {
         return 0;
       }
@@ -205,7 +199,7 @@ int husarnet_ip4addr_aton(const char *cp, uint8_t* result)
       val |= (parts[0] << 24) | (parts[1] << 16);
       break;
 
-    case 4:             /* a.b.c.d -- 8.8.8.8 bits */
+    case 4: /* a.b.c.d -- 8.8.8.8 bits */
       if (val > 0xff) {
         return 0;
       }
