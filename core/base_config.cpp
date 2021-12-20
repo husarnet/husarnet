@@ -1,30 +1,14 @@
 #include "base_config.h"
-#include "husarnet_config.h"
-#include "util.h"
-
 #include <ArduinoJson.h>
 #include <sodium.h>
+#include <fstream>
+#include "husarnet_config.h"
+#include "licensing.h"
+#include "util.h"
 
 static const unsigned char* PUBLIC_KEY = reinterpret_cast<const unsigned char*>(
     "\x2a\x3f\x26\x7c\x2a\x68\xa6\x0f\x66\xf6\xaf\x2b\x0a\x42\x7b\x25"
     "\xb5\x30\x7c\x23\x47\x80\x2d\xdf\x35\x24\xf4\x9a\xfe\x7d\x01\xe5");
-
-BaseConfig::BaseConfig() {
-  int baseAddressCount =
-      sizeof(::baseTcpAddresses) / sizeof(::baseTcpAddresses[0]);
-  baseTcpAddresses = std::vector<InetAddress>(
-      ::baseTcpAddresses, ::baseTcpAddresses + baseAddressCount);
-
-  this->dashboardUrl = ::dashboardUrl;
-  this->baseDnsAddress = ::baseDnsAddress;
-
-  int defaultWebsetupHostCount =
-      sizeof(::defaultWebsetupHosts) / sizeof(::defaultWebsetupHosts[0]);
-  defaultWebsetupHosts = std::vector<std::string>(
-      ::defaultWebsetupHosts,
-      ::defaultWebsetupHosts + defaultWebsetupHostCount);
-  this->defaultJoinHost = ::defaultJoinHost;
-}
 
 static std::string getSignatureData(const DynamicJsonDocument& doc) {
   std::string s;
@@ -72,6 +56,36 @@ BaseConfig::BaseConfig(const std::string& licenseFile) {
   this->baseDnsAddress = "";
   this->defaultJoinHost = doc["websetup_host"].as<std::string>();
   this->defaultWebsetupHosts.push_back(this->defaultJoinHost);
+}
+
+BaseConfig* BaseConfig::create(const std::string configDir) {
+  BaseConfig* config;
+  auto licenseFilePath = configDir + "license.json";
+  std::ifstream input(licenseFilePath);
+  if (input.is_open()) {
+    std::string str((std::istreambuf_iterator<char>(input)),
+                    std::istreambuf_iterator<char>());
+    config = new BaseConfig(str);
+  } else {
+    LOG("license not found locally, will get default license online...");
+    IpAddress ip = OsSocket::resolveToIp(::dashboardHostname);
+    InetAddress address{ip, 80};
+    std::string license = requestLicense(address);
+
+    std::ofstream f(licenseFilePath);
+    if (!f.good()) {
+      LOG("failed to write: %s - have you tried running husarnet in elevated "
+          "command prompt?",
+          configDir.c_str());
+      exit(1);
+    }
+    f << license;
+    f.close();
+
+    config = new BaseConfig(license);
+  }
+
+  return config;
 }
 
 bool BaseConfig::isDefault() const {
