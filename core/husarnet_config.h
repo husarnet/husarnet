@@ -3,7 +3,7 @@
 #include "ipaddress.h"
 #include <vector>
 
-#define HUSARNET_VERSION "2021.12.17.1"
+#define HUSARNET_VERSION "2021.12.20.1"
 
 __attribute__((unused)) static const char *dashboardUrl = "https://app.husarnet.com";
 __attribute__((unused)) static const char *dashboardHostname = "app.husarnet.com";
