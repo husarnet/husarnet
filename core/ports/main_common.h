@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
-#include "util.h"
 #include "port.h"
+#include "util.h"
 
 // implemented by platform code
 std::string sendMsg(std::string msg);

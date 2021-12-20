@@ -2,5 +2,5 @@
 
 #include <string>
 
-void serviceMain(bool fork=false);
+void serviceMain(bool fork = false);
 std::string prepareConfigDir();

@@ -1,6 +1,9 @@
-#include "licensing.h"
-#include "husarnet_config.h"
+// port.h has to be the first include, newline afterwards prevents autoformatter
+// from sorting it
 #include "port.h"
+
+#include "husarnet_config.h"
+#include "licensing.h"
 #include "util.h"
 
 std::string requestLicense(InetAddress address) {
