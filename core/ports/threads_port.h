@@ -1,6 +1,8 @@
+#pragma once
 #if defined(_GLIBCXX_HAS_GTHREADS)
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <thread>
 #else
 #include "mingw.condition_variable.h"
 #include "mingw.future.h"

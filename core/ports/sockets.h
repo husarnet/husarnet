@@ -3,10 +3,10 @@
 // Wrapper around OS sockets
 #pragma once
 
-#include "ipaddress.h"
 #include <functional>
-#include <vector>
 #include <memory>
+#include <vector>
+#include "ipaddress.h"
 #include "string_view.h"
 #include "threads_port.h"
 
@@ -20,8 +20,10 @@ using TcpDataCallback = std::function<void(const std::string&)>;
 using TcpErrorCallback =
     std::function<void(std::shared_ptr<FramedTcpConnection>)>;
 
-bool udpListenUnicast(int port, PacketCallack callback, bool setAsDefault=true);
-void udpSend(InetAddress address, string_view data, int fd=-1);
+bool udpListenUnicast(int port,
+                      PacketCallack callback,
+                      bool setAsDefault = true);
+void udpSend(InetAddress address, string_view data, int fd = -1);
 bool udpListenMulticast(InetAddress address, PacketCallack callback);
 void udpSendMulticast(InetAddress address, const std::string& data);
 int bindUdpSocket(InetAddress addr, bool reuse);
@@ -32,7 +34,9 @@ InetAddress ipFromSockaddr(struct sockaddr_storage st);
 struct sockaddr_in6 sockaddrFromIp(InetAddress ip);
 int connectTcpSocket(InetAddress addr);
 
-bool write(std::shared_ptr<FramedTcpConnection> conn, const std::string& data, bool queue);
+bool write(std::shared_ptr<FramedTcpConnection> conn,
+           const std::string& data,
+           bool queue);
 // Write a data packet.
 //
 // If the socket is not ready and queue is true, queue it anyway.
@@ -49,4 +53,4 @@ std::shared_ptr<FramedTcpConnection> tcpConnect(InetAddress address,
 void runOnce(int timeout);
 void init();
 
-}
+}  // namespace OsSocket
