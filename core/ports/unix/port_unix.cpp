@@ -174,6 +174,7 @@ static void ares_local_callback(void* arg,
 
 IpAddress resolveIp(std::string hostname) {
   if (hostname.empty()) {
+    LOG("[carrots] Yes, the hostname is empty here!");
     return IpAddress();
   }
 
