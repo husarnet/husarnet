@@ -1,11 +1,14 @@
 [Unit]
 Description=Husarnet
-After=network-pre.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=notify
 ExecStart=/usr/bin/husarnet daemon
 Environment=HUSARNET_VERBOSE=1
+Restart=always
+RestartSec=3
 NotifyAccess=all
 
 [Install]
