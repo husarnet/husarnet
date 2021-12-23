@@ -4,7 +4,7 @@
 #include <vector>
 #include "ipaddress.h"
 
-#define HUSARNET_VERSION "2021.12.23.1"
+#define HUSARNET_VERSION "2021.12.23.2"
 
 __attribute__((unused)) static const char* dashboardUrl =
     "https://app.husarnet.com";
