@@ -1,14 +1,5 @@
 #!/bin/bash
 
-echo REMOVE SCRIPT $@
-
-if [ ${1} == "purge" ]; then
-  echo "Removing /var/lib/husarnet"
-  rm -fr /var/lib/husarnet
-  
-  exit 0
-fi
-
 pidof -q systemd || false
 if [ ! $? -ne 0 ]; then 
     systemctl daemon-reload
