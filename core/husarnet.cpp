@@ -380,7 +380,7 @@ struct NgSocketImpl : public NgSocket {
       return nullptr;  // self
 
     if (!options->isPeerAllowed(id)) {
-      LOG("peer %s is blacklisted", IDSTR(id));
+      LOG("peer %s is not on the whitelist", IDSTR(id));
       return nullptr;
     }
 
