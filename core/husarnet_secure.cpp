@@ -404,7 +404,7 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
 
   Peer* createPeer(DeviceId id) {
     if (!options->isPeerAllowed(id)) {
-      LOG("peer %s is blacklisted", encodeHex(id).c_str());
+      LOG("peer %s is not on the whitelist", encodeHex(id).c_str());
       return nullptr;
     }
     Peer* peer = new Peer;
@@ -424,7 +424,7 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
       return cachedPeer;
 
     if (!options->isPeerAllowed(id)) {
-      LOG("peer %s is blacklisted", encodeHex(id).c_str());
+      LOG("peer %s is not on the whitelist", encodeHex(id).c_str());
       return nullptr;
     }
 
