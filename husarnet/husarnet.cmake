@@ -55,7 +55,11 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/ports)
 file(GLOB husarnet_ports_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_ports_SRC})
 
+# @TODO make this work
+# So includes like "husarnet/something.h" do work too
+# include_directories(${CMAKE_CURRENT_LIST_DIR}/..)
 include_directories(${CMAKE_CURRENT_LIST_DIR})
+
 file(GLOB core_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
 list(APPEND husarnet_core_SRC ${core_SRC})
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <list>
 #include <string>
-#include "ipaddress.h"
+#include "../ipaddress.h"
 
 namespace Privileged {
 void init();

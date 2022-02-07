@@ -4,7 +4,7 @@ cmake_policy(SET CMP0048 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 project (husarnet VERSION "0.0.0")
 
-include(../core/core.cmake)
+include(../husarnet/husarnet.cmake)
 include(../tests/tests.cmake)
 
 file(GLOB husarnet_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
