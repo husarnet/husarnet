@@ -1,8 +1,8 @@
+#include "configtable_persistent.h"
 #include <sqlite3.h>
 #include <exception>
 #include <functional>
 #include <vector>
-#include "configtable.h"
 #include "util.h"
 
 void bindText(sqlite3_stmt* stmt, int i, const std::string& s) {

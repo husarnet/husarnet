@@ -1,6 +1,8 @@
 #include "ports/port.h"
 
 #include <sstream>
+#include "configtable_inmemory.h"
+#include "configtable_persistent.h"
 #include "global_lock.h"
 #include "husarnet_config.h"
 #include "husarnet_crypto.h"
@@ -209,6 +211,9 @@ void HusarnetManager::cleanup() {
 }
 
 void HusarnetManager::runHusarnet() {
+  configTable =
+      createSqliteConfigTable(std::string("/usr/bin/husarnet") + "config.db");
+
   auto dashboardHostname =
       configGet("manual", "dashboard-hostname", "app.husarnet.com");
   this->license = new License(dashboardHostname);

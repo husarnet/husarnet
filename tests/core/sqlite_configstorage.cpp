@@ -1,6 +1,6 @@
 #include "catch.hpp"
-#include "memory_configtable.h"
-#include "sqlite_configtable.h"
+#include "configtable_inmemory.h"
+#include "configtable_persistent.h"
 
 template <typename T>
 std::vector<T> sorted(std::vector<T> v) {

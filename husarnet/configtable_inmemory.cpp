@@ -1,9 +1,9 @@
+#include "configtable_inmemory.h"
 #include <exception>
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "configtable.h"
 #include "util.h"
 
 struct MemoryConfigTable : ConfigTable {

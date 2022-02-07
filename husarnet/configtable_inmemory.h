@@ -1,5 +1,5 @@
 #pragma once
-#include "configtable.h"
+#include "configtable_interface.h"
 
 ConfigTable* createMemoryConfigTable(
     std::string initialData,

@@ -3,7 +3,7 @@
 
 #include <unordered_set>
 #include <vector>
-#include "configtable.h"
+#include "configtable_interface.h"
 #include "licensing.h"
 #include "logmanager.h"
 #include "ngsocket.h"
