@@ -1,12 +1,3 @@
-[submodule "deps/zstd"]
-	path = deps/zstd
-	url = https://github.com/facebook/zstd
-[submodule "deps/lwip"]
-	path = deps/lwip
-	url = https://gitea.husarion.com/husarion/husarnet-lwip.git
-[submodule "deps/lwip-contrib"]
-	path = deps/lwip-contrib
-	url = https://git.savannah.nongnu.org/git/lwip/lwip-contrib.git
 [submodule "deps/libsodium"]
 	path = deps/libsodium
 	url = https://github.com/jedisct1/libsodium
