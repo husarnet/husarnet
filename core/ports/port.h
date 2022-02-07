@@ -27,18 +27,12 @@
 #include <unistd.h>
 #include <filesystem>
 
-#ifdef USE_HUSARNET_SOCKETS
-#include "husarnet_socket.h"
-#define SOCKFUNC(name) ::husarnet_##name
-#else  // USE_HUSARNET_SOCKETS
 #define SOCKFUNC(name) ::name
-#endif  // USE_HUSARNET_SOCKETS
 
 #define ENABLE_IPV6
 #endif  // __linux__
 
-#include "ipaddress.h"
-
+// @TODO replace this in all occurrences
 #ifndef SOCKFUNC_close
 #define SOCKFUNC_close SOCKFUNC(close)
 #endif  // SOCKFUNC_close
@@ -48,6 +42,8 @@ inline int renameFile(const char* src, const char* dst) {
   return rename(src, dst);
 }
 #endif
+
+#include "ipaddress.h"
 
 // performance profiler
 #define hperf_compute()

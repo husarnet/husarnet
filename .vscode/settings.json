@@ -65,6 +65,29 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "list": "cpp"
-    }
+        "forward_list": "cpp",
+        "valarray": "cpp"
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}/unix",
+    "cSpell.words": [
+        "DEVICEID",
+        "hperf",
+        "Husarion",
+        "Husarnet",
+        "HUSARNET",
+        "IDSTR",
+        "libsodium",
+        "LOGV",
+        "Michał",
+        "microcontrollers",
+        "microservices",
+        "ngsocket",
+        "qsize",
+        "secretbox",
+        "stoi",
+        "tunelled",
+        "Websetup",
+        "Zieliński",
+        "zielmicha"
+    ]
 }

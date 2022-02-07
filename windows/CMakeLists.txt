@@ -1,10 +1,9 @@
-cmake_minimum_required (VERSION 2.4)
-
-project (husarnet)
+cmake_minimum_required (VERSION 3.5.0)
 cmake_policy(SET CMP0003 NEW)
+project (husarnet VERSION "0.0.0")
 
-include(../husarnet.cmake)
+include(../core/core.cmake)
 
-file(GLOB husarnet_SRC "*.cpp")
+file(GLOB husarnet_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
 add_executable(husarnet ${husarnet_SRC})
 target_link_libraries(husarnet husarnet_core)

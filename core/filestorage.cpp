@@ -1,24 +1,45 @@
 #include "filestorage.h"
 #include <time.h>
-#include <algorithm>
 #include <fstream>
-#include <random>
 #include "husarnet_crypto.h"
 #include "port.h"
 #include "service_helper.h"
 #include "util.h"
+
 namespace FileStorage {
 
-std::ifstream openFile(std::string name) {
-  std::ifstream f(name);
+std::string getConfigDir() {
+  return getenv("HUSARNET_CONFIG" ? getenv("HUSARNET_CONFIG")
+                                  : "/var/lib/husarnet/");
+}
+
+void prepareConfigDir() {
+  auto configDir = getConfigDir();
+
+  mkdir(configDir.c_str(), 0700);
+  chmod(configDir.c_str(), 0700);
+}
+
+std::ifstream openFile(std::string path) {
+  std::ifstream f(path);
   if (!f.good()) {
-    LOG("failed to open %s", name.c_str());
+    LOG("failed to open %s", path.c_str());
   }
   return f;
 }
 
-Identity* readIdentity(std::string configDir) {
-  std::ifstream f = openFile(idFilePath(configDir));
+std::ifstream writeFile(std::string path, std::string content) {
+  std::ofstream f(path);
+  if (!f.good()) {
+    exit(1);
+  }
+
+  f << content;
+  f.close();
+}
+
+Identity* readIdentity() {
+  std::ifstream f = openFile(idFilePath());
   if (!f.good())
     exit(1);
   if (f.peek() == std::ifstream::traits_type::eof()) {
@@ -26,9 +47,9 @@ Identity* readIdentity(std::string configDir) {
     LOG("generating ID...");
     auto p = NgSocketCrypto::generateId();
 
-    std::ofstream fp(idFilePath(configDir));
+    std::ofstream fp(idFilePath());
     if (!fp.good()) {
-      LOG("failed to write: %s", configDir.c_str());
+      LOG("failed to write: %s", idFilePath().c_str());
       exit(1);
     }
 
@@ -56,13 +77,13 @@ Identity* readIdentity(std::string configDir) {
   }
 }
 
-void generateAndWriteId(std::string configDir) {
+void generateAndWriteId() {
   LOG("generating ID...");
   auto p = NgSocketCrypto::generateId();
 
-  std::ofstream f(idFilePath(configDir));
+  std::ofstream f(idFilePath());
   if (!f.good()) {
-    LOG("failed to write: %s", configDir.c_str());
+    LOG("failed to write: %s", idFilePath().c_str());
     exit(1);
   }
 
@@ -70,29 +91,19 @@ void generateAndWriteId(std::string configDir) {
     << " " << encodeHex(p.first) << " " << encodeHex(p.second) << std::endl;
 }
 
-void generateAndWriteHttpSecret(std::string configDir) {
+void generateAndWriteHttpSecret() {
   LOG("Generatting http secret...");
   std::string secret = generateRandomString(64);
-  std::ofstream f(httpSecretFilePath(configDir));
+  std::ofstream f(httpSecretFilePath());
   if (!f.good()) {
-    LOG("failed to write: %s", configDir.c_str());
+    LOG("failed to write: %s", httpSecretFilePath().c_str());
     exit(1);
   }
   f << secret << std::endl;
 }
 
-void saveIp6tablesRuleForDeletion(std::string configDir, std::string rule) {
-  LOG("Saving Ip6tables rules for later deletion...");
-  std::ofstream f(ip6tablesRulesLogPath(configDir), std::ios_base::app);
-  if (!f.good()) {
-    LOG("failed to write: %s", configDir.c_str());
-    exit(1);
-  }
-  f << rule << std::endl;
-}
-
-std::string readHttpSecret(std::string configDir) {
-  std::ifstream f = openFile(httpSecretFilePath(configDir));
+std::string readHttpSecret() {
+  std::ifstream f = openFile(httpSecretFilePath());
   if (!f.good())
     exit(1);
   std::string secret;
@@ -100,16 +111,14 @@ std::string readHttpSecret(std::string configDir) {
   return secret;
 }
 
-std::string generateRandomString(const int length) {
-  std::random_device rd;
-  std::mt19937 rng(rd());
-  std::uniform_int_distribution<int> uni('a', 'z');
-
-  std::string result = "";
-  for (int i = 0; i < length; i++) {
-    result += (char)uni(rng);
+void saveIp6tablesRuleForDeletion(std::string rule) {
+  LOG("Saving Ip6tables rules for later deletion...");
+  std::ofstream f(ip6tablesRulesLogPath(), std::ios_base::app);
+  if (!f.good()) {
+    LOG("failed to write: %s", ip6tablesRulesLogPath().c_str());
+    exit(1);
   }
-
-  return result;
+  f << rule << std::endl;
 }
+
 }  // namespace FileStorage

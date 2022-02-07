@@ -1,5 +1,5 @@
 #pragma once
-#include "husarnet.h"
+#include "ngsocket.h"
 
 struct NetworkDev {
   static NgSocket* wrap(

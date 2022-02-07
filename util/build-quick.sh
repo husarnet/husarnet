@@ -4,6 +4,7 @@ source $(dirname "$0")/bash-base.sh
 mkdir -p ${release_base}
 
 # Unix build
+echo "===== Unix ====="
 
 arch=amd64
 ${util_base}/build-cmake.sh $arch unix
@@ -15,17 +16,20 @@ for package in $unix_packages; do
 done
 
 # Prepare the (unix) tests runtime
+echo "===== Unix (tests) ====="
 
 mkdir -p ${build_tests_base}
 cp ${build_base}/amd64/unix/husarnet ${build_tests_base}/husarnet
 cp ${build_base}/amd64/unix/tests ${build_tests_base}/unit-tests
 
 # Docker builds
+# echo "===== Docker ====="
 
 # This is commented out as it's intended to be disabled in CI. You can still run it manually.
 # ${util_base}/build-docker.sh
 
 # Windows builds
+echo "===== Windows ====="
 
 ${util_base}/build-cmake.sh win64 windows
 # ${util_base}/build-cmake.sh win32 windows

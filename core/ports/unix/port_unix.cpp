@@ -14,7 +14,7 @@
 #include <ares.h>
 
 #include "global_lock.h"
-#include "port.h"
+#include "ports/port.h"
 #include "util.h"
 
 bool husarnetVerbose = true;

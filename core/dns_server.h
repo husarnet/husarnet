@@ -1,6 +1,6 @@
 #pragma once
 // A fake DNS server for use when editing /etc/hosts file is not possible.
-#include "husarnet.h"
+#include "ngsocket.h"
 #include "util.h"
 
 struct ResolveResponse {

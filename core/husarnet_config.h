@@ -4,22 +4,13 @@
 #include <vector>
 #include "ipaddress.h"
 
-#define HUSARNET_VERSION "2021.12.29.1"
-
-__attribute__((unused)) static const char* dashboardUrl =
-    "https://app.husarnet.com";
-__attribute__((unused)) static const char* dashboardHostname =
-    "app.husarnet.com";
-__attribute__((unused)) static const char* baseDnsAddress = "base.husarnet.com";
+#define HUSARNET_VERSION "2021.12.20.2"
+#define WEBSETUP_SERVER_PORT 5580
+#define WEBSETUP_CLIENT_PORT 4800
 
 static const int MAX_QUEUED_PACKETS = 10;
 
-__attribute__((unused)) static const char* defaultWebsetupHosts[] = {
-    "fc94:7d8a:8254:8e9b:7e54:ad88:4540:cae",   // websetup-id-1
-    "fc94:50c:e453:ef91:203c:6ef2:3f9b:8145",   // websetup-id-2
-    "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a",  // websetup-id-3
-    "fc94:977a:9af5:bcd8:efff:da4c:c86d:3195",  // websetup-id-4 (husarnet.com)
-};
-
-__attribute__((unused)) static const char* defaultJoinHost =
-    "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a";
+// this is IPv4 AD-HOC multicast address (224.3.252.148)
+const IpAddress MULTICAST_ADDR_4 = IpAddress::parse("::ffff:E003:FC94");
+const IpAddress MULTICAST_ADDR_6 =
+    IpAddress::parse("ff02:88bb:31e4:95f7:2b87:6b52:e112:19ac");

@@ -1,5 +1,6 @@
 #pragma once
 #include "fstring.h"
+
 using DeviceId = fstring<16>;
 
 static const DeviceId BadDeviceId =

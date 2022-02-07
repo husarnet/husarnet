@@ -1,34 +1,40 @@
 #pragma once
-#include "configmanager.h"
-#include "husarnet.h"
+#include <string>
+#include "husarnet_crypto.h"
 
 namespace FileStorage {
 
-inline const std::string idFilePath(const std::string configDir) {
-  return configDir + "id";
-}
-inline const std::string httpSecretFilePath(const std::string configDir) {
-  return configDir + "http_secret";
-}
-inline const std::string settingsFilePath(const std::string configDir) {
-  return configDir + "settings.json";
-}
-inline const std::string licenseFilePath(const std::string configDir) {
-  return configDir + "license.json";
-}
-inline const std::string controlSocketPath(const std::string configDir) {
-  return configDir + "control.sock";
-}
-inline const std::string ip6tablesRulesLogPath(const std::string configDir) {
-  return configDir + "ip6tables_rules";
-}
+std::string getConfigDir();
+void prepareConfigDir();
 
-std::ifstream openFile(std::string name);
-Identity* readIdentity(std::string configDir);
-void generateAndWriteId(std::string configDir);
-void generateAndWriteHttpSecret(std::string configDir);
-void saveIp6tablesRuleForDeletion(std::string configDir, std::string rule);
-std::string readHttpSecret(std::string configDir);
-std::string generateRandomString(const int length);
+std::ifstream openFile(std::string path);
+std::ifstream writeFile(std::string path, std::string content);
+
+Identity* readIdentity();
+void generateAndWriteId();
+
+void generateAndWriteHttpSecret();
+std::string readHttpSecret();
+
+void saveIp6tablesRuleForDeletion(std::string rule);
+
+inline const std::string idFilePath() {
+  return getConfigDir() + "id";
+}
+inline const std::string httpSecretFilePath() {
+  return getConfigDir() + "http_secret";
+}
+inline const std::string settingsFilePath() {
+  return getConfigDir() + "settings.json";
+}
+inline const std::string licenseFilePath() {
+  return getConfigDir() + "license.json";
+}
+inline const std::string controlSocketPath() {
+  return getConfigDir() + "control.sock";
+}
+inline const std::string ip6tablesRulesLogPath() {
+  return getConfigDir() + "ip6tables_rules";
+}
 
 }  // namespace FileStorage
