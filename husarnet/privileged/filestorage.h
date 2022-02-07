@@ -14,7 +14,7 @@ Identity* readIdentity();
 void generateAndWriteId();
 
 void generateAndWriteHttpSecret();
-std::string readHttpSecret();
+// std::string readHttpSecret();
 
 void saveIp6tablesRuleForDeletion(std::string rule);
 

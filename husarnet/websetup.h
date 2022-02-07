@@ -1,7 +1,10 @@
 #pragma once
 #include <list>
 #include <string>
-#include "husarnet_manager.h"
+#include "port.h"
+#include "sockets.h"
+
+class HusarnetManager;
 
 class WebsetupConnection {
   HusarnetManager* manager;

@@ -12,4 +12,7 @@ std::string getSelfHostname();
 void changeSelfHostname(std::string newHostname);
 
 void updateHostsFile(std::list<std::pair<std::string, IpAddress>> data);
+
+void saveLicenseFile(std::string contents);
+std::string readLicenseFile();
 }  // namespace Privileged

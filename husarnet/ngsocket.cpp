@@ -129,7 +129,7 @@ std::string idstr(DeviceId id) {
 #define IDSTR(id) idstr(id).c_str()
 
 struct NgSocketImpl : public NgSocket {
-  BaseConfig* baseConfig;
+  HusarnetManager* manager;
   std::unordered_map<DeviceId, Peer*> peers;
   std::unordered_map<InetAddress, Peer*, iphash> peerSourceAddresses;
   std::vector<InetAddress> localAddresses;  // sorted
@@ -144,7 +144,6 @@ struct NgSocketImpl : public NgSocket {
 
   int baseConnectRetries = 0;
   InetAddress baseAddress;
-  IpAddress baseAddressFromDns;
 
   // Transient base addresses.
   // We send a packet to one port from a range of base ports (around 20 ports),
@@ -197,25 +196,6 @@ struct NgSocketImpl : public NgSocket {
     if (currentTime() - lastBaseTcpAction >
         (baseConnection ? TCP_PONG_TIMEOUT : NAT_INIT_TIMEOUT))
       connectToBase();
-  }
-
-  void resolveBaseAddress() {
-    while (!baseAddressFromDns) {
-      baseAddressFromDns = GIL::unlocked<IpAddress>(
-          [&]() { return resolveToIp(baseConfig->getBaseDnsAddress()); });
-      if (baseAddressFromDns)
-        LOG("base address resolved to: %s", baseAddressFromDns.str().c_str());
-      GIL::unlocked<void>([&]() { sleep(5); });
-    }
-
-    while (true) {
-      IpAddress result = GIL::unlocked<IpAddress>(
-          [&]() { return resolveToIp(baseConfig->getBaseDnsAddress()); });
-      LOG("base address resolved to: %s", result.str().c_str());
-      if (result)
-        baseAddressFromDns = result;
-      GIL::unlocked<void>([&]() { sleep(180); });
-    }
   }
 
   std::string generalInfo(std::map<std::string, std::string> hosts =
@@ -693,8 +673,6 @@ struct NgSocketImpl : public NgSocket {
     // Passing std::bind crashes mingw_thread. The reason is not apparent.
     startThread([this]() { this->workerLoop(); }, "hworker",
                 /*stack=*/8000);
-    GIL::startThread([this]() { this->resolveBaseAddress(); }, "resolver",
-                     /*stack=*/3000);
 
     LOG("ngsocket %s listening on %d", IDSTR(deviceId), sourcePort);
   }
@@ -820,9 +798,9 @@ struct NgSocketImpl : public NgSocket {
   }
 };
 
-NgSocket* NgSocket::create(Identity* identity, BaseConfig* baseConfig) {
+NgSocket* NgSocket::create(Identity* identity, HusarnetManager* manager) {
   NgSocketImpl* sock = new NgSocketImpl;
-  sock->baseConfig = baseConfig;
+  sock->manager = manager;
   sock->pubkey = identity->pubkey;
   sock->deviceId = identity->deviceId;
   sock->identity = identity;
@@ -1003,15 +981,12 @@ void NgSocketImpl::connectToBase() {
   if (options->overrideBaseAddress) {
     baseAddress = options->overrideBaseAddress;
   } else {
-    if (!baseAddress) {
-      baseAddress = {baseAddressFromDns, 443};
-    }
-
     if (baseConnectRetries > 2) {
       // failover
-      auto baseTcpAddressesTmp = baseConfig->getBaseTcpAddresses();
-      baseAddress =
-          baseTcpAddressesTmp[baseConnectRetries % baseTcpAddressesTmp.size()];
+      auto baseTcpAddressesTmp = manager->getBaseServerAddresses();
+      baseAddress = {
+          baseTcpAddressesTmp[baseConnectRetries % baseTcpAddressesTmp.size()],
+          443};
       LOG("retrying with fallback base address: %s", baseAddress.str().c_str());
     }
   }

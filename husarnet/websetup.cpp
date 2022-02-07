@@ -3,6 +3,7 @@
 #include <sstream>
 #include "global_lock.h"
 #include "husarnet_config.h"
+#include "husarnet_manager.h"
 #include "port.h"
 #include "sockets.h"
 #include "util.h"

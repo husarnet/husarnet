@@ -1,7 +1,9 @@
 #pragma once
 
+class HusarnetManager;
+
 namespace APIServer {
 
-void httpThread();
+void httpThread(HusarnetManager& manager);
 
 }

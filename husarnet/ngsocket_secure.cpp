@@ -449,12 +449,12 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
   }
 };
 
-NgSocket* NgSocketSecure::create(Identity* identity, BaseConfig* baseConfig) {
+NgSocket* NgSocketSecure::create(Identity* identity, HusarnetManager* manager) {
   NgSocketSecureImpl* self = new NgSocketSecureImpl;
   self->pubkey = identity->pubkey;
   self->deviceId = identity->deviceId;
   self->identity = identity;
-  self->socket = NgSocket::create(identity, baseConfig);
+  self->socket = NgSocket::create(identity, manager);
   self->options = self->socket->options;
   self->socket->delegate = self;
   return self;

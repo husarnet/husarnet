@@ -5,7 +5,6 @@
 #include <sodium.h>
 #include <algorithm>
 #include <fstream>
-#include "filestorage.h"
 #include "husarnet_config.h"
 #include "licensing.h"
 #include "sockets.h"
@@ -24,7 +23,9 @@ json retrieveLicenseJson(std::string dashboardHostname) {
 
   std::string request =
       "GET /license.json HTTP/1.1\n"
-      "Host: app.husarnet.com\n"
+      "Host: " +
+      dashboardHostname +
+      "\n"
       "User-Agent: husarnet\n"
       "Accept: */*\n\n";
 
@@ -97,6 +98,6 @@ IpAddress License::getWebsetupAddress() {
   return this->websetupAddress;
 }
 
-std::list<IpAddress> License::getBaseServerAddresses() {
+std::vector<IpAddress> License::getBaseServerAddresses() {
   return this->baseServerAddresses;
 }

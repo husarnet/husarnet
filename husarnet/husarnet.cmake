@@ -36,6 +36,12 @@ if (DEFINED FAIL_ON_WARNING)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wconversion")
 endif()
 
+if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows))
+  set(BUILD_HTTP_CONTROL_API TRUE)
+else()
+  set(BUILD_HTTP_CONTROL_API FALSE)
+endif()
+
 # Add all required headers and source files
 list(APPEND husarnet_core_SRC)  # This is more of a define rather than an append
 
@@ -55,15 +61,11 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/ports)
 file(GLOB husarnet_ports_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_ports_SRC})
 
-# @TODO make this work
-# So includes like "husarnet/something.h" do work too
-# include_directories(${CMAKE_CURRENT_LIST_DIR}/..)
-include_directories(${CMAKE_CURRENT_LIST_DIR})
+include_directories(${CMAKE_CURRENT_LIST_DIR}/privileged)
+file(GLOB husarnet_privileged_SRC "${CMAKE_CURRENT_LIST_DIR}/privileged/*.cpp")
+list(APPEND husarnet_core_SRC ${husarnet_privileged_SRC})
 
-file(GLOB core_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
-list(APPEND husarnet_core_SRC ${core_SRC})
-
-if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows))
+if (${BUILD_HTTP_CONTROL_API})
   include_directories(${CMAKE_CURRENT_LIST_DIR}/cli)
   file(GLOB cli_SRC "${CMAKE_CURRENT_LIST_DIR}/cli/*.cpp")
   list(APPEND husarnet_core_SRC ${cli_SRC})
@@ -73,6 +75,17 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Window
   list(APPEND husarnet_core_SRC ${api_server_SRC})
 endif()
 
+# Top level project files
+
+# @TODO make this work
+# So includes like "husarnet/something.h" do work too
+# include_directories(${CMAKE_CURRENT_LIST_DIR}/..)
+include_directories(${CMAKE_CURRENT_LIST_DIR})
+
+file(GLOB core_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
+list(APPEND husarnet_core_SRC ${core_SRC})
+
+# Join all of the above
 add_library(husarnet_core STATIC ${husarnet_core_SRC})
 
 # Configure dependencies
@@ -127,7 +140,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL Windows)
 endif()
 
 # Enable HTTP control API and CLI
-if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows))
+if (${BUILD_HTTP_CONTROL_API})
   add_compile_definitions(HTTP_CONTROL_API)
 
   FetchContent_Declare(

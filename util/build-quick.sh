@@ -22,6 +22,8 @@ mkdir -p ${build_tests_base}
 cp ${build_base}/amd64/unix/husarnet ${build_tests_base}/husarnet
 cp ${build_base}/amd64/unix/tests ${build_tests_base}/unit-tests
 
+exit 0
+
 # Docker builds
 # echo "===== Docker ====="
 

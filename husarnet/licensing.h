@@ -12,11 +12,11 @@ json retrieveLicenseJSON(std::string dashboardHostname);
 class License {
   std::string dashboardUrl;
   IpAddress websetupAddress;
-  std::list<IpAddress> baseServerAddresses;
+  std::vector<IpAddress> baseServerAddresses;
 
  public:
   License(std::string dashboardHostname);
   std::string getDashboardUrl();
   IpAddress getWebsetupAddress();
-  std::list<IpAddress> getBaseServerAddresses();
+  std::vector<IpAddress> getBaseServerAddresses();
 };

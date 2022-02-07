@@ -1,6 +1,6 @@
 #include "api_server/server.h"
+#include "../husarnet_manager.h"
 #include "api_server/common.h"
-#include "configmanager.h"
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 #include "util.h"
@@ -71,7 +71,7 @@ static bool requireParams(const httplib::Request& req,
   return true;
 }
 
-void httpThread(ConfigManager& configManager) {
+void httpThread(HusarnetManager& manager) {
   httplib::Server svr;
 
   // Test endpoint
@@ -81,14 +81,16 @@ void httpThread(ConfigManager& configManager) {
 
   svr.Get("/control/status", [&](const httplib::Request& req,
                                  httplib::Response& res) {
-    returnSuccess(req, res,
-                  {{"version", configManager.getVersion()},
-                   {"local_ip", configManager.getSelfAddress()},
-                   {"local_hostname", configManager.getSelfHostname()},
-                   {"is_joined", configManager.isJoined()},
-                   {"base_connection",
-                    {{"type", configManager.getCurrentBaseProtocol()},
-                     {"address", configManager.getCurrentBaseAddress()}}}});
+    returnSuccess(
+        req, res,
+        json::object(
+            {{"version", manager.getVersion()},
+             {"local_ip", manager.getSelfAddress().toFstring()},
+             {"local_hostname", manager.getSelfHostname()},
+             {"is_joined", manager.isJoined()},
+             {"base_connection",
+              {{"type", manager.getCurrentBaseProtocol()},
+               {"address", manager.getCurrentBaseAddress().toFstring()}}}}));
   });
 
   svr.Post("/control/join",
@@ -103,7 +105,7 @@ void httpThread(ConfigManager& configManager) {
 
              std::string code = req.get_param_value("code");
              std::string hostname = req.get_param_value("hostname");
-             configManager.joinNetwork(code, hostname);
+             manager.joinNetwork(code, hostname);
              returnSuccess(req, res);
            });
 
@@ -118,9 +120,8 @@ void httpThread(ConfigManager& configManager) {
     }
 
     try {
-      configManager.hostTableAdd(
-          req.get_param_value("hostname"),
-          IpAddress::parse(req.get_param_value("address")));
+      manager.hostTableAdd(req.get_param_value("hostname"),
+                           IpAddress::parse(req.get_param_value("address")));
       returnSuccess(req, res);
     } catch (ConfigEditFailed& err) {
       returnError(req, res, std::string("could not add host ") + err.what());
@@ -138,7 +139,7 @@ void httpThread(ConfigManager& configManager) {
     }
 
     try {
-      configManager.hostTableRm(req.get_param_value("hostname"));
+      manager.hostTableRm(req.get_param_value("hostname"));
       returnSuccess(req, res);
     } catch (ConfigEditFailed& err) {
       returnError(req, res, std::string("could not rm host ") + err.what());
@@ -148,7 +149,7 @@ void httpThread(ConfigManager& configManager) {
   svr.Get("/control/whitelist/ls",
           [&](const httplib::Request& req, httplib::Response& res) {
             std::vector<std::string> list;
-            for (auto addr : configManager.getWhitelist()) {
+            for (auto addr : manager.getWhitelist()) {
               list.push_back(addr.str());
             }
             returnSuccess(req, res, list);
@@ -165,8 +166,7 @@ void httpThread(ConfigManager& configManager) {
     }
 
     try {
-      configManager.whitelistAdd(
-          IpAddress::parse(req.get_param_value("address")));
+      manager.whitelistAdd(IpAddress::parse(req.get_param_value("address")));
       returnSuccess(req, res);
     } catch (ConfigEditFailed& err) {
       returnError(req, res,
@@ -185,8 +185,7 @@ void httpThread(ConfigManager& configManager) {
     }
 
     try {
-      configManager.whitelistRm(
-          IpAddress::parse(req.get_param_value("address")));
+      manager.whitelistRm(IpAddress::parse(req.get_param_value("address")));
       returnSuccess(req, res);
     } catch (ConfigEditFailed& err) {
       returnError(
@@ -202,7 +201,7 @@ void httpThread(ConfigManager& configManager) {
     }
 
     try {
-      configManager.whitelistEnable();
+      manager.whitelistEnable();
       returnSuccess(req, res);
     } catch (ConfigEditFailed& err) {
       returnError(req, res,
@@ -217,7 +216,7 @@ void httpThread(ConfigManager& configManager) {
     }
 
     try {
-      configManager.whitelistDisable();
+      manager.whitelistDisable();
       returnSuccess(req, res);
     } catch (ConfigEditFailed& err) {
       returnError(req, res,
@@ -227,30 +226,30 @@ void httpThread(ConfigManager& configManager) {
 
   svr.Get("/control/logs/get",
           [&](const httplib::Request& req, httplib::Response& res) {
-            returnSuccess(req, res, configManager.logManager.getLogs());
+            returnSuccess(req, res, manager.getLogManager().getLogs());
           });
 
   svr.Get("/control/logs/settings", [&](const httplib::Request& req,
                                         httplib::Response& res) {
-    // najpierw przenalizuj argumenty i zmien ustawienia a potem wypluj slownik
-    // z aktualnymi
+    auto logManager = manager.getLogManager();
+
     if (req.has_param("verbosity") || req.has_param("size")) {
       if (!validateSecret(req, res)) {
         return;
       }
+
       if (req.has_param("verbosity")) {
-        configManager.logManager.setVerbosity(req.get_param_value("verbosity"));
+        logManager.setVerbosity(std::stoi(req.get_param_value("verbosity")));
       }
       if (req.has_param("size")) {
-        configManager.logManager.setSize(req.get_param_value("size"));
+        logManager.setSize(std::stoi(req.get_param_value("size")));
       }
     }
 
-    returnSuccess(
-        req, res,
-        {{"verbosity", configManager.logManager.getVerbosity()},
-         {"size", configManager.logManager.getSize()},
-         {"current_size", configManager.logManager.getCurrentSize()}});
+    returnSuccess(req, res,
+                  {{"verbosity", logManager.getVerbosity()},
+                   {"size", logManager.getSize()},
+                   {"current_size", logManager.getCurrentSize()}});
   });
 
   if (!svr.bind_to_port("127.0.0.1", getApiPort())) {

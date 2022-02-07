@@ -1,7 +1,6 @@
 
 #include "api_client.h"
 #include "api_server/common.h"
-#include "filestorage.h"
 
 httplib::Client prepareApiClient() {
   httplib::Client client(
@@ -13,8 +12,10 @@ httplib::Client prepareApiClient() {
 
 httplib::Params prepareApiParams() {
   httplib::Params params;
-  std::string secret = FileStorage::readHttpSecret(FileStorage::getConfigDir());
-  params.emplace("secret", secret);
+  // @TODO link this properly
+  // std::string secret =
+  // FileStorage::readHttpSecret(FileStorage::getConfigDir());
+  // params.emplace("secret", secret);
   return params;
 }
 

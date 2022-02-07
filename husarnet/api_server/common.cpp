@@ -9,5 +9,7 @@ int getApiPort() {
 }
 
 std::string getApiSecret() {
-  return FileStorage::readHttpSecret();
+  // return FileStorage::readHttpSecret();
+  // @TODO implement this
+  return "";
 }
