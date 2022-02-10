@@ -119,32 +119,24 @@ void httpThread(HusarnetManager& manager) {
       return;
     }
 
-    try {
-      manager.hostTableAdd(req.get_param_value("hostname"),
-                           IpAddress::parse(req.get_param_value("address")));
-      returnSuccess(req, res);
-    } catch (ConfigEditFailed& err) {
-      returnError(req, res, std::string("could not add host ") + err.what());
-    }
+    manager.hostTableAdd(req.get_param_value("hostname"),
+                         IpAddress::parse(req.get_param_value("address")));
+    returnSuccess(req, res);
   });
 
-  svr.Post("/control/host/rm", [&](const httplib::Request& req,
-                                   httplib::Response& res) {
-    if (!validateSecret(req, res)) {
-      return;
-    }
+  svr.Post("/control/host/rm",
+           [&](const httplib::Request& req, httplib::Response& res) {
+             if (!validateSecret(req, res)) {
+               return;
+             }
 
-    if (!requireParams(req, res, {"hostname"})) {
-      return;
-    }
+             if (!requireParams(req, res, {"hostname"})) {
+               return;
+             }
 
-    try {
-      manager.hostTableRm(req.get_param_value("hostname"));
-      returnSuccess(req, res);
-    } catch (ConfigEditFailed& err) {
-      returnError(req, res, std::string("could not rm host ") + err.what());
-    }
-  });
+             manager.hostTableRm(req.get_param_value("hostname"));
+             returnSuccess(req, res);
+           });
 
   svr.Get("/control/whitelist/ls",
           [&](const httplib::Request& req, httplib::Response& res) {
@@ -165,13 +157,8 @@ void httpThread(HusarnetManager& manager) {
       return;
     }
 
-    try {
-      manager.whitelistAdd(IpAddress::parse(req.get_param_value("address")));
-      returnSuccess(req, res);
-    } catch (ConfigEditFailed& err) {
-      returnError(req, res,
-                  std::string("could not add host to whitelist ") + err.what());
-    }
+    manager.whitelistAdd(IpAddress::parse(req.get_param_value("address")));
+    returnSuccess(req, res);
   });
 
   svr.Post("/control/whitelist/rm", [&](const httplib::Request& req,
@@ -184,45 +171,29 @@ void httpThread(HusarnetManager& manager) {
       return;
     }
 
-    try {
-      manager.whitelistRm(IpAddress::parse(req.get_param_value("address")));
-      returnSuccess(req, res);
-    } catch (ConfigEditFailed& err) {
-      returnError(
-          req, res,
-          std::string("could not remove host from whitelist ") + err.what());
-    }
+    manager.whitelistRm(IpAddress::parse(req.get_param_value("address")));
+    returnSuccess(req, res);
   });
 
-  svr.Post("/control/whitelist/enable", [&](const httplib::Request& req,
-                                            httplib::Response& res) {
-    if (!validateSecret(req, res)) {
-      return;
-    }
+  svr.Post("/control/whitelist/enable",
+           [&](const httplib::Request& req, httplib::Response& res) {
+             if (!validateSecret(req, res)) {
+               return;
+             }
 
-    try {
-      manager.whitelistEnable();
-      returnSuccess(req, res);
-    } catch (ConfigEditFailed& err) {
-      returnError(req, res,
-                  std::string("could not enable whitelist ") + err.what());
-    }
-  });
+             manager.whitelistEnable();
+             returnSuccess(req, res);
+           });
 
-  svr.Post("/control/whitelist/disable", [&](const httplib::Request& req,
-                                             httplib::Response& res) {
-    if (!validateSecret(req, res)) {
-      return;
-    }
+  svr.Post("/control/whitelist/disable",
+           [&](const httplib::Request& req, httplib::Response& res) {
+             if (!validateSecret(req, res)) {
+               return;
+             }
 
-    try {
-      manager.whitelistDisable();
-      returnSuccess(req, res);
-    } catch (ConfigEditFailed& err) {
-      returnError(req, res,
-                  std::string("could not disable whitelist ") + err.what());
-    }
-  });
+             manager.whitelistDisable();
+             returnSuccess(req, res);
+           });
 
   svr.Get("/control/logs/get",
           [&](const httplib::Request& req, httplib::Response& res) {

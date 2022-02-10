@@ -1,8 +1,6 @@
 #include "ports/port.h"
 
 #include <sstream>
-#include "configtable_inmemory.h"
-#include "configtable_persistent.h"
 #include "global_lock.h"
 #include "husarnet_config.h"
 #include "husarnet_crypto.h"
@@ -15,31 +13,31 @@
 #include "api_server/server.h"
 #endif
 
-HusarnetManager::HusarnetManager() {}
-
 std::string HusarnetManager::configGet(std::string networkId,
                                        std::string key,
                                        std::string defaultValue) {
-  auto v = configTable->getValueForNetwork(networkId, "config", key);
-  if (v.size() == 0) {
-    return defaultValue;
-  }
-  if (v.size() > 1) {
-    LOG("warning: multiple values for config key %s", key.c_str());
-  }
+  // auto v = configTable->getValueForNetwork(networkId, "config", key);
+  // if (v.size() == 0) {
+  //   return defaultValue;
+  // }
+  // if (v.size() > 1) {
+  //   LOG("warning: multiple values for config key %s", key.c_str());
+  // }
 
-  return v[0];
+  // return v[0];
+  return "";  // @TODO
 }
 
 std::string HusarnetManager::configSet(std::string networkId,
                                        std::string key,
                                        std::string value) {
-  configTable->runInTransaction([&]() {
-    configTable->removeValues(networkId, "config", key);
-    configTable->insert(ConfigRow{networkId, "config", key, value});
-  });
+  // configTable->runInTransaction([&]() {
+  //   configTable->removeValues(networkId, "config", key);
+  //   configTable->insert(ConfigRow{networkId, "config", key, value});
+  // });
 
-  return value;
+  // return value;
+  return "";  // @TODO
 }
 
 LogManager& HusarnetManager::getLogManager() {
@@ -75,37 +73,39 @@ void HusarnetManager::updateHosts() {
   std::vector<std::pair<IpAddress, std::string>> hosts;
   std::unordered_set<std::string> mappedHosts;
 
-  for (std::string netId : configTable->listNetworks()) {
-    for (auto row : configTable->listValuesForNetwork(netId, "host")) {
-      hosts.push_back({IpAddress::parse(row.value), row.key});
-      mappedHosts.insert(row.key);
-    }
-  }
+  // for (std::string netId : configTable->listNetworks()) {
+  //   for (auto row : configTable->listValuesForNetwork(netId, "host")) {
+  //     hosts.push_back({IpAddress::parse(row.value), row.key});
+  //     mappedHosts.insert(row.key);
+  //   }
+  // }
 
-  {
-    // TODO: this should be configurable.
-    // Ensure "master" and hostname of device are always mapped.
-    if (mappedHosts.find("master") == mappedHosts.end())
-      hosts.push_back({IpAddress::parse("::1"), "master"});
+  // {
+  //   // TODO: this should be configurable.
+  //   // Ensure "master" and hostname of device are always mapped.
+  //   if (mappedHosts.find("master") == mappedHosts.end())
+  //     hosts.push_back({IpAddress::parse("::1"), "master"});
 
-    std::string my_hostname = configGet("manual", "hostname", "");
+  //   std::string my_hostname = configGet("manual", "hostname", "");
 
-    if (my_hostname.size() > 0)
-      if (mappedHosts.find(my_hostname) == mappedHosts.end())
-        hosts.push_back({IpAddress::parse("::1"), my_hostname});
-  }
+  //   if (my_hostname.size() > 0)
+  //     if (mappedHosts.find(my_hostname) == mappedHosts.end())
+  //       hosts.push_back({IpAddress::parse("::1"), my_hostname});
+  // }
 
-  std::sort(hosts.begin(), hosts.end());
+  // std::sort(hosts.begin(), hosts.end());
   // hostsFileUpdateFunc(hosts);  @TODO  link this properly (privileged
   // something)
+  // @TODO implement this
 }
 
 IpAddress HusarnetManager::resolveHostname(std::string hostname) {
-  auto values = configTable->getValue("host", hostname);
-  if (values.size() > 0)
-    return IpAddress::parse(values[0]);
-  else
-    return IpAddress{};
+  // auto values = configTable->getValue("host", hostname);
+  // if (values.size() > 0)
+  //   return IpAddress::parse(values[0]);
+  // else
+  //   return IpAddress{};
+  return IpAddress{};  // @TODO fix this
 }
 
 // @TODO implement this maybe
@@ -188,9 +188,11 @@ std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id) {
   if (std::string(id).find("\xff\x15\xf2\xd3\xa3\x89") == 0) {
     std::vector<DeviceId> res;
 
-    for (auto row : configTable->listValuesForNetwork("manual", "whitelist")) {
-      res.push_back(IpAddress::parse(row.key).toBinary());
-    }
+    // for (auto row : configTable->listValuesForNetwork("manual", "whitelist"))
+    // {
+    //   res.push_back(IpAddress::parse(row.key).toBinary());
+    // }
+    // @TODO fix this
 
     return res;
   } else {
@@ -204,16 +206,20 @@ int HusarnetManager::getLatency(IpAddress destination) {
 }
 
 void HusarnetManager::cleanup() {
-  configTable->runInTransaction([&]() {
-    configTable->removeAll("manual", "whitelist");
-    configTable->removeAll("manual", "host");
-  });
+  // configTable->runInTransaction([&]() {
+  //   configTable->removeAll("manual", "whitelist");
+  //   configTable->removeAll("manual", "host");
+  // });
+  // @TODO fix this
+}
+
+HusarnetManager::HusarnetManager() {
+  // configTable = createConfigTable(); @TODO
 }
 
 void HusarnetManager::runHusarnet() {
-  configTable =
-      createSqliteConfigTable(std::string("/usr/bin/husarnet") + "config.db");
-
+  // You need to get this variable as late as possible, so platforms like ESP32
+  // can prepopulate config with orverriden data
   auto dashboardHostname =
       configGet("manual", "dashboard-hostname", "app.husarnet.com");
   this->license = new License(dashboardHostname);

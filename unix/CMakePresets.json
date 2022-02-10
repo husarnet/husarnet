@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "configurePresets": [
+    {
+      "name": "unix",
+      "displayName": "Configure preset using toolchain file",
+      "description": "Sets Ninja generator, build and install directory",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "arch_amd64.cmake",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build"
+      }
+    }
+  ]
+}

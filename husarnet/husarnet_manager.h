@@ -3,7 +3,7 @@
 
 #include <unordered_set>
 #include <vector>
-#include "configtable_interface.h"
+#include "config_storage.h"
 #include "licensing.h"
 #include "logmanager.h"
 #include "ngsocket.h"
@@ -13,10 +13,10 @@ using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
 
 class HusarnetManager {
-  Identity* identity;        // @TODO
-  NgSocket* sock;            // @TODO
-  ConfigTable* configTable;  // @TODO
-  LogManager* logManager;    // @TODO
+  Identity* identity;  // @TODO
+  NgSocket* sock;      // @TODO
+  ConfigStorage* configStorage;
+  LogManager* logManager;  // @TODO
   WebsetupConnection* websetup;
   License* license;
 

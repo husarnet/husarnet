@@ -36,10 +36,11 @@ if (DEFINED FAIL_ON_WARNING)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wconversion")
 endif()
 
+# Configure the build
+set(BUILD_HTTP_CONTROL_API FALSE)
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows))
   set(BUILD_HTTP_CONTROL_API TRUE)
-else()
-  set(BUILD_HTTP_CONTROL_API FALSE)
 endif()
 
 # Add all required headers and source files
@@ -102,6 +103,24 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL Android)
   target_link_libraries(husarnet_core log)
 endif()
 
+FetchContent_Declare(
+  nlohmann_json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG        v3.10.5
+)
+set(JSON_BuildTests OFF)
+FetchContent_MakeAvailable(nlohmann_json)
+target_link_libraries(husarnet_core nlohmann_json)
+
+FetchContent_Declare(
+  better_enums
+  GIT_REPOSITORY https://github.com/aantron/better-enums.git
+  GIT_TAG        0.11.3
+)
+FetchContent_MakeAvailable(better_enums)
+# target_link_libraries(husarnet_core better_enums)
+target_include_directories(husarnet_core PUBLIC ${better_enums_SOURCE_DIR})
+
 # Include unix port libraries
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   FetchContent_Declare(
@@ -109,17 +128,16 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     GIT_REPOSITORY https://github.com/c-ares/c-ares.git
     GIT_TAG        cares-1_18_1
   )
-
-  FetchContent_GetProperties(c-ares)
-  if(NOT c-ares_POPULATED)
-    FetchContent_Populate(c-ares)
-    set(CMAKE_PROJECT_VERSION 0.0.0)
-    set(CARES_SHARED OFF)
-    set(CARES_STATIC ON)
-    set(CARES_STATIC_PIC ON)
-    add_subdirectory(${c-ares_SOURCE_DIR} ${c-ares_BINARY_DIR} EXCLUDE_FROM_ALL)
-    target_link_libraries(husarnet_core c-ares)
-  endif()
+  set(CARES_SHARED OFF)
+  set(CARES_STATIC ON)
+  set(CARES_STATIC_PIC ON)
+  set(CARES_INSTALL OFF)
+  set(CARES_BUILD_TESTS OFF)
+  set(CARES_BUILD_CONTAINER_TESTS OFF)
+  set(CARES_BUILD_TOOLS OFF)
+  add_compile_definitions(CARES_STATICLIB)
+  FetchContent_MakeAvailable(c-ares)
+  target_link_libraries(husarnet_core c-ares)
 endif()
 
 # Include windows port libraries
@@ -129,14 +147,9 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL Windows)
     GIT_REPOSITORY https://github.com/meganz/mingw-std-threads.git
     GIT_TAG        f73afbe664bf3beb93a01274246de80d543adf6e
   )
-
-  FetchContent_GetProperties(mingw-std-threads)
-  if(NOT mingw-std-threads_POPULATED)
-    FetchContent_Populate(mingw-std-threads)
-    option(MINGW_STDTHREADS_GENERATE_STDHEADERS "" ON)
-    add_subdirectory(${mingw-std-threads_SOURCE_DIR} ${mingw-std-threads_BINARY_DIR} EXCLUDE_FROM_ALL)
-    target_link_libraries(husarnet_core mingw_stdthreads)
-  endif()
+  set(MINGW_STDTHREADS_GENERATE_STDHEADERS ON)
+  FetchContent_MakeAvailable(mingw-std-threads)
+  target_link_libraries(husarnet_core mingw_stdthreads)
 endif()
 
 # Enable HTTP control API and CLI
@@ -148,30 +161,20 @@ if (${BUILD_HTTP_CONTROL_API})
     GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
     GIT_TAG        v0.10.1
   )
+  set(BUILD_SHARED_LIBS OFF)
+  set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF)
+  set(HTTPLIB_USE_OPENSSL_IF_AVAILABLE OFF)
+  set(HTTPLIB_REQUIRE_OPENSSL OFF)
+  set(HTTPLIB_REQUIRE_ZLIB OFF)
+  set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF)
+  set(HTTPLIB_REQUIRE_BROTLI OFF)
+  set(HTTPLIB_COMPILE ON)
+  FetchContent_MakeAvailable(httplib)
+  target_link_libraries(husarnet_core httplib)
+  # include_directories(${httplib_SOURCE_DIR})
 
-  FetchContent_GetProperties(httplib)
-  if(NOT httplib_POPULATED)
-    FetchContent_Populate(httplib)
-    set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF)
-    set(HTTPLIB_USE_OPENSSL_IF_AVAILABLE OFF)
-    add_subdirectory(${httplib_SOURCE_DIR} ${httplib_BINARY_DIR} EXCLUDE_FROM_ALL)
-    target_link_libraries(husarnet_core httplib)
-    # This is a hack working only for some specific libraries. Do not copy it to other places
-    include_directories(${httplib_SOURCE_DIR})
-  endif()
-
-  FetchContent_Declare(
-    nlohmann_json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG        v3.10.5
-  )
-
-  FetchContent_GetProperties(nlohmann_json)
-  if(NOT nlohmann_json_POPULATED)
-    FetchContent_Populate(nlohmann_json)
-    set(JSON_BuildTests OFF CACHE INTERNAL "")
-    add_subdirectory(${nlohmann_json_SOURCE_DIR} ${nlohmann_json_BINARY_DIR} EXCLUDE_FROM_ALL)
-    target_link_libraries(husarnet_core nlohmann_json)
+  if(IS_DIRECTORY "${httplib_SOURCE_DIR}")
+    set_property(DIRECTORY ${httplib_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
   endif()
 
   FetchContent_Declare(
@@ -179,11 +182,10 @@ if (${BUILD_HTTP_CONTROL_API})
     GIT_REPOSITORY https://github.com/docopt/docopt.cpp.git
     GIT_TAG        v0.6.3
   )
+  FetchContent_MakeAvailable(docopt)
+  target_link_libraries(husarnet_core docopt_s)
 
-  FetchContent_GetProperties(docopt)
-  if(NOT docopt_POPULATED)
-    FetchContent_Populate(docopt)
-    add_subdirectory(${docopt_SOURCE_DIR} ${docopt_BINARY_DIR} EXCLUDE_FROM_ALL)
-    target_link_libraries(husarnet_core docopt_s)
+  if(IS_DIRECTORY "${docopt_SOURCE_DIR}")
+    set_property(DIRECTORY ${docopt_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
   endif()
 endif()
