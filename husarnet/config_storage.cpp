@@ -1,3 +1,46 @@
+#include "config_storage.h"
+
+#define HOST_TABLE_KEY "host-table"
+
+ConfigStorage::ConfigStorage(
+    std::function<std::string()> readFunc,
+    std::function<void(std::string)> writeFunc,
+    std::map<UserSetting, std::string> settingsDefaults,
+    std::map<UserSetting, std::string> settingsEnvOverrides)
+    : readFunc(readFunc),
+      writeFunc(writeFunc),
+      settingsDefaults(settingsDefaults),
+      settingsEnvOverrides(settingsEnvOverrides) {
+  deserialize(readFunc());
+}
+
+std::string ConfigStorage::serialize() {
+  return this->currentData.dump(4);
+}
+
+void ConfigStorage::deserialize(std::string blob) {
+  this->currentData = json::parse(blob);
+}
+
+void ConfigStorage::save() {
+  if (!this->shouldSaveImmediately) {
+    return;
+  }
+
+  writeFunc(serialize());
+}
+
+void ConfigStorage::groupChanges(std::function<void()> f) {
+  this->shouldSaveImmediately = false;
+  f();
+  this->shouldSaveImmediately = true;
+  save();
+}
+
+void hostTableAdd(std::string hostname, IpAddress address) {
+  //   currentData[HOST_TABLE_KEY].
+}
+
 // #include "configstorage.h"
 // #include <exception>
 // #include <functional>
@@ -5,34 +48,6 @@
 // #include <unordered_set>
 // #include <vector>
 // #include "util.h"
-
-// ConfigTable::ConfigTable(std::function<std::string()> readFunc,
-//                          std::function<void(std::string)> writeFunc,
-//                          std::map<string, string> defaultValues,
-//                          std::map<string, string> environmentOverrides)
-//     : readFunc(readFunc),
-//       writeFunc(writeFunc),
-//       defaultValues(defaultValues),
-//       environmentOverrides(environmentOverrides)
-//     : {
-//   deserialize(readFunc());
-// }
-
-// std::string ConfigTable::serialize() {
-//   return this->currentData.dump(4);
-// }
-
-// void ConfigTable::deserialize(std::string blob) {
-//   this->currentData = json::parse(blob);
-// }
-
-// void ConfigTable::save() {
-//   if (!this->shouldSaveImmediately) {
-//     return;
-//   }
-
-//   writeFunc(serialize());
-// }
 
 // struct MemoryConfigTable : ConfigTable {
 //   struct Key {
@@ -100,8 +115,8 @@
 //     std::vector<std::string> split_data = split(data, '\0', 1000000);
 
 //     for (int i = 0; i + 4 <= (int)split_data.size(); i += 4) {
-//       insert(ConfigRow{split_data[i + 0], split_data[i + 1], split_data[i +
-//       2],
+//       insert(ConfigRow{split_data[i + 0], split_data[i + 1], split_data[i
+//       + 2],
 //                        split_data[i + 3]});
 //     }
 //   }
@@ -124,8 +139,8 @@
 //     writeData();
 //   }
 
-//   static Key _key(const ConfigRow& row) { return Key{row.kind, row.key}; }
-//   static Value _value(const ConfigRow& row) {
+//   static Key _key(const ConfigRow& row) { return Key{row.kind, row.key};
+//   } static Value _value(const ConfigRow& row) {
 //     return Value{row.networkId, row.value};
 //   }
 
@@ -179,7 +194,8 @@
 //     }
 //   }
 
-//   std::vector<std::string> getValueForNetwork(const std::string& networkId,
+//   std::vector<std::string> getValueForNetwork(const std::string&
+//   networkId,
 //                                               const std::string& kind,
 //                                               const std::string& key)
 //                                               override {
