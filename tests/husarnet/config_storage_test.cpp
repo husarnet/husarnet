@@ -1,50 +1,147 @@
 #include "config_storage.h"
 #include <catch2/catch.hpp>
 
-// template <typename T>
-// std::vector<T> sorted(std::vector<T> v) {
-//   std::sort(v.begin(), v.end());
-//   return v;
-// }
+TEST_CASE("Group changes") {
+  int writes = 0;
+  auto cs = new ConfigStorage([]() { return ""; },
+                              [&](std::string s) { writes++; }, {}, {}, {});
 
-// void testConfigTable(ConfigTable* t) {
-//   t->insert(ConfigRow{"testnet", "testcat", "testkey", "testval"});
-//   REQUIRE(t->getValue("testcat", "testkey") ==
-//           std::vector<std::string>{"testval"});
+  cs->hostTableAdd("foo", IpAddress::parse("dead:beef::1"));
+  cs->hostTableAdd("bar", IpAddress::parse("dead:beef::2"));
+  cs->hostTableAdd("baz", IpAddress::parse("dead:beef::3"));
 
-//   t->insert(ConfigRow{"testnet", "testcat", "testkey", "testval2"});
-//   REQUIRE(sorted(t->getValue("testcat", "testkey")) ==
-//           std::vector<std::string>{"testval", "testval2"});
-//   ;
+  REQUIRE(writes == 3);
 
-//   t->remove(ConfigRow{"testnet", "testcat", "testkey", "testval"});
-//   REQUIRE(t->getValue("testcat", "testkey") ==
-//           std::vector<std::string>{"testval2"});
-//   ;
+  cs->groupChanges([&]() {
+    cs->hostTableRm("foo");
+    cs->hostTableRm("bar");
+    cs->hostTableRm("baz");
+  });
 
-//   t->insert(ConfigRow{"testnet1", "testcat", "testkey", "testval3"});
-//   REQUIRE(t->getValueForNetwork("testnet", "testcat", "testkey") ==
-//           std::vector<std::string>{"testval2"});
-//   ;
-//   REQUIRE(sorted(t->getValue("testcat", "testkey")) ==
-//           std::vector<std::string>{"testval2", "testval3"});
-//   REQUIRE(sorted(t->listNetworks()) ==
-//           std::vector<std::string>{"testnet", "testnet1"});
+  REQUIRE(writes == 4);
+}
 
-//   t->removeAll("testnet", "testcat");
-//   REQUIRE(t->getValue("testcat", "testkey") ==
-//           std::vector<std::string>{"testval3"});
-//   REQUIRE(t->listNetworks() == std::vector<std::string>{"testnet1"});
-// }
+static ConfigStorage* makeTestStorage() {
+  return new ConfigStorage([]() { return ""; }, [&](std::string s) {}, {}, {},
+                           {});
+}
 
-// TEST_CASE("SQlite simple tests") {
-//   ConfigTable* t = createSqliteConfigTable(":memory:");
-//   t->open();
-//   testConfigTable(t);
-// }
+TEST_CASE("ConfigStorage initialization") {
+  makeTestStorage();
+}
 
-// TEST_CASE("memory configtable simple tests") {
-//   ConfigTable* t = createMemoryConfigTable("", [](std::string data) {});
-//   t->open();
-//   testConfigTable(t);
-// }
+TEST_CASE("Host table operations") {
+  auto cs = makeTestStorage();
+  REQUIRE(cs->getHostTable().empty());
+
+  std::string foo_hostname = "foo";
+  auto foo_ip = IpAddress::parse("dead:beef::1");
+
+  cs->hostTableAdd(foo_hostname, foo_ip);
+  REQUIRE(cs->getHostTable().size() == 1);
+  REQUIRE(cs->getHostTable().count(foo_hostname) == 1);
+  REQUIRE(cs->getHostTable()[foo_hostname] == foo_ip);
+
+  std::string bar_hostname = "bar";
+  auto bar_ip = IpAddress::parse("dead:beef::2");
+
+  cs->hostTableAdd(bar_hostname, bar_ip);
+  REQUIRE(cs->getHostTable().size() == 2);
+  REQUIRE(cs->getHostTable().count(bar_hostname) == 1);
+  REQUIRE(cs->getHostTable()[bar_hostname] == bar_ip);
+
+  cs->hostTableRm(bar_hostname);
+  REQUIRE(cs->getHostTable().size() == 1);
+  REQUIRE(cs->getHostTable().count(bar_hostname) == 0);
+
+  cs->hostTableClear();
+  REQUIRE(cs->getHostTable().empty());
+}
+
+TEST_CASE("Whitelist operations") {
+  auto cs = makeTestStorage();
+  REQUIRE(cs->getWhitelist().empty());
+
+  REQUIRE_FALSE(cs->isOnWhitelist(IpAddress::parse("dead:beef::0")));
+
+  cs->whitelistAdd(IpAddress::parse("dead:beef::1"));
+  REQUIRE(cs->isOnWhitelist(IpAddress::parse("dead:beef::1")));
+
+  cs->whitelistAdd(IpAddress::parse("dead:beef::2"));
+  REQUIRE(cs->isOnWhitelist(IpAddress::parse("dead:beef::2")));
+
+  cs->whitelistRm(IpAddress::parse("dead:beef::1"));
+  REQUIRE_FALSE(cs->isOnWhitelist(IpAddress::parse("dead:beef::1")));
+  REQUIRE(cs->isOnWhitelist(IpAddress::parse("dead:beef::2")));
+
+  cs->whitelistClear();
+  REQUIRE_FALSE(cs->isOnWhitelist(IpAddress::parse("dead:beef::2")));
+  REQUIRE(cs->getWhitelist().empty());
+}
+
+TEST_CASE("Internal settings") {
+  auto cs =
+      new ConfigStorage([]() { return ""; }, [&](std::string s) {}, {}, {}, {});
+
+  SECTION("Unset fields should be empty and not error out") {
+    CAPTURE(cs->getCurrentData());
+    REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "");
+  }
+
+  SECTION("Direct setting") {
+    cs->setInternalSetting(InternalSetting::websetupSecret, "foo");
+    REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "foo");
+  }
+
+  cs = new ConfigStorage([]() { return ""; }, [&](std::string s) {}, {}, {},
+                         {{InternalSetting::websetupSecret, "foo"}});
+
+  SECTION("Default setting") {
+    REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "foo");
+  }
+
+  SECTION("Default setting override") {
+    cs->setInternalSetting(InternalSetting::websetupSecret, "bar");
+    REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "bar");
+  }
+}
+
+TEST_CASE("User settings") {
+  auto cs =
+      new ConfigStorage([]() { return ""; }, [&](std::string s) {}, {}, {}, {});
+
+  SECTION("Unset fields should be empty and not error out") {
+    CAPTURE(cs->getCurrentData());
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "");
+  }
+
+  SECTION("Direct setting") {
+    cs->setUserSetting(UserSetting::dashboardUrl, "foo");
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "foo");
+  }
+
+  cs = new ConfigStorage([]() { return ""; }, [&](std::string s) {},
+                         {{UserSetting::dashboardUrl, "foo"}}, {}, {});
+
+  SECTION("Default setting") {
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "foo");
+  }
+
+  SECTION("Default setting override") {
+    cs->setUserSetting(UserSetting::dashboardUrl, "bar");
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "bar");
+  }
+
+  cs = new ConfigStorage([]() { return ""; }, [&](std::string s) {},
+                         {{UserSetting::dashboardUrl, "foo"}},
+                         {{UserSetting::dashboardUrl, "bar"}}, {});
+
+  SECTION("Override setting") {
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "bar");
+  }
+
+  SECTION("Override still wins") {
+    cs->setUserSetting(UserSetting::dashboardUrl, "baz");
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "bar");
+  }
+}

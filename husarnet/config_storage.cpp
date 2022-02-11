@@ -1,16 +1,21 @@
 #include "config_storage.h"
 
 #define HOST_TABLE_KEY "host-table"
+#define WHITELIST_KEY "whitelist"
+#define INTERNAL_SETTINGS_KEY "internal-settings"
+#define USER_SETTINGS_KEY "user-settings"
 
 ConfigStorage::ConfigStorage(
     std::function<std::string()> readFunc,
     std::function<void(std::string)> writeFunc,
-    std::map<UserSetting, std::string> settingsDefaults,
-    std::map<UserSetting, std::string> settingsEnvOverrides)
+    std::map<UserSetting, std::string> userDefaults,
+    std::map<UserSetting, std::string> userOverrides,
+    std::map<InternalSetting, std::string> internalDefaults)
     : readFunc(readFunc),
       writeFunc(writeFunc),
-      settingsDefaults(settingsDefaults),
-      settingsEnvOverrides(settingsEnvOverrides) {
+      userDefaults(userDefaults),
+      userOverrides(userOverrides),
+      internalDefaults(internalDefaults) {
   deserialize(readFunc());
 }
 
@@ -19,11 +24,25 @@ std::string ConfigStorage::serialize() {
 }
 
 void ConfigStorage::deserialize(std::string blob) {
+  // Initialize an empty file with something JSON-ish
+  if (blob.length() < 3) {
+    blob = "{}";
+  }
+
   this->currentData = json::parse(blob);
 
   // Make sure that all data is in a proper format
-  if (!currentData[HOST_TABLE_KEY].is_array()) {
-    currentData[HOST_TABLE_KEY] = json::array();
+  if (!currentData[HOST_TABLE_KEY].is_object()) {
+    currentData[HOST_TABLE_KEY] = json::object();
+  }
+  if (!currentData[WHITELIST_KEY].is_array()) {
+    currentData[WHITELIST_KEY] = json::array();
+  }
+  if (!currentData[INTERNAL_SETTINGS_KEY].is_object()) {
+    currentData[INTERNAL_SETTINGS_KEY] = json::object();
+  }
+  if (!currentData[USER_SETTINGS_KEY].is_object()) {
+    currentData[USER_SETTINGS_KEY] = json::object();
   }
 }
 
@@ -35,6 +54,10 @@ void ConfigStorage::save() {
   writeFunc(serialize());
 }
 
+json ConfigStorage::getCurrentData() {
+  return currentData;
+}
+
 void ConfigStorage::groupChanges(std::function<void()> f) {
   this->shouldSaveImmediately = false;
   f();
@@ -42,215 +65,119 @@ void ConfigStorage::groupChanges(std::function<void()> f) {
   save();
 }
 
-void hostTableAdd(std::string hostname, IpAddress address) {
-  //   currentData[HOST_TABLE_KEY].
+void ConfigStorage::hostTableAdd(std::string hostname, IpAddress address) {
+  currentData[HOST_TABLE_KEY][hostname] = address.toString();
+
+  save();
 }
 
-// #include "configstorage.h"
-// #include <exception>
-// #include <functional>
-// #include <unordered_map>
-// #include <unordered_set>
-// #include <vector>
-// #include "util.h"
+void ConfigStorage::hostTableRm(std::string hostname) {
+  currentData[HOST_TABLE_KEY].erase(hostname);
+  save();
+}
 
-// struct MemoryConfigTable : ConfigTable {
-//   struct Key {
-//     std::string kind;
-//     std::string key;
+std::map<std::string, IpAddress> ConfigStorage::getHostTable() {
+  std::map<std::string, IpAddress> r;
 
-//     bool operator==(const Key& o) const {
-//       return kind == o.kind && key == o.key;
-//     }
-//   };
+  for (const auto& item :
+       currentData[HOST_TABLE_KEY].get<std::map<std::string, std::string>>()) {
+    r[item.first] = IpAddress::parse(item.second);
+  }
 
-//   struct KeyHash {
-//     unsigned operator()(const Key& k) const {
-//       return pair_hash<std::string, std::string>()(
-//           std::make_pair(k.kind, k.key));
-//     }
-//   };
+  return r;
+}
 
-//   struct Value {
-//     std::string networkId;
-//     std::string value;
+void ConfigStorage::hostTableClear() {
+  currentData[HOST_TABLE_KEY].clear();
+  save();
+}
 
-//     bool operator==(const Value& o) const {
-//       return networkId == o.networkId && value == o.value;
-//     }
-//   };
+void ConfigStorage::whitelistAdd(IpAddress address) {
+  currentData[WHITELIST_KEY] += address.toString();
+  save();
+}
 
-//   struct ValueHash {
-//     unsigned operator()(const Value& k) const {
-//       return pair_hash<std::string, std::string>()(
-//           std::make_pair(k.value, k.networkId));
-//     }
-//   };
+void ConfigStorage::whitelistRm(IpAddress address) {
+  auto strAddr = address.toString();
+  bool changed = true;
 
-//   std::unordered_map<Key, std::unordered_set<Value, ValueHash>, KeyHash>
-//   values;
+  // This will remove all occurences
+  while (changed) {
+    changed = false;
+    int i = 0;
+    for (const auto& item : currentData[WHITELIST_KEY]) {
+      if (strAddr == item) {
+        currentData[WHITELIST_KEY].erase(i);
+        changed = true;
+        break;
+      }
+      i++;
+    }
+  }
 
-//   // serialization
+  save();
+}
 
-//   static void stripZeroBytes(std::string s) {
-//     // there should be no zero bytes in the data, but better be sure
-//     for (char& c : s)
-//       if (c == '\0')
-//         c = ' ';
-//   }
+bool ConfigStorage::isOnWhitelist(IpAddress address) {
+  auto strAddr = address.toString();
 
-//   std::string serialize() {
-//     std::string result;
-//     for (const auto& vals : values) {
-//       Key k = vals.first;
-//       stripZeroBytes(k.key);
-//       stripZeroBytes(k.kind);
-//       for (Value v : vals.second) {
-//         stripZeroBytes(v.networkId);
-//         stripZeroBytes(v.value);
-//         result +=
-//             v.networkId + '\0' + k.kind + '\0' + k.key + '\0' + v.value +
-//             '\0';
-//       }
-//     }
-//     return result;
-//   }
+  for (const auto& item : currentData[WHITELIST_KEY]) {
+    if (strAddr == item) {
+      return true;
+    }
+  }
+  return false;
+}
 
-//   void deserialize(std::string data) {
-//     std::vector<std::string> split_data = split(data, '\0', 1000000);
+std::list<IpAddress> ConfigStorage::getWhitelist() {
+  std::list<IpAddress> r;
 
-//     for (int i = 0; i + 4 <= (int)split_data.size(); i += 4) {
-//       insert(ConfigRow{split_data[i + 0], split_data[i + 1], split_data[i
-//       + 2],
-//                        split_data[i + 3]});
-//     }
-//   }
+  for (const auto& item : currentData[WHITELIST_KEY]) {
+    r.push_back(IpAddress::parse(item));
+  }
 
-//   std::string lastWrittenData;
-//   std::function<void(std::string)> writeFunc;
+  return r;
+}
 
-//   void writeData() {
-//     std::string serialized = serialize();
-//     if (serialized != lastWrittenData) {
-//       writeFunc(serialized);
-//       lastWrittenData = serialized;
-//     }
-//   }
+void ConfigStorage::whitelistClear() {
+  currentData[WHITELIST_KEY].clear();
+  save();
+}
 
-//   // -----
+void ConfigStorage::setInternalSetting(InternalSetting setting,
+                                       std::string value) {
+  currentData[INTERNAL_SETTINGS_KEY][setting._to_string()] = value;
+  save();
+}
 
-//   void runInTransaction(std::function<void()> f) override {
-//     f();
-//     writeData();
-//   }
+std::string ConfigStorage::getInternalSetting(InternalSetting setting) {
+  auto settingStr = setting._to_string();
+  if (currentData[INTERNAL_SETTINGS_KEY].contains(settingStr)) {
+    return currentData[INTERNAL_SETTINGS_KEY][settingStr];
+  }
+  if (internalDefaults.contains(setting)) {
+    return internalDefaults[setting];
+  }
 
-//   static Key _key(const ConfigRow& row) { return Key{row.kind, row.key};
-//   } static Value _value(const ConfigRow& row) {
-//     return Value{row.networkId, row.value};
-//   }
+  return "";
+}
 
-//   bool containsRow(const ConfigRow& row) {
-//     auto it = values.find(_key(row));
-//     if (it == values.end())
-//       return false;
-//     return it->second.find(_value(row)) != it->second.end();
-//   }
+void ConfigStorage::setUserSetting(UserSetting setting, std::string value) {
+  currentData[USER_SETTINGS_KEY][setting._to_string()] = value;
+  save();
+}
 
-//   bool insert(const ConfigRow& row) override {
-//     return values[_key(row)].insert(_value(row)).second;
-//   }
+std::string ConfigStorage::getUserSetting(UserSetting setting) {
+  auto settingStr = setting._to_string();
+  if (userOverrides.contains(setting)) {
+    return userOverrides[setting];
+  }
+  if (currentData[USER_SETTINGS_KEY].contains(settingStr)) {
+    return currentData[USER_SETTINGS_KEY][settingStr];
+  }
+  if (userDefaults.contains(setting)) {
+    return userDefaults[setting];
+  }
 
-//   bool remove(const ConfigRow& row) override {
-//     return values[_key(row)].erase(_value(row));
-//   }
-
-//   void removeValues(const std::string& networkId,
-//                     const std::string& kind,
-//                     const std::string& key) override {
-//     auto& coll = values[Key{kind, key}];
-//     auto it = coll.begin();
-//     while (it != coll.end()) {
-//       if (it->networkId == networkId) {
-//         auto toErase = it;
-//         it++;
-//         coll.erase(toErase);
-//       } else
-//         it++;
-//     }
-//   }
-
-//   void removeAll(const std::string& networkId,
-//                  const std::string& kind) override {
-//     for (auto& p : values) {
-//       const Key& key = p.first;
-//       if (key.kind != kind)
-//         continue;
-
-//       auto& coll = p.second;
-//       auto it = coll.begin();
-//       while (it != coll.end()) {
-//         if (it->networkId == networkId) {
-//           auto toErase = it;
-//           it++;
-//           coll.erase(toErase);
-//         } else
-//           it++;
-//       }
-//     }
-//   }
-
-//   std::vector<std::string> getValueForNetwork(const std::string&
-//   networkId,
-//                                               const std::string& kind,
-//                                               const std::string& key)
-//                                               override {
-//     std::vector<std::string> result;
-//     for (const Value& v : values[Key{kind, key}]) {
-//       if (v.networkId == networkId)
-//         result.push_back(v.value);
-//     }
-//     return result;
-//   }
-
-//   std::vector<std::string> getValue(const std::string& kind,
-//                                     const std::string& key) override {
-//     std::vector<std::string> result;
-//     auto it = values.find(Key{kind, key});
-//     if (it != values.end()) {
-//       for (const Value& v : it->second) {
-//         result.push_back(v.value);
-//       }
-//     }
-//     return result;
-//   }
-
-//   std::vector<std::string> listNetworks() override {
-//     std::unordered_set<std::string> result;
-//     for (const auto& p : values) {
-//       for (const Value& v : p.second) {
-//         result.insert(v.networkId);
-//       }
-//     }
-//     return std::vector<std::string>(result.begin(), result.end());
-//   }
-
-//   std::vector<ConfigRow> listValuesForNetwork(
-//       const std::string& networkId,
-//       const std::string& kind) override {
-//     std::vector<ConfigRow> result;
-//     for (const auto& p : values) {
-//       const Key& k = p.first;
-//       for (const Value& v : p.second) {
-//         if (v.networkId == networkId && k.kind == kind) {
-//           ConfigRow r;
-//           r.key = k.key;
-//           r.kind = k.kind;
-//           r.networkId = v.networkId;
-//           r.value = v.value;
-//           result.push_back(r);
-//         }
-//       }
-//     }
-//     return result;
-//   }
-// };
+  return "";
+}

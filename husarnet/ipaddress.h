@@ -54,6 +54,7 @@ struct IpAddress {
   std::string toBinary() { return std::string((char*)data.data(), 16); }
 
   fstring<16> toFstring() { return fstring<16>((const char*)data.data()); }
+  std::string toString() { return str(); }
 
   static IpAddress fromBinary(fstring<16> s) {
     IpAddress r;

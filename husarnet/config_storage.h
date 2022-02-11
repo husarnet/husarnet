@@ -9,9 +9,6 @@
 using namespace nlohmann;  // json
 
 // @TODO
-// a co jakby zrobić jakieś typowe "get scalar" i "get list" metody i
-// zrezygnować z inner-most poziomu?
-
 // rozkminić czy da się to scalić z settings (network id = global/daemon/manual
 // i wyjebane?)
 
@@ -32,8 +29,9 @@ BETTER_ENUM(UserSetting, int, dashboardUrl = 1)
 class ConfigStorage {
   std::function<std::string()> readFunc;
   std::function<void(std::string)> writeFunc;
-  std::map<UserSetting, std::string> settingsDefaults;
-  std::map<UserSetting, std::string> settingsEnvOverrides;
+  std::map<UserSetting, std::string> userDefaults;
+  std::map<UserSetting, std::string> userOverrides;
+  std::map<InternalSetting, std::string> internalDefaults;
 
   json currentData;
 
@@ -47,10 +45,13 @@ class ConfigStorage {
  public:
   ConfigStorage(std::function<std::string()> readFunc,
                 std::function<void(std::string)> writeFunc,
-                std::map<UserSetting, std::string> settingsDefaults,
-                std::map<UserSetting, std::string> settingsEnvOverrides);
+                std::map<UserSetting, std::string> userDefaults,
+                std::map<UserSetting, std::string> userOverrides,
+                std::map<InternalSetting, std::string> internalDefaults);
 
   ConfigStorage(ConfigStorage&) = delete;
+
+  json getCurrentData();
 
   void groupChanges(std::function<void()> f);
 
@@ -67,9 +68,7 @@ class ConfigStorage {
 
   void setInternalSetting(InternalSetting setting, std::string value);
   std::string getInternalSetting(InternalSetting setting);
-  void clearInternalSetting(InternalSetting setting);
 
   void setUserSetting(UserSetting setting, std::string value);
   std::string getUserSetting(UserSetting setting);
-  void clearUserSetting(UserSetting setting);
 };
