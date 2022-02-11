@@ -1,5 +1,5 @@
 #include "util.h"
-#include "catch.hpp"
+#include <catch2/catch.hpp>
 
 TEST_CASE("split whitespace") {
   REQUIRE(splitWhitespace("") == std::vector<std::string>{});

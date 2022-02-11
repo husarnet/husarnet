@@ -1,5 +1,5 @@
 #include "ipaddress.h"
-#include "catch.hpp"
+#include <catch2/catch.hpp>
 
 TEST_CASE("ipaddress parse/stringify") {
   REQUIRE(IpAddress::parse("127.0.0.1").str() == "127.0.0.1");

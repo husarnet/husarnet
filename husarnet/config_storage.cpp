@@ -20,6 +20,11 @@ std::string ConfigStorage::serialize() {
 
 void ConfigStorage::deserialize(std::string blob) {
   this->currentData = json::parse(blob);
+
+  // Make sure that all data is in a proper format
+  if (!currentData[HOST_TABLE_KEY].is_array()) {
+    currentData[HOST_TABLE_KEY] = json::array();
+  }
 }
 
 void ConfigStorage::save() {

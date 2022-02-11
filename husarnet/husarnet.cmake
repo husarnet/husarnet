@@ -118,7 +118,6 @@ FetchContent_Declare(
   GIT_TAG        0.11.3
 )
 FetchContent_MakeAvailable(better_enums)
-# target_link_libraries(husarnet_core better_enums)
 target_include_directories(husarnet_core PUBLIC ${better_enums_SOURCE_DIR})
 
 # Include unix port libraries

@@ -52,6 +52,8 @@ class ConfigStorage {
 
   ConfigStorage(ConfigStorage&) = delete;
 
+  void groupChanges(std::function<void()> f);
+
   void hostTableAdd(std::string hostname, IpAddress address);
   void hostTableRm(std::string hostname);
   std::map<std::string, IpAddress> getHostTable();
@@ -70,6 +72,4 @@ class ConfigStorage {
   void setUserSetting(UserSetting setting, std::string value);
   std::string getUserSetting(UserSetting setting);
   void clearUserSetting(UserSetting setting);
-
-  void groupChanges(std::function<void()> f);
 };
