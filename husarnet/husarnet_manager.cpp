@@ -25,7 +25,7 @@ std::string HusarnetManager::configGet(std::string networkId,
   // }
 
   // return v[0];
-  return "";  // @TODO
+  return "";  // TODO
 }
 
 std::string HusarnetManager::configSet(std::string networkId,
@@ -37,24 +37,24 @@ std::string HusarnetManager::configSet(std::string networkId,
   // });
 
   // return value;
-  return "";  // @TODO
+  return "";  // TODO
 }
 
 LogManager& HusarnetManager::getLogManager() {
   return *(this->logManager);
 }
 
-// @TODO implement this maybe
+// TODO implement this maybe
 std::string HusarnetManager::getVersion() {
   return "";
 }
 
-// @TODO implement this maybe
+// TODO implement this maybe
 std::string HusarnetManager::getUserAgent() {
   return "";
 }
 
-// @TODO implement this maybe
+// TODO implement this maybe
 IpAddress HusarnetManager::getSelfAddress() {
   return IpAddress();
 }
@@ -66,7 +66,7 @@ std::string HusarnetManager::getSelfHostname() {
 void HusarnetManager::setSelfHostname(std::string newHostname) {
   LOG("changing hostname to '%s'", newHostname.c_str());
   configSet("manual", "hostname", newHostname);
-  // ServiceHelper::modifyHostname(newHostname); // @TODO link this properly
+  // ServiceHelper::modifyHostname(newHostname); // TODO link this properly
 }
 
 void HusarnetManager::updateHosts() {
@@ -94,9 +94,9 @@ void HusarnetManager::updateHosts() {
   // }
 
   // std::sort(hosts.begin(), hosts.end());
-  // hostsFileUpdateFunc(hosts);  @TODO  link this properly (privileged
+  // hostsFileUpdateFunc(hosts);  TODO  link this properly (privileged
   // something)
-  // @TODO implement this
+  // TODO implement this
 }
 
 IpAddress HusarnetManager::resolveHostname(std::string hostname) {
@@ -105,15 +105,15 @@ IpAddress HusarnetManager::resolveHostname(std::string hostname) {
   //   return IpAddress::parse(values[0]);
   // else
   //   return IpAddress{};
-  return IpAddress{};  // @TODO fix this
+  return IpAddress{};  // TODO fix this
 }
 
-// @TODO implement this maybe
+// TODO implement this maybe
 IpAddress HusarnetManager::getCurrentBaseAddress() {
   return IpAddress();
 }
 
-// @TODO implement this maybe
+// TODO implement this maybe
 std::string HusarnetManager::getCurrentBaseProtocol() {
   return "";
 }
@@ -146,32 +146,32 @@ void HusarnetManager::joinNetwork(std::string joinCode,
                             newHostname);
 }
 
-// @TODO implement this maybe
+// TODO implement this maybe
 bool HusarnetManager::isJoined() {
   return false;
 }
 
-// @TODO implement this maybe
+// TODO implement this maybe
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address) {}
 
-// @TODO implement this maybe
+// TODO implement this maybe
 void HusarnetManager::hostTableRm(std::string hostname) {}
 
-// @TODO implement this maybe
+// TODO implement this maybe
 void HusarnetManager::whitelistAdd(IpAddress address) {}
 
-// @TODO implement this maybe
+// TODO implement this maybe
 void HusarnetManager::whitelistRm(IpAddress address) {}
 
-// @TODO implement this maybe
+// TODO implement this maybe
 std::list<IpAddress> HusarnetManager::getWhitelist() {
   return {};
 }
 
-// @TODO implement this maybe
+// TODO implement this maybe
 void HusarnetManager::whitelistEnable() {}
 
-// @TODO implement this maybe
+// TODO implement this maybe
 void HusarnetManager::whitelistDisable() {}
 
 std::string HusarnetManager::getDashboardUrl() {
@@ -192,7 +192,7 @@ std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id) {
     // {
     //   res.push_back(IpAddress::parse(row.key).toBinary());
     // }
-    // @TODO fix this
+    // TODO fix this
 
     return res;
   } else {
@@ -200,7 +200,7 @@ std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id) {
   }
 }
 
-// @TODO implement this maybe
+// TODO implement this maybe
 int HusarnetManager::getLatency(IpAddress destination) {
   return 0;
 }
@@ -210,11 +210,11 @@ void HusarnetManager::cleanup() {
   //   configTable->removeAll("manual", "whitelist");
   //   configTable->removeAll("manual", "host");
   // });
-  // @TODO fix this
+  // TODO fix this
 }
 
 HusarnetManager::HusarnetManager() {
-  // configTable = createConfigTable(); @TODO
+  // configTable = createConfigTable(); TODO
 }
 
 void HusarnetManager::runHusarnet() {

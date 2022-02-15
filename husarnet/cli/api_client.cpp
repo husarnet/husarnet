@@ -12,7 +12,7 @@ httplib::Client prepareApiClient() {
 
 httplib::Params prepareApiParams() {
   httplib::Params params;
-  // @TODO link this properly
+  // TODO link this properly
   // std::string secret =
   // FileStorage::readHttpSecret(FileStorage::getConfigDir());
   // params.emplace("secret", secret);

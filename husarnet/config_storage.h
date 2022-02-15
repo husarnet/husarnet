@@ -8,7 +8,7 @@
 
 using namespace nlohmann;  // json
 
-// @TODO
+// TODO
 // rozkminić czy da się to scalić z settings (network id = global/daemon/manual
 // i wyjebane?)
 

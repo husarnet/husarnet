@@ -13,10 +13,10 @@ using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
 
 class HusarnetManager {
-  Identity* identity;  // @TODO
-  NgSocket* sock;      // @TODO
+  Identity* identity;  // TODO
+  NgSocket* sock;      // TODO
   ConfigStorage* configStorage;
-  LogManager* logManager;  // @TODO
+  LogManager* logManager;  // TODO
   WebsetupConnection* websetup;
   License* license;
 
@@ -62,7 +62,7 @@ class HusarnetManager {
   void whitelistEnable();
   void whitelistDisable();
 
-  // @TODO think about exposing license object in the same way logmanager is
+  // TODO think about exposing license object in the same way logmanager is
   // Copy of methods from License class
   std::string getDashboardUrl();
   IpAddress getWebsetupAddress();

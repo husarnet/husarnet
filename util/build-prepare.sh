@@ -19,5 +19,5 @@ sudo apt install -y ruby ruby-dev rubygems rpm
 sudo gem install --no-document fpm
 
 # Install Docker dependencies
-# @TODO add proper repositories for docker-ce
+# TODO add proper repositories for docker-ce
 # sudo apt install -y docker-ce qemu-user-static

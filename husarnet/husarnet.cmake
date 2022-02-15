@@ -78,7 +78,7 @@ endif()
 
 # Top level project files
 
-# @TODO make this work
+# TODO make this work
 # So includes like "husarnet/something.h" do work too
 # include_directories(${CMAKE_CURRENT_LIST_DIR}/..)
 include_directories(${CMAKE_CURRENT_LIST_DIR})

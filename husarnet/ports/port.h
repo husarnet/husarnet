@@ -32,7 +32,7 @@
 #define ENABLE_IPV6
 #endif  // __linux__
 
-// @TODO replace this in all occurrences
+// TODO replace this in all occurrences
 #ifndef SOCKFUNC_close
 #define SOCKFUNC_close SOCKFUNC(close)
 #endif  // SOCKFUNC_close
@@ -57,7 +57,7 @@ inline int copyFile(const char* src, const char* dst) {
              ? 0
              : -1;
 #else   // __linux__
-  return -1;  // @TODO - technically we should make it work also on other ports,
+  return -1;  // TODO - technically we should make it work also on other ports,
               // but in practice I think this will be resolved upper in the call
               // tree
 #endif  // __linux__

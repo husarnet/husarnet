@@ -37,4 +37,4 @@ cp ${build_base}/win64/windows/husarnet.exe ${release_base}/
 
 # Smartcard module builds
 
-# @TODO add smartcard builder
+# TODO add smartcard builder

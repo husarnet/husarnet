@@ -6,7 +6,7 @@
 // #include "service_helper.h"
 // #include "util.h"
 
-// // @TODO move file storage abstract to privileged section
+// // TODO move file storage abstract to privileged section
 // namespace FileStorage {
 
 // std::string getConfigDir() {
@@ -17,7 +17,7 @@
 // void prepareConfigDir() {
 //   auto configDir = getConfigDir();
 
-//   // @TODO fix this
+//   // TODO fix this
 //   // mkdir(configDir.c_str(), 0700);
 //   // chmod(configDir.c_str(), 0700);
 // }
