@@ -92,9 +92,6 @@ add_library(husarnet_core STATIC ${husarnet_core_SRC})
 # Configure dependencies
 include(FetchContent)
 
-include(${CMAKE_CURRENT_LIST_DIR}/../deps/deps.cmake)
-target_link_libraries(husarnet_core sodium)
-
 if (${CMAKE_SYSTEM_NAME} STREQUAL Windows)
   target_link_libraries(husarnet_core iphlpapi shlwapi ws2_32)
 endif()
@@ -102,6 +99,22 @@ endif()
 if (${CMAKE_SYSTEM_NAME} STREQUAL Android)
   target_link_libraries(husarnet_core log)
 endif()
+
+FetchContent_Declare(
+  libsodium
+  GIT_REPOSITORY https://github.com/jedisct1/libsodium.git
+  GIT_TAG        1.0.14
+)
+FetchContent_MakeAvailable(libsodium)
+include_directories(${libsodium_SOURCE_DIR}/src/libsodium/include)
+file(GLOB_RECURSE sodium_SRC ${libsodium_SOURCE_DIR}/src/libsodium/*.c)
+add_library(sodium STATIC ${sodium_SRC})
+target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include)
+target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include/sodium)
+target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config)
+target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config/sodium)
+target_compile_options(sodium PRIVATE -DCONFIGURED=1)
+target_link_libraries(husarnet_core sodium)
 
 FetchContent_Declare(
   nlohmann_json
