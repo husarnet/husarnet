@@ -192,3 +192,5 @@ inline int renameOrCopyFile(const char* src, const char* dst) {
 }
 
 std::string generateRandomString(const int length);
+std::string strToUpper(std::string input);
+std::string strToLower(std::string input);

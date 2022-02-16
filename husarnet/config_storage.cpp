@@ -1,4 +1,5 @@
 #include "config_storage.h"
+#include "util.h"
 
 #define HOST_TABLE_KEY "host-table"
 #define WHITELIST_KEY "whitelist"
@@ -180,4 +181,36 @@ std::string ConfigStorage::getUserSetting(UserSetting setting) {
   }
 
   return "";
+}
+
+extern char** environ;
+
+std::map<UserSetting, std::string> getEnvironmentOverrides() {
+  std::map<UserSetting, std::string> result;
+  for (char** environ_ptr = environ; *environ_ptr != nullptr; environ_ptr++) {
+    std::string env = strToUpper(*environ_ptr);
+    std::string prefix = "HUSARNET_";
+
+    if (!startswith(env, prefix)) {
+      continue;
+    }
+
+    std::vector<std::string> splitted = split(env, '=', 1);
+    if (splitted.size() == 1) {
+      continue;
+    }
+
+    std::string keyName = strToLower(splitted[0].substr(prefix.size()));
+    auto keyOptional = UserSetting::_from_string_nothrow(keyName.c_str());
+    if (!keyOptional) {
+      continue;
+    }
+
+    auto key = *keyOptional;
+    std::string value = splitted[1];
+
+    result[key] = value;
+  }
+
+  return result;
 }

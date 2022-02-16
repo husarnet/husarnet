@@ -4,15 +4,20 @@
 #include "../ipaddress.h"
 
 namespace Privileged {
-void init();
+void init();   // Should be called as early as possible
+void start();  // Should be called as soon as the parent process is ready to
+               // drop all privileges
 
-std::string updateLicenseFile();
+std::string readSettings();
+void writeSettings(std::string);
 
-std::string getSelfHostname();
-void changeSelfHostname(std::string newHostname);
+// std::string updateLicenseFile();
 
-void updateHostsFile(std::list<std::pair<std::string, IpAddress>> data);
+// std::string getSelfHostname();
+// void changeSelfHostname(std::string newHostname);
 
-void saveLicenseFile(std::string contents);
-std::string readLicenseFile();
+// void updateHostsFile(std::list<std::pair<std::string, IpAddress>> data);
+
+// void saveLicenseFile(std::string contents);
+// std::string readLicenseFile();
 }  // namespace Privileged

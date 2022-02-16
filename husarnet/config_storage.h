@@ -12,10 +12,6 @@ using namespace nlohmann;  // json
 // rozkminić czy da się to scalić z settings (network id = global/daemon/manual
 // i wyjebane?)
 
-// rozkminić czy da się zrobić osobną, globalną tabelę od defaultów
-// (zdefiniowaną w husarnet_config.h?) dla "nietypowych" danych takich jak np.
-// ustawienia demona, adres dashboardu, etc
-
 // rozkminić że niektóre akcje powinny być mocno poblokowane/powodować crash
 // jeśli zrobione bez unlocka - typu zmiana adresu dashbaorda
 
@@ -68,7 +64,11 @@ class ConfigStorage {
 
   void setInternalSetting(InternalSetting setting, std::string value);
   std::string getInternalSetting(InternalSetting setting);
+  // TODO add getInternalSettingInt
 
   void setUserSetting(UserSetting setting, std::string value);
   std::string getUserSetting(UserSetting setting);
+  // TODO add getUserSettingInt
 };
+
+std::map<UserSetting, std::string> getEnvironmentOverrides();

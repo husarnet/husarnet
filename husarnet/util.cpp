@@ -105,3 +105,15 @@ std::string generateRandomString(const int length) {
 
   return result;
 }
+
+std::string strToUpper(std::string input) {
+  std::string ret;
+  std::transform(input.begin(), input.end(), ret.begin(), toupper);
+  return ret;
+}
+
+std::string strToLower(std::string input) {
+  std::string ret;
+  std::transform(input.begin(), input.end(), ret.begin(), tolower);
+  return ret;
+}

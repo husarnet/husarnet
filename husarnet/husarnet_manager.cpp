@@ -214,10 +214,16 @@ void HusarnetManager::cleanup() {
 }
 
 HusarnetManager::HusarnetManager() {
-  // configTable = createConfigTable(); TODO
+  Privileged::init();
+
+  configStorage = new ConfigStorage(
+      Privileged::readSettings, Privileged::writeSettings, userDefaults,
+      getEnvironmentOverrides(), internalDefaults);
 }
 
 void HusarnetManager::runHusarnet() {
+  Privileged::start();
+
   // You need to get this variable as late as possible, so platforms like ESP32
   // can prepopulate config with orverriden data
   auto dashboardHostname =
