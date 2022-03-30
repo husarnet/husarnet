@@ -3,6 +3,8 @@
 // License: specified in project_root/LICENSE.txt
 #include "privileged_interface.h"
 
+// TODO this whole file
+
 namespace Privileged {
 void init() {}
 
@@ -15,9 +17,9 @@ std::string readConfig() {
 void writeConfig(std::string) {}
 // namespace Privileged
 
-Identity* readIdentity() {
-  return NULL;
+Identity readIdentity() {
+  return Identity();
 }
 
-void writeIdentity(Identity* identity) {}
+void writeIdentity(Identity identity) {}
 }  // namespace Privileged

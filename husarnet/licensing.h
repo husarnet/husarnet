@@ -5,7 +5,7 @@
 
 #include <list>
 #include <string>
-#include "ipaddress.h"
+#include "husarnet/ipaddress.h"
 #include "nlohmann/json.hpp"
 
 using namespace nlohmann;  // json

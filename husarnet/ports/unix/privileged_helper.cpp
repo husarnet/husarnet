@@ -2,6 +2,8 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 
+// TODO rewrite this whole file
+
 // #include <signal.h>
 // #include <sys/prctl.h>
 // #include <sys/stat.h>

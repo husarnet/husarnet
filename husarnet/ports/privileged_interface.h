@@ -4,8 +4,8 @@
 #pragma once
 #include <list>
 #include <string>
-#include "../identity.h"
-#include "../ipaddress.h"
+#include "husarnet/identity.h"
+#include "husarnet/ipaddress.h"
 
 namespace Privileged {
 void init();   // Should be called as early as possible
@@ -15,8 +15,8 @@ void start();  // Should be called as soon as the parent process is ready to
 std::string readConfig();
 void writeConfig(std::string);
 
-Identity* readIdentity();
-void writeIdentity(Identity* identity);
+Identity readIdentity();
+void writeIdentity(Identity identity);
 
 // std::string updateLicenseFile();
 

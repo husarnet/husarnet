@@ -2,22 +2,20 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include <fstream>
-#include "configmanager.h"
-#include "filestorage.h"
-#include "global_lock.h"
-#include "husarnet.h"
-#include "husarnet_secure.h"
-#include "l2unwrapper.h"
-#include "legacy_filestorage.h"
-#include "network_dev.h"
-#include "ngsocket_crypto.h"
-#include "port.h"
-#include "service_helper.h"
-#include "shlwapi.h"
-#include "sockets.h"
-#include "sqlite_configtable.h"
-#include "tap_windows.h"
-#include "util.h"
+#include "husarnet/global_lock.h"
+#include "husarnet/husarnet.h"
+#include "husarnet/husarnet_manager.h"
+#include "husarnet/husarnet_secure.h"
+#include "husarnet/l2unwrapper.h"
+#include "husarnet/network_dev.h"
+#include "husarnet/ngsocket_crypto.h"
+#include "husarnet/port.h"
+#include "husarnet/service_helper.h"
+#include "husarnet/shlwapi.h"
+#include "husarnet/sockets.h"
+#include "husarnet/sqlite_configtable.h"
+#include "husarnet/tap_windows.h"
+#include "husarnet/util.h"
 
 static std::string configDir;
 

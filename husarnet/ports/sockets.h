@@ -8,9 +8,9 @@
 #include <functional>
 #include <memory>
 #include <vector>
-#include "ipaddress.h"
-#include "string_view.h"
-#include "threads_port.h"
+#include "husarnet/ipaddress.h"
+#include "husarnet/ports/threads_port.h"
+#include "husarnet/string_view.h"
 
 using mutex_guard = std::lock_guard<std::recursive_mutex>;
 

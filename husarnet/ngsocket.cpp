@@ -1,18 +1,18 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "ngsocket.h"
+#include "husarnet/ngsocket.h"
 #include <mutex>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "global_lock.h"
-#include "husarnet_config.h"
-#include "husarnet_manager.h"
-#include "ngsocket_crypto.h"
-#include "ports/port.h"
-#include "queue.h"
-#include "util.h"
+#include "husarnet/global_lock.h"
+#include "husarnet/husarnet_config.h"
+#include "husarnet/husarnet_manager.h"
+#include "husarnet/ngsocket_crypto.h"
+#include "husarnet/ports/port.h"
+#include "husarnet/queue.h"
+#include "husarnet/util.h"
 
 const int TEARDOWN_TIMEOUT = 120 * 1000;
 const int REFRESH_TIMEOUT = 25 * 1000;
@@ -802,8 +802,8 @@ struct NgSocketImpl : public NgSocket {
 NgSocket* NgSocket::create(Identity* identity, HusarnetManager* manager) {
   NgSocketImpl* sock = new NgSocketImpl;
   sock->manager = manager;
-  sock->pubkey = identity->pubkey;
-  sock->deviceId = identity->deviceId;
+  sock->pubkey = identity->getPubkey();
+  sock->deviceId = identity->getDeviceId();
   sock->identity = identity;
   sock->init();
   return sock;

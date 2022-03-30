@@ -1,10 +1,10 @@
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
 
 if (DEBUG)
   set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g -fsanitize=undefined -fsanitize=undefined") # -fsanitize=thread
+  set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
 else()
   set(COMMONFLAGS "${COMMONFLAGS} -O3 -ffunction-sections -fdata-sections")
 endif()
@@ -80,9 +80,8 @@ endif()
 
 # Top level project files
 
-# TODO make this work
 # So includes like "husarnet/something.h" do work too
-# include_directories(${CMAKE_CURRENT_LIST_DIR}/..)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/..)
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 file(GLOB core_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")

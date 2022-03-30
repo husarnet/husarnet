@@ -6,17 +6,27 @@
 #include "device_id.h"
 #include "fstring.h"
 
-struct Identity {
+class Identity {
+ private:
   fstring<32> pubkey;
+  fstring<64> privkey;
+
   DeviceId deviceId;
 
-  virtual fstring<64> sign(const std::string& data) = 0;
+ public:
+  Identity();  // This will create BadDeviceId. Look below for methods that'll
+               // get you something actually usable
 
-  // TODO add methods for serializing and deserializing so ports don't have to
-  // do that
-};
+  fstring<32> getPubkey();
+  DeviceId getDeviceId();
 
-struct StdIdentity : Identity {
-  fstring<64> privkey;
-  fstring<64> sign(const std::string& data) override;
+  fstring<64> sign(const std::string& data);
+  bool isValid();
+
+  // This will make new Identity (and *not* recover the existing one)
+  static Identity create();
+
+  // Those are meant to be saved and recovered from file
+  std::string serialize();
+  static Identity deserialize(std::string);
 };

@@ -1,22 +1,24 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "ports/port.h"
+#include "husarnet/ports/port.h"
 
 #include <sstream>
-#include "global_lock.h"
-#include "husarnet_config.h"
-#include "husarnet_manager.h"
-#include "ngsocket_crypto.h"
-#include "port_interface.h"
-#include "ports/privileged_interface.h"
-#include "ports/sockets.h"
-#include "util.h"
+#include "husarnet/global_lock.h"
+#include "husarnet/husarnet_config.h"
+#include "husarnet/husarnet_manager.h"
+#include "husarnet/ngsocket_crypto.h"
+#include "husarnet/ngsocket_secure.h"
+#include "husarnet/ports/port_interface.h"
+#include "husarnet/ports/privileged_interface.h"
+#include "husarnet/ports/sockets.h"
+#include "husarnet/util.h"
 
 #ifdef HTTP_CONTROL_API
-#include "api_server/server.h"
+#include "husarnet/api_server/server.h"
 #endif
 
+// TODO remove this method entirely
 std::string HusarnetManager::configGet(std::string networkId,
                                        std::string key,
                                        std::string defaultValue) {
@@ -32,6 +34,7 @@ std::string HusarnetManager::configGet(std::string networkId,
   return "";  // TODO
 }
 
+// TODO remove this method entirely
 std::string HusarnetManager::configSet(std::string networkId,
                                        std::string key,
                                        std::string value) {
@@ -229,13 +232,16 @@ void HusarnetManager::getLicense() {
 
 void HusarnetManager::getIdentity() {
   // TODO - reenable the smartcard support but with proper multiplatform support
-  // identity = Privileged::readIdentity();
+  identity = Privileged::readIdentity();
 
-  // if there is no identity or there's a bugged one
-  // if (identity == NULL || identity->deviceId == BadDeviceId) {
-  //   identity = NgSocketCrypto::generateId();
-  //   Privileged::writeIdentity(identity);
-  // }
+  if (!identity.isValid()) {
+    identity = Identity::create();
+    Privileged::writeIdentity(identity);
+  }
+}
+
+void HusarnetManager::startNGSocket() {
+  ngsocket = NgSocketSecure::create(&identity, this);
 }
 
 void HusarnetManager::startWebsetup() {
@@ -246,7 +252,8 @@ void HusarnetManager::startWebsetup() {
 
 void HusarnetManager::startHTTPServer() {
 #ifdef HTTP_CONTROL_API
-  std::thread httpThread([this]() { APIServer::httpThread(*this); });
+  threadpool.push_back(
+      new std::thread([this]() { APIServer::httpThread(*this); }));
 #endif
 }
 
@@ -276,22 +283,18 @@ void HusarnetManager::stage3() {
     return;
   }
 
+  startNGSocket();
   startWebsetup();
   startHTTPServer();
 }
 
 void HusarnetManager::runHusarnet() {
-  // TODO - powoli przepisywać z service.cpp
-  // zacząć od ogarnięcia license
-  // potem ngsocket (zamienić baseConfig na husarnetManager)
-
-  // NgSocket* sock = NgSocketSecure::create(identity, baseConfig);
   stage1();
   stage2();
   stage3();
 
   while (true) {
-    sock->periodic();
+    ngsocket->periodic();
     OsSocket::runOnce(1000);
   }
 }

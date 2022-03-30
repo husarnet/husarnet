@@ -44,7 +44,7 @@ inline int renameFile(const char* src, const char* dst) {
 }
 #endif
 
-#include "../ipaddress.h"
+#include "husarnet/ipaddress.h"
 
 // performance profiler
 #define hperf_compute()

@@ -5,12 +5,12 @@
 #include <functional>
 #include <map>
 #include <vector>
-#include "device_id.h"
-#include "fstring.h"
-#include "ipaddress.h"
-#include "licensing.h"
-#include "ngsocket_crypto.h"
-#include "string_view.h"
+#include "husarnet/device_id.h"
+#include "husarnet/fstring.h"
+#include "husarnet/ipaddress.h"
+#include "husarnet/licensing.h"
+#include "husarnet/ngsocket_crypto.h"
+#include "husarnet/string_view.h"
 
 #ifdef NDEBUG
 #error "NDEBUG should not be defined"

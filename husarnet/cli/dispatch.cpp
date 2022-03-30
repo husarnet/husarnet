@@ -1,11 +1,10 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "cli/dispatch.h"
+#include "husarnet/cli/dispatch.h"
 #include <iostream>
-#include "cli/api_client.h"
-#include "husarnet_manager.h"
-#include "ports/unix/service.h"
+#include "husarnet/cli/api_client.h"
+#include "husarnet/husarnet_manager.h"
 
 void dispatchCli(CLIOpts opts) {
   // This is a special case as it does not use any other CLI facilities like

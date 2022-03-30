@@ -6,22 +6,24 @@
 
 #include <unordered_set>
 #include <vector>
-#include "config_storage.h"
-#include "licensing.h"
-#include "logmanager.h"
-#include "ngsocket.h"
-#include "websetup.h"
+#include "husarnet/config_storage.h"
+#include "husarnet/ipaddress.h"
+#include "husarnet/licensing.h"
+#include "husarnet/logmanager.h"
+#include "husarnet/ngsocket.h"
+#include "husarnet/websetup.h"
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
 
 class HusarnetManager {
-  Identity* identity;
-  NgSocket* sock;  // TODO
+  Identity identity;
+  NgSocket* ngsocket;
   ConfigStorage* configStorage;
   LogManager* logManager;  // TODO
   WebsetupConnection* websetup;
   License* license;
+  std::vector<std::thread*> threadpool;
 
   bool stage1Started = false;
   bool stage2Started = false;
@@ -36,6 +38,7 @@ class HusarnetManager {
 
   void getLicense();
   void getIdentity();
+  void startNGSocket();
   void startWebsetup();
   void startHTTPServer();
 

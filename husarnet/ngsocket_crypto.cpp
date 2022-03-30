@@ -39,19 +39,6 @@ bool verifySignature(const std::string& data,
   return ret == 0;
 }
 
-std::pair<fstring<32>, fstring<64> > generateId() {
-  fstring<32> pubkey;
-  fstring<64> privkey;
-  DeviceId id = BadDeviceId;
-
-  while (id == BadDeviceId) {
-    crypto_sign_ed25519_keypair((unsigned char*)&pubkey[0],
-                                (unsigned char*)&privkey[0]);
-    id = NgSocketCrypto::pubkeyToDeviceId(pubkey);
-  }
-  return {pubkey, privkey};
-}
-
 bool safeEquals(std::string a, std::string b) {
   if (a.size() != b.size())
     return false;

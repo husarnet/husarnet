@@ -4,7 +4,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include "ipaddress.h"
+#include "husarnet/ipaddress.h"
 
 namespace ServiceHelper {
 bool validateHostname(std::string hostname);

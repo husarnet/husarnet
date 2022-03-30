@@ -1,12 +1,12 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "ngsocket_secure.h"
+#include "husarnet/ngsocket_secure.h"
 #include <sodium.h>
 #include <unordered_map>
-#include "ngsocket_crypto.h"
-#include "port.h"
-#include "util.h"
+#include "husarnet/ngsocket_crypto.h"
+#include "husarnet/ports/port.h"
+#include "husarnet/util.h"
 #ifdef WITH_ZSTD
 #include "zstd.h"
 #endif
@@ -452,8 +452,8 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
 
 NgSocket* NgSocketSecure::create(Identity* identity, HusarnetManager* manager) {
   NgSocketSecureImpl* self = new NgSocketSecureImpl;
-  self->pubkey = identity->pubkey;
-  self->deviceId = identity->deviceId;
+  self->pubkey = identity->getPubkey();
+  self->deviceId = identity->getDeviceId();
   self->identity = identity;
   self->socket = NgSocket::create(identity, manager);
   self->options = self->socket->options;

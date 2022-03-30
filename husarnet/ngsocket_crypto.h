@@ -17,6 +17,5 @@ bool verifySignature(const std::string& data,
                      const std::string& kind,
                      const fstring<32>& pubkey,
                      const fstring<64>& sig);
-std::pair<fstring<32>, fstring<64> > generateId();
 bool safeEquals(std::string a, std::string b);
 }  // namespace NgSocketCrypto

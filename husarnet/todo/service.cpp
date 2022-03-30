@@ -2,6 +2,8 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 
+// TODO remove this whole file
+
 // #include <signal.h>
 // #include <sys/stat.h>
 // #include <sys/un.h>

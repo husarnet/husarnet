@@ -2,6 +2,10 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 
+// TODO port this whole file
+// add wrappers/logic to to Identity and some to HusarnetManager
+// add port to port_interface
+
 // #include <sys/socket.h>
 // #include <sys/types.h>
 // #include <sys/un.h>

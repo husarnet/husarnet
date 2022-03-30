@@ -4,8 +4,8 @@
 #pragma once
 #include <map>
 #include <vector>
-#include "config_storage.h"
-#include "ipaddress.h"
+#include "husarnet/config_storage.h"
+#include "husarnet/ipaddress.h"
 
 #define HUSARNET_VERSION "2021.12.20.2"
 #define WEBSETUP_SERVER_PORT 5580
