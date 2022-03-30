@@ -1,13 +1,16 @@
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include <fstream>
 #include "configmanager.h"
 #include "filestorage.h"
 #include "global_lock.h"
 #include "husarnet.h"
-#include "husarnet_crypto.h"
 #include "husarnet_secure.h"
 #include "l2unwrapper.h"
 #include "legacy_filestorage.h"
 #include "network_dev.h"
+#include "ngsocket_crypto.h"
 #include "port.h"
 #include "service_helper.h"
 #include "shlwapi.h"

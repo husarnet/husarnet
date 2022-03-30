@@ -1,14 +1,15 @@
-// Copyright (c) 2017 Husarion Sp. z o.o.
-// author: Michał Zieliński (zielmicha)
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #pragma once
 #include <functional>
 #include <map>
 #include <vector>
 #include "device_id.h"
 #include "fstring.h"
-#include "husarnet_crypto.h"
 #include "ipaddress.h"
 #include "licensing.h"
+#include "ngsocket_crypto.h"
 #include "string_view.h"
 
 #ifdef NDEBUG

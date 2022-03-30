@@ -1,5 +1,7 @@
-// // Copyright (c) 2017 Husarion Sp. z o.o.
-// // author: Michał Zieliński (zielmicha)
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
+
 // #include "tun.h"
 // #include <linux/if_tun.h>
 // #include <net/if.h>

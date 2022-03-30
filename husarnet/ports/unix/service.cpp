@@ -1,3 +1,7 @@
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
+
 // #include <signal.h>
 // #include <sys/stat.h>
 // #include <sys/un.h>
@@ -166,21 +170,6 @@
 //   iptablesInsert("INPUT -s fc94::/16 -i lo -j ACCEPT");
 //   iptablesInsert("INPUT -s fc94::/16 \\! -i hnet0 -j DROP");
 
-//   Identity* identity;
-//   identity = tryCreateSmartcardIdentity();
-//   bool usingSmartcard;
-//   if (!identity) {
-//     usingSmartcard = false;
-//     identity = FileStorage::readIdentity(configDir);
-//   } else {
-//     usingSmartcard = true;
-//   }
-
-//   if (identity->deviceId ==
-//       BadDeviceId) {  // we had a bug where bad IDs would be generated
-//     FileStorage::generateAndWriteId(configDir);
-//     identity = FileStorage::readIdentity(configDir);
-//   }
 //   // if license not found -> pull the default one from app.husarnet.com
 //   BaseConfig* baseConfig;
 //   auto path = FileStorage::licenseFilePath(configDir);

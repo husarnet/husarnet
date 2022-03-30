@@ -1,5 +1,6 @@
-// Copyright (c) 2017 Husarion Sp. z o.o.
-// author: Michał Zieliński (zielmicha)
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -174,6 +175,7 @@ static void ares_local_callback(void* arg,
 
 IpAddress resolveIp(std::string hostname) {
   if (hostname.empty()) {
+    LOG("Empty hostname provided for a DNS search");
     return IpAddress();
   }
 
@@ -181,6 +183,7 @@ IpAddress resolveIp(std::string hostname) {
   ares_channel channel;
 
   if (ares_init(&channel) != ARES_SUCCESS) {
+    LOG("Unable to init ARES/DNS channel for doman: %s", hostname.c_str());
     return IpAddress();
   }
 

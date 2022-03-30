@@ -1,3 +1,6 @@
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include "util.h"
 #include <time.h>
 #include <algorithm>
@@ -107,13 +110,15 @@ std::string generateRandomString(const int length) {
 }
 
 std::string strToUpper(std::string input) {
-  std::string ret;
-  std::transform(input.begin(), input.end(), ret.begin(), toupper);
+  std::string ret(input);
+  std::transform(input.begin(), input.end(), ret.begin(),
+                 [](unsigned char c) { return std::toupper(c); });
   return ret;
 }
 
 std::string strToLower(std::string input) {
-  std::string ret;
-  std::transform(input.begin(), input.end(), ret.begin(), tolower);
+  std::string ret(input);
+  std::transform(input.begin(), input.end(), ret.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
   return ret;
 }

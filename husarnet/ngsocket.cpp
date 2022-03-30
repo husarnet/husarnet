@@ -1,5 +1,6 @@
-// Copyright (c) 2017 Husarion Sp. z o.o.
-// author: Michał Zieliński (zielmicha)
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include "ngsocket.h"
 #include <mutex>
 #include <unordered_map>
@@ -7,8 +8,8 @@
 #include <vector>
 #include "global_lock.h"
 #include "husarnet_config.h"
-#include "husarnet_crypto.h"
 #include "husarnet_manager.h"
+#include "ngsocket_crypto.h"
 #include "ports/port.h"
 #include "queue.h"
 #include "util.h"

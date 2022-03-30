@@ -1,3 +1,6 @@
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #pragma once
 #include "ports/port.h"
 
@@ -13,12 +16,16 @@ using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
 
 class HusarnetManager {
-  Identity* identity;  // TODO
-  NgSocket* sock;      // TODO
+  Identity* identity;
+  NgSocket* sock;  // TODO
   ConfigStorage* configStorage;
   LogManager* logManager;  // TODO
   WebsetupConnection* websetup;
   License* license;
+
+  bool stage1Started = false;
+  bool stage2Started = false;
+  bool stage3Started = false;
 
   std::string configGet(std::string networkId,
                         std::string key,
@@ -26,6 +33,11 @@ class HusarnetManager {
   std::string configSet(std::string networkId,
                         std::string key,
                         std::string value);
+
+  void getLicense();
+  void getIdentity();
+  void startWebsetup();
+  void startHTTPServer();
 
  public:
   HusarnetManager();
@@ -73,5 +85,10 @@ class HusarnetManager {
 
   void cleanup();
 
+  void stage1();  // Start privileged interface and config storage so user code
+                  // (on platforms like ESP32) can modify settings
+  void stage2();  // Read identity, obtain license, etc. Changing user settings
+                  // is not allowed after this step
+  void stage3();  // Actually connect to the network
   void runHusarnet();
 };

@@ -1,3 +1,6 @@
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include "api_server/server.h"
 #include "../husarnet_manager.h"
 #include "api_server/common.h"

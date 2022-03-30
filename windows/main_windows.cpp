@@ -1,10 +1,13 @@
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include "base_config.h"
 #include "husarnet_config.h"
-#include "husarnet_crypto.h"
 #include "main_common.h"
+#include "ngsocket_crypto.h"
 #include "port.h"
 #include "service_helper.h"
 #include "sockets.h"

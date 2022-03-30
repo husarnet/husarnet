@@ -1,4 +1,9 @@
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include "config_storage.h"
+#include <stdio.h>
+#include <iostream>
 #include "util.h"
 
 #define HOST_TABLE_KEY "host-table"
@@ -188,14 +193,14 @@ extern char** environ;
 std::map<UserSetting, std::string> getEnvironmentOverrides() {
   std::map<UserSetting, std::string> result;
   for (char** environ_ptr = environ; *environ_ptr != nullptr; environ_ptr++) {
-    std::string env = strToUpper(*environ_ptr);
+    std::string envUpper = strToUpper(std::string(*environ_ptr));
     std::string prefix = "HUSARNET_";
 
-    if (!startswith(env, prefix)) {
+    if (!startswith(envUpper, prefix)) {
       continue;
     }
 
-    std::vector<std::string> splitted = split(env, '=', 1);
+    std::vector<std::string> splitted = split(*environ_ptr, '=', 1);
     if (splitted.size() == 1) {
       continue;
     }

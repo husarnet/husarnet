@@ -1,9 +1,10 @@
-// Copyright (c) 2017 Husarion Sp. z o.o.
-// author: Michał Zieliński (zielmicha)
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include "ngsocket_secure.h"
 #include <sodium.h>
 #include <unordered_map>
-#include "husarnet_crypto.h"
+#include "ngsocket_crypto.h"
 #include "port.h"
 #include "util.h"
 #ifdef WITH_ZSTD

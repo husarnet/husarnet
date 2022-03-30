@@ -1,12 +1,16 @@
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include "ports/port.h"
 
 #include <sstream>
 #include "global_lock.h"
 #include "husarnet_config.h"
-#include "husarnet_crypto.h"
 #include "husarnet_manager.h"
+#include "ngsocket_crypto.h"
+#include "port_interface.h"
+#include "ports/privileged_interface.h"
 #include "ports/sockets.h"
-#include "privileged/privileged_interface.h"
 #include "util.h"
 
 #ifdef HTTP_CONTROL_API
@@ -214,30 +218,77 @@ void HusarnetManager::cleanup() {
 }
 
 HusarnetManager::HusarnetManager() {
+  Port::init();
   Privileged::init();
-
-  configStorage = new ConfigStorage(
-      Privileged::readSettings, Privileged::writeSettings, userDefaults,
-      getEnvironmentOverrides(), internalDefaults);
 }
 
-void HusarnetManager::runHusarnet() {
-  Privileged::start();
+void HusarnetManager::getLicense() {
+  this->license =
+      new License(configStorage->getUserSetting(UserSetting::dashboardUrl));
+}
 
-  // You need to get this variable as late as possible, so platforms like ESP32
-  // can prepopulate config with orverriden data
-  auto dashboardHostname =
-      configGet("manual", "dashboard-hostname", "app.husarnet.com");
-  this->license = new License(dashboardHostname);
+void HusarnetManager::getIdentity() {
+  // TODO - reenable the smartcard support but with proper multiplatform support
+  // identity = Privileged::readIdentity();
+
+  // if there is no identity or there's a bugged one
+  // if (identity == NULL || identity->deviceId == BadDeviceId) {
+  //   identity = NgSocketCrypto::generateId();
+  //   Privileged::writeIdentity(identity);
+  // }
+}
+
+void HusarnetManager::startWebsetup() {
   this->websetup = new WebsetupConnection(this);
-
   websetup->init();
-
   GIL::startThread([this]() { websetup->run(); }, "websetup", 6000);
+}
 
+void HusarnetManager::startHTTPServer() {
 #ifdef HTTP_CONTROL_API
   std::thread httpThread([this]() { APIServer::httpThread(*this); });
 #endif
+}
+
+void HusarnetManager::stage1() {
+  if (stage1Started) {
+    return;
+  }
+
+  Privileged::start();
+
+  configStorage = new ConfigStorage(
+      Privileged::readConfig, Privileged::writeConfig, userDefaults,
+      getEnvironmentOverrides(), internalDefaults);
+}
+
+void HusarnetManager::stage2() {
+  if (stage2Started) {
+    return;
+  }
+
+  getLicense();
+  getIdentity();
+}
+
+void HusarnetManager::stage3() {
+  if (stage3Started) {
+    return;
+  }
+
+  startWebsetup();
+  startHTTPServer();
+}
+
+void HusarnetManager::runHusarnet() {
+  // TODO - powoli przepisywać z service.cpp
+  // zacząć od ogarnięcia license
+  // potem ngsocket (zamienić baseConfig na husarnetManager)
+
+  // NgSocket* sock = NgSocketSecure::create(identity, baseConfig);
+  stage1();
+  stage2();
+  stage3();
 
   while (true) {
     sock->periodic();

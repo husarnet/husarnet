@@ -1,3 +1,6 @@
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include "parser.h"
 #include <iostream>
 #include "docopt.h"
@@ -42,9 +45,9 @@ CLIOpts parseCliArgs(int argc, const char* argv[]) {
   std::map<std::string, docopt::value> args =
       docopt::docopt(USAGE, {argv + 1, argv + argc}, true, HUSARNET_VERSION);
 
-  for (auto const& arg : args) {
-    std::cout << arg.first << ":" << arg.second << std::endl;
-  }
+  // for (auto const& arg : args) {
+  //   std::cout << arg.first << ":" << arg.second << std::endl;
+  // }
 
   CLIOpts opts;
 
