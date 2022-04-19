@@ -31,7 +31,6 @@ void udpSendMulticast(InetAddress address, const std::string& data);
 int bindUdpSocket(InetAddress addr, bool reuse);
 void bindCustomFd(int fd, std::function<void()> readyCallback);
 void bindCustomDgramFd(int fd, PacketCallack callback);
-IpAddress resolveToIp(std::string hostname);
 InetAddress ipFromSockaddr(struct sockaddr_storage st);
 struct sockaddr_in6 sockaddrFromIp(InetAddress ip);
 int connectTcpSocket(InetAddress addr);

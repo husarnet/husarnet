@@ -6,8 +6,9 @@
 #include <list>
 #include <stdexcept>
 #include "enum.h"
+#include "husarnet/ipaddress.h"
+#include "husarnet/util.h"
 #include "nlohmann/json.hpp"
-#include "util.h"
 
 using namespace nlohmann;  // json
 

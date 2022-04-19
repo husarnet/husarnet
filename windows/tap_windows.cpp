@@ -2,7 +2,7 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "tap_windows.h"
-#include "global_lock.h"
+#include "gil.h"
 #include "husarnet.h"
 #include "port.h"
 #include "util.h"

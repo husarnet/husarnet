@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
-#include "fstring.h"
+#include "husarnet/fstring.h"
 
 #if defined(ESP_PLATFORM)
 namespace std {

@@ -42,7 +42,6 @@ mkdir -p ${output_dir}
 pushd ${build_dir}
 
 cmake -G Ninja \
-      -DSODIUM_SRC=${base_dir}/deps/libsodium/src/libsodium \
       -DCMAKE_INSTALL_PREFIX=${output_dir} \
       -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
       -DCMAKE_BUILD_TYPE=Debug \

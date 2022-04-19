@@ -34,3 +34,5 @@ class LogManager {
   uint16_t getSize();
   uint16_t getCurrentSize();
 };
+
+extern LogManager* globalLogManager;

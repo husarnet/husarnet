@@ -4,11 +4,12 @@
 
 // port.h has to be the first include, newline afterwards prevents autoformatter
 // from sorting it
-#include "port.h"
+#include "husarnet/ports/port.h"
 
-#include "global_lock.h"
-#include "sockets.h"
-#include "util.h"
+#include "husarnet/gil.h"
+#include "husarnet/ports/port_interface.h"
+#include "husarnet/ports/sockets.h"
+#include "husarnet/util.h"
 
 namespace OsSocket {
 
@@ -77,10 +78,6 @@ InetAddress ipFromSockaddr(struct sockaddr_storage st) {
   }
 }
 
-IpAddress resolveToIp(std::string hostname) {
-  return resolveIp(hostname);
-}
-
 struct UdpSocket {
   int fd;
   PacketCallack callback;
@@ -126,7 +123,7 @@ int bindUdpSocket(InetAddress addr, bool reuse, bool v6) {
   auto sa = makeSockaddr(addr, useV6);
   socklen_t socklen = sizeof(sa);
   if (SOCKFUNC(bind)(fd, (sockaddr*)&sa, socklen) < 0) {
-    SOCKFUNC_close(fd);
+    SOCKFUNC(close)(fd);
     return -1;
   }
   return fd;
@@ -240,7 +237,7 @@ int connectTcpSocket(InetAddress addr) {
   socklen_t socklen = sizeof(sa);
   if (SOCKFUNC(connect)(fd, (sockaddr*)&sa, socklen) < 0) {
     LOG("connection with the server failed");
-    SOCKFUNC_close(fd);
+    SOCKFUNC(close)(fd);
     return -1;
   }
   return fd;
@@ -378,7 +375,7 @@ void close(std::shared_ptr<FramedTcpConnection> conn) {
   if (conn->fd == -1)
     return;
 
-  SOCKFUNC_close(conn->fd);
+  SOCKFUNC(close)(conn->fd);
   conn->fd = -1;
   tcpConnectionsErrored.push_back(conn);
 }

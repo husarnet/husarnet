@@ -19,7 +19,6 @@ inline void sleep(int sec) {
   Sleep(sec * 1000);
 }
 #define SOCKFUNC(name) ::name
-#define SOCKFUNC_close closesocket
 
 inline long random() {
   unsigned int res = 0;

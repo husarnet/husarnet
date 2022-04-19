@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/ports/port.h"
+#include "husarnet/ports/port_interface.h"
 #include "husarnet/util.h"
 #ifdef WITH_ZSTD
 #include "zstd.h"
@@ -84,12 +85,12 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
     if (peer == nullptr)
       return -1;
 
-    peer->heartbeatIdent = randBytes(8);
+    peer->heartbeatIdent = generateRandomString(8);
     std::string packet = std::string("\4") + peer->heartbeatIdent;
-    peer->lastLatencySent = currentTime();
+    peer->lastLatencySent = Port::getCurrentTime();
     socket->sendDataPacket(peer->id, packet);
 
-    if (peer->lastLatencyReceived + 10000 < currentTime())
+    if (peer->lastLatencyReceived + 10000 < Port::getCurrentTime())
       return -1;
     return peer->latency;
   }
@@ -105,7 +106,7 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
       return;
 
     if (ident == peer->heartbeatIdent) {
-      Time now = currentTime();
+      Time now = Port::getCurrentTime();
       peer->lastLatencyReceived = now;
       peer->latency = now - peer->lastLatencySent;
     }
@@ -355,7 +356,6 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
   }
 
   void doSendDataPacket(Peer* peer, string_view data) {
-    HPERF_RECORD(secure_enter);
     uint64_t seqnum = 0;
     assert(data.size() < 10240);
     int cleartextSize = (int)data.size() + 8;
@@ -396,7 +396,6 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
                           cleartextSize, (const unsigned char*)nonce,
                           peer->txKey.data());
 
-    HPERF_RECORD(secure_exit);
     socket->sendDataPacket(
         peer->id, string_view(ciphertextBuffer).substr(0, ciphertextSize));
   }
@@ -409,7 +408,7 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
       return nullptr;
     }
     Peer* peer = new Peer;
-    peer->heartbeatIdent = randBytes(8);
+    peer->heartbeatIdent = generateRandomString(8);
     peer->id = id;
     crypto_kx_keypair(peer->kxPubkey.data(), peer->kxPrivkey.data());
     peers[id] = peer;

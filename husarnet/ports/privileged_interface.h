@@ -4,6 +4,7 @@
 #pragma once
 #include <list>
 #include <string>
+#include <vector>
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 
@@ -17,6 +18,8 @@ void writeConfig(std::string);
 
 Identity readIdentity();
 void writeIdentity(Identity identity);
+
+std::vector<IpAddress> getLocalAddresses();
 
 // std::string updateLicenseFile();
 

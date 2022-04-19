@@ -10,13 +10,14 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include "husarnet_config.h"
-#include "licensing.h"
-#include "sockets.h"
-#include "util.h"
+#include "husarnet/husarnet_config.h"
+#include "husarnet/licensing.h"
+#include "husarnet/ports/port_interface.h"
+#include "husarnet/ports/sockets.h"
+#include "husarnet/util.h"
 
 json retrieveLicenseJson(std::string dashboardHostname) {
-  IpAddress ip = OsSocket::resolveToIp(dashboardHostname);
+  IpAddress ip = Port::resolveToIp(dashboardHostname);
   InetAddress address{ip, 80};
   int sockfd = OsSocket::connectTcpSocket(address);
   if (sockfd < 0) {

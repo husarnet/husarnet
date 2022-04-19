@@ -12,9 +12,9 @@
 #include <ws2tcpip.h>
 #include <chrono>
 #include <vector>
-#include "global_lock.h"
-#include "threads_port.h"
-#include "util.h"
+#include "husarnet/gil.h"
+#include "husarnet/ports/threads_port.h"
+#include "husarnet/util.h"
 
 bool husarnetVerbose = true;
 

@@ -6,11 +6,13 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "husarnet/global_lock.h"
+#include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/ports/port.h"
+#include "husarnet/ports/port_interface.h"
+#include "husarnet/ports/privileged_interface.h"
 #include "husarnet/queue.h"
 #include "husarnet/util.h"
 
@@ -120,7 +122,9 @@ struct Peer {
   std::unordered_set<InetAddress, iphash> sourceAddresses;
   std::vector<std::string> packetQueue;
 
-  bool active() { return currentTime() - lastPacket < TEARDOWN_TIMEOUT; }
+  bool active() {
+    return Port::getCurrentTime() - lastPacket < TEARDOWN_TIMEOUT;
+  }
 };
 
 std::string idstr(DeviceId id) {
@@ -173,28 +177,28 @@ struct NgSocketImpl : public NgSocket {
   Queue<std::function<void()>> workerQueue;
 
   void periodic() override {
-    if (currentTime() < lastPeriodic + 1000)
+    if (Port::getCurrentTime() < lastPeriodic + 1000)
       return;
-    lastPeriodic = currentTime();
+    lastPeriodic = Port::getCurrentTime();
 
     if (reloadLocalAddresses()) {
       // new addresses, accelerate reconnection
       LOG("IP address change detected");
       requestRefresh();
-      if (currentTime() - lastBaseTcpAction > NAT_INIT_TIMEOUT)
+      if (Port::getCurrentTime() - lastBaseTcpAction > NAT_INIT_TIMEOUT)
         connectToBase();
     }
 
-    if (currentTime() - lastRefresh > REFRESH_TIMEOUT)
+    if (Port::getCurrentTime() - lastRefresh > REFRESH_TIMEOUT)
       requestRefresh();
 
     if (!natInitConfirmed &&
-        currentTime() - lastNatInitSent > NAT_INIT_TIMEOUT) {
+        Port::getCurrentTime() - lastNatInitSent > NAT_INIT_TIMEOUT) {
       // retry nat init in case the packet gets lost
       sendNatInitToBase();
     }
 
-    if (currentTime() - lastBaseTcpAction >
+    if (Port::getCurrentTime() - lastBaseTcpAction >
         (baseConnection ? TCP_PONG_TIMEOUT : NAT_INIT_TIMEOUT))
       connectToBase();
   }
@@ -211,7 +215,7 @@ struct NgSocketImpl : public NgSocket {
     }
 
     if (!isBaseUdp()) {
-      if (currentTime() - lastBaseTcpMessage > UDP_BASE_TIMEOUT)
+      if (Port::getCurrentTime() - lastBaseTcpMessage > UDP_BASE_TIMEOUT)
         info += "ERROR: no base connection\n";
       else
         info += "WARN: only TCP connection to base established\n";
@@ -278,7 +282,7 @@ struct NgSocketImpl : public NgSocket {
 
   void refresh() {
     // release the lock around every operation to reduce latency
-    lastRefresh = currentTime();
+    lastRefresh = Port::getCurrentTime();
     sendLocalAddressesToBase();
 
     GIL::yield();
@@ -298,7 +302,8 @@ struct NgSocketImpl : public NgSocket {
       // TODO: send unsubscribe to base
     } else {
       if (peer->reestablishing && peer->connected &&
-          currentTime() - peer->lastReestablish > REESTABLISH_TIMEOUT) {
+          Port::getCurrentTime() - peer->lastReestablish >
+              REESTABLISH_TIMEOUT) {
         peer->connected = false;
         LOG("falling back to relay (peer: %s)", IDSTR(peer->id));
       }
@@ -308,14 +313,13 @@ struct NgSocketImpl : public NgSocket {
   }
 
   void sendDataPacket(DeviceId target, string_view data) override {
-    HPERF_RECORD(husarnet_enter);
     Peer* peer = getOrCreatePeer(target);
     if (peer != nullptr)
       sendDataToPeer(peer, data);
   }
 
   bool isBaseUdp() {
-    return currentTime() - lastNatInitConfirmation < UDP_BASE_TIMEOUT;
+    return Port::getCurrentTime() - lastNatInitConfirmation < UDP_BASE_TIMEOUT;
   }
 
   void sendDataToPeer(Peer* peer, string_view data) {
@@ -323,13 +327,13 @@ struct NgSocketImpl : public NgSocket {
       PeerToPeerMessage msg;
       msg.kind = PeerToPeerMessage::DATA;
       msg.data = data;
-      HPERF_RECORD(husarnet_exit);
 
       LOG_DEBUG("send to peer %s", peer->targetAddress.str().c_str());
       sendToPeer(peer->targetAddress, msg);
     } else {
       if (!peer->reestablishing ||
-          (currentTime() - peer->lastReestablish > REESTABLISH_TIMEOUT &&
+          (Port::getCurrentTime() - peer->lastReestablish >
+               REESTABLISH_TIMEOUT &&
            peer->failedEstablishments <= MAX_FAILED_ESTABLISHMENTS))
         attemptReestablish(peer);
 
@@ -349,7 +353,7 @@ struct NgSocketImpl : public NgSocket {
     if (!peer->active())
       sendInfoRequestToBase(peer->id);
 
-    peer->lastPacket = currentTime();
+    peer->lastPacket = Port::getCurrentTime();
   }
 
   Peer* createPeer(DeviceId id) {
@@ -375,9 +379,9 @@ struct NgSocketImpl : public NgSocket {
       return;
 
     peer->failedEstablishments++;
-    peer->lastReestablish = currentTime();
+    peer->lastReestablish = Port::getCurrentTime();
     peer->reestablishing = true;
-    peer->helloCookie = randBytes(16);
+    peer->helloCookie = generateRandomString(16);
 
     LOGV("reestablish connection to [%s]",
          IpAddress::fromBinary(peer->id).str().c_str());
@@ -476,7 +480,7 @@ struct NgSocketImpl : public NgSocket {
       return;
     }
 
-    int latency = currentTime() - peer->lastReestablish;
+    int latency = Port::getCurrentTime() - peer->lastReestablish;
     LOGV(" - using this address as target (reply received after %d ms)",
          latency);
     peer->targetAddress = source;
@@ -499,7 +503,7 @@ struct NgSocketImpl : public NgSocket {
     if (msg.kind == BaseToPeerMessage::NAT_OK) {
       if (lastNatInitConfirmation == 0)
         LOG("UDP connection to base server established");
-      lastNatInitConfirmation = currentTime();
+      lastNatInitConfirmation = Port::getCurrentTime();
       natInitConfirmed = true;
 
       PeerToBaseMessage resp{};
@@ -513,7 +517,7 @@ struct NgSocketImpl : public NgSocket {
   }
 
   void baseMessageReceivedTcp(const BaseToPeerMessage& msg) {
-    lastBaseTcpAction = lastBaseTcpMessage = currentTime();
+    lastBaseTcpAction = lastBaseTcpMessage = Port::getCurrentTime();
     baseConnectRetries = 0;
 
     if (msg.kind == BaseToPeerMessage::HELLO) {
@@ -571,7 +575,7 @@ struct NgSocketImpl : public NgSocket {
     if (cookie.size() == 0)
       return;
 
-    lastNatInitSent = currentTime();
+    lastNatInitSent = Port::getCurrentTime();
     natInitConfirmed = false;
 
     PeerToBaseMessage msg;
@@ -672,8 +676,8 @@ struct NgSocketImpl : public NgSocket {
     udpListenMulticast(InetAddress{MULTICAST_ADDR_6, MULTICAST_PORT}, callback);
 
     // Passing std::bind crashes mingw_thread. The reason is not apparent.
-    startThread([this]() { this->workerLoop(); }, "hworker",
-                /*stack=*/8000);
+    Port::startThread([this]() { this->workerLoop(); }, "hworker",
+                      /*stack=*/8000);
 
     LOG("ngsocket %s listening on %d", IDSTR(deviceId), sourcePort);
   }
@@ -741,7 +745,7 @@ struct NgSocketImpl : public NgSocket {
     if (options->useOverrideLocalAddresses) {
       newAddresses = options->overrideLocalAddresses;
     } else {
-      for (IpAddress address : getLocalAddresses()) {
+      for (IpAddress address : Privileged::getLocalAddresses()) {
         if (address.data[0] == 0xfc && address.data[1] == 0x94)
           continue;
 
@@ -1000,7 +1004,7 @@ void NgSocketImpl::connectToBase() {
   LOG("establishing connection to base %s", baseAddress.str().c_str());
 
   auto dataCallback = [this](string_view data) {
-    lastBaseTcpMessage = currentTime();
+    lastBaseTcpMessage = Port::getCurrentTime();
     this->baseMessageReceivedTcp(parseBaseToPeerMessage(data));
   };
 
@@ -1010,7 +1014,7 @@ void NgSocketImpl::connectToBase() {
     if (conn == baseConnection) {
       close(baseConnection);
       baseConnection = nullptr;  // warning: this will destroy us (the lambda)
-      lastBaseTcpAction = currentTime();
+      lastBaseTcpAction = Port::getCurrentTime();
     }
   };
 
@@ -1018,7 +1022,7 @@ void NgSocketImpl::connectToBase() {
     close(baseConnection);
 
   baseConnection = tcpConnect(baseAddress, dataCallback, errorCallback);
-  lastBaseTcpAction = currentTime();
+  lastBaseTcpAction = Port::getCurrentTime();
 
   PeerToBaseMessage userAgentMsg;
   userAgentMsg.kind = PeerToBaseMessage::USER_AGENT;

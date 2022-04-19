@@ -1,15 +1,15 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "websetup.h"
+#include "husarnet/websetup.h"
 #include <iterator>
 #include <sstream>
-#include "global_lock.h"
-#include "husarnet_config.h"
-#include "husarnet_manager.h"
-#include "port.h"
-#include "sockets.h"
-#include "util.h"
+#include "husarnet/gil.h"
+#include "husarnet/husarnet_config.h"
+#include "husarnet/husarnet_manager.h"
+#include "husarnet/ports/port.h"
+#include "husarnet/ports/sockets.h"
+#include "husarnet/util.h"
 
 WebsetupConnection::WebsetupConnection(HusarnetManager* manager)
     : manager(manager) {}

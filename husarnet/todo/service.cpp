@@ -4,38 +4,6 @@
 
 // TODO remove this whole file
 
-// #include <signal.h>
-// #include <sys/stat.h>
-// #include <sys/un.h>
-// #include <unistd.h>
-// #include <fstream>
-// #include <sstream>
-// #include <unordered_set>
-// #include "dns_server.h"
-// #include "filestorage.h"
-// #include "husarnet.h"
-// #include "husarnet_config.h"
-// #include "husarnet_crypto.h"
-// #include "husarnet_secure.h"
-// #include "l2unwrapper.h"
-// #include "logmanager.h"
-// #include "network_dev.h"
-// #include "port.h"
-// #include "service_helper.h"
-// #include "settings.h"
-// #include "smartcard_client.h"
-// #include "sockets.h"
-// #include "sqlite_configtable.h"
-// #include "tun.h"
-// #include "util.h"
-
-// #include <linux/capability.h>
-// #include <linux/securebits.h>
-// #include <sys/prctl.h>
-// #include <sys/syscall.h>
-
-// using namespace std::placeholders;
-
 // struct cap_header_struct {
 //   __u32 version;
 //   int pid;
@@ -110,17 +78,6 @@
 //   }
 // }
 
-// void iptablesInsert(std::string rule) {
-//   LOGV("adding iptables rule: %s", rule.c_str())
-//   if (system(("ip6tables --check " + rule + "|| ip6tables --append " + rule)
-//                  .c_str()) != 0) {
-//     LOG("unable to insert iptables rule: %s", rule.c_str());
-//     exit(1);
-//   }
-
-//   FileStorage::saveIp6tablesRuleForDeletion(rule);
-// }
-
 // void systemdNotify() {
 //   const char* msg = "READY=1";
 //   const char* sockPath = getenv("NOTIFY_SOCKET");
@@ -150,12 +107,6 @@
 //     switchNetns(netns);
 //   }
 
-//   std::string configDir = prepareConfigDir();
-
-//   if (access(FileStorage::idFilePath(configDir).c_str(), R_OK) != 0) {
-//     FileStorage::generateAndWriteId(configDir);
-//   }
-
 //   if (chdir(configDir.c_str()) != 0) {
 //     LOG("failed to chdir to config dir");
 //     exit(1);
@@ -163,42 +114,6 @@
 //   configDir = "./";
 
 //   ServiceHelper::startServiceHelperProc(configDir);
-
-//   if (system("modprobe ip6_tables 2>/dev/null; modprobe tun 2>/dev/null") !=
-//       0) {
-//     // ignore
-//   }
-
-//   iptablesInsert("INPUT -s fc94::/16 -i lo -j ACCEPT");
-//   iptablesInsert("INPUT -s fc94::/16 \\! -i hnet0 -j DROP");
-
-//   // if license not found -> pull the default one from app.husarnet.com
-//   BaseConfig* baseConfig;
-//   auto path = FileStorage::licenseFilePath(configDir);
-//   std::ifstream input(path);
-//   if (input.is_open()) {
-//     std::string str((std::istreambuf_iterator<char>(input)),
-//                     std::istreambuf_iterator<char>());
-//     baseConfig = new BaseConfig(str);
-//   } else {
-//     // pull license
-//     IpAddress ip = OsSocket::resolveToIp(::dashboardHostname);
-//     InetAddress address{ip, 80};
-//     std::string license = retrieveLicense(address);
-
-//     // read new license
-//     std::ifstream inputDefault(path);
-//     if (inputDefault.is_open()) {
-//       std::string str((std::istreambuf_iterator<char>(input)),
-//                       std::istreambuf_iterator<char>());
-//       baseConfig = new BaseConfig(license);
-//     } else {
-//       LOG("failed to pull the default license");
-//       exit(1);  // TODO (?): remove hardcoded IPs from husarnet_config.h
-//     }
-//   }
-
-//   NgSocket* sock = NgSocketSecure::create(identity, baseConfig);
 
 //   Settings settings(FileStorage::settingsFilePath(configDir));
 //   settings.loadInto(sock->options);
@@ -211,11 +126,6 @@
 //   }
 //   LogManager* logManager = new LogManager(100);
 //   globalLogManager = logManager;
-//   ConfigTable* configTable = createSqliteConfigTable(configDir +
-//   "config.db"); ConfigManager configManager(identity, baseConfig,
-//   configTable,
-//                               ServiceHelper::updateHostsFile, sock,
-//                               logManager);
 
 //   sock->options->isPeerAllowed = [&](DeviceId id) {
 //     return configManager.isPeerAllowed(id);
@@ -289,10 +199,6 @@
 //       0) {
 //     LOG("failed to setup multicast route");
 //   }
-
-//   // important: no messages will be processed until we call `runHusarnet`
-//   bindControlSocket(configManager,
-//   FileStorage::controlSocketPath(configDir));
 
 //   systemdNotify();
 

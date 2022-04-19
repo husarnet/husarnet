@@ -1,8 +1,12 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "global_lock.h"
-#include "util.h"
+#include "husarnet/gil.h"
+#include "husarnet/ports/port.h"
+#include "husarnet/ports/port_interface.h"
+#include "husarnet/ports/threads_port.h"
+#include "husarnet/util.h"
+
 namespace GIL {
 
 std::mutex globalLock;
@@ -20,7 +24,7 @@ void startThread(std::function<void()> func,
     func();
     globalLock.unlock();
   };
-  ::startThread(wrapped, name, stack, priority);
+  Port::startThread(wrapped, name, stack, priority);
 }
 
 void yield() {

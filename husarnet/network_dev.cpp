@@ -66,8 +66,6 @@ struct NetworkDevImpl : NgSocket, NgSocketDelegate {
   }
 
   void sendDataPacket(DeviceId target, string_view packet) override {
-    HPERF_RECORD(start);
-
     if (packet.size() <= 40) {
       LOG("truncated packet");
       return;
@@ -106,9 +104,6 @@ struct NetworkDevImpl : NgSocket, NgSocketDelegate {
       *(char*)(&msgData[0]) =
           (char)protocol;  // a bit hacky, but we assume we can modify `packet`
       socket->sendDataPacket(dstAddress, msgData);
-
-      HPERF_RECORD(exit);
-      hperf_compute();
     }
   }
 };

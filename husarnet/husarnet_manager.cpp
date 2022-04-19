@@ -4,7 +4,7 @@
 #include "husarnet/ports/port.h"
 
 #include <sstream>
-#include "husarnet/global_lock.h"
+#include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ngsocket_crypto.h"
@@ -147,7 +147,8 @@ void HusarnetManager::joinNetwork(std::string joinCode,
                                   std::string newHostname) {
   whitelistAdd(license->getWebsetupAddress());
 
-  auto newWebsetupSecret = setWebsetupSecret(encodeHex(randBytes(12)));
+  auto newWebsetupSecret =
+      setWebsetupSecret(encodeHex(generateRandomString(12)));
 
   websetup->sendJoinRequest(parseJoinCode(joinCode), newWebsetupSecret,
                             newHostname);
@@ -262,6 +263,7 @@ void HusarnetManager::stage1() {
     return;
   }
 
+  GIL::init();
   Privileged::start();
 
   configStorage = new ConfigStorage(

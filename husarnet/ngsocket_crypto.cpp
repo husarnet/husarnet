@@ -1,10 +1,10 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "ngsocket_crypto.h"
-#include "identity.h"
+#include "husarnet/ngsocket_crypto.h"
+#include "husarnet/identity.h"
+#include "husarnet/util.h"
 #include "sodium.h"
-#include "util.h"
 
 namespace NgSocketCrypto {
 std::string makeMessage(const std::string& data, const std::string& kind) {

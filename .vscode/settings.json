@@ -71,7 +71,6 @@
     "cmake.sourceDirectory": "${workspaceFolder}/unix",
     "cSpell.words": [
         "DEVICEID",
-        "hperf",
         "Husarion",
         "Husarnet",
         "HUSARNET",
@@ -89,5 +88,7 @@
         "Websetup",
         "Zieliński",
         "zielmicha"
-    ]
+    ],
+    "cmake.configureOnOpen": true,
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

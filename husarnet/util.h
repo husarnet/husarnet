@@ -7,44 +7,44 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
-#include "fstring.h"
-#include "logmanager.h"
-#include "ports/port.h"
-#include "string_view.h"
-int64_t currentTime();
-
-extern LogManager* globalLogManager;
+#include "husarnet/fstring.h"
+#include "husarnet/logmanager.h"
+#include "husarnet/ports/port.h"
+#include "husarnet/ports/port_interface.h"
+#include "husarnet/string_view.h"
 
 #ifdef __ANDROID__
 #include <android/log.h>
 
 #define LOG(msg, x...)                                                 \
   __android_log_print(ANDROID_LOG_INFO, "husarnet", "[%ld] " msg "\n", \
-                      (long int)currentTime(), ##x)
+                      (long int)Port::getCurrentTime(), ##x)
 #define LOGV(msg, x...) LOG(msg, ##x)
 
 #else
 #ifdef _WIN32
 #define LOG(msg, x...)                                                    \
   do {                                                                    \
-    fprintf(stderr, "[%lld] %s: " msg "\n", (long long int)currentTime(), \
-            getThreadName(), ##x);                                        \
+    fprintf(stderr, "[%lld] %s: " msg "\n",                               \
+            (long long int)Port::getCurrentTime(), getThreadName(), ##x); \
     fflush(stderr);                                                       \
   } while (0)
 #else
-#define LOG(msg, x...)                                                      \
-  do {                                                                      \
-    fprintf(stderr, "[%lld] " msg "\n", (long long int)currentTime(), ##x); \
-    fflush(stderr);                                                         \
-    if (globalLogManager != nullptr) {                                      \
-      char buf[1024];                                                       \
-      snprintf(buf, 1024, "[%lld] " msg "\n", (long long int)currentTime(), \
-               ##x);                                                        \
-      globalLogManager->insert(buf);                                        \
-    }                                                                       \
+#define LOG(msg, x...)                                                         \
+  do {                                                                         \
+    fprintf(stderr, "[%lld] " msg "\n", (long long int)Port::getCurrentTime(), \
+            ##x);                                                              \
+    fflush(stderr);                                                            \
+    if (globalLogManager != nullptr) {                                         \
+      char buf[1024];                                                          \
+      snprintf(buf, 1024, "[%lld] " msg "\n",                                  \
+               (long long int)Port::getCurrentTime(), ##x);                    \
+      globalLogManager->insert(buf);                                           \
+    }                                                                          \
   } while (0)
 #endif
-// globalLogManager->insert("["+std::to_string((long long int)currentTime())+"]
+// globalLogManager->insert("["+std::to_string((long long
+// int)Port::getCurrentTime())+"]
 // "+msg);
 #define LOGV1(msg, x...)                           \
   do {                                             \
@@ -183,14 +183,6 @@ struct pair_hash {
     return std::hash<A>()(a.first) + std::hash<B>()(a.second) * 23456213;
   }
 };
-
-inline int renameOrCopyFile(const char* src, const char* dst) {
-  if (renameFile(src, dst) == 0) {
-    return 0;
-  }
-
-  return copyFile(src, dst);
-}
 
 std::string generateRandomString(const int length);
 std::string strToUpper(std::string input);

@@ -2,8 +2,7 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include "ports/port.h"
-#include "ports/threads_port.h"
+#include <functional>
 
 namespace GIL {
 void lock();

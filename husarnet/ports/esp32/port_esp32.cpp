@@ -10,23 +10,6 @@
 
 bool husarnetVerbose = true;
 
-#ifdef ENABLE_HPREF
-hperf_t hperf;
-constexpr int hperf_cnt = sizeof(hperf_t) / 8 - 1;
-int64_t hperf_avg[hperf_cnt];
-int64_t hperf_n;
-
-void hperf_compute() {
-  int64_t* arr = (int64_t*)&hperf;
-  printf("[] perf: ");
-  for (int i = 0; i < hperf_cnt; i++) {
-    printf("%lld ", arr[i + 1] - arr[0]);
-  }
-  printf("\n");
-  hperf_n++;
-}
-#endif
-
 int64_t currentTime() {
   // return (xTaskGetTickCount() * 1000 / configTICK_RATE_HZ) + 10000000ul;
   return esp_timer_get_time() / 1000 + 10000000ul;
