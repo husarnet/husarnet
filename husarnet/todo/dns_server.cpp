@@ -8,11 +8,12 @@
 #include "sockets.h"
 #include "util.h"
 
-std::string read_label(const std::string& data, int& pos) {
-  if (pos >= data.size())
+std::string read_label(const std::string& data, int& pos)
+{
+  if(pos >= data.size())
     return "";
   int len = data[pos];
-  if (pos + len + 1 > data.size())
+  if(pos + len + 1 > data.size())
     return "";
   std::string label = data.substr(pos + 1, len);
   pos += len + 1;
@@ -31,8 +32,9 @@ struct DnsRequest {
   std::vector<Label> labels;
 };
 
-DnsRequest parseDnsRequest(std::string s) {
-  if (s.size() < 12) {
+DnsRequest parseDnsRequest(std::string s)
+{
+  if(s.size() < 12) {
     LOG("DNS request too short");
     return {false};
   }
@@ -43,18 +45,18 @@ DnsRequest parseDnsRequest(std::string s) {
 
   std::vector<DnsRequest::Label> labels;
   int pos = 12;
-  for (int i = 0; i < qcount; i++) {
+  for(int i = 0; i < qcount; i++) {
     std::string label = "";
-    while (true) {
+    while(true) {
       std::string part = read_label(s, pos);
-      if (part == "")
+      if(part == "")
         break;
       label += part + ".";
     }
-    if (label != "")
+    if(label != "")
       label = label.substr(0, label.size() - 1);
 
-    if (pos + 4 > s.size())
+    if(pos + 4 > s.size())
       break;
 
     uint16_t qtype = htons(unpack<uint16_t>(s.substr(pos, 2)));
@@ -69,11 +71,12 @@ DnsRequest parseDnsRequest(std::string s) {
   return DnsRequest{true, id, labels};
 }
 
-std::string mk_label(std::string label) {
+std::string mk_label(std::string label)
+{
   std::string res = "";
   std::string curr = "";
-  for (const char& ch : label + ".") {
-    if (ch == '.') {
+  for(const char& ch : label + ".") {
+    if(ch == '.') {
       res += pack(uint8_t(curr.size())) + curr;
       curr = "";
     } else {
@@ -84,17 +87,17 @@ std::string mk_label(std::string label) {
   return res;
 }
 
-std::string makeDnsResponse(int id,
-                            ResolveResponse resp,
-                            DnsRequest::Label query) {
+std::string
+makeDnsResponse(int id, ResolveResponse resp, DnsRequest::Label query)
+{
   uint16_t opcode = 0;
   uint16_t flags = (1 << 15) | (opcode << 12) | (int)resp.code |
                    /* rd|ra */ (1 << 7) | (1 << 8);
   uint16_t qcount = (query.name.size() > 0) ? 1 : 0;
   uint16_t acount = (resp.code == ResolveResponse::OK && query.qtype == 28 &&
                      query.qclass == 1)
-                        ? 1
-                        : 0;
+                      ? 1
+                      : 0;
   uint16_t nscount = 0;
   uint16_t arcount = 0;
 
@@ -102,13 +105,13 @@ std::string makeDnsResponse(int id,
                      pack(htons(qcount)) + pack(htons(acount)) +
                      pack(htons(nscount)) + pack(htons(arcount));
 
-  if (qcount == 1) {
+  if(qcount == 1) {
     body += mk_label(query.name);
     body += pack(htons(uint16_t(query.qtype))) +
             pack(htons(uint16_t(query.qclass)));
   }
 
-  if (acount == 1) {
+  if(acount == 1) {
     body += mk_label(resp.label);
     std::string rdata = resp.address.toBinary();
     body += pack(htons(uint16_t(28))) + pack(htons(uint16_t(1))) +
@@ -119,14 +122,15 @@ std::string makeDnsResponse(int id,
   return body;
 }
 
-std::string processDnsRequest(std::string s, ResolveFunc resolver) {
+std::string processDnsRequest(std::string s, ResolveFunc resolver)
+{
   DnsRequest req = parseDnsRequest(s);
-  if (!req.ok)
+  if(!req.ok)
     return "";
 
-  if (req.labels.size() > 0) {
+  if(req.labels.size() > 0) {
     ResolveResponse resp = resolver(req.labels[0].name);
-    if (resp.code == ResolveResponse::IGNORE)
+    if(resp.code == ResolveResponse::IGNORE)
       return "";
 
     return makeDnsResponse(req.id, resp, req.labels[0]);
@@ -135,12 +139,13 @@ std::string processDnsRequest(std::string s, ResolveFunc resolver) {
   return "";
 }
 
-uint16_t checksum(std::string pkt) {
-  if (pkt.size() % 2 == 1)
+uint16_t checksum(std::string pkt)
+{
+  if(pkt.size() % 2 == 1)
     pkt += '\0';
 
   int s = 0;
-  for (int i = 0; i < pkt.size(); i += 2)
+  for(int i = 0; i < pkt.size(); i += 2)
     s += unpack<uint16_t>(pkt.substr(i, 2));
   s = (s >> 16) + (s & 0xffff);
   s += s >> 16;
@@ -148,11 +153,13 @@ uint16_t checksum(std::string pkt) {
   return s & 0xffff;
 }
 
-std::string makeUdp6Packet(std::string src,
-                           std::string dst,
-                           int srcport,
-                           int dstport,
-                           std::string data) {
+std::string makeUdp6Packet(
+    std::string src,
+    std::string dst,
+    int srcport,
+    int dstport,
+    std::string data)
+{
   std::string pseudoheader =
       src + dst + pack(htons(data.size() + 8)) + std::string("\0\0\0\x11", 4);
   std::string header = pack(htons(srcport)) + pack(htons(dstport)) +
@@ -168,7 +175,8 @@ struct UdpPacket {
   std::string data;
 };
 
-UdpPacket parseUdp6Packet(std::string data) {
+UdpPacket parseUdp6Packet(std::string data)
+{
   UdpPacket res;
   res.src_port = htons(unpack<uint16_t>(data.substr(0, 2)));
   res.dst_port = htons(unpack<uint16_t>(data.substr(2, 2)));
@@ -176,19 +184,21 @@ UdpPacket parseUdp6Packet(std::string data) {
   return res;
 }
 
-std::string processUdpWithDnsRequest(std::string src,
-                                     std::string dst,
-                                     std::string data,
-                                     ResolveFunc resolver) {
-  if (data[0] != 0x11)
+std::string processUdpWithDnsRequest(
+    std::string src,
+    std::string dst,
+    std::string data,
+    ResolveFunc resolver)
+{
+  if(data[0] != 0x11)
     return "";  // not udp
   UdpPacket packet = parseUdp6Packet(data.substr(1));
-  if (packet.dst_port != 53) {
+  if(packet.dst_port != 53) {
     return "";
   }
 
   std::string dnsResp = processDnsRequest(packet.data, resolver);
-  if (dnsResp == "")
+  if(dnsResp == "")
     return "";
   return '\x11' + makeUdp6Packet(dst, src, 53, packet.src_port, dnsResp);
 }
@@ -205,22 +215,25 @@ struct DnsSocketWrapper : NgSocket, NgSocketDelegate {
 
   std::unordered_map<uint16_t, std::pair<uint16_t, uint16_t> > dnsIdMapping;
 
-  DnsSocketWrapper() {
+  DnsSocketWrapper()
+  {
     dnsFd =
         OsSocket::bindUdpSocket(InetAddress{IpAddress(), (uint16_t)0}, false);
 
     OsSocket::bindCustomDgramFd(
-        dnsFd, std::bind(&DnsSocketWrapper::dnsReply, this,
-                         std::placeholders::_1, std::placeholders::_2));
+        dnsFd, std::bind(
+                   &DnsSocketWrapper::dnsReply, this, std::placeholders::_1,
+                   std::placeholders::_2));
   }
 
-  void dnsReply(InetAddress src, string_view data) {
+  void dnsReply(InetAddress src, string_view data)
+  {
     LOG("dns reply: %s", encodeHex(data).c_str());
-    if (src != recursiveDnsServer)
+    if(src != recursiveDnsServer)
       return;
 
     uint16_t id = unpack<uint16_t>(data.substr(0, 2));
-    if (dnsIdMapping.find(id) == dnsIdMapping.end()) {
+    if(dnsIdMapping.find(id) == dnsIdMapping.end()) {
       LOG("unknown DNS response");
       return;
     }
@@ -229,21 +242,24 @@ struct DnsSocketWrapper : NgSocket, NgSocketDelegate {
     dnsIdMapping.erase(dnsIdMapping.find(id));
     std::string newData = pack(orgId) + std::string(data).substr(2);
 
-    delegate->onDataPacket(dnsServerAddress,
-                           '\x11' + makeUdp6Packet(dnsServerAddress, deviceId,
-                                                   53, orgPort, newData));
+    delegate->onDataPacket(
+        dnsServerAddress,
+        '\x11' +
+            makeUdp6Packet(dnsServerAddress, deviceId, 53, orgPort, newData));
   }
 
-  uint16_t makeDnsId() {
-    while (true) {
+  uint16_t makeDnsId()
+  {
+    while(true) {
       uint16_t id = random() % (1 << 16);
-      if (dnsIdMapping.find(id) == dnsIdMapping.end())
+      if(dnsIdMapping.find(id) == dnsIdMapping.end())
         return id;
     }
   }
 
-  void forwardDnsPacket(string_view rawData) {
-    if (dnsIdMapping.size() > 100) {
+  void forwardDnsPacket(string_view rawData)
+  {
+    if(dnsIdMapping.size() > 100) {
       LOG("too many pending DNS requests, clearing");
       dnsIdMapping.clear();
     }
@@ -260,14 +276,16 @@ struct DnsSocketWrapper : NgSocket, NgSocketDelegate {
 
   void periodic() override { socket->periodic(); }
 
-  void onDataPacket(DeviceId source, string_view data) override {
+  void onDataPacket(DeviceId source, string_view data) override
+  {
     delegate->onDataPacket(source, data);
   }
 
-  void sendDataPacket(DeviceId target, string_view packet) override {
-    if (target == dnsServerAddress) {
-      if (packet.size() >= 8 && packet[0] == 0x3A &&
-          packet[1] == 0x80) {  // ICMP
+  void sendDataPacket(DeviceId target, string_view packet) override
+  {
+    if(target == dnsServerAddress) {
+      if(packet.size() >= 8 && packet[0] == 0x3A &&
+         packet[1] == 0x80) {  // ICMP
         // reply to pings
         std::string response;
         response.push_back(0x3A);
@@ -285,7 +303,7 @@ struct DnsSocketWrapper : NgSocket, NgSocketDelegate {
 
       std::string resp =
           processUdpWithDnsRequest(deviceId, target, packet, resolver);
-      if (resp == "") {
+      if(resp == "") {
         // forward the packet to a recursive DNS server
         forwardDnsPacket(packet);
       } else {
@@ -297,9 +315,8 @@ struct DnsSocketWrapper : NgSocket, NgSocketDelegate {
   }
 };
 
-NgSocket* dnsServerWrap(DeviceId deviceId,
-                        NgSocket* sock,
-                        ResolveFunc resolver) {
+NgSocket* dnsServerWrap(DeviceId deviceId, NgSocket* sock, ResolveFunc resolver)
+{
   auto dev = new DnsSocketWrapper;
   dev->deviceId = deviceId;
   dev->socket = sock;

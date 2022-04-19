@@ -15,12 +15,14 @@
 #include <string>
 
 extern errno_t rand_s(unsigned int* randomValue);
-inline void sleep(int sec) {
+inline void sleep(int sec)
+{
   Sleep(sec * 1000);
 }
 #define SOCKFUNC(name) ::name
 
-inline long random() {
+inline long random()
+{
   unsigned int res = 0;
   auto ok = rand_s(&res);
   assert(ok == 0);
@@ -29,7 +31,8 @@ inline long random() {
 
 const char* getThreadName();
 
-inline int renameFile(const char* src, const char* dst) {
+inline int renameFile(const char* src, const char* dst)
+{
   return MoveFileEx(src, dst, MOVEFILE_REPLACE_EXISTING) ? 0 : -1;
 }
 

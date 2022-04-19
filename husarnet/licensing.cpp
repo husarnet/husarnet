@@ -16,11 +16,12 @@
 #include "husarnet/ports/sockets.h"
 #include "husarnet/util.h"
 
-json retrieveLicenseJson(std::string dashboardHostname) {
+json retrieveLicenseJson(std::string dashboardHostname)
+{
   IpAddress ip = Port::resolveToIp(dashboardHostname);
   InetAddress address{ip, 80};
   int sockfd = OsSocket::connectTcpSocket(address);
-  if (sockfd < 0) {
+  if(sockfd < 0) {
     exit(1);
   }
 
@@ -40,7 +41,7 @@ json retrieveLicenseJson(std::string dashboardHostname) {
       SOCKFUNC(recv)(sockfd, (char*)readBuffer.data(), readBuffer.size(), 0);
   size_t pos = readBuffer.find("\r\n\r\n");
 
-  if (pos == std::string::npos) {
+  if(pos == std::string::npos) {
     LOG("invalid response from the server: %s", readBuffer.c_str());
     abort();
   }
@@ -63,17 +64,18 @@ static const unsigned char* PUBLIC_KEY = reinterpret_cast<const unsigned char*>(
 #define LICENSE_VALID_UNTIL_KEY "valid_until"
 #define LICENSE_SIGNATURE_KEY "signature"
 
-static std::string getSignatureData(const json licenseJson) {
+static std::string getSignatureData(const json licenseJson)
+{
   std::string s;
   s.append("1\n");
   s.append(licenseJson[LICENSE_INSTALLATION_ID_KEY].get<std::string>() + "\n");
   s.append(licenseJson[LICENSE_LICENSE_ID_KEY].get<std::string>() + "\n");
   s.append(licenseJson[LICENSE_NAME_KEY].get<std::string>() + "\n");
-  s.append(std::to_string(licenseJson[LICENSE_MAX_DEVICES_KEY].get<int>()) +
-           "\n");
+  s.append(
+      std::to_string(licenseJson[LICENSE_MAX_DEVICES_KEY].get<int>()) + "\n");
   s.append(licenseJson[LICENSE_DASHBOARD_URL_KEY].get<std::string>() + "\n");
   s.append(licenseJson[LICENSE_WEBSETUP_HOST_KEY].get<std::string>() + "\n");
-  for (auto address : licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]) {
+  for(auto address : licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]) {
     s.append(address.get<std::string>() + ",");
   }
   s[s.size() - 1] = '\n';  // remove the last comma
@@ -82,18 +84,21 @@ static std::string getSignatureData(const json licenseJson) {
   return s;
 }
 
-static void verifySignature(const std::string& signature,
-                            const std::string& data) {
+static void verifySignature(
+    const std::string& signature,
+    const std::string& data)
+{
   auto* signaturePtr = reinterpret_cast<const unsigned char*>(signature.data());
   auto* dataPtr = reinterpret_cast<const unsigned char*>(data.data());
-  if (crypto_sign_ed25519_verify_detached(signaturePtr, dataPtr, data.size(),
-                                          PUBLIC_KEY) != 0) {
+  if(crypto_sign_ed25519_verify_detached(
+         signaturePtr, dataPtr, data.size(), PUBLIC_KEY) != 0) {
     LOG("license file is invalid");
     abort();
   }
 }
 
-License::License(std::string dashboardHostname) {
+License::License(std::string dashboardHostname)
+{
   auto licenseJson = retrieveLicenseJson(dashboardHostname);
   verifySignature(
       base64Decode(licenseJson[LICENSE_SIGNATURE_KEY].get<std::string>()),
@@ -104,20 +109,23 @@ License::License(std::string dashboardHostname) {
   this->websetupAddress = IpAddress::parse(
       licenseJson[LICENSE_WEBSETUP_HOST_KEY].get<std::string>());
 
-  for (auto baseAddress : licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]) {
+  for(auto baseAddress : licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]) {
     this->baseServerAddresses.emplace_back(
         IpAddress::parse(baseAddress.get<std::string>()));
   }
 }
 
-std::string License::getDashboardUrl() {
+std::string License::getDashboardUrl()
+{
   return this->dashboardUrl;
 }
 
-IpAddress License::getWebsetupAddress() {
+IpAddress License::getWebsetupAddress()
+{
   return this->websetupAddress;
 }
 
-std::vector<IpAddress> License::getBaseServerAddresses() {
+std::vector<IpAddress> License::getBaseServerAddresses()
+{
   return this->baseServerAddresses;
 }

@@ -12,7 +12,8 @@
 #include <iostream>
 #include <string>
 
-int main(int argc, const char* argv[]) {
+int main(int argc, const char* argv[])
+{
   CLIOpts opts = parseCliArgs(argc, argv);
   dispatchCli(opts);
 

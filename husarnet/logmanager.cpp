@@ -3,22 +3,24 @@
 // License: specified in project_root/LICENSE.txt
 #include "logmanager.h"
 
-std::string LogManager::getLogs() {
-  if (currentSize == 0)
+std::string LogManager::getLogs()
+{
+  if(currentSize == 0)
     return "No logs to display";
   LogElement* itr = last;
   std::string result = "";
-  while (itr != nullptr) {
+  while(itr != nullptr) {
     result += itr->log;
     itr = itr->prev;
   }
   return result;
 };
 
-void LogManager::insert(std::string log) {
+void LogManager::insert(std::string log)
+{
   LogElement* logElement = new LogElement(log);
-  if (last == nullptr or size == 1) {
-    if (first != nullptr)
+  if(last == nullptr or size == 1) {
+    if(first != nullptr)
       delete first;
     currentSize = 1;
     first = logElement;
@@ -26,7 +28,7 @@ void LogManager::insert(std::string log) {
     return;
   }
 
-  if (currentSize < size) {
+  if(currentSize < size) {
     currentSize++;
     first->prev = logElement;
     logElement->next = first;
@@ -43,20 +45,21 @@ void LogManager::insert(std::string log) {
   delete tmp;
 };
 
-void LogManager::setSize(uint16_t size) {
-  if (size >= currentSize) {
+void LogManager::setSize(uint16_t size)
+{
+  if(size >= currentSize) {
     this->size = size;
     return;
   }
-  if (size < 1) {
+  if(size < 1) {
     return;
   }
-  if (size == 1) {
+  if(size == 1) {
     LogElement* itr = first->next;
     first->next = nullptr;
     last = first;
     this->size = size;
-    while (itr != nullptr) {
+    while(itr != nullptr) {
       LogElement* tmp = itr;
       itr = itr->next;
       delete tmp;
@@ -67,12 +70,12 @@ void LogManager::setSize(uint16_t size) {
   LogElement* itr = first->next;
   LogElement* followItr = first;
   int visitedCount = 2;
-  while (visitedCount < size && itr != nullptr) {
+  while(visitedCount < size && itr != nullptr) {
     followItr = itr;
     itr = itr->next;
     visitedCount++;
   }
-  while (itr != nullptr) {
+  while(itr != nullptr) {
     LogElement* tmp = itr;
     itr = itr->next;
     delete tmp;
@@ -83,18 +86,22 @@ void LogManager::setSize(uint16_t size) {
   this->currentSize = size;
 };
 
-void LogManager::setVerbosity(uint16_t verb) {
+void LogManager::setVerbosity(uint16_t verb)
+{
   verbosity = verb;
 };
 
-uint16_t LogManager::getVerbosity() {
+uint16_t LogManager::getVerbosity()
+{
   return verbosity;
 };
 
-uint16_t LogManager::getSize() {
+uint16_t LogManager::getSize()
+{
   return size;
 };
 
-uint16_t LogManager::getCurrentSize() {
+uint16_t LogManager::getCurrentSize()
+{
   return currentSize;
 };

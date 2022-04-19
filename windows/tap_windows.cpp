@@ -31,7 +31,8 @@
 
 typedef unsigned long IPADDR;
 
-static std::vector<std::string> getExistingDeviceNames() {
+static std::vector<std::string> getExistingDeviceNames()
+{
   std::vector<std::string> names;
   const char* key_name = NETWORK_ADAPTERS;
   HKEY adapters, adapter;
@@ -40,25 +41,26 @@ static std::vector<std::string> getExistingDeviceNames() {
 
   ret =
       RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(key_name), 0, KEY_READ, &adapters);
-  if (ret != ERROR_SUCCESS) {
+  if(ret != ERROR_SUCCESS) {
     LOG("RegOpenKeyEx returned error");
     return {};
   }
 
-  ret = RegQueryInfoKey(adapters, NULL, NULL, NULL, &sub_keys, NULL, NULL, NULL,
-                        NULL, NULL, NULL, NULL);
-  if (ret != ERROR_SUCCESS) {
+  ret = RegQueryInfoKey(
+      adapters, NULL, NULL, NULL, &sub_keys, NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL);
+  if(ret != ERROR_SUCCESS) {
     LOG("RegQueryInfoKey returned error");
     return {};
   }
 
-  if (sub_keys <= 0) {
+  if(sub_keys <= 0) {
     LOG("Wrong registry key");
     return {};
   }
 
   /* Walk througt all adapters */
-  for (i = 0; i < sub_keys; i++) {
+  for(i = 0; i < sub_keys; i++) {
     char new_key[MAX_KEY_LENGTH];
     char data[256];
     TCHAR key[MAX_KEY_LENGTH];
@@ -66,7 +68,7 @@ static std::vector<std::string> getExistingDeviceNames() {
 
     /* Get the adapter key name */
     ret = RegEnumKeyEx(adapters, i, key, &keylen, NULL, NULL, NULL, NULL);
-    if (ret != ERROR_SUCCESS) {
+    if(ret != ERROR_SUCCESS) {
       continue;
     }
 
@@ -74,7 +76,7 @@ static std::vector<std::string> getExistingDeviceNames() {
     snprintf(new_key, sizeof new_key, "%s\\%s", key_name, key);
     ret =
         RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(new_key), 0, KEY_READ, &adapter);
-    if (ret != ERROR_SUCCESS) {
+    if(ret != ERROR_SUCCESS) {
       continue;
     }
 
@@ -82,18 +84,18 @@ static std::vector<std::string> getExistingDeviceNames() {
     len = sizeof data;
     ret =
         RegQueryValueEx(adapter, "ComponentId", NULL, NULL, (LPBYTE)data, &len);
-    if (ret != ERROR_SUCCESS) {
+    if(ret != ERROR_SUCCESS) {
       /* This value doesn't exist in this adaptater tree */
       goto clean;
     }
     /* If its a tap adapter, its all good */
-    if (strncmp(data, "tap", 3) == 0) {
+    if(strncmp(data, "tap", 3) == 0) {
       DWORD type;
 
       len = sizeof data;
-      ret = RegQueryValueEx(adapter, "NetCfgInstanceId", NULL, &type,
-                            (LPBYTE)data, &len);
-      if (ret != ERROR_SUCCESS) {
+      ret = RegQueryValueEx(
+          adapter, "NetCfgInstanceId", NULL, &type, (LPBYTE)data, &len);
+      if(ret != ERROR_SUCCESS) {
         LOG("RegQueryValueEx returned error");
         goto clean;
       }
@@ -109,7 +111,8 @@ static std::vector<std::string> getExistingDeviceNames() {
   return names;
 }
 
-static std::string getNetshNameForGuid(std::string guid) {
+static std::string getNetshNameForGuid(std::string guid)
+{
   std::string path =
       "SYSTEM\\CurrentControlSet\\Control\\Network\\{4d36e972-e325-11ce-bfc1-"
       "08002be10318}\\" +
@@ -125,14 +128,16 @@ static std::string getNetshNameForGuid(std::string guid) {
   return value;
 }
 
-static HANDLE tuntapStart(std::string name) {
+static HANDLE tuntapStart(std::string name)
+{
   HANDLE tun_fd;
 
   std::string path = "\\\\.\\Global\\" + name + ".tap";
-  tun_fd = CreateFile(path.c_str(), GENERIC_WRITE | GENERIC_READ,
-                      FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING,
-                      FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
-  if (tun_fd == INVALID_HANDLE_VALUE) {
+  tun_fd = CreateFile(
+      path.c_str(), GENERIC_WRITE | GENERIC_READ,
+      FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING,
+      FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
+  if(tun_fd == INVALID_HANDLE_VALUE) {
     int errcode = GetLastError();
 
     LOG("failed to open tap device: %d", errcode);
@@ -142,15 +147,17 @@ static HANDLE tuntapStart(std::string name) {
   return tun_fd;
 }
 
-static void createNewTuntap() {
+static void createNewTuntap()
+{
   system("addtap.bat");
 }
 
 static std::string whatNewDeviceWasCreated(
-    std::vector<std::string> previousNames) {
-  for (std::string name : getExistingDeviceNames()) {
-    if (std::find(previousNames.begin(), previousNames.end(), name) ==
-        previousNames.end()) {
+    std::vector<std::string> previousNames)
+{
+  for(std::string name : getExistingDeviceNames()) {
+    if(std::find(previousNames.begin(), previousNames.end(), name) ==
+       previousNames.end()) {
       LOG("new device: %s", name.c_str());
       return name;
     }
@@ -159,13 +166,15 @@ static std::string whatNewDeviceWasCreated(
   abort();
 }
 
-WinTap* WinTap::create(std::string savedDeviceName) {
+WinTap* WinTap::create(std::string savedDeviceName)
+{
   WinTap* self = new WinTap();
 
   auto existingDevices = getExistingDeviceNames();
   self->deviceName = savedDeviceName;
-  if (std::find(existingDevices.begin(), existingDevices.end(),
-                savedDeviceName) == existingDevices.end()) {
+  if(std::find(
+         existingDevices.begin(), existingDevices.end(), savedDeviceName) ==
+     existingDevices.end()) {
     createNewTuntap();
     self->deviceName = whatNewDeviceWasCreated(existingDevices);
   }
@@ -174,18 +183,20 @@ WinTap* WinTap::create(std::string savedDeviceName) {
   return self;
 }
 
-std::string WinTap::getNetshName() {
+std::string WinTap::getNetshName()
+{
   return getNetshNameForGuid(deviceName);
 }
 
-string_view WinTap::read(std::string& buffer) {
+string_view WinTap::read(std::string& buffer)
+{
   return GIL::unlocked<string_view>([&] {
     OVERLAPPED overlapped = {0, 0, 0};
     overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-    if (ReadFile(tap_fd, &buffer[0], (DWORD)buffer.size(), NULL, &overlapped) ==
-        0) {
-      if (GetLastError() != ERROR_IO_PENDING) {
+    if(ReadFile(tap_fd, &buffer[0], (DWORD)buffer.size(), NULL, &overlapped) ==
+       0) {
+      if(GetLastError() != ERROR_IO_PENDING) {
         LOG("tap read failed %d", (int)GetLastError());
         assert(false);
       }
@@ -199,13 +210,14 @@ string_view WinTap::read(std::string& buffer) {
   });
 }
 
-void WinTap::write(string_view data) {
+void WinTap::write(string_view data)
+{
   GIL::unlocked<void>([&] {
     OVERLAPPED overlapped = {0, 0, 0};
     overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-    if (WriteFile(tap_fd, data.data(), (DWORD)data.size(), NULL, &overlapped)) {
-      if (GetLastError() != ERROR_IO_PENDING) {
+    if(WriteFile(tap_fd, data.data(), (DWORD)data.size(), NULL, &overlapped)) {
+      if(GetLastError() != ERROR_IO_PENDING) {
         LOG("tap write failed");
       }
     }
@@ -215,12 +227,14 @@ void WinTap::write(string_view data) {
   });
 }
 
-void WinTap::bringUp() {
+void WinTap::bringUp()
+{
   DWORD len;
 
   ULONG flag = 1;
-  if (DeviceIoControl(tap_fd, TAP_IOCTL_SET_MEDIA_STATUS, &flag, sizeof(flag),
-                      &flag, sizeof(flag), &len, NULL) == 0) {
+  if(DeviceIoControl(
+         tap_fd, TAP_IOCTL_SET_MEDIA_STATUS, &flag, sizeof(flag), &flag,
+         sizeof(flag), &len, NULL) == 0) {
     LOG("failed to bring up the tap device");
     return;
   }
@@ -228,13 +242,15 @@ void WinTap::bringUp() {
   LOG("tap config OK");
 }
 
-std::string WinTap::getMac() {
+std::string WinTap::getMac()
+{
   std::string hwaddr;
   hwaddr.resize(6);
   DWORD len;
 
-  if (DeviceIoControl(tap_fd, TAP_IOCTL_GET_MAC, &hwaddr[0], hwaddr.size(),
-                      &hwaddr[0], hwaddr.size(), &len, NULL) == 0) {
+  if(DeviceIoControl(
+         tap_fd, TAP_IOCTL_GET_MAC, &hwaddr[0], hwaddr.size(), &hwaddr[0],
+         hwaddr.size(), &len, NULL) == 0) {
     LOG("failed to retrieve MAC address");
     assert(false);
   } else {

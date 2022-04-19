@@ -7,6 +7,6 @@ class HusarnetManager;
 
 namespace APIServer {
 
-void httpThread(HusarnetManager& manager);
+  void httpThread(HusarnetManager& manager);
 
 }

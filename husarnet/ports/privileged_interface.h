@@ -9,25 +9,25 @@
 #include "husarnet/ipaddress.h"
 
 namespace Privileged {
-void init();   // Should be called as early as possible
-void start();  // Should be called as soon as the parent process is ready to
-               // drop all privileges
+  void init();   // Should be called as early as possible
+  void start();  // Should be called as soon as the parent process is ready to
+                 // drop all privileges
 
-std::string readConfig();
-void writeConfig(std::string);
+  std::string readConfig();
+  void writeConfig(std::string);
 
-Identity readIdentity();
-void writeIdentity(Identity identity);
+  Identity readIdentity();
+  void writeIdentity(Identity identity);
 
-std::vector<IpAddress> getLocalAddresses();
+  std::vector<IpAddress> getLocalAddresses();
 
-// std::string updateLicenseFile();
+  // std::string updateLicenseFile();
 
-// std::string getSelfHostname();
-// void changeSelfHostname(std::string newHostname);
+  // std::string getSelfHostname();
+  // void changeSelfHostname(std::string newHostname);
 
-// void updateHostsFile(std::list<std::pair<std::string, IpAddress>> data);
+  // void updateHostsFile(std::list<std::pair<std::string, IpAddress>> data);
 
-// void saveLicenseFile(std::string contents);
-// std::string readLicenseFile();
+  // void saveLicenseFile(std::string contents);
+  // std::string readLicenseFile();
 }  // namespace Privileged

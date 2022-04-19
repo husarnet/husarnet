@@ -18,8 +18,9 @@
 
 bool husarnetVerbose = true;
 
-InetAddress ipFromSockaddr(sockaddr_storage* st) {
-  if (st->ss_family == AF_INET) {
+InetAddress ipFromSockaddr(sockaddr_storage* st)
+{
+  if(st->ss_family == AF_INET) {
     struct sockaddr_in* st4 = (sockaddr_in*)(st);
     InetAddress r{};
     r.ip.data[10] = 0xFF;  // ipv4-mapped ipv6
@@ -27,7 +28,7 @@ InetAddress ipFromSockaddr(sockaddr_storage* st) {
     memcpy((char*)r.ip.data.data() + 12, &st4->sin_addr, 4);
     r.port = htons(st4->sin_port);
     return r;
-  } else if (st->ss_family == AF_INET6) {
+  } else if(st->ss_family == AF_INET6) {
     struct sockaddr_in6* st6 = (sockaddr_in6*)(st);
     InetAddress r{};
     memcpy(r.ip.data.data(), &st6->sin6_addr, 16);
@@ -38,14 +39,16 @@ InetAddress ipFromSockaddr(sockaddr_storage* st) {
   }
 }
 
-int64_t currentTime() {
+int64_t currentTime()
+{
   using namespace std::chrono;
   milliseconds ms =
       duration_cast<milliseconds>(system_clock::now().time_since_epoch());
   return ms.count();
 }
 
-std::vector<IpAddress> getLocalAddresses() {
+std::vector<IpAddress> getLocalAddresses()
+{
   // this takes 18 ms on a test system
   std::vector<IpAddress> result;
 
@@ -53,7 +56,7 @@ std::vector<IpAddress> getLocalAddresses() {
   PIP_ADAPTER_ADDRESSES buffer;
   unsigned long buffer_size = 20000;
 
-  while (true) {
+  while(true) {
     buffer = (PIP_ADAPTER_ADDRESSES) new char[buffer_size];
 
     ret = GetAdaptersAddresses(
@@ -62,7 +65,7 @@ std::vector<IpAddress> getLocalAddresses() {
             GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_MULTICAST |
             GAA_FLAG_SKIP_ANYCAST,
         0, buffer, &buffer_size);
-    if (ret != ERROR_BUFFER_OVERFLOW)
+    if(ret != ERROR_BUFFER_OVERFLOW)
       break;
     delete[] buffer;
     buffer = nullptr;
@@ -70,9 +73,9 @@ std::vector<IpAddress> getLocalAddresses() {
   }
 
   PIP_ADAPTER_ADDRESSES current_adapter = buffer;
-  while (current_adapter) {
+  while(current_adapter) {
     PIP_ADAPTER_UNICAST_ADDRESS current = current_adapter->FirstUnicastAddress;
-    while (current) {
+    while(current) {
       InetAddress addr = ipFromSockaddr(
           reinterpret_cast<sockaddr_storage*>(current->Address.lpSockaddr));
       // LOG("detected IP: %s", addr.str().c_str());
@@ -89,43 +92,49 @@ std::vector<IpAddress> getLocalAddresses() {
 
 thread_local const char* threadName = nullptr;
 
-const char* getThreadName() {
+const char* getThreadName()
+{
   return threadName ? threadName : "null";
 }
 
-void runThread(void* arg) {
+void runThread(void* arg)
+{
   auto f = (std::pair<char*, std::function<void()>>*)arg;
   threadName = f->first;
   f->second();
 }
 
-void startThread(std::function<void()> func,
-                 const char* name,
-                 int stack,
-                 int priority) {
+void startThread(
+    std::function<void()> func,
+    const char* name,
+    int stack,
+    int priority)
+{
   auto* f =
       new std::pair<const char*, std::function<void()>>(name, std::move(func));
   _beginthread(runThread, 0, f);
 }
 
-void initPort() {
+void initPort()
+{
   threadName = "main";
   GIL::init();
   WSADATA wsaData;
   WSAStartup(0x202, &wsaData);
 }
 
-IpAddress resolveIp(std::string hostname) {
+IpAddress resolveIp(std::string hostname)
+{
   struct addrinfo* result = nullptr;
   int error;
 
   error = SOCKFUNC(getaddrinfo)(hostname.c_str(), "443", NULL, &result);
-  if (error != 0) {
+  if(error != 0) {
     return IpAddress();
   }
 
-  for (struct addrinfo* res = result; res != NULL; res = res->ai_next) {
-    if (res->ai_family == AF_INET || res->ai_family == AF_INET6) {
+  for(struct addrinfo* res = result; res != NULL; res = res->ai_next) {
+    if(res->ai_family == AF_INET || res->ai_family == AF_INET6) {
       sockaddr_storage ss{};
       ss.ss_family = res->ai_family;
       assert(sizeof(sockaddr_storage) >= res->ai_addrlen);

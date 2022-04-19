@@ -4,10 +4,11 @@
 #include "config_storage.h"
 #include <catch2/catch.hpp>
 
-TEST_CASE("Group changes") {
+TEST_CASE("Group changes")
+{
   int writes = 0;
-  auto cs = new ConfigStorage([]() { return ""; },
-                              [&](std::string s) { writes++; }, {}, {}, {});
+  auto cs = new ConfigStorage(
+      []() { return ""; }, [&](std::string s) { writes++; }, {}, {}, {});
 
   cs->hostTableAdd("foo", IpAddress::parse("dead:beef::1"));
   cs->hostTableAdd("bar", IpAddress::parse("dead:beef::2"));
@@ -24,16 +25,19 @@ TEST_CASE("Group changes") {
   REQUIRE(writes == 4);
 }
 
-static ConfigStorage* makeTestStorage() {
-  return new ConfigStorage([]() { return ""; }, [&](std::string s) {}, {}, {},
-                           {});
+static ConfigStorage* makeTestStorage()
+{
+  return new ConfigStorage(
+      []() { return ""; }, [&](std::string s) {}, {}, {}, {});
 }
 
-TEST_CASE("ConfigStorage initialization") {
+TEST_CASE("ConfigStorage initialization")
+{
   makeTestStorage();
 }
 
-TEST_CASE("Host table operations") {
+TEST_CASE("Host table operations")
+{
   auto cs = makeTestStorage();
   REQUIRE(cs->getHostTable().empty());
 
@@ -61,7 +65,8 @@ TEST_CASE("Host table operations") {
   REQUIRE(cs->getHostTable().empty());
 }
 
-TEST_CASE("Whitelist operations") {
+TEST_CASE("Whitelist operations")
+{
   auto cs = makeTestStorage();
   REQUIRE(cs->getWhitelist().empty());
 
@@ -82,68 +87,83 @@ TEST_CASE("Whitelist operations") {
   REQUIRE(cs->getWhitelist().empty());
 }
 
-TEST_CASE("Internal settings") {
+TEST_CASE("Internal settings")
+{
   auto cs =
       new ConfigStorage([]() { return ""; }, [&](std::string s) {}, {}, {}, {});
 
-  SECTION("Unset fields should be empty and not error out") {
+  SECTION("Unset fields should be empty and not error out")
+  {
     CAPTURE(cs->getCurrentData());
     REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "");
   }
 
-  SECTION("Direct setting") {
+  SECTION("Direct setting")
+  {
     cs->setInternalSetting(InternalSetting::websetupSecret, "foo");
     REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "foo");
   }
 
-  cs = new ConfigStorage([]() { return ""; }, [&](std::string s) {}, {}, {},
-                         {{InternalSetting::websetupSecret, "foo"}});
+  cs = new ConfigStorage(
+      []() { return ""; }, [&](std::string s) {}, {}, {},
+      {{InternalSetting::websetupSecret, "foo"}});
 
-  SECTION("Default setting") {
+  SECTION("Default setting")
+  {
     REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "foo");
   }
 
-  SECTION("Default setting override") {
+  SECTION("Default setting override")
+  {
     cs->setInternalSetting(InternalSetting::websetupSecret, "bar");
     REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "bar");
   }
 }
 
-TEST_CASE("User settings") {
+TEST_CASE("User settings")
+{
   auto cs =
       new ConfigStorage([]() { return ""; }, [&](std::string s) {}, {}, {}, {});
 
-  SECTION("Unset fields should be empty and not error out") {
+  SECTION("Unset fields should be empty and not error out")
+  {
     CAPTURE(cs->getCurrentData());
     REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "");
   }
 
-  SECTION("Direct setting") {
+  SECTION("Direct setting")
+  {
     cs->setUserSetting(UserSetting::dashboardUrl, "foo");
     REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "foo");
   }
 
-  cs = new ConfigStorage([]() { return ""; }, [&](std::string s) {},
-                         {{UserSetting::dashboardUrl, "foo"}}, {}, {});
+  cs = new ConfigStorage(
+      []() { return ""; }, [&](std::string s) {},
+      {{UserSetting::dashboardUrl, "foo"}}, {}, {});
 
-  SECTION("Default setting") {
+  SECTION("Default setting")
+  {
     REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "foo");
   }
 
-  SECTION("Default setting override") {
+  SECTION("Default setting override")
+  {
     cs->setUserSetting(UserSetting::dashboardUrl, "bar");
     REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "bar");
   }
 
-  cs = new ConfigStorage([]() { return ""; }, [&](std::string s) {},
-                         {{UserSetting::dashboardUrl, "foo"}},
-                         {{UserSetting::dashboardUrl, "bar"}}, {});
+  cs = new ConfigStorage(
+      []() { return ""; }, [&](std::string s) {},
+      {{UserSetting::dashboardUrl, "foo"}},
+      {{UserSetting::dashboardUrl, "bar"}}, {});
 
-  SECTION("Override setting") {
+  SECTION("Override setting")
+  {
     REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "bar");
   }
 
-  SECTION("Override still wins") {
+  SECTION("Override still wins")
+  {
     cs->setUserSetting(UserSetting::dashboardUrl, "baz");
     REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "bar");
   }

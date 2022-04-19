@@ -12,10 +12,6 @@
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/string_view.h"
 
-#ifdef NDEBUG
-#error "NDEBUG should not be defined"
-#endif
-
 class HusarnetManager;
 
 struct NgSocketDelegate {
@@ -52,13 +48,17 @@ struct NgSocket {
   NgSocketOptions* options = new NgSocketOptions;
   NgSocketDelegate* delegate = nullptr;
 
-  virtual std::string generalInfo(std::map<std::string, std::string> hosts =
-                                      std::map<std::string, std::string>()) {
+  virtual std::string generalInfo(
+      std::map<std::string, std::string> hosts =
+          std::map<std::string, std::string>())
+  {
     return "";
   }
   virtual std::string peerInfo(DeviceId id) { return ""; }
-  virtual std::string info(std::map<std::string, std::string> hosts =
-                               std::map<std::string, std::string>()) {
+  virtual std::string info(
+      std::map<std::string, std::string> hosts =
+          std::map<std::string, std::string>())
+  {
     return "";
   }
   virtual int getLatency(DeviceId peer) { return -1; }

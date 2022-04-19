@@ -7,12 +7,14 @@
 
 // TODO reimplement methods in this file
 
-int getApiPort() {
+int getApiPort()
+{
   return getenv("HUSARNET_API_PORT") ? std::stoi(getenv("HUSARNET_API_PORT"))
                                      : 16216;
 }
 
-std::string getApiSecret() {
+std::string getApiSecret()
+{
   // TODO implement this
   return "";
 }

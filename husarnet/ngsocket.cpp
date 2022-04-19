@@ -40,7 +40,16 @@ using namespace OsSocket;
 using namespace NgSocketCrypto;
 
 struct BaseToPeerMessage {
-  enum { HELLO, DEVICE_ADDRESSES, DATA, NAT_OK, STATE, REDIRECT, INVALID } kind;
+  enum
+  {
+    HELLO,
+    DEVICE_ADDRESSES,
+    DATA,
+    NAT_OK,
+    STATE,
+    REDIRECT,
+    INVALID
+  } kind;
 
   // Hello message
   fstring<16> cookie;
@@ -62,7 +71,8 @@ struct BaseToPeerMessage {
 };
 
 struct PeerToBaseMessage {
-  enum {
+  enum
+  {
     REQUEST_INFO,
     DATA,
     INFO,
@@ -94,7 +104,13 @@ struct PeerToBaseMessage {
 };
 
 struct PeerToPeerMessage {
-  enum { HELLO, HELLO_REPLY, DATA, INVALID } kind;
+  enum
+  {
+    HELLO,
+    HELLO_REPLY,
+    DATA,
+    INVALID
+  } kind;
 
   // hello and hello_reply
   DeviceId myId;
@@ -122,12 +138,14 @@ struct Peer {
   std::unordered_set<InetAddress, iphash> sourceAddresses;
   std::vector<std::string> packetQueue;
 
-  bool active() {
+  bool active()
+  {
     return Port::getCurrentTime() - lastPacket < TEARDOWN_TIMEOUT;
   }
 };
 
-std::string idstr(DeviceId id) {
+std::string idstr(DeviceId id)
+{
   return IpAddress::fromBinary(id).str();
 }
 
@@ -176,46 +194,49 @@ struct NgSocketImpl : public NgSocket {
 
   Queue<std::function<void()>> workerQueue;
 
-  void periodic() override {
-    if (Port::getCurrentTime() < lastPeriodic + 1000)
+  void periodic() override
+  {
+    if(Port::getCurrentTime() < lastPeriodic + 1000)
       return;
     lastPeriodic = Port::getCurrentTime();
 
-    if (reloadLocalAddresses()) {
+    if(reloadLocalAddresses()) {
       // new addresses, accelerate reconnection
       LOG("IP address change detected");
       requestRefresh();
-      if (Port::getCurrentTime() - lastBaseTcpAction > NAT_INIT_TIMEOUT)
+      if(Port::getCurrentTime() - lastBaseTcpAction > NAT_INIT_TIMEOUT)
         connectToBase();
     }
 
-    if (Port::getCurrentTime() - lastRefresh > REFRESH_TIMEOUT)
+    if(Port::getCurrentTime() - lastRefresh > REFRESH_TIMEOUT)
       requestRefresh();
 
-    if (!natInitConfirmed &&
-        Port::getCurrentTime() - lastNatInitSent > NAT_INIT_TIMEOUT) {
+    if(!natInitConfirmed &&
+       Port::getCurrentTime() - lastNatInitSent > NAT_INIT_TIMEOUT) {
       // retry nat init in case the packet gets lost
       sendNatInitToBase();
     }
 
-    if (Port::getCurrentTime() - lastBaseTcpAction >
-        (baseConnection ? TCP_PONG_TIMEOUT : NAT_INIT_TIMEOUT))
+    if(Port::getCurrentTime() - lastBaseTcpAction >
+       (baseConnection ? TCP_PONG_TIMEOUT : NAT_INIT_TIMEOUT))
       connectToBase();
   }
 
-  std::string generalInfo(std::map<std::string, std::string> hosts =
-                              std::map<std::string, std::string>()) override {
+  std::string generalInfo(
+      std::map<std::string, std::string> hosts =
+          std::map<std::string, std::string>()) override
+  {
     std::string info;
     info += "Version: " HUSARNET_VERSION "\n";
     info +=
         "Husarnet IP address: " + IpAddress::fromBinary(deviceId).str() + "\n";
-    if (hosts.find(IpAddress::fromBinary(deviceId).str()) != hosts.end()) {
+    if(hosts.find(IpAddress::fromBinary(deviceId).str()) != hosts.end()) {
       info += "Known hostnames: " +
               hosts.at(IpAddress::fromBinary(deviceId).str()) + "\n";
     }
 
-    if (!isBaseUdp()) {
-      if (Port::getCurrentTime() - lastBaseTcpMessage > UDP_BASE_TIMEOUT)
+    if(!isBaseUdp()) {
+      if(Port::getCurrentTime() - lastBaseTcpMessage > UDP_BASE_TIMEOUT)
         info += "ERROR: no base connection\n";
       else
         info += "WARN: only TCP connection to base established\n";
@@ -226,36 +247,37 @@ struct NgSocketImpl : public NgSocket {
     return info;
   }
 
-  std::string peerInfo(DeviceId id) override {
+  std::string peerInfo(DeviceId id) override
+  {
     Peer* peer = getPeerById(id);
-    if (!peer)
+    if(!peer)
       return "";
-    if (!peer->active() && !peer->reestablishing)
+    if(!peer->active() && !peer->reestablishing)
       return "";
 
     std::string info;
 
-    if (peer->sourceAddresses.size() > 0) {
+    if(peer->sourceAddresses.size() > 0) {
       info += "  source=";
-      for (InetAddress addr : peer->sourceAddresses) {
+      for(InetAddress addr : peer->sourceAddresses) {
         info += addr.str() + " ";
       }
       info += "\n";
     }
-    if (peer->targetAddresses.size() > 0) {
+    if(peer->targetAddresses.size() > 0) {
       info += "  addresses from base=";
-      for (InetAddress addr : peer->targetAddresses) {
+      for(InetAddress addr : peer->targetAddresses) {
         info += addr.str() + " ";
       }
       info += "\n";
     }
 
-    if (peer->targetAddress && peer->connected)
+    if(peer->targetAddress && peer->connected)
       info += "  target=" + peer->targetAddress.str() + "\n";
     else
       info += "  tunnelled\n";
 
-    if (peer->linkLocalAddress && peer->connected)
+    if(peer->linkLocalAddress && peer->connected)
       info += "  link local address=" + peer->linkLocalAddress.str() + "\n";
 
     return info;
@@ -263,16 +285,18 @@ struct NgSocketImpl : public NgSocket {
 
   int getLatency(DeviceId peerId) override { return -1; }
 
-  void requestRefresh() {
-    if (workerQueue.qsize() < WORKER_QUEUE_SIZE) {
+  void requestRefresh()
+  {
+    if(workerQueue.qsize() < WORKER_QUEUE_SIZE) {
       workerQueue.push(std::bind(&NgSocketImpl::refresh, this));
     } else {
       LOG("worker queue full");
     }
   }
 
-  void workerLoop() {
-    while (true) {
+  void workerLoop()
+  {
+    while(true) {
       std::function<void()> f = workerQueue.pop_blocking();
       GIL::lock();
       f();
@@ -280,7 +304,8 @@ struct NgSocketImpl : public NgSocket {
     }
   }
 
-  void refresh() {
+  void refresh()
+  {
     // release the lock around every operation to reduce latency
     lastRefresh = Port::getCurrentTime();
     sendLocalAddressesToBase();
@@ -290,20 +315,20 @@ struct NgSocketImpl : public NgSocket {
     sendNatInitToBase();
     sendMulticast();
 
-    for (Peer* peer : iteratePeers()) {
+    for(Peer* peer : iteratePeers()) {
       GIL::yield();
       periodicPeer(peer);
     }
   }
 
-  void periodicPeer(Peer* peer) {
-    if (!peer->active()) {
+  void periodicPeer(Peer* peer)
+  {
+    if(!peer->active()) {
       peer->connected = false;
       // TODO: send unsubscribe to base
     } else {
-      if (peer->reestablishing && peer->connected &&
-          Port::getCurrentTime() - peer->lastReestablish >
-              REESTABLISH_TIMEOUT) {
+      if(peer->reestablishing && peer->connected &&
+         Port::getCurrentTime() - peer->lastReestablish > REESTABLISH_TIMEOUT) {
         peer->connected = false;
         LOG("falling back to relay (peer: %s)", IDSTR(peer->id));
       }
@@ -312,18 +337,21 @@ struct NgSocketImpl : public NgSocket {
     }
   }
 
-  void sendDataPacket(DeviceId target, string_view data) override {
+  void sendDataPacket(DeviceId target, string_view data) override
+  {
     Peer* peer = getOrCreatePeer(target);
-    if (peer != nullptr)
+    if(peer != nullptr)
       sendDataToPeer(peer, data);
   }
 
-  bool isBaseUdp() {
+  bool isBaseUdp()
+  {
     return Port::getCurrentTime() - lastNatInitConfirmation < UDP_BASE_TIMEOUT;
   }
 
-  void sendDataToPeer(Peer* peer, string_view data) {
-    if (peer->connected) {
+  void sendDataToPeer(Peer* peer, string_view data)
+  {
+    if(peer->connected) {
       PeerToPeerMessage msg;
       msg.kind = PeerToPeerMessage::DATA;
       msg.data = data;
@@ -331,10 +359,10 @@ struct NgSocketImpl : public NgSocket {
       LOG_DEBUG("send to peer %s", peer->targetAddress.str().c_str());
       sendToPeer(peer->targetAddress, msg);
     } else {
-      if (!peer->reestablishing ||
-          (Port::getCurrentTime() - peer->lastReestablish >
-               REESTABLISH_TIMEOUT &&
-           peer->failedEstablishments <= MAX_FAILED_ESTABLISHMENTS))
+      if(!peer->reestablishing ||
+         (Port::getCurrentTime() - peer->lastReestablish >
+              REESTABLISH_TIMEOUT &&
+          peer->failedEstablishments <= MAX_FAILED_ESTABLISHMENTS))
         attemptReestablish(peer);
 
       LOG_DEBUG("send to peer tunnelled");
@@ -344,23 +372,24 @@ struct NgSocketImpl : public NgSocket {
       msg.kind = PeerToBaseMessage::DATA;
       msg.data = data;
 
-      if (isBaseUdp() && !options->disableUdpTunnelling)
+      if(isBaseUdp() && !options->disableUdpTunnelling)
         sendToBaseUdp(msg);
-      else if (!options->disableTcpTunnelling)
+      else if(!options->disableTcpTunnelling)
         sendToBaseTcp(msg);
     }
 
-    if (!peer->active())
+    if(!peer->active())
       sendInfoRequestToBase(peer->id);
 
     peer->lastPacket = Port::getCurrentTime();
   }
 
-  Peer* createPeer(DeviceId id) {
-    if (id == deviceId)
+  Peer* createPeer(DeviceId id)
+  {
+    if(id == deviceId)
       return nullptr;  // self
 
-    if (!options->isPeerAllowed(id)) {
+    if(!options->isPeerAllowed(id)) {
       LOG("peer %s is not on the whitelist", IDSTR(id));
       return nullptr;
     }
@@ -373,9 +402,10 @@ struct NgSocketImpl : public NgSocket {
     return peer;
   }
 
-  void attemptReestablish(Peer* peer) {
+  void attemptReestablish(Peer* peer)
+  {
     // TODO: if (peer->reestablishing) something;
-    if (options->disableUdp)
+    if(options->disableUdp)
       return;
 
     peer->failedEstablishments++;
@@ -383,29 +413,30 @@ struct NgSocketImpl : public NgSocket {
     peer->reestablishing = true;
     peer->helloCookie = generateRandomString(16);
 
-    LOGV("reestablish connection to [%s]",
-         IpAddress::fromBinary(peer->id).str().c_str());
+    LOGV(
+        "reestablish connection to [%s]",
+        IpAddress::fromBinary(peer->id).str().c_str());
 
     std::vector<InetAddress> addresses = peer->targetAddresses;
-    if (peer->linkLocalAddress)
+    if(peer->linkLocalAddress)
       addresses.push_back(peer->linkLocalAddress);
 
-    for (InetAddress address : peer->sourceAddresses)
+    for(InetAddress address : peer->sourceAddresses)
       addresses.push_back(address);
 
-    for (InetAddress address : options->additionalPeerIpAddresses(peer->id))
+    for(InetAddress address : options->additionalPeerIpAddresses(peer->id))
       addresses.push_back(address);
 
     std::sort(addresses.begin(), addresses.end());
-    addresses.erase(std::unique(addresses.begin(), addresses.end()),
-                    addresses.end());
+    addresses.erase(
+        std::unique(addresses.begin(), addresses.end()), addresses.end());
 
     std::string msg = "";
 
-    for (InetAddress address : addresses) {
-      if (address.ip.isFC94())
+    for(InetAddress address : addresses) {
+      if(address.ip.isFC94())
         continue;
-      if (!options->isAddressAllowed(address))
+      if(!options->isAddressAllowed(address))
         continue;
       msg += address.str().c_str();
       msg += ", ";
@@ -415,42 +446,45 @@ struct NgSocketImpl : public NgSocket {
       response.yourId = peer->id;
       sendToPeer(address, response);
 
-      if (address == peer->targetAddress)
+      if(address == peer->targetAddress)
         // send the heartbeat twice to the active address
         sendToPeer(address, response);
     }
     LOGV("addresses: %s", msg.c_str());
   }
 
-  void peerMessageReceived(InetAddress source, const PeerToPeerMessage& msg) {
-    if (msg.kind == PeerToPeerMessage::DATA) {
+  void peerMessageReceived(InetAddress source, const PeerToPeerMessage& msg)
+  {
+    if(msg.kind == PeerToPeerMessage::DATA) {
       peerDataPacketReceived(source, msg.data);
-    } else if (msg.kind == PeerToPeerMessage::HELLO) {
+    } else if(msg.kind == PeerToPeerMessage::HELLO) {
       helloReceived(source, msg);
-    } else if (msg.kind == PeerToPeerMessage::HELLO_REPLY) {
+    } else if(msg.kind == PeerToPeerMessage::HELLO_REPLY) {
       helloReplyReceived(source, msg);
     }
   }
 
-  void helloReceived(InetAddress source, const PeerToPeerMessage& msg) {
-    if (msg.yourId != deviceId)
+  void helloReceived(InetAddress source, const PeerToPeerMessage& msg)
+  {
+    if(msg.yourId != deviceId)
       return;
 
     Peer* peer = getOrCreatePeer(msg.myId);
-    if (peer == nullptr)
+    if(peer == nullptr)
       return;
-    LOGV("HELLO from %s (id: %s, active: %s)", source.str().c_str(),
-         IDSTR(msg.myId), peer->active() ? "YES" : "NO");
+    LOGV(
+        "HELLO from %s (id: %s, active: %s)", source.str().c_str(),
+        IDSTR(msg.myId), peer->active() ? "YES" : "NO");
 
-    if (!options->isAddressAllowed(source)) {
+    if(!options->isAddressAllowed(source)) {
       LOGV("- rejected due to blacklist");
       return;
     }
     addSourceAddress(peer, source);
 
-    if (source.ip.isLinkLocal() && !peer->linkLocalAddress) {
+    if(source.ip.isLinkLocal() && !peer->linkLocalAddress) {
       peer->linkLocalAddress = source;
-      if (peer->active())
+      if(peer->active())
         attemptReestablish(peer);
     }
 
@@ -461,47 +495,52 @@ struct NgSocketImpl : public NgSocket {
     sendToPeer(source, reply);
   }
 
-  void helloReplyReceived(InetAddress source, const PeerToPeerMessage& msg) {
-    if (msg.yourId != deviceId)
+  void helloReplyReceived(InetAddress source, const PeerToPeerMessage& msg)
+  {
+    if(msg.yourId != deviceId)
       return;
 
-    LOGV("HELLO-REPLY from %s (%s)", source.str().c_str(),
-         encodeHex(msg.myId).c_str());
+    LOGV(
+        "HELLO-REPLY from %s (%s)", source.str().c_str(),
+        encodeHex(msg.myId).c_str());
     Peer* peer = getPeerById(msg.myId);
-    if (peer == nullptr)
+    if(peer == nullptr)
       return;
-    if (!peer->reestablishing)
+    if(!peer->reestablishing)
       return;
-    if (peer->helloCookie != msg.helloCookie)
+    if(peer->helloCookie != msg.helloCookie)
       return;
 
-    if (!options->isAddressAllowed(source)) {
+    if(!options->isAddressAllowed(source)) {
       LOGV("(address blacklisted)");
       return;
     }
 
     int latency = Port::getCurrentTime() - peer->lastReestablish;
-    LOGV(" - using this address as target (reply received after %d ms)",
-         latency);
+    LOGV(
+        " - using this address as target (reply received after %d ms)",
+        latency);
     peer->targetAddress = source;
     peer->connected = true;
     peer->failedEstablishments = 0;
     peer->reestablishing = false;
   }
 
-  void peerDataPacketReceived(InetAddress source, string_view data) {
+  void peerDataPacketReceived(InetAddress source, string_view data)
+  {
     Peer* peer = findPeerBySourceAddress(source);
 
-    if (peer != nullptr)
+    if(peer != nullptr)
       delegate->onDataPacket(peer->id, data);
     else {
       LOG("unknown UDP data packet (source: %s)", source.str().c_str());
     }
   }
 
-  void baseMessageReceivedUdp(const BaseToPeerMessage& msg) {
-    if (msg.kind == BaseToPeerMessage::NAT_OK) {
-      if (lastNatInitConfirmation == 0)
+  void baseMessageReceivedUdp(const BaseToPeerMessage& msg)
+  {
+    if(msg.kind == BaseToPeerMessage::NAT_OK) {
+      if(lastNatInitConfirmation == 0)
         LOG("UDP connection to base server established");
       lastNatInitConfirmation = Port::getCurrentTime();
       natInitConfirmed = true;
@@ -509,49 +548,51 @@ struct NgSocketImpl : public NgSocket {
       PeerToBaseMessage resp{};
       resp.kind = PeerToBaseMessage::NAT_OK_CONFIRM;
       sendToBaseUdp(resp);
-    } else if (msg.kind == BaseToPeerMessage::DATA) {
+    } else if(msg.kind == BaseToPeerMessage::DATA) {
       delegate->onDataPacket(msg.source, msg.data);
     } else {
       LOG("received invalid UDP message from base");
     }
   }
 
-  void baseMessageReceivedTcp(const BaseToPeerMessage& msg) {
+  void baseMessageReceivedTcp(const BaseToPeerMessage& msg)
+  {
     lastBaseTcpAction = lastBaseTcpMessage = Port::getCurrentTime();
     baseConnectRetries = 0;
 
-    if (msg.kind == BaseToPeerMessage::HELLO) {
+    if(msg.kind == BaseToPeerMessage::HELLO) {
       LOG("TCP connection to base server established");
       LOGV("received hello cookie %s", encodeHex(msg.cookie).c_str());
       cookie = msg.cookie;
       resendInfoRequests();
       sendLocalAddressesToBase();
       requestRefresh();
-    } else if (msg.kind == BaseToPeerMessage::DEVICE_ADDRESSES) {
-      if (!options->disableUdp) {
+    } else if(msg.kind == BaseToPeerMessage::DEVICE_ADDRESSES) {
+      if(!options->disableUdp) {
         Peer* peer = getPeerById(msg.deviceId);
-        if (peer != nullptr)
+        if(peer != nullptr)
           changePeerTargetAddresses(peer, msg.addresses);
       }
-    } else if (msg.kind == BaseToPeerMessage::DATA) {
+    } else if(msg.kind == BaseToPeerMessage::DATA) {
       delegate->onDataPacket(msg.source, msg.data);
-    } else if (msg.kind == BaseToPeerMessage::STATE) {
-      if (!options->disableUdp) {
+    } else if(msg.kind == BaseToPeerMessage::STATE) {
+      if(!options->disableUdp) {
         allBaseUdpAddresses = msg.udpAddress;
         baseUdpAddress = msg.udpAddress[0];
         LOGV("received base UDP address: %s", baseUdpAddress.str().c_str());
 
-        if (msg.natTransientRange.first != 0 &&
-            msg.natTransientRange.second >= msg.natTransientRange.first) {
-          LOGV("received base transient range: %d %d",
-               msg.natTransientRange.first, msg.natTransientRange.second);
+        if(msg.natTransientRange.first != 0 &&
+           msg.natTransientRange.second >= msg.natTransientRange.first) {
+          LOGV(
+              "received base transient range: %d %d",
+              msg.natTransientRange.first, msg.natTransientRange.second);
           baseTransientRange = msg.natTransientRange;
-          if (baseTransientPort == 0) {
+          if(baseTransientPort == 0) {
             baseTransientPort = baseTransientRange.first;
           }
         }
       }
-    } else if (msg.kind == BaseToPeerMessage::REDIRECT) {
+    } else if(msg.kind == BaseToPeerMessage::REDIRECT) {
       baseAddress = msg.newBaseAddress;
       LOG("redirected to new base server: %s", baseAddress.str().c_str());
       connectToBase();
@@ -560,19 +601,20 @@ struct NgSocketImpl : public NgSocket {
     }
   }
 
-  void changePeerTargetAddresses(Peer* peer,
-                                 std::vector<InetAddress> addresses) {
+  void changePeerTargetAddresses(Peer* peer, std::vector<InetAddress> addresses)
+  {
     std::sort(addresses.begin(), addresses.end());
-    if (peer->targetAddresses != addresses) {
+    if(peer->targetAddresses != addresses) {
       peer->targetAddresses = addresses;
       attemptReestablish(peer);
     }
   }
 
-  void sendNatInitToBase() {
-    if (options->disableUdp)
+  void sendNatInitToBase()
+  {
+    if(options->disableUdp)
       return;
-    if (cookie.size() == 0)
+    if(cookie.size() == 0)
       return;
 
     lastNatInitSent = Port::getCurrentTime();
@@ -586,7 +628,7 @@ struct NgSocketImpl : public NgSocket {
 
     sendToBaseUdp(msg);
 
-    if (baseTransientPort != 0) {
+    if(baseTransientPort != 0) {
       PeerToBaseMessage msg2;
       msg2.kind = PeerToBaseMessage::NAT_INIT_TRANSIENT;
       msg2.deviceId = deviceId;
@@ -594,38 +636,43 @@ struct NgSocketImpl : public NgSocket {
       sendToBaseUdp(msg2);
 
       baseTransientPort++;
-      if (baseTransientPort > baseTransientRange.second) {
+      if(baseTransientPort > baseTransientRange.second) {
         baseTransientPort = baseTransientRange.first;
       }
     }
   }
 
-  void sendLocalAddressesToBase() {
+  void sendLocalAddressesToBase()
+  {
     PeerToBaseMessage msg;
     msg.kind = PeerToBaseMessage::INFO;
-    if (!options->disableUdp)
+    if(!options->disableUdp)
       msg.addresses = localAddresses;
     sendToBaseTcp(msg);
   }
 
-  void sendMulticast() {
-    if (options->disableUdp || options->disableMulticast)
+  void sendMulticast()
+  {
+    if(options->disableUdp || options->disableMulticast)
       return;
-    udpSendMulticast(InetAddress{MULTICAST_ADDR_4, MULTICAST_PORT},
-                     pack((uint16_t)sourcePort) + deviceId);
-    udpSendMulticast(InetAddress{MULTICAST_ADDR_6, MULTICAST_PORT},
-                     pack((uint16_t)sourcePort) + deviceId);
+    udpSendMulticast(
+        InetAddress{MULTICAST_ADDR_4, MULTICAST_PORT},
+        pack((uint16_t)sourcePort) + deviceId);
+    udpSendMulticast(
+        InetAddress{MULTICAST_ADDR_6, MULTICAST_PORT},
+        pack((uint16_t)sourcePort) + deviceId);
   }
 
-  void multicastPacketReceived(InetAddress address, string_view packetView) {
+  void multicastPacketReceived(InetAddress address, string_view packetView)
+  {
     // we check if this is from local network to avoid some DoS attacks
-    if (!(address.ip.isLinkLocal() || address.ip.isPrivateV4()))
+    if(!(address.ip.isLinkLocal() || address.ip.isPrivateV4()))
       return;
 
-    if (options->disableUdp || options->disableMulticast)
+    if(options->disableUdp || options->disableMulticast)
       return;
 
-    if (packetView.size() < DEVICEID_LENGTH + 2)
+    if(packetView.size() < DEVICEID_LENGTH + 2)
       return;
 
     std::string packet = packetView;
@@ -633,23 +680,24 @@ struct NgSocketImpl : public NgSocket {
     DeviceId devId = packet.substr(2, DEVICEID_LENGTH);
     uint16_t port = unpack<uint16_t>(packet.substr(0, 2));
 
-    if (devId == deviceId)
+    if(devId == deviceId)
       return;
 
     Peer* peer = getPeerById(devId);
 
-    LOGV("multicast received from %s, id %s, port %d, interesting: %s",
-         address.str().c_str(), IDSTR(devId), port,
-         peer == NULL ? "NO" : "YES");
+    LOGV(
+        "multicast received from %s, id %s, port %d, interesting: %s",
+        address.str().c_str(), IDSTR(devId), port, peer == NULL ? "NO" : "YES");
 
     InetAddress srcAddress = InetAddress{address.ip, port};
-    if (peer != nullptr && peer->linkLocalAddress != srcAddress) {
+    if(peer != nullptr && peer->linkLocalAddress != srcAddress) {
       peer->linkLocalAddress = srcAddress;
       attemptReestablish(peer);
     }
   }
 
-  void init() {
+  void init()
+  {
     assert(pubkeyToDeviceId(pubkey) == deviceId);
 
     auto cb = [this](InetAddress address, string_view packet) {
@@ -657,15 +705,15 @@ struct NgSocketImpl : public NgSocket {
     };
 
     sourcePort = 5582;
-    if (options->overrideSourcePort)
+    if(options->overrideSourcePort)
       sourcePort = options->overrideSourcePort;
 
-    for (;; sourcePort++) {
-      if (sourcePort == 7000) {
+    for(;; sourcePort++) {
+      if(sourcePort == 7000) {
         LOG("failed to bind UDP port");
         abort();
       }
-      if (udpListenUnicast(sourcePort, cb))
+      if(udpListenUnicast(sourcePort, cb))
         break;
     }
 
@@ -676,20 +724,23 @@ struct NgSocketImpl : public NgSocket {
     udpListenMulticast(InetAddress{MULTICAST_ADDR_6, MULTICAST_PORT}, callback);
 
     // Passing std::bind crashes mingw_thread. The reason is not apparent.
-    Port::startThread([this]() { this->workerLoop(); }, "hworker",
-                      /*stack=*/8000);
+    Port::startThread(
+        [this]() { this->workerLoop(); }, "hworker",
+        /*stack=*/8000);
 
     LOG("ngsocket %s listening on %d", IDSTR(deviceId), sourcePort);
   }
 
-  void resendInfoRequests() {
-    for (Peer* peer : iteratePeers()) {
-      if (peer->active())
+  void resendInfoRequests()
+  {
+    for(Peer* peer : iteratePeers()) {
+      if(peer->active())
         sendInfoRequestToBase(peer->id);
     }
   }
 
-  void sendInfoRequestToBase(DeviceId id) {
+  void sendInfoRequestToBase(DeviceId id)
+  {
     LOGV("info request %s", IDSTR(id));
     PeerToBaseMessage msg;
     msg.kind = PeerToBaseMessage::REQUEST_INFO;
@@ -709,7 +760,8 @@ struct NgSocketImpl : public NgSocket {
   std::string serializePeerToPeerMessage(const PeerToPeerMessage& msg);
 
   // crypto
-  std::string sign(const std::string& data, const std::string& kind) {
+  std::string sign(const std::string& data, const std::string& kind)
+  {
     return NgSocketCrypto::sign(data, kind, identity);
   }
 
@@ -718,12 +770,13 @@ struct NgSocketImpl : public NgSocket {
   Peer* cachedPeer = nullptr;
   DeviceId cachedPeerId;
 
-  Peer* getPeerById(DeviceId id) {
-    if (cachedPeerId == id)
+  Peer* getPeerById(DeviceId id)
+  {
+    if(cachedPeerId == id)
       return cachedPeer;
 
     auto it = peers.find(id);
-    if (it == peers.end())
+    if(it == peers.end())
       return nullptr;
 
     cachedPeerId = id;
@@ -732,21 +785,23 @@ struct NgSocketImpl : public NgSocket {
     return it->second;
   }
 
-  Peer* getOrCreatePeer(DeviceId id) {
+  Peer* getOrCreatePeer(DeviceId id)
+  {
     Peer* peer = getPeerById(id);
-    if (peer == nullptr) {
+    if(peer == nullptr) {
       peer = createPeer(id);
     }
     return peer;
   }
 
-  bool reloadLocalAddresses() {
+  bool reloadLocalAddresses()
+  {
     std::vector<InetAddress> newAddresses;
-    if (options->useOverrideLocalAddresses) {
+    if(options->useOverrideLocalAddresses) {
       newAddresses = options->overrideLocalAddresses;
     } else {
-      for (IpAddress address : Privileged::getLocalAddresses()) {
-        if (address.data[0] == 0xfc && address.data[1] == 0x94)
+      for(IpAddress address : Privileged::getLocalAddresses()) {
+        if(address.data[0] == 0xfc && address.data[1] == 0x94)
           continue;
 
         newAddresses.push_back(InetAddress{address, (uint16_t)sourcePort});
@@ -754,7 +809,7 @@ struct NgSocketImpl : public NgSocket {
     }
 
     sort(newAddresses.begin(), newAddresses.end());
-    if (newAddresses != localAddresses) {
+    if(newAddresses != localAddresses) {
       bool anyAddresses = localAddresses.size() > 0;
       localAddresses = newAddresses;
       return anyAddresses;
@@ -763,23 +818,25 @@ struct NgSocketImpl : public NgSocket {
     }
   }
 
-  void removeSourceAddress(Peer* peer, InetAddress address) {
+  void removeSourceAddress(Peer* peer, InetAddress address)
+  {
     peer->sourceAddresses.erase(address);
     peerSourceAddresses.erase(address);
   }
 
-  void addSourceAddress(Peer* peer, InetAddress source) {
+  void addSourceAddress(Peer* peer, InetAddress source)
+  {
     assert(peer != nullptr);
-    if (peer->sourceAddresses.find(source) == peer->sourceAddresses.end()) {
-      if (peer->sourceAddresses.size() >= MAX_SOURCE_ADDRESSES) {
+    if(peer->sourceAddresses.find(source) == peer->sourceAddresses.end()) {
+      if(peer->sourceAddresses.size() >= MAX_SOURCE_ADDRESSES) {
         // remove random old address
-        std::vector<InetAddress> addresses(peer->sourceAddresses.begin(),
-                                           peer->sourceAddresses.end());
+        std::vector<InetAddress> addresses(
+            peer->sourceAddresses.begin(), peer->sourceAddresses.end());
         removeSourceAddress(peer, addresses[rand() % addresses.size()]);
       }
       peer->sourceAddresses.insert(source);
 
-      if (peerSourceAddresses.find(source) != peerSourceAddresses.end()) {
+      if(peerSourceAddresses.find(source) != peerSourceAddresses.end()) {
         Peer* lastPeer = peerSourceAddresses[source];
         lastPeer->sourceAddresses.erase(source);
       }
@@ -787,23 +844,26 @@ struct NgSocketImpl : public NgSocket {
     }
   }
 
-  Peer* findPeerBySourceAddress(InetAddress address) {
+  Peer* findPeerBySourceAddress(InetAddress address)
+  {
     auto it = peerSourceAddresses.find(address);
-    if (it == peerSourceAddresses.end())
+    if(it == peerSourceAddresses.end())
       return nullptr;
     else
       return it->second;
   }
 
-  std::vector<Peer*> iteratePeers() {
+  std::vector<Peer*> iteratePeers()
+  {
     std::vector<Peer*> peersVec;
-    for (auto& p : peers)
+    for(auto& p : peers)
       peersVec.push_back(p.second);
     return peersVec;
   }
 };
 
-NgSocket* NgSocket::create(Identity* identity, HusarnetManager* manager) {
+NgSocket* NgSocket::create(Identity* identity, HusarnetManager* manager)
+{
   NgSocketImpl* sock = new NgSocketImpl;
   sock->manager = manager;
   sock->pubkey = identity->getPubkey();
@@ -813,50 +873,51 @@ NgSocket* NgSocket::create(Identity* identity, HusarnetManager* manager) {
   return sock;
 }
 
-BaseToPeerMessage parseBaseToPeerMessage(string_view data) {
+BaseToPeerMessage parseBaseToPeerMessage(string_view data)
+{
   BaseToPeerMessage msg{};
   msg.kind = BaseToPeerMessage::INVALID;
 
-  if (data.size() == 0)
+  if(data.size() == 0)
     return msg;
 
-  if (data[0] == (char)BaseToPeerMessage::HELLO) {
-    if (data.size() != 17)
+  if(data[0] == (char)BaseToPeerMessage::HELLO) {
+    if(data.size() != 17)
       return msg;
     msg.cookie = substr<1, 16>(data);
-  } else if (data[0] == (char)BaseToPeerMessage::DEVICE_ADDRESSES) {
-    if (data.size() <= 17)
+  } else if(data[0] == (char)BaseToPeerMessage::DEVICE_ADDRESSES) {
+    if(data.size() <= 17)
       return msg;
     msg.deviceId = std::string(substr<1, 16>(data));
-    for (int i = 17; i + 18 <= data.size(); i += 18) {
-      msg.addresses.push_back(
-          InetAddress{IpAddress::fromBinary(data.substr(i, 16)),
-                      unpack<uint16_t>(data.substr(i + 16, 2))});
+    for(int i = 17; i + 18 <= data.size(); i += 18) {
+      msg.addresses.push_back(InetAddress{
+          IpAddress::fromBinary(data.substr(i, 16)),
+          unpack<uint16_t>(data.substr(i + 16, 2))});
     }
-  } else if (data[0] == (char)BaseToPeerMessage::DATA) {
-    if (data.size() <= 17)
+  } else if(data[0] == (char)BaseToPeerMessage::DATA) {
+    if(data.size() <= 17)
       return msg;
     msg.source = std::string(substr<1, 16>(data));
     msg.data = data.substr(17);
-  } else if (data[0] == (char)BaseToPeerMessage::NAT_OK) {
-  } else if (data[0] == (char)BaseToPeerMessage::STATE) {
+  } else if(data[0] == (char)BaseToPeerMessage::NAT_OK) {
+  } else if(data[0] == (char)BaseToPeerMessage::STATE) {
     int i = 1;
 
-    while (i + 18 <= data.size() && msg.udpAddress.size() < 5) {
-      msg.udpAddress.push_back(
-          InetAddress{IpAddress::fromBinary(data.substr(i, 16)),
-                      unpack<uint16_t>(data.substr(i + 16, 2))});
+    while(i + 18 <= data.size() && msg.udpAddress.size() < 5) {
+      msg.udpAddress.push_back(InetAddress{
+          IpAddress::fromBinary(data.substr(i, 16)),
+          unpack<uint16_t>(data.substr(i + 16, 2))});
       i += 18;
     }
 
-    if (i + 4 <= data.size()) {
+    if(i + 4 <= data.size()) {
       msg.natTransientRange = {
           unpack<uint16_t>(data.substr(i, 2)),
           unpack<uint16_t>(data.substr(i + 2, 2)),
       };
     }
 
-    if (msg.udpAddress.size() < 1)
+    if(msg.udpAddress.size() < 1)
       return msg;
   } else {
     return msg;
@@ -866,15 +927,16 @@ BaseToPeerMessage parseBaseToPeerMessage(string_view data) {
   return msg;
 }
 
-PeerToPeerMessage parsePeerToPeerMessage(string_view data) {
+PeerToPeerMessage parsePeerToPeerMessage(string_view data)
+{
   PeerToPeerMessage msg{};
   msg.kind = PeerToPeerMessage::INVALID;
-  if (data.size() == 0)
+  if(data.size() == 0)
     return msg;
 
-  if (data[0] == (char)PeerToPeerMessage::HELLO ||
-      data[0] == (char)PeerToPeerMessage::HELLO_REPLY) {
-    if (data.size() != 1 + 16 * 3 + 32 + 64)
+  if(data[0] == (char)PeerToPeerMessage::HELLO ||
+     data[0] == (char)PeerToPeerMessage::HELLO_REPLY) {
+    if(data.size() != 1 + 16 * 3 + 32 + 64)
       return msg;
     msg.myId = substr<1, 16>(data);
     std::string pubkey = data.substr(17, 32);
@@ -882,17 +944,17 @@ PeerToPeerMessage parsePeerToPeerMessage(string_view data) {
     msg.helloCookie = data.substr(17 + 48, 16);
     std::string signature = data.substr(17 + 64, 64);
 
-    if (pubkeyToDeviceId(pubkey) != msg.myId) {
+    if(pubkeyToDeviceId(pubkey) != msg.myId) {
       LOG("invalid pubkey");
       return msg;
     }
 
     bool ok = GIL::unlocked<bool>([&]() {
-      return verifySignature(data.substr(0, 17 + 64), "ng-p2p-msg", pubkey,
-                             signature);
+      return verifySignature(
+          data.substr(0, 17 + 64), "ng-p2p-msg", pubkey, signature);
     });
 
-    if (!ok) {
+    if(!ok) {
       LOG("invalid signature");
       return msg;
     }
@@ -900,7 +962,7 @@ PeerToPeerMessage parsePeerToPeerMessage(string_view data) {
     return msg;
   }
 
-  if (data[0] == (char)PeerToPeerMessage::DATA) {
+  if(data[0] == (char)PeerToPeerMessage::DATA) {
     msg.kind = decltype(msg.kind)(data[0]);
     msg.data = data.substr(1);
     return msg;
@@ -910,18 +972,20 @@ PeerToPeerMessage parsePeerToPeerMessage(string_view data) {
 }
 
 std::string NgSocketImpl::serializePeerToPeerMessage(
-    const PeerToPeerMessage& msg) {
+    const PeerToPeerMessage& msg)
+{
   std::string data;
 
-  if (msg.kind == PeerToPeerMessage::HELLO ||
-      msg.kind == PeerToPeerMessage::HELLO_REPLY) {
-    assert(deviceId.size() == 16 && msg.yourId.size() == 16 &&
-           msg.helloCookie.size() == 16 && pubkey.size() == 32);
+  if(msg.kind == PeerToPeerMessage::HELLO ||
+     msg.kind == PeerToPeerMessage::HELLO_REPLY) {
+    assert(
+        deviceId.size() == 16 && msg.yourId.size() == 16 &&
+        msg.helloCookie.size() == 16 && pubkey.size() == 32);
     data = pack((uint8_t)msg.kind) + deviceId + pubkey + msg.yourId +
            msg.helloCookie;
     data +=
         GIL::unlocked<std::string>([&]() { return sign(data, "ng-p2p-msg"); });
-  } else if (msg.kind == PeerToPeerMessage::DATA) {
+  } else if(msg.kind == PeerToPeerMessage::DATA) {
     data = pack((uint8_t)msg.kind) + msg.data.str();
   } else {
     abort();
@@ -931,44 +995,46 @@ std::string NgSocketImpl::serializePeerToPeerMessage(
 }
 
 std::string NgSocketImpl::serializePeerToBaseMessage(
-    const PeerToBaseMessage& msg) {
+    const PeerToBaseMessage& msg)
+{
   assert(deviceId.size() == 16 && cookie.size() == 16 && pubkey.size() == 32);
   std::string data =
       pack((uint8_t)msg.kind) + this->deviceId + this->pubkey + this->cookie;
 
-  if (msg.kind == PeerToBaseMessage::REQUEST_INFO) {
+  if(msg.kind == PeerToBaseMessage::REQUEST_INFO) {
     data += fstring<16>(msg.deviceId);
-  } else if (msg.kind == PeerToBaseMessage::DATA) {
+  } else if(msg.kind == PeerToBaseMessage::DATA) {
     data = pack((uint8_t)msg.kind) + this->deviceId;
     data += fstring<16>(msg.target);
     data += msg.data;
-  } else if (msg.kind == PeerToBaseMessage::USER_AGENT) {
+  } else if(msg.kind == PeerToBaseMessage::USER_AGENT) {
     return pack((uint8_t)msg.kind) + msg.userAgent;
-  } else if (msg.kind == PeerToBaseMessage::INFO) {
-    for (InetAddress address : localAddresses) {
+  } else if(msg.kind == PeerToBaseMessage::INFO) {
+    for(InetAddress address : localAddresses) {
       data += address.ip.toBinary() + pack((uint16_t)address.port);
     }
-  } else if (msg.kind == PeerToBaseMessage::NAT_INIT) {
+  } else if(msg.kind == PeerToBaseMessage::NAT_INIT) {
     data += pack((uint64_t)natInitCounter);
-  } else if (msg.kind == PeerToBaseMessage::NAT_OK_CONFIRM) {
+  } else if(msg.kind == PeerToBaseMessage::NAT_OK_CONFIRM) {
     data += pack((uint64_t)natInitCounter);
   }
 
-  if (msg.kind != PeerToBaseMessage::DATA)
+  if(msg.kind != PeerToBaseMessage::DATA)
     data += sign(data, "ng-p2b-msg");
 
   return data;
 }
 
-void NgSocketImpl::udpPacketReceived(InetAddress source, string_view data) {
+void NgSocketImpl::udpPacketReceived(InetAddress source, string_view data)
+{
   LOG_DEBUG("udp received %s", source.str().c_str());
-  if (source == baseUdpAddress) {
+  if(source == baseUdpAddress) {
     baseMessageReceivedUdp(parseBaseToPeerMessage(data));
   } else {
-    if (data[0] == (char)PeerToPeerMessage::HELLO ||
-        data[0] == (char)PeerToPeerMessage::HELLO_REPLY) {
+    if(data[0] == (char)PeerToPeerMessage::HELLO ||
+       data[0] == (char)PeerToPeerMessage::HELLO_REPLY) {
       // "slow" messages are handled on the worker thread to reduce latency
-      if (workerQueue.qsize() < WORKER_QUEUE_SIZE) {
+      if(workerQueue.qsize() < WORKER_QUEUE_SIZE) {
         std::string dataCopy = data;
         workerQueue.push([this, source, dataCopy]() {
           peerMessageReceived(source, parsePeerToPeerMessage(dataCopy));
@@ -982,11 +1048,12 @@ void NgSocketImpl::udpPacketReceived(InetAddress source, string_view data) {
   }
 }
 
-void NgSocketImpl::connectToBase() {
-  if (options->overrideBaseAddress) {
+void NgSocketImpl::connectToBase()
+{
+  if(options->overrideBaseAddress) {
     baseAddress = options->overrideBaseAddress;
   } else {
-    if (baseConnectRetries > 2) {
+    if(baseConnectRetries > 2) {
       // failover
       auto baseTcpAddressesTmp = manager->getBaseServerAddresses();
       baseAddress = {
@@ -996,7 +1063,7 @@ void NgSocketImpl::connectToBase() {
     }
   }
   baseConnectRetries++;
-  if (!baseAddress) {
+  if(!baseAddress) {
     LOG("waiting until base address is resolved...");
     return;
   }
@@ -1011,14 +1078,14 @@ void NgSocketImpl::connectToBase() {
   auto errorCallback = [this](std::shared_ptr<FramedTcpConnection> conn) {
     LOG("base TCP connection closed");
 
-    if (conn == baseConnection) {
+    if(conn == baseConnection) {
       close(baseConnection);
       baseConnection = nullptr;  // warning: this will destroy us (the lambda)
       lastBaseTcpAction = Port::getCurrentTime();
     }
   };
 
-  if (baseConnection)
+  if(baseConnection)
     close(baseConnection);
 
   baseConnection = tcpConnect(baseAddress, dataCallback, errorCallback);
@@ -1040,17 +1107,18 @@ void NgSocketImpl::connectToBase() {
   sendToBaseTcp(userAgentMsg);
 }
 
-void NgSocketImpl::sendToBaseUdp(const PeerToBaseMessage& msg) {
-  if (!baseConnection || cookie.size() == 0)
+void NgSocketImpl::sendToBaseUdp(const PeerToBaseMessage& msg)
+{
+  if(!baseConnection || cookie.size() == 0)
     return;
   std::string serialized = serializePeerToBaseMessage(msg);
-  if (msg.kind == PeerToBaseMessage::NAT_INIT ||
-      msg.kind == PeerToBaseMessage::NAT_OK_CONFIRM ||
-      msg.kind == PeerToBaseMessage::NAT_INIT_TRANSIENT) {
+  if(msg.kind == PeerToBaseMessage::NAT_INIT ||
+     msg.kind == PeerToBaseMessage::NAT_OK_CONFIRM ||
+     msg.kind == PeerToBaseMessage::NAT_INIT_TRANSIENT) {
     // In case of NatInit we send to all addresses, so base will know our
     // (maybe NATted) IPv6 address.
-    for (InetAddress address : allBaseUdpAddresses) {
-      if (msg.kind == PeerToBaseMessage::NAT_INIT_TRANSIENT) {
+    for(InetAddress address : allBaseUdpAddresses) {
+      if(msg.kind == PeerToBaseMessage::NAT_INIT_TRANSIENT) {
         address.port = baseTransientPort;
       } else {
         udpSend(address, serialized);
@@ -1061,14 +1129,16 @@ void NgSocketImpl::sendToBaseUdp(const PeerToBaseMessage& msg) {
   }
 }
 
-void NgSocketImpl::sendToBaseTcp(const PeerToBaseMessage& msg) {
-  if (!baseConnection || cookie.size() == 0)
+void NgSocketImpl::sendToBaseTcp(const PeerToBaseMessage& msg)
+{
+  if(!baseConnection || cookie.size() == 0)
     return;
   std::string serialized = serializePeerToBaseMessage(msg);
   write(baseConnection, serialized, msg.kind != PeerToBaseMessage::DATA);
 }
 
-void NgSocketImpl::sendToPeer(InetAddress dest, const PeerToPeerMessage& msg) {
+void NgSocketImpl::sendToPeer(InetAddress dest, const PeerToPeerMessage& msg)
+{
   std::string serialized = serializePeerToPeerMessage(msg);
   udpSend(dest, std::move(serialized));
 }

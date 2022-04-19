@@ -43,11 +43,12 @@ class ConfigStorage {
   void save();
 
  public:
-  ConfigStorage(std::function<std::string()> readFunc,
-                std::function<void(std::string)> writeFunc,
-                std::map<UserSetting, std::string> userDefaults,
-                std::map<UserSetting, std::string> userOverrides,
-                std::map<InternalSetting, std::string> internalDefaults);
+  ConfigStorage(
+      std::function<std::string()> readFunc,
+      std::function<void(std::string)> writeFunc,
+      std::map<UserSetting, std::string> userDefaults,
+      std::map<UserSetting, std::string> userOverrides,
+      std::map<InternalSetting, std::string> internalDefaults);
 
   ConfigStorage(ConfigStorage&) = delete;
 

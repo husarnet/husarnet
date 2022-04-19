@@ -18,7 +18,8 @@ std::string getConfigDir();
 
 static std::string configDir;
 
-void printUsage() {
+void printUsage()
+{
   std::cerr << R"(Usage:
 
   husarnet whitelist add [address]
@@ -47,13 +48,14 @@ void printUsage() {
 
 std::string getControlSharedSecret(std::string configDir);
 
-std::string sendMsg(std::string msg) {
+std::string sendMsg(std::string msg)
+{
   int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
   sockaddr_in6 servaddr =
       OsSocket::sockaddrFromIp(InetAddress::parse("127.0.0.1:5579"));
 
-  if (connect(fd, (sockaddr*)&servaddr, sizeof(servaddr)) != 0) {
+  if(connect(fd, (sockaddr*)&servaddr, sizeof(servaddr)) != 0) {
     LOG("failed to connect to Husarnet control socket (%d)", WSAGetLastError());
     exit(1);
   }
@@ -66,7 +68,7 @@ std::string sendMsg(std::string msg) {
   resp.resize(128 * 1024);
   long ret = ::recv(fd, &resp[0], resp.size(), 0);
 
-  if (ret < 0) {
+  if(ret < 0) {
     LOG("didn't receive response");
     return "";
   }
@@ -74,9 +76,10 @@ std::string sendMsg(std::string msg) {
   return resp.substr(0, ret);
 }
 
-std::string getMyId() {
+std::string getMyId()
+{
   std::ifstream f(configDir + "/id");
-  if (!f.good()) {
+  if(!f.good()) {
     LOG("Failed to access configuration file.");
     LOG("Please make sure you run the utility as an administrator.");
     exit(1);
@@ -86,31 +89,36 @@ std::string getMyId() {
   return IpAddress::parse(id.c_str()).toBinary();
 }
 
-std::string get_manage_url(const std::string& dashboardUrl,
-                           std::string webtoken) {
+std::string get_manage_url(
+    const std::string& dashboardUrl,
+    std::string webtoken)
+{
   return dashboardUrl + "/husarnet/" + webtoken;
 }
 
-void print_websetup_message(const std::string& dashboardUrl,
-                            std::string webtoken) {
+void print_websetup_message(
+    const std::string& dashboardUrl,
+    std::string webtoken)
+{
   std::cerr << "Go to " + get_manage_url(dashboardUrl, webtoken) +
                    " to manage your network from web browser."
             << std::endl;
 }
 
-int main(int argc, const char** args) {
+int main(int argc, const char** args)
+{
   initPort();
 
-  if (argc < 2) {
+  if(argc < 2) {
     printUsage();
   }
 
   configDir = getConfigDir();
 
   std::string cmd = args[1];
-  if (cmd == "daemon") {
+  if(cmd == "daemon") {
     serviceMain();
-  } else if (cmd == "genid") {
+  } else if(cmd == "genid") {
     auto p = NgSocketCrypto::generateId();
 
     std::cout << IpAddress::fromBinary(
@@ -118,22 +126,22 @@ int main(int argc, const char** args) {
                      .str()
               << " " << encodeHex(p.first) << " " << encodeHex(p.second)
               << std::endl;
-  } else if (cmd == "websetup") {
+  } else if(cmd == "websetup") {
     BaseConfig* baseConfig = BaseConfig::create(configDir);
-    if (argc > 2 && std::string(args[2]) == "--link-only") {
-      std::cout << get_manage_url(baseConfig->getDashboardUrl(),
-                                  getWebsetupData())
+    if(argc > 2 && std::string(args[2]) == "--link-only") {
+      std::cout << get_manage_url(
+                       baseConfig->getDashboardUrl(), getWebsetupData())
                 << std::endl;
     } else {
       print_websetup_message(baseConfig->getDashboardUrl(), getWebsetupData());
     }
-  } else if (cmd == "join" && (argc == 3 || argc == 4)) {
+  } else if(cmd == "join" && (argc == 3 || argc == 4)) {
     getWebsetupData();
 
     sendMsg("reset-received-init-response\n");
 
-    for (int i = 0; i < 5; i++) {
-      if (sendMsg("has-received-init-response\n") == "yes") {
+    for(int i = 0; i < 5; i++) {
+      if(sendMsg("has-received-init-response\n") == "yes") {
         printf("Network joined successfully.\n");
         goto success;
       }
@@ -149,12 +157,12 @@ int main(int argc, const char** args) {
         "later.\n");
   success:
     (void)0;
-  } else if ((cmd == "host" || cmd == "hosts") && argc >= 3) {
+  } else if((cmd == "host" || cmd == "hosts") && argc >= 3) {
     std::string subcmd = args[2];
-    if ((subcmd == "add" || subcmd == "rm") && argc == 5) {
+    if((subcmd == "add" || subcmd == "rm") && argc == 5) {
       std::string name = args[3];
       IpAddress ip = IpAddress::parse(args[4]);
-      if (!ip) {
+      if(!ip) {
         LOG("invalid IP address");
         printUsage();
       }
@@ -163,27 +171,27 @@ int main(int argc, const char** args) {
     } else {
       printUsage();
     }
-  } else if (cmd == "whitelist" && argc >= 3) {
+  } else if(cmd == "whitelist" && argc >= 3) {
     std::string subcmd = args[2];
-    if ((subcmd == "add" || subcmd == "rm") && argc >= 4) {
-      for (int i = 3; i < argc; i++) {
+    if((subcmd == "add" || subcmd == "rm") && argc >= 4) {
+      for(int i = 3; i < argc; i++) {
         IpAddress ip = IpAddress::parse(args[i]);
-        if (!ip) {
+        if(!ip) {
           LOG("invalid IP address");
           printUsage();
         }
         sendMsg("whitelist-" + subcmd + "\n" + encodeHex(ip.toBinary()));
       }
-    } else if (subcmd == "enable" && argc == 3) {
+    } else if(subcmd == "enable" && argc == 3) {
       sendMsg("whitelist-enable\n");
-    } else if (subcmd == "disable" && argc == 3) {
+    } else if(subcmd == "disable" && argc == 3) {
       sendMsg("whitelist-disable\n");
     } else {
       printUsage();
     }
-  } else if (cmd == "status") {
+  } else if(cmd == "status") {
     std::cout << sendMsg("status\n") << std::endl;
-  } else if (cmd == "status-json") {
+  } else if(cmd == "status-json") {
     std::cout << sendMsg("status-json\n") << std::endl;
   } else {
     printUsage();

@@ -10,8 +10,9 @@ struct NetworkDev {
       NgSocket* sock,
       std::function<std::vector<DeviceId>(DeviceId)> getMulticastDestinations);
 
-  static NgSocket* wrap(DeviceId deviceId, NgSocket* sock) {
-    return wrap(deviceId, sock,
-                [](DeviceId) { return std::vector<DeviceId>(); });
+  static NgSocket* wrap(DeviceId deviceId, NgSocket* sock)
+  {
+    return wrap(
+        deviceId, sock, [](DeviceId) { return std::vector<DeviceId>(); });
   }
 };

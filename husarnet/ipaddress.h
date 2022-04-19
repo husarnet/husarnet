@@ -12,8 +12,8 @@
 
 #if defined(ESP_PLATFORM)
 namespace std {
-std::string to_string(int a);
-int stoi(std::string s);
+  std::string to_string(int a);
+  int stoi(std::string s);
 }  // namespace std
 #endif
 
@@ -32,20 +32,22 @@ struct IpAddress {
 
   bool isLinkLocal() const { return data[0] == 0xfe && data[1] == 0x80; }
 
-  bool isMappedV4() const {
+  bool isMappedV4() const
+  {
     return memcmp(data.data(), "\0\0\0\0\0\0\0\0\0\0\xFF\xFF", 12) == 0;
   }
 
-  bool isPrivateV4() const {
-    if (!isMappedV4())
+  bool isPrivateV4() const
+  {
+    if(!isMappedV4())
       return false;
-    if (data[12] == 127)
+    if(data[12] == 127)
       return true;
-    if (data[12] == 10)
+    if(data[12] == 10)
       return true;
-    if (data[12] == 192 && data[13] == 168)
+    if(data[12] == 192 && data[13] == 168)
       return true;
-    if (data[12] == 172 && (data[13] & 0b11110000) == 16)
+    if(data[12] == 172 && (data[13] & 0b11110000) == 16)
       return true;
     return false;
   }
@@ -57,26 +59,30 @@ struct IpAddress {
   fstring<16> toFstring() { return fstring<16>((const char*)data.data()); }
   std::string toString() { return str(); }
 
-  static IpAddress fromBinary(fstring<16> s) {
+  static IpAddress fromBinary(fstring<16> s)
+  {
     IpAddress r;
     memcpy(r.data.data(), s.data(), 16);
     return r;
   }
 
-  static IpAddress fromBinary(std::string s) {
+  static IpAddress fromBinary(std::string s)
+  {
     assert(s.size() == 16);
     IpAddress r;
     memcpy(r.data.data(), s.data(), 16);
     return r;
   }
 
-  static IpAddress fromBinary(const char* data) {
+  static IpAddress fromBinary(const char* data)
+  {
     IpAddress r;
     memcpy(r.data.data(), data, 16);
     return r;
   }
 
-  static IpAddress fromBinary4(uint32_t addr) {
+  static IpAddress fromBinary4(uint32_t addr)
+  {
     IpAddress r;
     r.data[10] = 0xFF;
     r.data[11] = 0xFF;
@@ -94,11 +100,13 @@ struct InetAddress {
   IpAddress ip;
   uint16_t port;
 
-  bool operator<(const InetAddress other) const {
+  bool operator<(const InetAddress other) const
+  {
     return std::make_pair(ip, port) < std::make_pair(other.ip, other.port);
   }
 
-  bool operator==(const InetAddress other) const {
+  bool operator==(const InetAddress other) const
+  {
     return std::make_pair(ip, port) == std::make_pair(other.ip, other.port);
   }
 
@@ -106,31 +114,35 @@ struct InetAddress {
 
   operator bool() { return ip; }
 
-  std::string str() const {
+  std::string str() const
+  {
     return "[" + ip.str() + "]:" + std::to_string(port);
   }
 
-  static InetAddress parse(std::string s) {
+  static InetAddress parse(std::string s)
+  {
     int pos = (int)s.rfind(':');
-    if (pos == -1)
+    if(pos == -1)
       return InetAddress{};
     std::string ipstr = s.substr(0, pos);
-    if (ipstr.size() > 2 && ipstr.front() == '[' && ipstr.back() == ']')
+    if(ipstr.size() > 2 && ipstr.front() == '[' && ipstr.back() == ']')
       ipstr = ipstr.substr(1, ipstr.size() - 2);
-    return InetAddress{IpAddress::parse(ipstr),
-                       (uint16_t)atoi(s.substr(pos + 1).c_str())};
+    return InetAddress{
+        IpAddress::parse(ipstr), (uint16_t)atoi(s.substr(pos + 1).c_str())};
   }
 };
 
-inline size_t hashpair(size_t a, size_t b) {
+inline size_t hashpair(size_t a, size_t b)
+{
   return (a + b + 0x64e9c409) ^ (a << 1);  // no idea if this a good function
 }
 
 class iphash {
  public:
-  size_t operator()(IpAddress a) const {
+  size_t operator()(IpAddress a) const
+  {
     size_t v = 0;
-    for (int i = 0; i < 4; i++) {
+    for(int i = 0; i < 4; i++) {
       size_t h = 0;
       memcpy(&h, a.data.data() + (i * 4), 4);
       v = hashpair(v, h);
@@ -138,7 +150,8 @@ class iphash {
     return v;
   }
 
-  size_t operator()(InetAddress a) const {
+  size_t operator()(InetAddress a) const
+  {
     return hashpair(iphash()(a.ip), a.port);
   }
 };

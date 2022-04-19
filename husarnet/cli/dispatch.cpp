@@ -6,10 +6,11 @@
 #include "husarnet/cli/api_client.h"
 #include "husarnet/husarnet_manager.h"
 
-void dispatchCli(CLIOpts opts) {
+void dispatchCli(CLIOpts opts)
+{
   // This is a special case as it does not use any other CLI facilities like
   // HTTP client
-  if (opts.command == Command::daemon) {
+  if(opts.command == Command::daemon) {
     auto* manager = new HusarnetManager();
     manager->runHusarnet();
     return;
@@ -18,7 +19,7 @@ void dispatchCli(CLIOpts opts) {
   try {
     auto client = prepareApiClient();
 
-    switch (opts.command) {
+    switch(opts.command) {
       case Command::daemon:
         // This was handled above. Here's a copy to make linter happy
         break;
@@ -26,9 +27,9 @@ void dispatchCli(CLIOpts opts) {
         std::cout << apiGet(client, "/control/status")->body << std::endl;
         break;
     }
-  } catch (const std::exception& e) {
+  } catch(const std::exception& e) {
     std::cerr << e.what() << std::endl;
-  } catch (const std::string& e) {
+  } catch(const std::string& e) {
     std::cerr << e << std::endl;
   }
 }

@@ -45,39 +45,6 @@
 //   }
 // }
 
-// static int originalNetns = -1;
-
-// void switchNetns(const char* ns) {
-//   originalNetns = open("/proc/self/ns/net", O_RDONLY);
-//   if (originalNetns == -1) {
-//     LOG("failed to open origin netns");
-//     exit(1);
-//   }
-
-//   int newFd = open(ns, O_RDONLY);
-//   if (originalNetns == -1) {
-//     LOG("failed to open netns");
-//     exit(1);
-//   }
-
-//   if (setns(newFd, CLONE_NEWNET) != 0) {
-//     LOG("failed to switch netns");
-//     exit(0);
-//   }
-//   close(newFd);
-// }
-
-// void revertNetns() {
-//   if (originalNetns != -1) {
-//     if (setns(originalNetns, 0) != 0) {
-//       LOG("failed to switch netns back");
-//       exit(1);
-//     }
-
-//     close(originalNetns);
-//   }
-// }
-
 // void systemdNotify() {
 //   const char* msg = "READY=1";
 //   const char* sockPath = getenv("NOTIFY_SOCKET");
@@ -100,12 +67,7 @@
 // }
 
 // void serviceMain(bool doFork = false) {
-//   signal(SIGPIPE, SIG_IGN);
-
-//   const char* netns = getenv("HUSARNET_NETNS");
-//   if (netns) {
-//     switchNetns(netns);
-//   }
+//   signal(SIGPIPE, SIG_IGN)
 
 //   if (chdir(configDir.c_str()) != 0) {
 //     LOG("failed to chdir to config dir");
@@ -124,8 +86,6 @@
 //       ua += "\n";
 //     ua += "smartcard\n";
 //   }
-//   LogManager* logManager = new LogManager(100);
-//   globalLogManager = logManager;
 
 //   sock->options->isPeerAllowed = [&](DeviceId id) {
 //     return configManager.isPeerAllowed(id);
@@ -136,11 +96,10 @@
 //   configManager.shouldSendInitRequest =
 //       getenv("HUSARNET_SEND_INIT_REQUEST") != nullptr;
 
-//   if (system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c
-//   "
-//              "10 200)") != 0) {
-//     LOG("failed to create TUN device");
-//   }
+// if (system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c
+// 10 200)") != 0) {
+//   LOG("failed to create TUN device");
+// }
 
 //   NgSocket* wrappedSock = sock;
 //   NgSocket* netDev = NetworkDev::wrap(
@@ -201,8 +160,6 @@
 //   }
 
 //   systemdNotify();
-
-//   revertNetns();
 
 //   if (doFork) {
 //     int pid = fork();

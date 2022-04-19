@@ -4,7 +4,8 @@
 #pragma once
 #include <string>
 
-enum class Command {
+enum class Command
+{
   join,
   status,
   wait,
@@ -15,7 +16,8 @@ enum class Command {
   daemon,
   logs
 };
-enum class Subcommand {
+enum class Subcommand
+{
   ls,
   enable,
   disable,

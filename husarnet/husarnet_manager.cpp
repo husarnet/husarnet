@@ -19,9 +19,11 @@
 #endif
 
 // TODO remove this method entirely
-std::string HusarnetManager::configGet(std::string networkId,
-                                       std::string key,
-                                       std::string defaultValue) {
+std::string HusarnetManager::configGet(
+    std::string networkId,
+    std::string key,
+    std::string defaultValue)
+{
   // auto v = configTable->getValueForNetwork(networkId, "config", key);
   // if (v.size() == 0) {
   //   return defaultValue;
@@ -35,9 +37,11 @@ std::string HusarnetManager::configGet(std::string networkId,
 }
 
 // TODO remove this method entirely
-std::string HusarnetManager::configSet(std::string networkId,
-                                       std::string key,
-                                       std::string value) {
+std::string HusarnetManager::configSet(
+    std::string networkId,
+    std::string key,
+    std::string value)
+{
   // configTable->runInTransaction([&]() {
   //   configTable->removeValues(networkId, "config", key);
   //   configTable->insert(ConfigRow{networkId, "config", key, value});
@@ -47,36 +51,43 @@ std::string HusarnetManager::configSet(std::string networkId,
   return "";  // TODO
 }
 
-LogManager& HusarnetManager::getLogManager() {
+LogManager& HusarnetManager::getLogManager()
+{
   return *(this->logManager);
 }
 
 // TODO implement this maybe
-std::string HusarnetManager::getVersion() {
+std::string HusarnetManager::getVersion()
+{
   return "";
 }
 
 // TODO implement this maybe
-std::string HusarnetManager::getUserAgent() {
+std::string HusarnetManager::getUserAgent()
+{
   return "";
 }
 
 // TODO implement this maybe
-IpAddress HusarnetManager::getSelfAddress() {
+IpAddress HusarnetManager::getSelfAddress()
+{
   return IpAddress();
 }
 
-std::string HusarnetManager::getSelfHostname() {
+std::string HusarnetManager::getSelfHostname()
+{
   return configGet("manual", "hostname", "");
 }
 
-void HusarnetManager::setSelfHostname(std::string newHostname) {
+void HusarnetManager::setSelfHostname(std::string newHostname)
+{
   LOG("changing hostname to '%s'", newHostname.c_str());
   configSet("manual", "hostname", newHostname);
   // ServiceHelper::modifyHostname(newHostname); // TODO link this properly
 }
 
-void HusarnetManager::updateHosts() {
+void HusarnetManager::updateHosts()
+{
   std::vector<std::pair<IpAddress, std::string>> hosts;
   std::unordered_set<std::string> mappedHosts;
 
@@ -106,7 +117,8 @@ void HusarnetManager::updateHosts() {
   // TODO implement this
 }
 
-IpAddress HusarnetManager::resolveHostname(std::string hostname) {
+IpAddress HusarnetManager::resolveHostname(std::string hostname)
+{
   // auto values = configTable->getValue("host", hostname);
   // if (values.size() > 0)
   //   return IpAddress::parse(values[0]);
@@ -116,84 +128,107 @@ IpAddress HusarnetManager::resolveHostname(std::string hostname) {
 }
 
 // TODO implement this maybe
-IpAddress HusarnetManager::getCurrentBaseAddress() {
+IpAddress HusarnetManager::getCurrentBaseAddress()
+{
   return IpAddress();
 }
 
 // TODO implement this maybe
-std::string HusarnetManager::getCurrentBaseProtocol() {
+std::string HusarnetManager::getCurrentBaseProtocol()
+{
   return "";
 }
 
-std::string HusarnetManager::getWebsetupSecret() {
+std::string HusarnetManager::getWebsetupSecret()
+{
   return configGet("manual", "websetup-secret", "");
 }
 
-std::string HusarnetManager::setWebsetupSecret(std::string newSecret) {
+std::string HusarnetManager::setWebsetupSecret(std::string newSecret)
+{
   configSet("manual", "websetup-secret", newSecret);
   return newSecret;
 }
 
-static std::string parseJoinCode(std::string joinCode) {
+static std::string parseJoinCode(std::string joinCode)
+{
   int slash = joinCode.find("/");
-  if (slash == -1) {
+  if(slash == -1) {
     return joinCode;
   }
 
   return joinCode.substr(slash + 1);
 }
 
-void HusarnetManager::joinNetwork(std::string joinCode,
-                                  std::string newHostname) {
+void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
+{
   whitelistAdd(license->getWebsetupAddress());
 
   auto newWebsetupSecret =
       setWebsetupSecret(encodeHex(generateRandomString(12)));
 
-  websetup->sendJoinRequest(parseJoinCode(joinCode), newWebsetupSecret,
-                            newHostname);
+  websetup->sendJoinRequest(
+      parseJoinCode(joinCode), newWebsetupSecret, newHostname);
 }
 
 // TODO implement this maybe
-bool HusarnetManager::isJoined() {
+bool HusarnetManager::isJoined()
+{
   return false;
 }
 
 // TODO implement this maybe
-void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address) {}
+void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)
+{
+}
 
 // TODO implement this maybe
-void HusarnetManager::hostTableRm(std::string hostname) {}
+void HusarnetManager::hostTableRm(std::string hostname)
+{
+}
 
 // TODO implement this maybe
-void HusarnetManager::whitelistAdd(IpAddress address) {}
+void HusarnetManager::whitelistAdd(IpAddress address)
+{
+}
 
 // TODO implement this maybe
-void HusarnetManager::whitelistRm(IpAddress address) {}
+void HusarnetManager::whitelistRm(IpAddress address)
+{
+}
 
 // TODO implement this maybe
-std::list<IpAddress> HusarnetManager::getWhitelist() {
+std::list<IpAddress> HusarnetManager::getWhitelist()
+{
   return {};
 }
 
 // TODO implement this maybe
-void HusarnetManager::whitelistEnable() {}
+void HusarnetManager::whitelistEnable()
+{
+}
 
 // TODO implement this maybe
-void HusarnetManager::whitelistDisable() {}
+void HusarnetManager::whitelistDisable()
+{
+}
 
-std::string HusarnetManager::getDashboardUrl() {
+std::string HusarnetManager::getDashboardUrl()
+{
   return license->getDashboardUrl();
 }
-IpAddress HusarnetManager::getWebsetupAddress() {
+IpAddress HusarnetManager::getWebsetupAddress()
+{
   return license->getWebsetupAddress();
 }
-std::vector<IpAddress> HusarnetManager::getBaseServerAddresses() {
+std::vector<IpAddress> HusarnetManager::getBaseServerAddresses()
+{
   return license->getBaseServerAddresses();
 }
 
-std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id) {
-  if (std::string(id).find("\xff\x15\xf2\xd3\xa3\x89") == 0) {
+std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
+{
+  if(std::string(id).find("\xff\x15\xf2\xd3\xa3\x89") == 0) {
     std::vector<DeviceId> res;
 
     // for (auto row : configTable->listValuesForNetwork("manual", "whitelist"))
@@ -209,11 +244,13 @@ std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id) {
 }
 
 // TODO implement this maybe
-int HusarnetManager::getLatency(IpAddress destination) {
+int HusarnetManager::getLatency(IpAddress destination)
+{
   return 0;
 }
 
-void HusarnetManager::cleanup() {
+void HusarnetManager::cleanup()
+{
   // configTable->runInTransaction([&]() {
   //   configTable->removeAll("manual", "whitelist");
   //   configTable->removeAll("manual", "host");
@@ -221,58 +258,69 @@ void HusarnetManager::cleanup() {
   // TODO fix this
 }
 
-HusarnetManager::HusarnetManager() {
+HusarnetManager::HusarnetManager()
+{
   Port::init();
   Privileged::init();
 }
 
-void HusarnetManager::getLicense() {
+void HusarnetManager::getLicense()
+{
   this->license =
       new License(configStorage->getUserSetting(UserSetting::dashboardUrl));
 }
 
-void HusarnetManager::getIdentity() {
+void HusarnetManager::getIdentity()
+{
   // TODO - reenable the smartcard support but with proper multiplatform support
   identity = Privileged::readIdentity();
 
-  if (!identity.isValid()) {
+  if(!identity.isValid()) {
     identity = Identity::create();
     Privileged::writeIdentity(identity);
   }
 }
 
-void HusarnetManager::startNGSocket() {
+void HusarnetManager::startNGSocket()
+{
   ngsocket = NgSocketSecure::create(&identity, this);
 }
 
-void HusarnetManager::startWebsetup() {
+void HusarnetManager::startWebsetup()
+{
   this->websetup = new WebsetupConnection(this);
   websetup->init();
   GIL::startThread([this]() { websetup->run(); }, "websetup", 6000);
 }
 
-void HusarnetManager::startHTTPServer() {
+void HusarnetManager::startHTTPServer()
+{
 #ifdef HTTP_CONTROL_API
   threadpool.push_back(
       new std::thread([this]() { APIServer::httpThread(*this); }));
 #endif
 }
 
-void HusarnetManager::stage1() {
-  if (stage1Started) {
+void HusarnetManager::stage1()
+{
+  if(stage1Started) {
     return;
   }
 
   GIL::init();
   Privileged::start();
 
+  logManager = new LogManager(100);
+  globalLogManager = logManager;
+
   configStorage = new ConfigStorage(
       Privileged::readConfig, Privileged::writeConfig, userDefaults,
       getEnvironmentOverrides(), internalDefaults);
 }
 
-void HusarnetManager::stage2() {
-  if (stage2Started) {
+void HusarnetManager::stage2()
+{
+  if(stage2Started) {
     return;
   }
 
@@ -280,8 +328,9 @@ void HusarnetManager::stage2() {
   getIdentity();
 }
 
-void HusarnetManager::stage3() {
-  if (stage3Started) {
+void HusarnetManager::stage3()
+{
+  if(stage3Started) {
     return;
   }
 
@@ -290,12 +339,13 @@ void HusarnetManager::stage3() {
   startHTTPServer();
 }
 
-void HusarnetManager::runHusarnet() {
+void HusarnetManager::runHusarnet()
+{
   stage1();
   stage2();
   stage3();
 
-  while (true) {
+  while(true) {
     ngsocket->periodic();
     OsSocket::runOnce(1000);
   }

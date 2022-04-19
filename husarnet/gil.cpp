@@ -9,53 +9,52 @@
 
 namespace GIL {
 
-std::mutex globalLock;
+  std::mutex globalLock;
 
-void init() {
-  lock();
-}
+  void init() { lock(); }
 
-void startThread(std::function<void()> func,
-                 const char* name,
-                 int stack,
-                 int priority) {
-  auto wrapped = [func]() {
-    globalLock.lock();
-    func();
+  void startThread(
+      std::function<void()> func,
+      const char* name,
+      int stack,
+      int priority)
+  {
+    auto wrapped = [func]() {
+      globalLock.lock();
+      func();
+      globalLock.unlock();
+    };
+    Port::startThread(wrapped, name, stack, priority);
+  }
+
+  void yield()
+  {
     globalLock.unlock();
-  };
-  Port::startThread(wrapped, name, stack, priority);
-}
-
-void yield() {
-  globalLock.unlock();
-  // std::this_thread::yield();
-  globalLock.lock();
-}
+    // std::this_thread::yield();
+    globalLock.lock();
+  }
 
 #ifndef DEBUG_LOCKS
-void lock() {
-  globalLock.lock();
-}
+  void lock() { globalLock.lock(); }
 
-void unlock() {
-  globalLock.unlock();
-}
+  void unlock() { globalLock.unlock(); }
 #else
-void lock() {
-  if (globalLock.try_lock()) {
-    LOG("lock");
-  } else {
-    LOG("wait for lock");
-    globalLock.lock();
-    LOG("locked");
+  void lock()
+  {
+    if(globalLock.try_lock()) {
+      LOG("lock");
+    } else {
+      LOG("wait for lock");
+      globalLock.lock();
+      LOG("locked");
+    }
   }
-}
 
-void unlock() {
-  globalLock.unlock();
-  LOG("unlock");
-}
+  void unlock()
+  {
+    globalLock.unlock();
+    LOG("unlock");
+  }
 #endif
 
 }  // namespace GIL

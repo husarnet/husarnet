@@ -18,15 +18,17 @@ class WebsetupConnection {
   void bind();
   void send(std::string command, std::list<std::string> arguments);
   void handleWebsetupPacket(std::string data);
-  std::list<std::string> handleWebsetupCommand(std::string command,
-                                               std::string payload);
+  std::list<std::string> handleWebsetupCommand(
+      std::string command,
+      std::string payload);
 
  public:
   WebsetupConnection(HusarnetManager* manager);
   void init();
   void run();
 
-  void sendJoinRequest(std::string joinCode,
-                       std::string newWebsetupSecret,
-                       std::string selfHostname);
+  void sendJoinRequest(
+      std::string joinCode,
+      std::string newWebsetupSecret,
+      std::string selfHostname);
 };

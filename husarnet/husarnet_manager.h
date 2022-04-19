@@ -20,7 +20,7 @@ class HusarnetManager {
   Identity identity;
   NgSocket* ngsocket;
   ConfigStorage* configStorage;
-  LogManager* logManager;  // TODO
+  LogManager* logManager;
   WebsetupConnection* websetup;
   License* license;
   std::vector<std::thread*> threadpool;
@@ -29,12 +29,10 @@ class HusarnetManager {
   bool stage2Started = false;
   bool stage3Started = false;
 
-  std::string configGet(std::string networkId,
-                        std::string key,
-                        std::string defaultValue);
-  std::string configSet(std::string networkId,
-                        std::string key,
-                        std::string value);
+  std::string
+  configGet(std::string networkId, std::string key, std::string defaultValue);
+  std::string
+  configSet(std::string networkId, std::string key, std::string value);
 
   void getLicense();
   void getIdentity();

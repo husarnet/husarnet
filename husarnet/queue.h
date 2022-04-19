@@ -12,18 +12,21 @@ struct Queue {
   std::condition_variable cv;
   std::deque<T> q;
 
-  int qsize() {
+  int qsize()
+  {
     std::unique_lock<std::mutex> g(m);
     return q.size();
   }
 
-  void push(T&& v) {
+  void push(T&& v)
+  {
     std::unique_lock<std::mutex> g(m);
     q.push_back(std::move(v));
     cv.notify_one();
   }
 
-  T pop_blocking() {
+  T pop_blocking()
+  {
     std::unique_lock<std::mutex> g(m);
     cv.wait(g, [this]() { return q.size() > 0; });
     T out = std::move(q.front());

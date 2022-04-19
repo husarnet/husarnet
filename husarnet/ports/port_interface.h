@@ -7,14 +7,15 @@
 #include "husarnet/ipaddress.h"
 
 namespace Port {
-void init();  // Should be called as early as possible
+  void init();  // Should be called as early as possible
 
-void startThread(std::function<void()> func,
-                 const char* name,
-                 int stack = -1,
-                 int priority = 2);
+  void startThread(
+      std::function<void()> func,
+      const char* name,
+      int stack = -1,
+      int priority = 2);
 
-IpAddress resolveToIp(std::string hostname);
+  IpAddress resolveToIp(std::string hostname);
 
-int64_t getCurrentTime();
+  int64_t getCurrentTime();
 }  // namespace Port
