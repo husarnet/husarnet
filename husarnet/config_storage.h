@@ -10,18 +10,17 @@
 #include "husarnet/util.h"
 #include "nlohmann/json.hpp"
 
-using namespace nlohmann;  // json
+using namespace nlohmann;
 
-// TODO
-// rozkminić czy da się to scalić z settings (network id = global/daemon/manual
-// i wyjebane?)
+// TODO rozkminić czy da się to scalić z settings (network id =
+// global/daemon/manual i wyjebane?)
 
-// rozkminić że niektóre akcje powinny być mocno poblokowane/powodować crash
-// jeśli zrobione bez unlocka - typu zmiana adresu dashbaorda
+// TODO rozkminić że niektóre akcje powinny być mocno poblokowane/powodować
+// crash jeśli zrobione bez unlocka - typu zmiana adresu dashbaorda
 
-// protect writes with gil I guess
+// TODO protect writes with gil I guess
 
-// wywalić obsługę klucza master
+// TODO wywalić obsługę klucza master
 
 BETTER_ENUM(InternalSetting, int, websetupSecret = 1)
 BETTER_ENUM(UserSetting, int, dashboardUrl = 1)

@@ -3,8 +3,8 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <string>
-#include "device_id.h"
-#include "fstring.h"
+#include "husarnet/device_id.h"
+#include "husarnet/fstring.h"
 
 class Identity {
  private:

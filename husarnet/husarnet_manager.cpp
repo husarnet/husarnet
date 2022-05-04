@@ -4,6 +4,7 @@
 #include "husarnet/ports/port.h"
 
 #include <sstream>
+#include "husarnet/device_id.h"
 #include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
@@ -203,6 +204,12 @@ std::list<IpAddress> HusarnetManager::getWhitelist()
   return {};
 }
 
+// TODO implement this
+bool HusarnetManager::isWhitelistEnabled()
+{
+  return false;
+}
+
 // TODO implement this maybe
 void HusarnetManager::whitelistEnable()
 {
@@ -211,6 +218,16 @@ void HusarnetManager::whitelistEnable()
 // TODO implement this maybe
 void HusarnetManager::whitelistDisable()
 {
+}
+
+bool HusarnetManager::isHostAllowed(IpAddress id)
+{
+  if(!isWhitelistEnabled()) {
+    return true;
+  }
+
+  auto whitelist = getWhitelist();
+  return std::find(begin(whitelist), end(whitelist), id) != std::end(whitelist);
 }
 
 std::string HusarnetManager::getDashboardUrl()
@@ -284,6 +301,11 @@ void HusarnetManager::getIdentity()
 void HusarnetManager::startNGSocket()
 {
   ngsocket = NgSocketSecure::create(&identity, this);
+  ngsocket->options->isPeerAllowed = [&](DeviceId id) {
+    return isHostAllowed(deviceIdToIpAddress(id));
+  };
+
+  ngsocket->options->userAgent = "Linux daemon";
 }
 
 void HusarnetManager::startWebsetup()

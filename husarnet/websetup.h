@@ -4,8 +4,8 @@
 #pragma once
 #include <list>
 #include <string>
-#include "port.h"
-#include "sockets.h"
+#include "husarnet/ports/port.h"
+#include "husarnet/ports/sockets.h"
 
 class HusarnetManager;
 

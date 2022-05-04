@@ -72,8 +72,11 @@ class HusarnetManager {
   void whitelistRm(IpAddress address);
   std::list<IpAddress> getWhitelist();
 
+  bool isWhitelistEnabled();
   void whitelistEnable();
   void whitelistDisable();
+
+  bool isHostAllowed(IpAddress id);
 
   // TODO think about exposing license object in the same way logmanager is
   // Copy of methods from License class

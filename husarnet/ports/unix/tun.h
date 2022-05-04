@@ -1,28 +1,24 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
+#pragma once
+#include "husarnet/ngsocket.h"
 
-// TODO this whole file
+class TunDelegate : private NgSocketDelegate {
+  NgSocket* sock;
+  int tunFd = -1;
+  std::string tunBuffer;
 
-// #pragma once
-// #include "husarnet.h"
+  void onDataPacket(DeviceId source, string_view data);
+  void tunReady();
+  TunDelegate(NgSocket* netDev);
 
-// class TunDelegate : private NgSocketDelegate {
-//   NgSocket* sock;
-//   int tunFd = -1;
-//   std::string tunBuffer;
+ public:
+  void setFd(int tunFd);
+  void closeFd();
+  bool isRunning();
 
-//   void onDataPacket(DeviceId source, string_view data);
-//   void tunReady();
-//   TunDelegate(NgSocket* netDev);
-
-//  public:
-//   void setFd(int tunFd);
-//   void closeFd();
-//   bool isRunning();
-
-//   static TunDelegate* startTun(std::string name,
-//                                NgSocket* netDev,
-//                                bool isTap = false);
-//   static TunDelegate* createTun(NgSocket* netDev);
-// };
+  static TunDelegate*
+  startTun(std::string name, NgSocket* netDev, bool isTap = false);
+  static TunDelegate* createTun(NgSocket* netDev);
+};

@@ -4,7 +4,9 @@
 #include "husarnet/ports/port_interface.h"
 #include <ares.h>
 #include <thread>
+#include "husarnet/network_dev.h"
 #include "husarnet/ports/port.h"
+#include "husarnet/ports/unix/tun.h"
 #include "husarnet/util.h"
 
 struct ares_result {
@@ -106,5 +108,47 @@ namespace Port {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000 / 1000;
+  }
+
+  // TODO this whole method should be rewritten *not* to utilize inline
+  // bash(?!) and *to* utilize netlink interface
+  void startTunTap(std::string name)
+  {
+    if(system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c "
+              "10 200)") != 0) {
+      LOG("failed to create TUN device");
+    }
+
+    // TODO!
+    // NgSocket* wrappedSock = sock;
+    // NgSocket* netDev =
+    //     NetworkDev::wrap(identity->deviceId, wrappedSock, [&](DeviceId id) {
+    //       return configManager.getMulticastDestinations(id);
+    //     });
+
+    // std::string myIp = deviceIdToIpAddress(identity->deviceId).str();
+
+    // TunDelegate::startTun(name, netDev);
+
+    if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||
+       system(("sysctl net.ipv6.conf." + name + ".disable_ipv6=0").c_str()) !=
+           0) {
+      LOG("failed to enable IPv6 (may be harmless)");
+    }
+
+    // TODO!
+    // if(system(("ip link set dev " + name + " mtu 1350").c_str()) != 0 ||
+    //    system(("ip addr add dev " + name + " " + myIp + "/16").c_str()) != 0
+    //    || system(("ip link set dev " + name + " up").c_str()) != 0) {
+    //   LOG("failed to setup IP address");
+    //   exit(1);
+    // }
+
+    // Multicast
+    if(system(
+           ("ip -6 route add ff15:f2d3:a389::/48 dev " + name + " table local")
+               .c_str()) != 0) {
+      LOG("failed to setup multicast route");
+    }
   }
 }  // namespace Port

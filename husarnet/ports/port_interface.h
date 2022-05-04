@@ -18,4 +18,6 @@ namespace Port {
   IpAddress resolveToIp(std::string hostname);
 
   int64_t getCurrentTime();
+
+  void startTunTap(std::string name);
 }  // namespace Port
