@@ -21,6 +21,4 @@ const IpAddress MULTICAST_ADDR_6 =
 const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::dashboardUrl, "app.husarnet.com"},
 };
-const std::map<InternalSetting, std::string> internalDefaults = {
-
-};
+const std::map<InternalSetting, std::string> internalDefaults = {{}};

@@ -6,6 +6,8 @@
 #include <list>
 #include "husarnet/ipaddress.h"
 
+class HusarnetManager;
+
 namespace Port {
   void init();  // Should be called as early as possible
 
@@ -19,5 +21,5 @@ namespace Port {
 
   int64_t getCurrentTime();
 
-  void startTunTap(std::string name);
+  void startTunTap(HusarnetManager* manager);
 }  // namespace Port

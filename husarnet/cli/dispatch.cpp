@@ -26,6 +26,14 @@ void dispatchCli(CLIOpts opts)
       case Command::status:
         std::cout << apiGet(client, "/control/status")->body << std::endl;
         break;
+      case Command::whitelist:
+        switch(opts.subcommand) {
+          case Subcommand::enable:
+            std::cout << apiPost(client, "/control/whitelist/enable")->body
+                      << std::endl;
+            break;
+        }
+        break;
     }
   } catch(const std::exception& e) {
     std::cerr << e.what() << std::endl;

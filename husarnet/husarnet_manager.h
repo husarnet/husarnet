@@ -34,8 +34,8 @@ class HusarnetManager {
   std::string
   configSet(std::string networkId, std::string key, std::string value);
 
-  void getLicense();
-  void getIdentity();
+  void getLicenseStage();
+  void getIdentityStage();
   void startNGSocket();
   void startWebsetup();
   void startHTTPServer();
@@ -48,6 +48,8 @@ class HusarnetManager {
 
   std::string getVersion();
   std::string getUserAgent();
+
+  Identity* getIdentity();
 
   IpAddress getSelfAddress();
   std::string getSelfHostname();
@@ -84,6 +86,8 @@ class HusarnetManager {
   IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
 
+  NgSocket* getNGSocket();
+  std::string getInterfaceName() { return "hnet0"; }
   std::vector<DeviceId> getMulticastDestinations(DeviceId id);
   int getLatency(IpAddress destination);
 

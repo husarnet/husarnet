@@ -69,9 +69,16 @@ std::string HusarnetManager::getUserAgent()
   return "";
 }
 
+Identity* HusarnetManager::getIdentity()
+{
+  return &identity;
+}
+
 // TODO implement this maybe
 IpAddress HusarnetManager::getSelfAddress()
 {
+  // TODO napisac metode w identity do pobierania adresu ip
+  // return deviceIdToIpAddress(identity.getPubkey());
   return IpAddress();
 }
 
@@ -178,46 +185,44 @@ bool HusarnetManager::isJoined()
   return false;
 }
 
-// TODO implement this maybe
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)
 {
+  configStorage->hostTableAdd(hostname, address);
 }
 
-// TODO implement this maybe
 void HusarnetManager::hostTableRm(std::string hostname)
 {
+  configStorage->hostTableRm(hostname);
 }
 
-// TODO implement this maybe
 void HusarnetManager::whitelistAdd(IpAddress address)
 {
+  configStorage->whitelistAdd(address);
 }
 
-// TODO implement this maybe
 void HusarnetManager::whitelistRm(IpAddress address)
 {
+  configStorage->whitelistRm(address);
 }
 
-// TODO implement this maybe
 std::list<IpAddress> HusarnetManager::getWhitelist()
 {
-  return {};
+  return configStorage->getWhitelist();
 }
 
-// TODO implement this
 bool HusarnetManager::isWhitelistEnabled()
 {
-  return false;
+  return configStorage->getUserSettingBool(UserSetting::whitelistEnable);
 }
 
-// TODO implement this maybe
 void HusarnetManager::whitelistEnable()
 {
+  configStorage->setUserSetting(UserSetting::whitelistEnable, true);
 }
 
-// TODO implement this maybe
 void HusarnetManager::whitelistDisable()
 {
+  configStorage->setUserSetting(UserSetting::whitelistEnable, false);
 }
 
 bool HusarnetManager::isHostAllowed(IpAddress id)
@@ -241,6 +246,11 @@ IpAddress HusarnetManager::getWebsetupAddress()
 std::vector<IpAddress> HusarnetManager::getBaseServerAddresses()
 {
   return license->getBaseServerAddresses();
+}
+
+NgSocket* HusarnetManager::getNGSocket()
+{
+  return ngsocket;
 }
 
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
@@ -281,21 +291,16 @@ HusarnetManager::HusarnetManager()
   Privileged::init();
 }
 
-void HusarnetManager::getLicense()
+void HusarnetManager::getLicenseStage()
 {
   this->license =
       new License(configStorage->getUserSetting(UserSetting::dashboardUrl));
 }
 
-void HusarnetManager::getIdentity()
+void HusarnetManager::getIdentityStage()
 {
   // TODO - reenable the smartcard support but with proper multiplatform support
   identity = Privileged::readIdentity();
-
-  if(!identity.isValid()) {
-    identity = Identity::create();
-    Privileged::writeIdentity(identity);
-  }
 }
 
 void HusarnetManager::startNGSocket()
@@ -306,6 +311,8 @@ void HusarnetManager::startNGSocket()
   };
 
   ngsocket->options->userAgent = "Linux daemon";
+
+  Port::startTunTap(this);
 }
 
 void HusarnetManager::startWebsetup()
@@ -346,8 +353,8 @@ void HusarnetManager::stage2()
     return;
   }
 
-  getLicense();
-  getIdentity();
+  getLicenseStage();
+  getIdentityStage();
 }
 
 void HusarnetManager::stage3()

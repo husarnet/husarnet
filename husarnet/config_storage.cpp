@@ -173,6 +173,11 @@ void ConfigStorage::setInternalSetting(
   save();
 }
 
+void ConfigStorage::setInternalSetting(InternalSetting setting, bool value)
+{
+  setInternalSetting(setting, value ? trueValue : "");
+}
+
 std::string ConfigStorage::getInternalSetting(InternalSetting setting)
 {
   auto settingStr = setting._to_string();
@@ -186,10 +191,20 @@ std::string ConfigStorage::getInternalSetting(InternalSetting setting)
   return "";
 }
 
+bool ConfigStorage::getInternalSettingBool(InternalSetting setting)
+{
+  return getInternalSetting(setting) == trueValue;
+}
+
 void ConfigStorage::setUserSetting(UserSetting setting, std::string value)
 {
   currentData[USER_SETTINGS_KEY][setting._to_string()] = value;
   save();
+}
+
+void ConfigStorage::setUserSetting(UserSetting setting, bool value)
+{
+  setUserSetting(setting, value ? trueValue : "");
 }
 
 std::string ConfigStorage::getUserSetting(UserSetting setting)
@@ -206,6 +221,11 @@ std::string ConfigStorage::getUserSetting(UserSetting setting)
   }
 
   return "";
+}
+
+bool ConfigStorage::getUserSettingBool(UserSetting setting)
+{
+  return getUserSetting(setting) == trueValue;
 }
 
 extern char** environ;

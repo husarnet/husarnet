@@ -1,8 +1,9 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "api_client.h"
-#include "api_server/common.h"
+#include "husarnet/cli/api_client.h"
+#include "husarnet/api_server/common.h"
+#include "husarnet/util.h"
 
 httplib::Client prepareApiClient()
 {
@@ -13,14 +14,10 @@ httplib::Client prepareApiClient()
   return client;
 }
 
-httplib::Params prepareApiParams()
+static void prepareApiParams(httplib::Params& params)
 {
-  httplib::Params params;
-  // TODO link this properly
-  // std::string secret =
-  // FileStorage::readHttpSecret(FileStorage::getConfigDir());
-  // params.emplace("secret", secret);
-  return params;
+  std::string secret = "";
+  params.emplace("secret", secret);
 }
 
 void checkInvalidResponse(const httplib::Result& result)
@@ -35,8 +32,10 @@ void checkInvalidResponse(const httplib::Result& result)
 httplib::Result apiPost(
     httplib::Client& client,
     const std::string path,
-    const httplib::Params& params)
+    httplib::Params& params)
 {
+  prepareApiParams(params);
+
   auto result = client.Post(path.c_str(), params);
 
   checkInvalidResponse(result);
@@ -44,11 +43,20 @@ httplib::Result apiPost(
   return result;
 }
 
+httplib::Result apiPost(httplib::Client& client, const std::string path)
+{
+  httplib::Params params;
+  return apiPost(client, path, params);
+}
+
 httplib::Result apiGet(httplib::Client& client, const std::string path)
 {
+  LOG("making a request to %s", path.c_str());
   auto result = client.Get(path.c_str());
 
   checkInvalidResponse(result);
+
+  LOG("got %s", result->body.c_str());
 
   return result;
 }

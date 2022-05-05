@@ -10,7 +10,7 @@
 #include "husarnet/util.h"
 #include "nlohmann/json.hpp"
 
-using namespace nlohmann;
+using namespace nlohmann;  // json
 
 // TODO rozkminić czy da się to scalić z settings (network id =
 // global/daemon/manual i wyjebane?)
@@ -20,10 +20,10 @@ using namespace nlohmann;
 
 // TODO protect writes with gil I guess
 
-// TODO wywalić obsługę klucza master
-
 BETTER_ENUM(InternalSetting, int, websetupSecret = 1)
-BETTER_ENUM(UserSetting, int, dashboardUrl = 1)
+BETTER_ENUM(UserSetting, int, dashboardUrl = 1, whitelistEnable = 2)
+
+const std::string trueValue = "true";
 
 class ConfigStorage {
   std::function<std::string()> readFunc;
@@ -67,11 +67,15 @@ class ConfigStorage {
   void whitelistClear();
 
   void setInternalSetting(InternalSetting setting, std::string value);
+  void setInternalSetting(InternalSetting setting, bool value);
   std::string getInternalSetting(InternalSetting setting);
+  bool getInternalSettingBool(InternalSetting setting);
   // TODO add getInternalSettingInt
 
   void setUserSetting(UserSetting setting, std::string value);
+  void setUserSetting(UserSetting setting, bool value);
   std::string getUserSetting(UserSetting setting);
+  bool getUserSettingBool(UserSetting setting);
   // TODO add getUserSettingInt
 };
 

@@ -1,8 +1,10 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "identity.h"
-#include "ngsocket_crypto.h"
+#include "husarnet/identity.h"
+#include <sstream>
+#include "husarnet/ngsocket_crypto.h"
+#include "husarnet/util.h"
 #include "sodium.h"
 
 Identity::Identity()
@@ -57,11 +59,31 @@ Identity Identity::create()
 
 std::string Identity::serialize()
 {
-  // TODO implement this
-  return "";
+  std::stringstream buffer;
+
+  buffer << deviceIdToIpAddress(NgSocketCrypto::pubkeyToDeviceId(pubkey)).str();
+  buffer << " ";
+
+  buffer << encodeHex(pubkey);
+  buffer << " ";
+
+  buffer << encodeHex(privkey);
+  buffer << std::endl;
+
+  return buffer.str();
 }
+
 Identity Identity::deserialize(std::string data)
 {
-  // TODO implement this
-  return Identity();
+  std::stringstream buffer;
+  buffer << data;
+
+  std::string ipStr, pubkeyStr, privkeyStr;
+  buffer >> ipStr >> pubkeyStr >> privkeyStr;
+
+  auto identity = new Identity();
+  identity->pubkey = decodeHex(pubkeyStr);
+  identity->privkey = decodeHex(privkeyStr);
+  identity->deviceId = IpAddress::parse(ipStr.c_str()).toBinary();
+  return *identity;
 }

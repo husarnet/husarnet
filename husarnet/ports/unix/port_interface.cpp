@@ -4,6 +4,7 @@
 #include "husarnet/ports/port_interface.h"
 #include <ares.h>
 #include <thread>
+#include "husarnet/husarnet_manager.h"
 #include "husarnet/network_dev.h"
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/unix/tun.h"
@@ -112,42 +113,44 @@ namespace Port {
 
   // TODO this whole method should be rewritten *not* to utilize inline
   // bash(?!) and *to* utilize netlink interface
-  void startTunTap(std::string name)
+  void startTunTap(HusarnetManager* manager)
   {
     if(system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c "
               "10 200)") != 0) {
       LOG("failed to create TUN device");
     }
 
-    // TODO!
-    // NgSocket* wrappedSock = sock;
-    // NgSocket* netDev =
-    //     NetworkDev::wrap(identity->deviceId, wrappedSock, [&](DeviceId id) {
-    //       return configManager.getMulticastDestinations(id);
-    //     });
+    NgSocket* wrappedSock = manager->getNGSocket();
+    NgSocket* netDev = NetworkDev::wrap(
+        manager->getIdentity()->getDeviceId(), wrappedSock,
+        [&](DeviceId id) { return manager->getMulticastDestinations(id); });
 
-    // std::string myIp = deviceIdToIpAddress(identity->deviceId).str();
+    std::string myIp =
+        deviceIdToIpAddress(manager->getIdentity()->getDeviceId()).str();
 
-    // TunDelegate::startTun(name, netDev);
+    auto interfaceName = manager->getInterfaceName();
+    TunDelegate::startTun(interfaceName, netDev);
 
     if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||
-       system(("sysctl net.ipv6.conf." + name + ".disable_ipv6=0").c_str()) !=
-           0) {
+       system(("sysctl net.ipv6.conf." + interfaceName + ".disable_ipv6=0")
+                  .c_str()) != 0) {
       LOG("failed to enable IPv6 (may be harmless)");
     }
 
-    // TODO!
-    // if(system(("ip link set dev " + name + " mtu 1350").c_str()) != 0 ||
-    //    system(("ip addr add dev " + name + " " + myIp + "/16").c_str()) != 0
-    //    || system(("ip link set dev " + name + " up").c_str()) != 0) {
-    //   LOG("failed to setup IP address");
-    //   exit(1);
-    // }
+    if(system(("ip link set dev " + interfaceName + " mtu 1350").c_str()) !=
+           0 ||
+       system(
+           ("ip addr add dev " + interfaceName + " " + myIp + "/16").c_str()) !=
+           0 ||
+       system(("ip link set dev " + interfaceName + " up").c_str()) != 0) {
+      LOG("failed to setup IP address");
+      exit(1);
+    }
 
     // Multicast
-    if(system(
-           ("ip -6 route add ff15:f2d3:a389::/48 dev " + name + " table local")
-               .c_str()) != 0) {
+    if(system(("ip -6 route add ff15:f2d3:a389::/48 dev " + interfaceName +
+               " table local")
+                  .c_str()) != 0) {
       LOG("failed to setup multicast route");
     }
   }

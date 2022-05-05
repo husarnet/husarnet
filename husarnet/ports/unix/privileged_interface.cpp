@@ -8,8 +8,13 @@
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 #include <thread>
 #include "husarnet/util.h"
+
+namespace fs = std::filesystem;
 
 // TODO this whole file
 
@@ -124,19 +129,66 @@ static bool writeFile(std::string path, std::string data)
   return true;
 }
 
+static std::string readFile(std::string path)
+{
+  std::ifstream f(path);
+  if(!f.good()) {
+    LOG("failed to open %s", path.c_str());
+    exit(1);
+  }
+
+  std::stringstream buffer;
+  buffer << f.rdbuf();
+
+  return buffer.str();
+}
+
+static bool existsFile(std::string path)
+{
+  return fs::exists(path);
+}
+
+const static std::string configPath = "/var/lib/husarnet/config.json";
+const static std::string identityPath = "/var/lib/husarnet/id";
+
 namespace Privileged {
   void init() {}
 
   void start() { beforeDropCap(); }
 
-  std::string readConfig() { return ""; }
+  std::string readConfig()
+  {
+    if(!existsFile(configPath)) {
+      return "";
+    }
 
-  void writeConfig(std::string) {}
-  // namespace Privileged
+    return readFile(configPath);
+  }
 
-  Identity readIdentity() { return Identity(); }
+  void writeConfig(std::string data) { writeFile(configPath, data); }
 
-  void writeIdentity(Identity identity) {}
+  Identity readIdentity()
+  {
+    if(!existsFile(identityPath)) {
+      auto identity = Identity::create();
+      Privileged::writeIdentity(identity);
+      return identity;
+    }
+
+    auto identity = Identity::deserialize(readFile(identityPath));
+
+    if(!identity.isValid()) {
+      identity = Identity::create();
+      Privileged::writeIdentity(identity);
+    }
+
+    return identity;
+  }
+
+  void writeIdentity(Identity identity)
+  {
+    writeFile(identityPath, identity.serialize());
+  }
 
   std::vector<IpAddress> getLocalAddresses()
   {
