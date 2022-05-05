@@ -101,7 +101,7 @@ namespace APIServer {
               req, res,
               json::object(
                   {{"version", manager.getVersion()},
-                   {"local_ip", manager.getSelfAddress().toFstring()},
+                   {"local_ip", manager.getSelfAddress().toString()},
                    {"local_hostname", manager.getSelfHostname()},
                    {"is_joined", manager.isJoined()},
                    {"base_connection",

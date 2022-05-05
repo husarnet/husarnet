@@ -6,13 +6,19 @@
 #include "husarnet/ports/privileged_interface.h"
 
 #ifdef ESP_PLATFORM
+#define PORT_ESP32
+#define PORT_NAME "ESP32"
 #include "husarnet/ports/esp32/port.h"
 #endif  // ESP_PLATFORM
 
 #ifdef _WIN32
+#define PORT_WINDOWS
+#define PORT_NAME "Windows"
 #include "husarnet/ports/windows/port.h"
 #endif  // _WIN32
 
 #ifdef __linux__
+#define PORT_UNIX
+#define PORT_NAME "Unix"
 #include "husarnet/ports/unix/port.h"
 #endif

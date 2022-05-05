@@ -19,6 +19,7 @@ class Identity {
 
   fstring<32> getPubkey();
   DeviceId getDeviceId();
+  IpAddress getIpAddress();
 
   fstring<64> sign(const std::string& data);
   bool isValid();

@@ -23,8 +23,8 @@ namespace Privileged {
 
   // std::string updateLicenseFile();
 
-  // std::string getSelfHostname();
-  // void changeSelfHostname(std::string newHostname);
+  std::string getSelfHostname();
+  bool setSelfHostname(std::string newHostname);
 
   // void updateHostsFile(std::list<std::pair<std::string, IpAddress>> data);
 

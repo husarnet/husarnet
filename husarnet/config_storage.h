@@ -68,15 +68,19 @@ class ConfigStorage {
 
   void setInternalSetting(InternalSetting setting, std::string value);
   void setInternalSetting(InternalSetting setting, bool value);
+  void setInternalSetting(InternalSetting setting, int value);
+
   std::string getInternalSetting(InternalSetting setting);
   bool getInternalSettingBool(InternalSetting setting);
-  // TODO add getInternalSettingInt
+  int getInternalSettingInt(InternalSetting setting);
 
   void setUserSetting(UserSetting setting, std::string value);
   void setUserSetting(UserSetting setting, bool value);
+  void setUserSetting(UserSetting setting, int value);
+
   std::string getUserSetting(UserSetting setting);
   bool getUserSettingBool(UserSetting setting);
-  // TODO add getUserSettingInt
+  int getUserSettingInt(UserSetting setting);
 };
 
 std::map<UserSetting, std::string> getEnvironmentOverrides();

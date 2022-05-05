@@ -178,6 +178,11 @@ void ConfigStorage::setInternalSetting(InternalSetting setting, bool value)
   setInternalSetting(setting, value ? trueValue : "");
 }
 
+void ConfigStorage::setInternalSetting(InternalSetting setting, int value)
+{
+  setInternalSetting(setting, std::to_string(value));
+}
+
 std::string ConfigStorage::getInternalSetting(InternalSetting setting)
 {
   auto settingStr = setting._to_string();
@@ -196,6 +201,11 @@ bool ConfigStorage::getInternalSettingBool(InternalSetting setting)
   return getInternalSetting(setting) == trueValue;
 }
 
+int ConfigStorage::getInternalSettingInt(InternalSetting setting)
+{
+  return stoi(getInternalSetting(setting));
+}
+
 void ConfigStorage::setUserSetting(UserSetting setting, std::string value)
 {
   currentData[USER_SETTINGS_KEY][setting._to_string()] = value;
@@ -205,6 +215,11 @@ void ConfigStorage::setUserSetting(UserSetting setting, std::string value)
 void ConfigStorage::setUserSetting(UserSetting setting, bool value)
 {
   setUserSetting(setting, value ? trueValue : "");
+}
+
+void ConfigStorage::setUserSetting(UserSetting setting, int value)
+{
+  setUserSetting(setting, std::to_string(value));
 }
 
 std::string ConfigStorage::getUserSetting(UserSetting setting)
@@ -226,6 +241,11 @@ std::string ConfigStorage::getUserSetting(UserSetting setting)
 bool ConfigStorage::getUserSettingBool(UserSetting setting)
 {
   return getUserSetting(setting) == trueValue;
+}
+
+int ConfigStorage::getUserSettingInt(UserSetting setting)
+{
+  return stoi(getUserSetting(setting));
 }
 
 extern char** environ;

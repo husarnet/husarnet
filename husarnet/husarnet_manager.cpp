@@ -19,54 +19,19 @@
 #include "husarnet/api_server/server.h"
 #endif
 
-// TODO remove this method entirely
-std::string HusarnetManager::configGet(
-    std::string networkId,
-    std::string key,
-    std::string defaultValue)
-{
-  // auto v = configTable->getValueForNetwork(networkId, "config", key);
-  // if (v.size() == 0) {
-  //   return defaultValue;
-  // }
-  // if (v.size() > 1) {
-  //   LOG("warning: multiple values for config key %s", key.c_str());
-  // }
-
-  // return v[0];
-  return "";  // TODO
-}
-
-// TODO remove this method entirely
-std::string HusarnetManager::configSet(
-    std::string networkId,
-    std::string key,
-    std::string value)
-{
-  // configTable->runInTransaction([&]() {
-  //   configTable->removeValues(networkId, "config", key);
-  //   configTable->insert(ConfigRow{networkId, "config", key, value});
-  // });
-
-  // return value;
-  return "";  // TODO
-}
-
 LogManager& HusarnetManager::getLogManager()
 {
-  return *(this->logManager);
+  return *logManager;
 }
 
-// TODO implement this maybe
 std::string HusarnetManager::getVersion()
 {
-  return "";
+  return HUSARNET_VERSION;
 }
 
-// TODO implement this maybe
 std::string HusarnetManager::getUserAgent()
 {
-  return "";
+  return PORT_NAME;
 }
 
 Identity* HusarnetManager::getIdentity()
@@ -74,26 +39,22 @@ Identity* HusarnetManager::getIdentity()
   return &identity;
 }
 
-// TODO implement this maybe
 IpAddress HusarnetManager::getSelfAddress()
 {
-  // TODO napisac metode w identity do pobierania adresu ip
-  // return deviceIdToIpAddress(identity.getPubkey());
-  return IpAddress();
+  return identity.getIpAddress();
 }
 
 std::string HusarnetManager::getSelfHostname()
 {
-  return configGet("manual", "hostname", "");
+  return Privileged::getSelfHostname();
 }
 
-void HusarnetManager::setSelfHostname(std::string newHostname)
+bool HusarnetManager::setSelfHostname(std::string newHostname)
 {
-  LOG("changing hostname to '%s'", newHostname.c_str());
-  configSet("manual", "hostname", newHostname);
-  // ServiceHelper::modifyHostname(newHostname); // TODO link this properly
+  return Privileged::setSelfHostname(newHostname);
 }
 
+// TODO
 void HusarnetManager::updateHosts()
 {
   std::vector<std::pair<IpAddress, std::string>> hosts;
@@ -149,12 +110,12 @@ std::string HusarnetManager::getCurrentBaseProtocol()
 
 std::string HusarnetManager::getWebsetupSecret()
 {
-  return configGet("manual", "websetup-secret", "");
+  return configStorage->getInternalSetting(InternalSetting::websetupSecret);
 }
 
 std::string HusarnetManager::setWebsetupSecret(std::string newSecret)
 {
-  configSet("manual", "websetup-secret", newSecret);
+  configStorage->setInternalSetting(InternalSetting::websetupSecret, newSecret);
   return newSecret;
 }
 
@@ -310,7 +271,7 @@ void HusarnetManager::startNGSocket()
     return isHostAllowed(deviceIdToIpAddress(id));
   };
 
-  ngsocket->options->userAgent = "Linux daemon";
+  ngsocket->options->userAgent = getUserAgent();
 
   Port::startTunTap(this);
 }

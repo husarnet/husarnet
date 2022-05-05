@@ -29,11 +29,6 @@ class HusarnetManager {
   bool stage2Started = false;
   bool stage3Started = false;
 
-  std::string
-  configGet(std::string networkId, std::string key, std::string defaultValue);
-  std::string
-  configSet(std::string networkId, std::string key, std::string value);
-
   void getLicenseStage();
   void getIdentityStage();
   void startNGSocket();
@@ -50,10 +45,10 @@ class HusarnetManager {
   std::string getUserAgent();
 
   Identity* getIdentity();
-
   IpAddress getSelfAddress();
+
   std::string getSelfHostname();
-  void setSelfHostname(std::string newHostname);
+  bool setSelfHostname(std::string newHostname);
 
   void updateHosts();
   IpAddress resolveHostname(std::string hostname);

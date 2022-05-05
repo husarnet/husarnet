@@ -200,4 +200,10 @@ namespace Privileged {
     return ret;
   }
 
+  // TODO implement this (modifyHostnameInternal)
+  std::string getSelfHostname() { return ""; }
+
+  // TODO implement this (modifyHostnameInternal)
+  bool setSelfHostname(std::string newHostname) { return true; }
+
 }  // namespace Privileged

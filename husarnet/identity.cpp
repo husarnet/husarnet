@@ -22,6 +22,11 @@ DeviceId Identity::getDeviceId()
   return deviceId;
 }
 
+IpAddress Identity::getIpAddress()
+{
+  return deviceIdToIpAddress(getDeviceId());
+}
+
 fstring<64> Identity::sign(const std::string& msg)
 {
   fstring<64> sig;
