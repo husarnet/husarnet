@@ -75,6 +75,10 @@ class HusarnetManager {
 
   bool isHostAllowed(IpAddress id);
 
+  int getApiPort();
+  std::string getApiSecret();
+  std::string rotateApiSecret();
+
   // TODO think about exposing license object in the same way logmanager is
   // Copy of methods from License class
   std::string getDashboardUrl();

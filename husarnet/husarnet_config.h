@@ -22,5 +22,7 @@ const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::dashboardUrl, "app.husarnet.com"},
     {UserSetting::whitelistEnable, trueValue},
     {UserSetting::interfaceName, "hnet0"},
+    {UserSetting::apiPort, "16216"},
 };
+
 const std::map<InternalSetting, std::string> internalDefaults = {{}};

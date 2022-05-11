@@ -26,7 +26,8 @@ BETTER_ENUM(
     int,
     dashboardUrl = 1,
     whitelistEnable = 2,
-    interfaceName = 3)
+    interfaceName = 3,
+    apiPort = 4)
 
 const std::string trueValue = "true";
 

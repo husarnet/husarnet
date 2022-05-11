@@ -193,7 +193,24 @@ bool HusarnetManager::isHostAllowed(IpAddress id)
   }
 
   auto whitelist = getWhitelist();
+  // TODO it'd be wise to optimize it (use hashmaps or sth)
   return std::find(begin(whitelist), end(whitelist), id) != std::end(whitelist);
+}
+
+int HusarnetManager::getApiPort()
+{
+  return configStorage->getUserSettingInt(UserSetting::apiPort);
+}
+
+std::string HusarnetManager::getApiSecret()
+{
+  return Privileged::readApiSecret();
+}
+
+std::string HusarnetManager::rotateApiSecret()
+{
+  Privileged::rotateApiSecret();
+  return getApiSecret();
 }
 
 std::string HusarnetManager::getDashboardUrl()
@@ -291,8 +308,10 @@ void HusarnetManager::startWebsetup()
 void HusarnetManager::startHTTPServer()
 {
 #ifdef HTTP_CONTROL_API
-  threadpool.push_back(
-      new std::thread([this]() { APIServer::httpThread(*this); }));
+  threadpool.push_back(new std::thread([this]() {
+    auto server = new ApiServer(this);
+    server->runThread();
+  }));
 #endif
 }
 

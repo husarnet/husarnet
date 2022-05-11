@@ -2,21 +2,33 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/cli/api_client.h"
-#include "husarnet/api_server/common.h"
 #include "husarnet/util.h"
 
 httplib::Client prepareApiClient()
 {
-  httplib::Client client(
-      (std::string("http://127.0.0.1:") + std::to_string(getApiPort()))
-          .c_str());
+  httplib::Client client((std::string("http://127.0.0.1:16216")).c_str());
 
   return client;
 }
 
+static std::string readFile(std::string path)
+{
+  std::ifstream f(path);
+  if(!f.good()) {
+    LOG("failed to open %s", path.c_str());
+    exit(1);
+  }
+
+  std::stringstream buffer;
+  buffer << f.rdbuf();
+
+  return buffer.str();
+}
+const static std::string apiSecretPath = "/var/lib/husarnet/api_secret";
+
 static void prepareApiParams(httplib::Params& params)
 {
-  std::string secret = "";
+  std::string secret = readFile(apiSecretPath);
   params.emplace("secret", secret);
 }
 
@@ -56,7 +68,7 @@ httplib::Result apiGet(httplib::Client& client, const std::string path)
 
   checkInvalidResponse(result);
 
-  LOG("got %s", result->body.c_str());
+  // LOG("got %s", result->body.c_str());
 
   return result;
 }

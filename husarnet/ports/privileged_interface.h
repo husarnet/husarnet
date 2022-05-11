@@ -19,6 +19,9 @@ namespace Privileged {
   Identity readIdentity();
   void writeIdentity(Identity identity);
 
+  std::string readApiSecret();
+  void rotateApiSecret();
+
   std::vector<IpAddress> getLocalAddresses();
 
   // std::string updateLicenseFile();

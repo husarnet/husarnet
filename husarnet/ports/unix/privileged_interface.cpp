@@ -150,6 +150,7 @@ static bool existsFile(std::string path)
 
 const static std::string configPath = "/var/lib/husarnet/config.json";
 const static std::string identityPath = "/var/lib/husarnet/id";
+const static std::string apiSecretPath = "/var/lib/husarnet/api_secret";
 
 namespace Privileged {
   void init() {}
@@ -189,6 +190,17 @@ namespace Privileged {
   {
     writeFile(identityPath, identity.serialize());
   }
+
+  std::string readApiSecret()
+  {
+    if(!existsFile(apiSecretPath)) {
+      rotateApiSecret();
+    }
+
+    return readFile(apiSecretPath);
+  }
+
+  void rotateApiSecret() { writeFile(apiSecretPath, generateRandomString(32)); }
 
   std::vector<IpAddress> getLocalAddresses()
   {
