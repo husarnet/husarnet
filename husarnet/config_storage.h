@@ -21,7 +21,12 @@ using namespace nlohmann;  // json
 // TODO protect writes with gil I guess
 
 BETTER_ENUM(InternalSetting, int, websetupSecret = 1)
-BETTER_ENUM(UserSetting, int, dashboardUrl = 1, whitelistEnable = 2)
+BETTER_ENUM(
+    UserSetting,
+    int,
+    dashboardUrl = 1,
+    whitelistEnable = 2,
+    interfaceName = 3)
 
 const std::string trueValue = "true";
 

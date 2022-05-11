@@ -82,7 +82,7 @@ class HusarnetManager {
   std::vector<IpAddress> getBaseServerAddresses();
 
   NgSocket* getNGSocket();
-  std::string getInterfaceName() { return "hnet0"; }
+  std::string getInterfaceName();
   std::vector<DeviceId> getMulticastDestinations(DeviceId id);
   int getLatency(IpAddress destination);
 

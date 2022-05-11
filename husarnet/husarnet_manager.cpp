@@ -214,6 +214,11 @@ NgSocket* HusarnetManager::getNGSocket()
   return ngsocket;
 }
 
+std::string HusarnetManager::getInterfaceName()
+{
+  return configStorage->getUserSetting(UserSetting::interfaceName);
+}
+
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
   if(std::string(id).find("\xff\x15\xf2\xd3\xa3\x89") == 0) {
