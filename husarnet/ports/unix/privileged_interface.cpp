@@ -148,9 +148,26 @@ static bool existsFile(std::string path)
   return fs::exists(path);
 }
 
+static bool validateHostname(std::string hostname)
+{
+  if(hostname.size() == 0)
+    return false;
+  for(char c : hostname) {
+    bool ok = ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
+              ('0' <= c && c <= '9') || (c == '_' || c == '-' || c == '.');
+    if(!ok) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const static std::string configPath = "/var/lib/husarnet/config.json";
 const static std::string identityPath = "/var/lib/husarnet/id";
 const static std::string apiSecretPath = "/var/lib/husarnet/api_secret";
+const static std::string hostnamePath = "/etc/hostname";
+const static std::string hostsPath = "/etc/hosts";
+// look for getHostsFilePath in the old code for windows paths
 
 namespace Privileged {
   void init() {}
@@ -212,10 +229,16 @@ namespace Privileged {
     return ret;
   }
 
-  // TODO implement this (modifyHostnameInternal)
-  std::string getSelfHostname() { return ""; }
+  std::string getSelfHostname() { return readFile(hostnamePath); }
 
-  // TODO implement this (modifyHostnameInternal)
-  bool setSelfHostname(std::string newHostname) { return true; }
+  bool setSelfHostname(std::string newHostname)
+  {
+    if(!validateHostname(newHostname)) {
+      return false;
+    }
+
+    writeFile(hostnamePath, newHostname);
+    return true;
+  }
 
 }  // namespace Privileged

@@ -40,6 +40,7 @@ class HusarnetManager {
   HusarnetManager(const HusarnetManager&) = delete;
 
   LogManager& getLogManager();
+  ConfigStorage& getConfigStorage();
 
   std::string getVersion();
   std::string getUserAgent();
@@ -53,13 +54,13 @@ class HusarnetManager {
   void updateHosts();
   IpAddress resolveHostname(std::string hostname);
 
-  IpAddress getCurrentBaseAddress();
+  InetAddress getCurrentBaseAddress();
   std::string getCurrentBaseProtocol();
 
   std::string getWebsetupSecret();
   std::string setWebsetupSecret(std::string newSecret);
 
-  void joinNetwork(std::string joinCode, std::string hostname);
+  void joinNetwork(std::string joinCode, std::string hostname = "");
   bool isJoined();
 
   void hostTableAdd(std::string hostname, IpAddress address);

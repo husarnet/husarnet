@@ -80,6 +80,8 @@ class ConfigStorage {
   bool getInternalSettingBool(InternalSetting setting);
   int getInternalSettingInt(InternalSetting setting);
 
+  bool isInternalSettingEmpty(InternalSetting setting);
+
   void setUserSetting(UserSetting setting, std::string value);
   void setUserSetting(UserSetting setting, bool value);
   void setUserSetting(UserSetting setting, int value);

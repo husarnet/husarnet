@@ -55,10 +55,24 @@ httplib::Result apiPost(
   return result;
 }
 
+httplib::Result apiPost(
+    httplib::Client& client,
+    const std::string path,
+    std::map<std::string, std::string> params)
+{
+  httplib::Params httpParams;
+
+  for(auto it = params.begin(); it != params.end(); it++) {
+    httpParams.emplace(it->first, it->second);
+  }
+
+  return apiPost(client, path, httpParams);
+}
+
 httplib::Result apiPost(httplib::Client& client, const std::string path)
 {
-  httplib::Params params;
-  return apiPost(client, path, params);
+  httplib::Params httpParams;
+  return apiPost(client, path, httpParams);
 }
 
 httplib::Result apiGet(httplib::Client& client, const std::string path)

@@ -5,41 +5,22 @@
 #include <functional>
 #include <map>
 #include <vector>
+#include "enum.h"
 #include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/licensing.h"
 #include "husarnet/ngsocket_crypto.h"
+#include "husarnet/ngsocket_options.h"
 #include "husarnet/string_view.h"
 
 class HusarnetManager;
+using Time = int64_t;
+
+BETTER_ENUM(BaseConnectionType, int, NONE = 0, TCP = 1, UDP = 2)
 
 struct NgSocketDelegate {
   virtual void onDataPacket(DeviceId source, string_view data) = 0;
-};
-
-struct NgSocketOptions {
-  std::function<bool(DeviceId)> isPeerAllowed = [](DeviceId) { return true; };
-  std::function<bool(InetAddress)> isAddressAllowed = [](InetAddress) {
-    return true;
-  };
-  std::function<std::string(DeviceId)> peerAddressInfo = [](DeviceId) {
-    return "";
-  };  // only used in `info()`
-  std::function<std::vector<InetAddress>(DeviceId)> additionalPeerIpAddresses =
-      [](DeviceId) { return std::vector<InetAddress>{}; };
-  InetAddress overrideBaseAddress = InetAddress{};
-  int overrideSourcePort = 0;
-  bool disableUdp = false;
-  bool disableMulticast = false;
-  bool useOverrideLocalAddresses = false;
-  bool compressionEnabled = false;
-  bool disableUdpTunnelling = false;
-  bool disableTcpTunnelling = false;
-  std::vector<InetAddress> overrideLocalAddresses;
-  std::string userAgent;
-
-  void loadFromEnvironment();
 };
 
 struct NgSocket {
@@ -48,12 +29,12 @@ struct NgSocket {
   NgSocketOptions* options = new NgSocketOptions;
   NgSocketDelegate* delegate = nullptr;
 
-  virtual std::string generalInfo(
-      std::map<std::string, std::string> hosts =
-          std::map<std::string, std::string>())
+  virtual BaseConnectionType getCurrentBaseConnectionType()
   {
-    return "";
-  }
+    return BaseConnectionType::NONE;
+  };
+  virtual InetAddress getCurrentBaseAddress() { return InetAddress{}; };
+
   virtual std::string peerInfo(DeviceId id) { return ""; }
   virtual std::string info(
       std::map<std::string, std::string> hosts =

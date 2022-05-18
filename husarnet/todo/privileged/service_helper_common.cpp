@@ -12,20 +12,6 @@ namespace ServiceHelper {
 
   const std::string marker = " # managed by Husarnet";
 
-  bool validateHostname(std::string hostname)
-  {
-    if(hostname.size() == 0)
-      return false;
-    for(char c : hostname) {
-      bool ok = ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
-                ('0' <= c && c <= '9') || (c == '_' || c == '-' || c == '.');
-      if(!ok) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   bool isLineMarked(std::string line) { return endswith(line, marker); }
 
   void parseHostsFile(

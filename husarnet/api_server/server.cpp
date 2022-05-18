@@ -10,6 +10,7 @@ using namespace nlohmann;  // json
 
 ApiServer::ApiServer(HusarnetManager* manager) : manager(manager)
 {
+  manager->rotateApiSecret();
 }
 
 void ApiServer::returnSuccess(
@@ -99,17 +100,29 @@ void ApiServer::runThread()
   svr.Get(
       "/control/status",
       [&](const httplib::Request& req, httplib::Response& res) {
+        auto hostTable = manager->getConfigStorage().getHostTable();
+        std::map<std::string, std::string> hostTableStringified;
+
+        for(auto it = hostTable.begin(); it != hostTable.end(); it++) {
+          hostTableStringified.insert({it->first, it->second.toString()});
+        }
+
+        // TODO add peer data here (ip, hostname, latency + is this a websetup
+        // host data)
         returnSuccess(
             req, res,
-            json::object(
-                {{"version", manager->getVersion()},
-                 {"local_ip", manager->getSelfAddress().toString()},
-                 {"local_hostname", manager->getSelfHostname()},
-                 {"is_joined", manager->isJoined()},
-                 {"base_connection",
-                  {{"type", manager->getCurrentBaseProtocol()},
-                   {"address",
-                    manager->getCurrentBaseAddress().toFstring()}}}}));
+            json::object({
+                {"version", manager->getVersion()},
+                {"local_ip", manager->getSelfAddress().toString()},
+                {"local_hostname", manager->getSelfHostname()},
+                {"is_joined", manager->isJoined()},
+                {"websetup_address", manager->getWebsetupAddress().toString()},
+                {"base_connection",
+                 {{"type", manager->getCurrentBaseProtocol()},
+                  {"address", manager->getCurrentBaseAddress().ip.toString()},
+                  {"port", manager->getCurrentBaseAddress().port}}},
+                {"host_table", hostTableStringified},
+            }));
       });
 
   svr.Post(
@@ -119,12 +132,14 @@ void ApiServer::runThread()
           return;
         }
 
-        if(!requireParams(req, res, {"code", "hostname"})) {
+        if(!requireParams(req, res, {"code"})) {
           return;
         }
 
         std::string code = req.get_param_value("code");
-        std::string hostname = req.get_param_value("hostname");
+        std::string hostname =
+            req.has_param("hostname") ? req.get_param_value("hostname") : "";
+
         manager->joinNetwork(code, hostname);
         returnSuccess(req, res);
       });

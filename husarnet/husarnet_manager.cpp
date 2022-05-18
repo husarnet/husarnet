@@ -24,6 +24,11 @@ LogManager& HusarnetManager::getLogManager()
   return *logManager;
 }
 
+ConfigStorage& HusarnetManager::getConfigStorage()
+{
+  return *configStorage;
+}
+
 std::string HusarnetManager::getVersion()
 {
   return HUSARNET_VERSION;
@@ -54,58 +59,30 @@ bool HusarnetManager::setSelfHostname(std::string newHostname)
   return Privileged::setSelfHostname(newHostname);
 }
 
-// TODO
 void HusarnetManager::updateHosts()
 {
-  std::vector<std::pair<IpAddress, std::string>> hosts;
-  std::unordered_set<std::string> mappedHosts;
-
-  // for (std::string netId : configTable->listNetworks()) {
-  //   for (auto row : configTable->listValuesForNetwork(netId, "host")) {
-  //     hosts.push_back({IpAddress::parse(row.value), row.key});
-  //     mappedHosts.insert(row.key);
-  //   }
-  // }
-
-  // {
-  //   // TODO: this should be configurable.
-  //   // Ensure "master" and hostname of device are always mapped.
-  //   if (mappedHosts.find("master") == mappedHosts.end())
-  //     hosts.push_back({IpAddress::parse("::1"), "master"});
-
-  //   std::string my_hostname = configGet("manual", "hostname", "");
-
-  //   if (my_hostname.size() > 0)
-  //     if (mappedHosts.find(my_hostname) == mappedHosts.end())
-  //       hosts.push_back({IpAddress::parse("::1"), my_hostname});
-  // }
-
-  // std::sort(hosts.begin(), hosts.end());
-  // hostsFileUpdateFunc(hosts);  TODO  link this properly (privileged
-  // something)
-  // TODO implement this
+  Privileged::updateHostsFile(configStorage->getHostTable());
 }
 
 IpAddress HusarnetManager::resolveHostname(std::string hostname)
 {
-  // auto values = configTable->getValue("host", hostname);
-  // if (values.size() > 0)
-  //   return IpAddress::parse(values[0]);
-  // else
-  //   return IpAddress{};
-  return IpAddress{};  // TODO fix this
+  auto hostTable = configStorage->getHostTable();
+
+  if(hostTable.find(hostname) == hostTable.end()) {
+    return IpAddress{};
+  }
+
+  return hostTable[hostname];
 }
 
-// TODO implement this maybe
-IpAddress HusarnetManager::getCurrentBaseAddress()
+InetAddress HusarnetManager::getCurrentBaseAddress()
 {
-  return IpAddress();
+  return ngsocket->getCurrentBaseAddress();
 }
 
-// TODO implement this maybe
 std::string HusarnetManager::getCurrentBaseProtocol()
 {
-  return "";
+  return ngsocket->getCurrentBaseConnectionType()._to_string();
 }
 
 std::string HusarnetManager::getWebsetupSecret()
@@ -131,19 +108,28 @@ static std::string parseJoinCode(std::string joinCode)
 
 void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
 {
-  whitelistAdd(license->getWebsetupAddress());
+  whitelistAdd(getWebsetupAddress());
 
   auto newWebsetupSecret =
       setWebsetupSecret(encodeHex(generateRandomString(12)));
 
+  std::string dashboardHostname = newHostname;
+  if(newHostname.empty()) {
+    dashboardHostname = Privileged::getSelfHostname();
+  } else {
+    setSelfHostname(newHostname);
+  }
+
   websetup->sendJoinRequest(
-      parseJoinCode(joinCode), newWebsetupSecret, newHostname);
+      parseJoinCode(joinCode), newWebsetupSecret, dashboardHostname);
 }
 
-// TODO implement this maybe
 bool HusarnetManager::isJoined()
 {
-  return false;
+  // This implementation is very naive as it does only check local
+  // configuration for data, but it's the best we can do for now
+  return !configStorage->isInternalSettingEmpty(
+      InternalSetting::websetupSecret);
 }
 
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)

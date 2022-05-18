@@ -5,6 +5,7 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/util.h"
 
+// TODO why exactly does this need to derive from ngsocket?
 struct NetworkDevImpl : NgSocket, NgSocketDelegate {
   NgSocket* socket;
   DeviceId deviceId;

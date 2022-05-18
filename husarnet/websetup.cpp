@@ -53,15 +53,27 @@ void WebsetupConnection::send(
     std::string command,
     std::list<std::string> arguments)
 {
-  std::ostringstream ss;
-  std::copy(
-      arguments.begin(), arguments.end(),
-      std::ostream_iterator<std::string>(ss, "\n"));
-  const char* data = (command + "\n" + ss.str()).c_str();
+  std::string frame = "";
+  frame.append(command);
+  frame.append("\n");
+
+  if(arguments.size() > 0) {
+    std::stringstream ss;
+    std::copy(
+        arguments.begin(), arguments.end(),
+        std::ostream_iterator<std::string>(ss, "\n"));
+    frame.append(ss.str());
+    frame.pop_back();
+    frame.pop_back();  // remove redundant \n
+  }
+
+  auto data = frame.c_str();
+
+  LOG("sending to websetup: %s", data);
 
   if(SOCKFUNC(sendto)(
-         websetupFd, data, sizeof(data), 0, websetupAddr,
-         sizeof(*websetupAddr)) < 0) {
+         websetupFd, data, strlen(data), 0, websetupAddr,
+         sizeof(sockaddr_in6)) < 0) {
     LOG("websetup UDP send failed (%d)", (int)errno);
   }
 }
@@ -72,6 +84,7 @@ void WebsetupConnection::sendJoinRequest(
     std::string selfHostname)
 {
   send("init-request", {});
+  sleep(3);  // TODO this is bad but current websetup needs it
   send("init-request-join-code", {joinCode, newWebsetupSecret, selfHostname});
 }
 

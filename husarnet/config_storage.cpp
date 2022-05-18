@@ -28,6 +28,8 @@ ConfigStorage::ConfigStorage(
 
 std::string ConfigStorage::serialize()
 {
+  // TODO make this ignore pretty formatting on space constrained platforms like
+  // ESP32
   return this->currentData.dump(4);
 }
 
@@ -108,6 +110,7 @@ void ConfigStorage::hostTableClear()
   save();
 }
 
+// TODO deduplicate entries
 void ConfigStorage::whitelistAdd(IpAddress address)
 {
   currentData[WHITELIST_KEY] += address.toString();
@@ -204,6 +207,20 @@ bool ConfigStorage::getInternalSettingBool(InternalSetting setting)
 int ConfigStorage::getInternalSettingInt(InternalSetting setting)
 {
   return stoi(getInternalSetting(setting));
+}
+
+bool ConfigStorage::isInternalSettingEmpty(InternalSetting setting)
+{
+  auto settingStr = setting._to_string();
+  if(!currentData[INTERNAL_SETTINGS_KEY].contains(settingStr)) {
+    return true;
+  }
+
+  if(getInternalSetting(setting).empty()) {
+    return true;
+  }
+
+  return false;
 }
 
 void ConfigStorage::setUserSetting(UserSetting setting, std::string value)

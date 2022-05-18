@@ -10,13 +10,14 @@
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ngsocket_crypto.h"
+#include "husarnet/ngsocket_messages.h"
+#include "husarnet/ngsocket_peer.h"
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/privileged_interface.h"
 #include "husarnet/queue.h"
 #include "husarnet/util.h"
 
-const int TEARDOWN_TIMEOUT = 120 * 1000;
 const int REFRESH_TIMEOUT = 25 * 1000;
 const int NAT_INIT_TIMEOUT = 3 * 1000;
 const int TCP_PONG_TIMEOUT = 35 * 1000;
@@ -27,122 +28,17 @@ const int MAX_ADDRESSES = 10;
 const int MAX_SOURCE_ADDRESSES = 5;
 const int DEVICEID_LENGTH = 16;
 const int MULTICAST_PORT = 5581;
+
 #if defined(ESP_PLATFORM)
 const int WORKER_QUEUE_SIZE = 16;
 #else
 const int WORKER_QUEUE_SIZE = 256;
 #endif
 
-using Time = int64_t;
 using mutex_guard = std::lock_guard<std::recursive_mutex>;
 
 using namespace OsSocket;
 using namespace NgSocketCrypto;
-
-struct BaseToPeerMessage {
-  enum
-  {
-    HELLO,
-    DEVICE_ADDRESSES,
-    DATA,
-    NAT_OK,
-    STATE,
-    REDIRECT,
-    INVALID
-  } kind;
-
-  // Hello message
-  fstring<16> cookie;
-
-  // State message
-  std::vector<InetAddress> udpAddress;
-  std::pair<int, int> natTransientRange;
-
-  // Device addresses message
-  DeviceId deviceId;
-  std::vector<InetAddress> addresses;
-
-  // Data message
-  DeviceId source;
-  std::string data;
-
-  // Redirect
-  InetAddress newBaseAddress;
-};
-
-struct PeerToBaseMessage {
-  enum
-  {
-    REQUEST_INFO,
-    DATA,
-    INFO,
-    NAT_INIT,
-    USER_AGENT,
-    NAT_OK_CONFIRM,
-    NAT_INIT_TRANSIENT,
-    INVALID
-  } kind;
-
-  // All
-  fstring<16> cookie;
-
-  // Request info
-  DeviceId deviceId;
-
-  // My info
-  std::vector<InetAddress> addresses;
-
-  // Data message
-  DeviceId target;
-  std::string data;
-
-  // NAT init message
-  uint64_t counter = 0;
-
-  // User agent
-  std::string userAgent;
-};
-
-struct PeerToPeerMessage {
-  enum
-  {
-    HELLO,
-    HELLO_REPLY,
-    DATA,
-    INVALID
-  } kind;
-
-  // hello and hello_reply
-  DeviceId myId;
-  DeviceId yourId;
-  std::string helloCookie;
-
-  // data message
-  string_view data;
-};
-
-struct Peer {
-  DeviceId id;
-  Time lastPacket = 0;
-  Time lastReestablish = 0;
-
-  int latency = -1;  // in ms
-  bool connected = false;
-  bool reestablishing = false;
-  int failedEstablishments = 0;
-  InetAddress targetAddress;
-  std::string helloCookie;
-
-  std::vector<InetAddress> targetAddresses;
-  InetAddress linkLocalAddress;
-  std::unordered_set<InetAddress, iphash> sourceAddresses;
-  std::vector<std::string> packetQueue;
-
-  bool active()
-  {
-    return Port::getCurrentTime() - lastPacket < TEARDOWN_TIMEOUT;
-  }
-};
 
 std::string idstr(DeviceId id)
 {
@@ -222,31 +118,29 @@ struct NgSocketImpl : public NgSocket {
       connectToBase();
   }
 
-  std::string generalInfo(
-      std::map<std::string, std::string> hosts =
-          std::map<std::string, std::string>()) override
+  BaseConnectionType getCurrentBaseConnectionType()
   {
-    std::string info;
-    info += "Version: " HUSARNET_VERSION "\n";
-    info +=
-        "Husarnet IP address: " + IpAddress::fromBinary(deviceId).str() + "\n";
-    if(hosts.find(IpAddress::fromBinary(deviceId).str()) != hosts.end()) {
-      info += "Known hostnames: " +
-              hosts.at(IpAddress::fromBinary(deviceId).str()) + "\n";
+    if(isBaseUdp()) {
+      return BaseConnectionType::UDP;
     }
 
-    if(!isBaseUdp()) {
-      if(Port::getCurrentTime() - lastBaseTcpMessage > UDP_BASE_TIMEOUT)
-        info += "ERROR: no base connection\n";
-      else
-        info += "WARN: only TCP connection to base established\n";
-    } else {
-      info += "UDP connection to base: " + baseUdpAddress.str() + "\n";
+    if(Port::getCurrentTime() - lastBaseTcpMessage <= UDP_BASE_TIMEOUT) {
+      return BaseConnectionType::TCP;
     }
 
-    return info;
-  }
+    return BaseConnectionType::NONE;
+  };
 
+  InetAddress getCurrentBaseAddress()
+  {
+    if(isBaseUdp()) {
+      return baseUdpAddress;
+    }
+
+    return baseAddress;
+  };
+
+  // TODO remove this
   std::string peerInfo(DeviceId id) override
   {
     Peer* peer = getPeerById(id);
@@ -579,13 +473,13 @@ struct NgSocketImpl : public NgSocket {
       if(!options->disableUdp) {
         allBaseUdpAddresses = msg.udpAddress;
         baseUdpAddress = msg.udpAddress[0];
-        LOGV("received base UDP address: %s", baseUdpAddress.str().c_str());
+        // LOGV("received base UDP address: %s", baseUdpAddress.str().c_str());
 
         if(msg.natTransientRange.first != 0 &&
            msg.natTransientRange.second >= msg.natTransientRange.first) {
-          LOGV(
-              "received base transient range: %d %d",
-              msg.natTransientRange.first, msg.natTransientRange.second);
+          // LOGV(
+          //     "received base transient range: %d %d",
+          //     msg.natTransientRange.first, msg.natTransientRange.second);
           baseTransientRange = msg.natTransientRange;
           if(baseTransientPort == 0) {
             baseTransientPort = baseTransientRange.first;
@@ -1095,6 +989,8 @@ void NgSocketImpl::connectToBase()
   userAgentMsg.kind = PeerToBaseMessage::USER_AGENT;
   userAgentMsg.userAgent = "Husarnet " HUSARNET_VERSION "\n";
 
+// TODO why this exists here while there are like three other places definig
+// it?!
 #ifdef __linux__
   userAgentMsg.userAgent += "linux\n";
 #elif ESP_PLATFORM

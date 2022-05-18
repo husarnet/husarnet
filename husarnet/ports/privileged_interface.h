@@ -3,6 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <list>
+#include <map>
 #include <string>
 #include <vector>
 #include "husarnet/identity.h"
@@ -29,7 +30,7 @@ namespace Privileged {
   std::string getSelfHostname();
   bool setSelfHostname(std::string newHostname);
 
-  // void updateHostsFile(std::list<std::pair<std::string, IpAddress>> data);
+  void updateHostsFile(std::map<std::string, IpAddress> data);
 
   // void saveLicenseFile(std::string contents);
   // std::string readLicenseFile();

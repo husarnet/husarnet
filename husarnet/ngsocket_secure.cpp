@@ -77,13 +77,6 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
     compressBuffer.resize(2100);
   }
 
-  std::string generalInfo(
-      std::map<std::string, std::string> hosts =
-          std::map<std::string, std::string>()) override
-  {
-    return socket->generalInfo(hosts);
-  }
-
   int getLatency(DeviceId peerId) override
   {
     Peer* peer = getOrCreatePeer(peerId);
@@ -119,6 +112,7 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
     }
   }
 
+  // TODO remove this
   std::string peerInfo(DeviceId id) override
   {
     std::string infostr = socket->peerInfo(id);
@@ -132,11 +126,13 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
     return infostr;
   }
 
+  // TODO remove this
   std::string info(
       std::map<std::string, std::string> hosts =
           std::map<std::string, std::string>()) override
   {
-    std::string result = generalInfo(hosts);
+    // std::string result = generalInfo(hosts);
+    std::string result;
     for(auto k : peers) {
       result += "Peer " + IpAddress::fromBinary(k.first).str();
       result += options->peerAddressInfo(k.first);
@@ -427,6 +423,16 @@ struct NgSocketSecureImpl : public NgSocket, public NgSocketDelegate {
   {
     socket->periodic();
   }
+
+  BaseConnectionType getCurrentBaseConnectionType()
+  {
+    return socket->getCurrentBaseConnectionType();
+  };
+
+  InetAddress getCurrentBaseAddress()
+  {
+    return socket->getCurrentBaseAddress();
+  };
 
   Peer* createPeer(DeviceId id)
   {
