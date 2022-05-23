@@ -15,7 +15,6 @@
 #include "husarnet/string_view.h"
 
 class HusarnetManager;
-using Time = int64_t;
 
 BETTER_ENUM(BaseConnectionType, int, NONE = 0, TCP = 1, UDP = 2)
 

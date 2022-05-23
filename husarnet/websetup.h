@@ -12,23 +12,28 @@ class HusarnetManager;
 class WebsetupConnection {
   HusarnetManager* manager;
 
+  Time lastContact = 0;
   int websetupFd;
-  sockaddr* websetupAddr;
 
   void bind();
+  void send(
+      InetAddress replyAddress,
+      std::string command,
+      std::list<std::string> arguments);
   void send(std::string command, std::list<std::string> arguments);
-  void handleWebsetupPacket(std::string data);
+  void handleWebsetupPacket(InetAddress replyAddress, std::string data);
   std::list<std::string> handleWebsetupCommand(
       std::string command,
       std::string payload);
 
  public:
   WebsetupConnection(HusarnetManager* manager);
-  void init();
   void run();
 
   void sendJoinRequest(
       std::string joinCode,
       std::string newWebsetupSecret,
       std::string selfHostname);
+
+  Time getLastContact();
 };

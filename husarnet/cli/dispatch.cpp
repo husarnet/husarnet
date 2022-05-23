@@ -31,6 +31,13 @@ void dispatchCli(CLIOpts opts)
             << apiPost(client, "/control/join", {{"code", opts.joincode}})->body
             << std::endl;
         break;
+      case Command::setup_server:
+        std::cout << apiPost(
+                         client, "/control/change-server",
+                         {{"domain", opts.address}})
+                         ->body
+                  << std::endl;
+        break;
       case Command::whitelist:
         switch(opts.subcommand) {
           case Subcommand::enable:

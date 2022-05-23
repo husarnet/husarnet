@@ -85,6 +85,17 @@ std::string HusarnetManager::getCurrentBaseProtocol()
   return ngsocket->getCurrentBaseConnectionType()._to_string();
 }
 
+bool HusarnetManager::isConnectedToBase()
+{
+  return ngsocket->getCurrentBaseConnectionType() !=
+         better_enums_data_BaseConnectionType::NONE;
+}
+
+bool HusarnetManager::isConnectedToWebsetup()
+{
+  return websetup->getLastContact() != 0;
+}
+
 std::string HusarnetManager::getWebsetupSecret()
 {
   return configStorage->getInternalSetting(InternalSetting::websetupSecret);
@@ -106,6 +117,8 @@ static std::string parseJoinCode(std::string joinCode)
   return joinCode.substr(slash + 1);
 }
 
+// TODO send plain init-request on startup if has websetup secreat so it can
+// download whitelist updates
 void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
 {
   whitelistAdd(getWebsetupAddress());
@@ -113,23 +126,31 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
   auto newWebsetupSecret =
       setWebsetupSecret(encodeHex(generateRandomString(12)));
 
-  std::string dashboardHostname = newHostname;
+  std::string dashboardHostname;
   if(newHostname.empty()) {
     dashboardHostname = Privileged::getSelfHostname();
   } else {
     setSelfHostname(newHostname);
+    dashboardHostname = newHostname;
   }
 
   websetup->sendJoinRequest(
       parseJoinCode(joinCode), newWebsetupSecret, dashboardHostname);
 }
 
+// TODO add an endporint for cheching whether it has talked to websetup recently
 bool HusarnetManager::isJoined()
 {
   // This implementation is very naive as it does only check local
   // configuration for data, but it's the best we can do for now
   return !configStorage->isInternalSettingEmpty(
       InternalSetting::websetupSecret);
+}
+
+void HusarnetManager::changeServer(std::string domain)
+{
+  configStorage->setUserSetting(UserSetting::dashboardUrl, domain);
+  exit(1);
 }
 
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)
@@ -287,7 +308,6 @@ void HusarnetManager::startNGSocket()
 void HusarnetManager::startWebsetup()
 {
   this->websetup = new WebsetupConnection(this);
-  websetup->init();
   GIL::startThread([this]() { websetup->run(); }, "websetup", 6000);
 }
 

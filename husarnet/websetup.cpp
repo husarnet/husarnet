@@ -40,16 +40,17 @@ void WebsetupConnection::bind()
   (websetupFd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 }
 
-void WebsetupConnection::init()
+void WebsetupConnection::send(
+    std::string command,
+    std::list<std::string> arguments)
 {
-  sockaddr_in6* addr = (sockaddr_in6*)malloc(sizeof(sockaddr_in6));
-  addr->sin6_family = AF_INET6;
-  addr->sin6_port = htons(WEBSETUP_CLIENT_PORT);
-  memcpy(&(addr->sin6_addr), manager->getWebsetupAddress().data.data(), 16);
-  websetupAddr = (sockaddr*)addr;
+  send(
+      InetAddress{manager->getWebsetupAddress(), WEBSETUP_CLIENT_PORT}, command,
+      arguments);
 }
 
 void WebsetupConnection::send(
+    InetAddress dstAddress,
     std::string command,
     std::list<std::string> arguments)
 {
@@ -57,23 +58,25 @@ void WebsetupConnection::send(
   frame.append(command);
   frame.append("\n");
 
-  if(arguments.size() > 0) {
-    std::stringstream ss;
-    std::copy(
-        arguments.begin(), arguments.end(),
-        std::ostream_iterator<std::string>(ss, "\n"));
-    frame.append(ss.str());
-    frame.pop_back();
-    frame.pop_back();  // remove redundant \n
+  int i = 0;
+  for(auto& it : arguments) {
+    frame.append(it);
+    if(i < (arguments.size() - 1)) {
+      frame.append("\n");
+    }
+    i++;
   }
 
-  auto data = frame.c_str();
+  LOGV("sending to websetup: %s", frame.c_str());
 
-  LOG("sending to websetup: %s", data);
+  sockaddr_in6 addr{};
+  addr.sin6_family = AF_INET6;
+  addr.sin6_port = htons(dstAddress.port);
+  memcpy(&(addr.sin6_addr), dstAddress.ip.data.data(), 16);
 
   if(SOCKFUNC(sendto)(
-         websetupFd, data, strlen(data), 0, websetupAddr,
-         sizeof(sockaddr_in6)) < 0) {
+         websetupFd, frame.data(), frame.size(), 0, (sockaddr*)&addr,
+         sizeof(addr)) < 0) {
     LOG("websetup UDP send failed (%d)", (int)errno);
   }
 }
@@ -83,9 +86,22 @@ void WebsetupConnection::sendJoinRequest(
     std::string newWebsetupSecret,
     std::string selfHostname)
 {
-  send("init-request", {});
-  sleep(3);  // TODO this is bad but current websetup needs it
+  // TODO make it send init request on reboot
+  // send("init-request", {});
+  // sleep(5);
+  // jesli nie ma shared secret to nie ma sensu wysylac init-request
+  // rozwazyc przechowywanie init-code w internal/user settings (ale wtedy nie
+  // eksponowac w statusie tego klucza) zeby mozna bylo sprobować w niektorych
+  // sytuacjach zrobic join + mozna bylo latwo przekazac go jako zmienna
+  // srodowiskowa jesli jest secret to zrobic init-request niezaleznie ktore
+  // jest aktualnie wywolywane dodac mechanizm do ponawiania prob co np. 5s
+  // (pamietac o throttle na websetupie)
   send("init-request-join-code", {joinCode, newWebsetupSecret, selfHostname});
+}
+
+Time WebsetupConnection::getLastContact()
+{
+  return lastContact;
 }
 
 void WebsetupConnection::run()
@@ -117,18 +133,23 @@ void WebsetupConnection::run()
       LOG("Websetup packet from invalid address: %s", sourceIp.str().c_str());
     }
 
-    handleWebsetupPacket(buffer.substr(0, ret));
+    InetAddress replyAddress{sourceIp, htons(addr.sin6_port)};
+    handleWebsetupPacket(replyAddress, buffer.substr(0, ret));
   }
 }
 
-void WebsetupConnection::handleWebsetupPacket(std::string data)
+void WebsetupConnection::handleWebsetupPacket(
+    InetAddress replyAddress,
+    std::string data)
 {
   std::string sharedSecret = manager->getWebsetupSecret();
 
   if(data.size() < sharedSecret.size() ||
      !NgSocketCrypto::safeEquals(
          data.substr(0, sharedSecret.size()), sharedSecret)) {
-    LOG("invalid management shared secret");
+    LOG("invalid management shared secret.\ngot: %s\nexp: %s",
+        data.substr(0, sharedSecret.size()).c_str(), sharedSecret.c_str());
+    LOG("message: %s", data.c_str());
     return;
   }
 
@@ -143,11 +164,14 @@ void WebsetupConnection::handleWebsetupPacket(std::string data)
   std::string command = data.substr(5, s - 5);
   std::string payload = data.substr(s + 1);
 
+  // Pings are too verbose - handle their logging separately
   if(command == "ping") {
     LOGV("remote command: ping");
   } else {
-    LOG("remote command: %s", command.c_str());
+    LOG("remote command: %s, arguments: %s", command.c_str(), payload.c_str());
   }
+
+  lastContact = Port::getCurrentTime();
 
   auto response = handleWebsetupCommand(command, payload);
 
@@ -159,7 +183,7 @@ void WebsetupConnection::handleWebsetupPacket(std::string data)
   response.pop_front();
   auto responseArguments = response;
 
-  send(seqnum + responseCommand, responseArguments);
+  send(replyAddress, seqnum + responseCommand, responseArguments);
 }
 
 std::list<std::string> WebsetupConnection::handleWebsetupCommand(
@@ -171,10 +195,10 @@ std::list<std::string> WebsetupConnection::handleWebsetupCommand(
   } else if(command == "init-response") {
     return {"ok"};
   } else if(command == "whitelist-add") {
-    manager->whitelistAdd(IpAddress::parse(payload));
+    manager->whitelistAdd(IpAddress::fromBinary(decodeHex(payload)));
     return {"ok"};
   } else if(command == "whitelist-rm") {
-    manager->whitelistRm(IpAddress::parse(payload));
+    manager->whitelistRm(IpAddress::fromBinary(decodeHex(payload)));
     return {"ok"};
   } else if(command == "whitelist-enable") {
     manager->whitelistEnable();

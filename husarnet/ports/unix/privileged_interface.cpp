@@ -229,7 +229,7 @@ namespace Privileged {
     return ret;
   }
 
-  std::string getSelfHostname() { return readFile(hostnamePath); }
+  std::string getSelfHostname() { return rtrim(readFile(hostnamePath)); }
 
   bool setSelfHostname(std::string newHostname)
   {

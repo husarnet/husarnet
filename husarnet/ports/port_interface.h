@@ -8,6 +8,8 @@
 
 class HusarnetManager;
 
+using Time = int64_t;
+
 namespace Port {
   void init();  // Should be called as early as possible
 
@@ -19,7 +21,7 @@ namespace Port {
 
   IpAddress resolveToIp(std::string hostname);
 
-  int64_t getCurrentTime();
+  Time getCurrentTime();
 
   void startTunTap(HusarnetManager* manager);
 }  // namespace Port

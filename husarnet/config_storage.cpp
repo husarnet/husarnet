@@ -110,9 +110,12 @@ void ConfigStorage::hostTableClear()
   save();
 }
 
-// TODO deduplicate entries
 void ConfigStorage::whitelistAdd(IpAddress address)
 {
+  if(isOnWhitelist(address)) {
+    return;
+  }
+
   currentData[WHITELIST_KEY] += address.toString();
   save();
 }
@@ -263,6 +266,17 @@ bool ConfigStorage::getUserSettingBool(UserSetting setting)
 int ConfigStorage::getUserSettingInt(UserSetting setting)
 {
   return stoi(getUserSetting(setting));
+}
+
+std::map<std::string, std::string> ConfigStorage::getUserSettings()
+{
+  std::map<std::string, std::string> allSettings;
+
+  for(auto& setting : UserSetting::_values()) {
+    allSettings[setting._to_string()] = getUserSetting(setting);
+  }
+
+  return allSettings;
 }
 
 extern char** environ;

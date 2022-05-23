@@ -103,8 +103,14 @@ void ApiServer::runThread()
         auto hostTable = manager->getConfigStorage().getHostTable();
         std::map<std::string, std::string> hostTableStringified;
 
-        for(auto it = hostTable.begin(); it != hostTable.end(); it++) {
-          hostTableStringified.insert({it->first, it->second.toString()});
+        for(auto& element : hostTable) {
+          hostTableStringified.insert(
+              {element.first, element.second.toString()});
+        }
+
+        std::list<std::string> whitelistStringified;
+        for(auto& element : manager->getWhitelist()) {
+          whitelistStringified.push_back(element.toString());
         }
 
         // TODO add peer data here (ip, hostname, latency + is this a websetup
@@ -116,12 +122,21 @@ void ApiServer::runThread()
                 {"local_ip", manager->getSelfAddress().toString()},
                 {"local_hostname", manager->getSelfHostname()},
                 {"is_joined", manager->isJoined()},
+                // TODO rozkminic czy nie zmienic tego na jakis zbiorczy klucz
+                // "isReady" (co bedzie zawieralo wszystkie aktualne i przyszle
+                // atrakcje)
+                {"is_connected_to_base", manager->isConnectedToBase()},
+                {"is_connected_to_websetup", manager->isConnectedToWebsetup()},
+                {"dashboard_url", manager->getDashboardUrl()},
                 {"websetup_address", manager->getWebsetupAddress().toString()},
                 {"base_connection",
                  {{"type", manager->getCurrentBaseProtocol()},
                   {"address", manager->getCurrentBaseAddress().ip.toString()},
                   {"port", manager->getCurrentBaseAddress().port}}},
                 {"host_table", hostTableStringified},
+                {"whitelist", whitelistStringified},
+                {"user_settings",
+                 manager->getConfigStorage().getUserSettings()},
             }));
       });
 
@@ -141,6 +156,21 @@ void ApiServer::runThread()
             req.has_param("hostname") ? req.get_param_value("hostname") : "";
 
         manager->joinNetwork(code, hostname);
+        returnSuccess(req, res);
+      });
+
+  svr.Post(
+      "/control/change-server",
+      [&](const httplib::Request& req, httplib::Response& res) {
+        if(!validateSecret(req, res)) {
+          return;
+        }
+
+        if(!requireParams(req, res, {"domain"})) {
+          return;
+        }
+
+        manager->changeServer(req.get_param_value("domain"));
         returnSuccess(req, res);
       });
 

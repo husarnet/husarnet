@@ -89,6 +89,8 @@ class ConfigStorage {
   std::string getUserSetting(UserSetting setting);
   bool getUserSettingBool(UserSetting setting);
   int getUserSettingInt(UserSetting setting);
+
+  std::map<std::string, std::string> getUserSettings();
 };
 
 std::map<UserSetting, std::string> getEnvironmentOverrides();

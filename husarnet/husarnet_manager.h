@@ -57,11 +57,16 @@ class HusarnetManager {
   InetAddress getCurrentBaseAddress();
   std::string getCurrentBaseProtocol();
 
+  bool isConnectedToBase();
+  bool isConnectedToWebsetup();
+
   std::string getWebsetupSecret();
   std::string setWebsetupSecret(std::string newSecret);
 
   void joinNetwork(std::string joinCode, std::string hostname = "");
   bool isJoined();
+
+  void changeServer(std::string domain);
 
   void hostTableAdd(std::string hostname, IpAddress address);
   void hostTableRm(std::string hostname);
