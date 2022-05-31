@@ -9,9 +9,6 @@ struct NgSocketOptions {
   std::function<bool(InetAddress)> isAddressAllowed = [](InetAddress) {
     return true;
   };
-  std::function<std::string(DeviceId)> peerAddressInfo = [](DeviceId) {
-    return "";
-  };  // only used in `info()`
   std::function<std::vector<InetAddress>(DeviceId)> additionalPeerIpAddresses =
       [](DeviceId) { return std::vector<InetAddress>{}; };
   InetAddress overrideBaseAddress = InetAddress{};
@@ -23,7 +20,5 @@ struct NgSocketOptions {
   bool disableUdpTunnelling = false;
   bool disableTcpTunnelling = false;
   std::vector<InetAddress> overrideLocalAddresses;
-  std::string userAgent;
-
-  void loadFromEnvironment();
+  // std::string userAgent;
 };

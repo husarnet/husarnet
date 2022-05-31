@@ -11,15 +11,22 @@
 #include "husarnet/licensing.h"
 #include "husarnet/logmanager.h"
 #include "husarnet/ngsocket.h"
+#include "husarnet/peer_container.h"
+#include "husarnet/security_layer.h"
 #include "husarnet/websetup.h"
+
+class SecurityLayer;
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
 
 class HusarnetManager {
+ private:
   Identity identity;
   NgSocket* ngsocket;
+  SecurityLayer* securityLayer;
   ConfigStorage* configStorage;
+  PeerContainer* peerContainer;
   LogManager* logManager;
   WebsetupConnection* websetup;
   License* license;
@@ -31,7 +38,7 @@ class HusarnetManager {
 
   void getLicenseStage();
   void getIdentityStage();
-  void startNGSocket();
+  void startNetworkingStack();
   void startWebsetup();
   void startHTTPServer();
 
@@ -41,6 +48,7 @@ class HusarnetManager {
 
   LogManager& getLogManager();
   ConfigStorage& getConfigStorage();
+  PeerContainer* getPeerContainer();
 
   std::string getVersion();
   std::string getUserAgent();
@@ -85,16 +93,16 @@ class HusarnetManager {
   std::string getApiSecret();
   std::string rotateApiSecret();
 
-  // TODO think about exposing license object in the same way logmanager is
   // Copy of methods from License class
   std::string getDashboardUrl();
   IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
 
   NgSocket* getNGSocket();
+  SecurityLayer* getSecurityLayer();
   std::string getInterfaceName();
   std::vector<DeviceId> getMulticastDestinations(DeviceId id);
-  int getLatency(IpAddress destination);
+  int getLatency(DeviceId destination);
 
   void cleanup();
 

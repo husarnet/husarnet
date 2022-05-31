@@ -3,22 +3,21 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include "husarnet/ngsocket.h"
+#include "husarnet/ngsocket_interfaces.h"
 
-class TunDelegate : private NgSocketDelegate {
-  NgSocket* sock;
-  int tunFd = -1;
+class TunTap : public HigherLayer {
+ private:
+  int fd;
   std::string tunBuffer;
 
-  void onDataPacket(DeviceId source, string_view data);
-  void tunReady();
-  TunDelegate(NgSocket* netDev);
-
- public:
-  void setFd(int tunFd);
-  void closeFd();
+  void close();
   bool isRunning();
 
-  static TunDelegate*
-  startTun(std::string name, NgSocket* netDev, bool isTap = false);
-  static TunDelegate* createTun(NgSocket* netDev);
+  // This is called by the OsSocket as a callback
+  void onTunTapData();
+
+ public:
+  TunTap(std::string name, bool isTap = false);
+
+  void onLowerLayerData(DeviceId source, string_view data) override;
 };

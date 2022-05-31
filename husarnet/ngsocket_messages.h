@@ -2,7 +2,11 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
+#include <string>
+#include <vector>
+#include "husarnet/fstring.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/string_view.h"
 
 struct BaseToPeerMessage {
   enum

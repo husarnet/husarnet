@@ -4,15 +4,18 @@
 #include "husarnet/ports/port.h"
 
 #include <sstream>
+#include "husarnet/compression_layer.h"
 #include "husarnet/device_id.h"
 #include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
+#include "husarnet/multicast_layer.h"
 #include "husarnet/ngsocket_crypto.h"
-#include "husarnet/ngsocket_secure.h"
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/privileged_interface.h"
 #include "husarnet/ports/sockets.h"
+#include "husarnet/ports/unix/tun.h"  // TODO this is very wrong. Fix this
+#include "husarnet/security_layer.h"
 #include "husarnet/util.h"
 
 #ifdef HTTP_CONTROL_API
@@ -27,6 +30,11 @@ LogManager& HusarnetManager::getLogManager()
 ConfigStorage& HusarnetManager::getConfigStorage()
 {
   return *configStorage;
+}
+
+PeerContainer* HusarnetManager::getPeerContainer()
+{
+  return peerContainer;
 }
 
 std::string HusarnetManager::getVersion()
@@ -238,6 +246,11 @@ NgSocket* HusarnetManager::getNGSocket()
   return ngsocket;
 }
 
+SecurityLayer* HusarnetManager::getSecurityLayer()
+{
+  return securityLayer;
+}
+
 std::string HusarnetManager::getInterfaceName()
 {
   return configStorage->getUserSetting(UserSetting::interfaceName);
@@ -245,6 +258,7 @@ std::string HusarnetManager::getInterfaceName()
 
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
+  // Look at port_interface.cpp in unix for `ip route add` call
   if(std::string(id).find("\xff\x15\xf2\xd3\xa3\x89") == 0) {
     std::vector<DeviceId> res;
 
@@ -261,9 +275,9 @@ std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 }
 
 // TODO implement this maybe
-int HusarnetManager::getLatency(IpAddress destination)
+int HusarnetManager::getLatency(DeviceId destination)
 {
-  return 0;
+  return ngsocket->getLatency(destination);
 }
 
 void HusarnetManager::cleanup()
@@ -283,7 +297,7 @@ HusarnetManager::HusarnetManager()
 
 void HusarnetManager::getLicenseStage()
 {
-  this->license =
+  license =
       new License(configStorage->getUserSetting(UserSetting::dashboardUrl));
 }
 
@@ -293,21 +307,29 @@ void HusarnetManager::getIdentityStage()
   identity = Privileged::readIdentity();
 }
 
-void HusarnetManager::startNGSocket()
+void HusarnetManager::startNetworkingStack()
 {
-  ngsocket = NgSocketSecure::create(&identity, this);
+  peerContainer = new PeerContainer(this);
+
+  auto tunTap = Port::startTunTap(this);
+  auto multicast = new MulticastLayer(this);
+  auto compression = new CompressionLayer(this);
+  securityLayer = new SecurityLayer(this);
+  ngsocket = new NgSocket(this);
+
   ngsocket->options->isPeerAllowed = [&](DeviceId id) {
     return isHostAllowed(deviceIdToIpAddress(id));
   };
 
-  ngsocket->options->userAgent = getUserAgent();
-
-  Port::startTunTap(this);
+  stackHigherOnLower(tunTap, multicast);
+  stackHigherOnLower(multicast, compression);
+  stackHigherOnLower(compression, securityLayer);
+  stackHigherOnLower(securityLayer, ngsocket);
 }
 
 void HusarnetManager::startWebsetup()
 {
-  this->websetup = new WebsetupConnection(this);
+  websetup = new WebsetupConnection(this);
   GIL::startThread([this]() { websetup->run(); }, "websetup", 6000);
 }
 
@@ -336,6 +358,8 @@ void HusarnetManager::stage1()
   configStorage = new ConfigStorage(
       Privileged::readConfig, Privileged::writeConfig, userDefaults,
       getEnvironmentOverrides(), internalDefaults);
+
+  stage1Started = true;
 }
 
 void HusarnetManager::stage2()
@@ -346,6 +370,8 @@ void HusarnetManager::stage2()
 
   getLicenseStage();
   getIdentityStage();
+
+  stage2Started = true;
 }
 
 void HusarnetManager::stage3()
@@ -354,9 +380,11 @@ void HusarnetManager::stage3()
     return;
   }
 
-  startNGSocket();
+  startNetworkingStack();
   startWebsetup();
   startHTTPServer();
+
+  stage3Started = true;
 }
 
 void HusarnetManager::runHusarnet()
@@ -367,6 +395,6 @@ void HusarnetManager::runHusarnet()
 
   while(true) {
     ngsocket->periodic();
-    OsSocket::runOnce(1000);
+    OsSocket::runOnce(1000);  // process socket events for at most so many ms
   }
 }

@@ -7,6 +7,7 @@
 #include "husarnet/ipaddress.h"
 
 class HusarnetManager;
+class TunTap;
 
 using Time = int64_t;
 
@@ -23,5 +24,5 @@ namespace Port {
 
   Time getCurrentTime();
 
-  void startTunTap(HusarnetManager* manager);
+  TunTap* startTunTap(HusarnetManager* manager);
 }  // namespace Port

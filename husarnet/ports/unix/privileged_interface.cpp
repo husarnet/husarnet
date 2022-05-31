@@ -241,4 +241,5 @@ namespace Privileged {
     return true;
   }
 
+  void updateHostsFile(std::map<std::string, IpAddress> data) {}
 }  // namespace Privileged

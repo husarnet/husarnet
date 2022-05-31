@@ -14,3 +14,8 @@ inline IpAddress deviceIdToIpAddress(DeviceId id)
 {
   return IpAddress::fromBinary(id);
 }
+
+inline DeviceId deviceIdFromIpAddress(IpAddress ip)
+{
+  return ip.toBinary();
+}

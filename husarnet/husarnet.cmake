@@ -26,7 +26,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror=return-type -Wno-sign-comp
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall ${COMMONFLAGS}")
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COMMONFLAGS} -Wl,-z,relro -Wl,-z,now -Wl,--gc-sections -Wl,--whole-archive -lrt -lpthread -Wl,--no-whole-archive")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COMMONFLAGS} -lrt -lpthread")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL Windows)

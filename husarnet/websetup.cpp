@@ -231,7 +231,7 @@ std::list<std::string> WebsetupConnection::handleWebsetupCommand(
         std::string("version=") + manager->getVersion() +
         ";ua=" + manager->getUserAgent()};
   } else if(command == "get-latency") {
-    auto destination = IpAddress::parse(payload);
+    auto destination = deviceIdFromIpAddress(IpAddress::parse(payload));
     auto latency = manager->getLatency(destination);
     return {"latency=" + std::to_string(latency)};
   } else if(command == "cleanup") {

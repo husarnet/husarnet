@@ -12,37 +12,7 @@
 #include "husarnet/ports/sockets.h"
 #include "husarnet/util.h"
 
-TunDelegate::TunDelegate(NgSocket* sock) : sock(sock)
-{
-  tunBuffer.resize(4096);
-  sock->delegate = this;
-}
-
-void TunDelegate::tunReady()
-{
-  long size = read(tunFd, &tunBuffer[0], tunBuffer.size());
-
-  if(size <= 0) {
-    if(errno == EAGAIN) {
-      return;
-    } else {
-      tunFd = -1;
-      return;
-    }
-  }
-
-  string_view packet = string_view(tunBuffer).substr(0, size);
-  sock->sendDataPacket(BadDeviceId, packet);
-}
-
-void TunDelegate::onDataPacket(DeviceId source, string_view data)
-{
-  long wr = write(tunFd, data.data(), data.size());
-  if(wr != data.size())
-    LOG("short tun write");
-}
-
-int openTun(std::string name, bool isTap)
+static int openTun(std::string name, bool isTap)
 {
   struct ifreq ifr;
   int fd;
@@ -66,32 +36,45 @@ int openTun(std::string name, bool isTap)
   return fd;
 }
 
-void TunDelegate::setFd(int tunFd)
+void TunTap::close()
 {
-  this->tunFd = tunFd;
-  OsSocket::bindCustomFd(tunFd, std::bind(&TunDelegate::tunReady, this));
+  SOCKFUNC(close)(fd);
 }
 
-void TunDelegate::closeFd()
+bool TunTap::isRunning()
 {
-  close(this->tunFd);
+  return fd != -1;
 }
 
-bool TunDelegate::isRunning()
+void TunTap::onTunTapData()
 {
-  return tunFd != -1;
+  long size = read(fd, &tunBuffer[0], tunBuffer.size());
+
+  if(size <= 0) {
+    if(errno == EAGAIN) {
+      return;
+    } else {
+      fd = -1;
+      return;
+    }
+  }
+
+  string_view packet = string_view(tunBuffer).substr(0, size);
+  sendToLowerLayer(BadDeviceId, packet);
 }
 
-TunDelegate* TunDelegate::createTun(NgSocket* netDev)
+TunTap::TunTap(std::string name, bool isTap)
 {
-  return new TunDelegate(netDev);
+  tunBuffer.resize(4096);
+
+  fd = openTun(name, isTap);
+  OsSocket::bindCustomFd(fd, std::bind(&TunTap::onTunTapData, this));
 }
 
-TunDelegate*
-TunDelegate::startTun(std::string name, NgSocket* netDev, bool isTap)
+void TunTap::onLowerLayerData(DeviceId source, string_view data)
 {
-  int fd = openTun(name, isTap);
-  TunDelegate* delegate = createTun(netDev);
-  delegate->setFd(fd);
-  return delegate;
+  long wr = write(fd, data.data(), data.size());
+  if(wr != data.size()) {
+    LOG("short tun write");
+  }
 }

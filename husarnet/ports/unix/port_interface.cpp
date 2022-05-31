@@ -5,7 +5,6 @@
 #include <ares.h>
 #include <thread>
 #include "husarnet/husarnet_manager.h"
-#include "husarnet/network_dev.h"
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/unix/tun.h"
 #include "husarnet/util.h"
@@ -113,23 +112,19 @@ namespace Port {
 
   // TODO this whole method should be rewritten *not* to utilize inline
   // bash(?!) and *to* utilize netlink interface
-  void startTunTap(HusarnetManager* manager)
+  TunTap* startTunTap(HusarnetManager* manager)
   {
     if(system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c "
               "10 200)") != 0) {
       LOG("failed to create TUN device");
     }
 
-    NgSocket* wrappedSock = manager->getNGSocket();
-    NgSocket* netDev = NetworkDev::wrap(
-        manager->getIdentity()->getDeviceId(), wrappedSock,
-        [&](DeviceId id) { return manager->getMulticastDestinations(id); });
-
     std::string myIp =
         deviceIdToIpAddress(manager->getIdentity()->getDeviceId()).str();
 
     auto interfaceName = manager->getInterfaceName();
-    TunDelegate::startTun(interfaceName, netDev);
+
+    auto tunTap = new TunTap(interfaceName);
 
     if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||
        system(("sysctl net.ipv6.conf." + interfaceName + ".disable_ipv6=0")
@@ -153,5 +148,8 @@ namespace Port {
                   .c_str()) != 0) {
       LOG("failed to setup multicast route");
     }
+
+    return tunTap;
   }
+
 }  // namespace Port

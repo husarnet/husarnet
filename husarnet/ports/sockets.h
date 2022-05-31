@@ -53,6 +53,5 @@ namespace OsSocket {
       TcpErrorCallback errorCallback);
 
   void runOnce(int timeout);
-  void init();
 
 }  // namespace OsSocket
