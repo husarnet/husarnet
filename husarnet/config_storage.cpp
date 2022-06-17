@@ -28,9 +28,11 @@ ConfigStorage::ConfigStorage(
 
 std::string ConfigStorage::serialize()
 {
-  // TODO make this ignore pretty formatting on space constrained platforms like
-  // ESP32
+#ifdef PORT_ESP32
+  return this->currentData.dump(0);
+#else
   return this->currentData.dump(4);
+#endif
 }
 
 void ConfigStorage::deserialize(std::string blob)
@@ -144,14 +146,10 @@ void ConfigStorage::whitelistRm(IpAddress address)
 
 bool ConfigStorage::isOnWhitelist(IpAddress address)
 {
-  auto strAddr = address.toString();
-
-  for(const auto& item : currentData[WHITELIST_KEY]) {
-    if(strAddr == item) {
-      return true;
-    }
-  }
-  return false;
+  // TODO Long Term - it'd be wise to optimize it (use hashmaps or sth)
+  auto whitelist = currentData[WHITELIST_KEY];
+  return std::find(begin(whitelist), end(whitelist), address.str()) !=
+         std::end(whitelist);
 }
 
 std::list<IpAddress> ConfigStorage::getWhitelist()
@@ -189,6 +187,12 @@ void ConfigStorage::setInternalSetting(InternalSetting setting, int value)
   setInternalSetting(setting, std::to_string(value));
 }
 
+void ConfigStorage::clearInternalSetting(InternalSetting setting)
+{
+  currentData[INTERNAL_SETTINGS_KEY].erase(setting._to_string());
+  save();
+}
+
 std::string ConfigStorage::getInternalSetting(InternalSetting setting)
 {
   auto settingStr = setting._to_string();
@@ -209,6 +213,10 @@ bool ConfigStorage::getInternalSettingBool(InternalSetting setting)
 
 int ConfigStorage::getInternalSettingInt(InternalSetting setting)
 {
+  if(getInternalSetting(setting) == "") {
+    return 0;
+  }
+
   return stoi(getInternalSetting(setting));
 }
 
@@ -242,6 +250,17 @@ void ConfigStorage::setUserSetting(UserSetting setting, int value)
   setUserSetting(setting, std::to_string(value));
 }
 
+void ConfigStorage::setUserSetting(UserSetting setting, InetAddress value)
+{
+  setUserSetting(setting, value.str());
+}
+
+void ConfigStorage::clearUserSetting(UserSetting setting)
+{
+  currentData[USER_SETTINGS_KEY].erase(setting._to_string());
+  save();
+}
+
 std::string ConfigStorage::getUserSetting(UserSetting setting)
 {
   auto settingStr = setting._to_string();
@@ -265,7 +284,16 @@ bool ConfigStorage::getUserSettingBool(UserSetting setting)
 
 int ConfigStorage::getUserSettingInt(UserSetting setting)
 {
+  if(getUserSetting(setting) == "") {
+    return 0;
+  }
+
   return stoi(getUserSetting(setting));
+}
+
+InetAddress ConfigStorage::getUserSettingInet(UserSetting setting)
+{
+  return InetAddress::parse(getUserSetting(setting));
 }
 
 std::map<std::string, std::string> ConfigStorage::getUserSettings()

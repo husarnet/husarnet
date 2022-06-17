@@ -22,7 +22,7 @@ namespace Port {
 
   IpAddress resolveToIp(std::string hostname);
 
-  Time getCurrentTime();
+  Time getCurrentTime();  // some monotonic time in ms
 
   TunTap* startTunTap(HusarnetManager* manager);
 }  // namespace Port

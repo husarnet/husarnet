@@ -11,7 +11,7 @@ PeerContainer::PeerContainer(HusarnetManager* manager) : manager(manager)
 
 Peer* PeerContainer::createPeer(DeviceId id)
 {
-  if(!manager->isHostAllowed(deviceIdToIpAddress(id))) {
+  if(!manager->isPeerAddressAllowed(deviceIdToIpAddress(id))) {
     LOG("peer %s is blacklisted", encodeHex(id).c_str());
     return nullptr;
   }
@@ -28,7 +28,7 @@ Peer* PeerContainer::getPeer(DeviceId id)
   if(cachedPeerId == id)
     return cachedPeer;
 
-  if(!manager->isHostAllowed(deviceIdToIpAddress(id))) {
+  if(!manager->isPeerAddressAllowed(deviceIdToIpAddress(id))) {
     LOG("peer %s is blacklisted", encodeHex(id).c_str());
     return nullptr;
   }

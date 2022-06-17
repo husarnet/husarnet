@@ -6,15 +6,15 @@
 #include <map>
 #include <vector>
 #include "enum.h"
+#include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/layer_interfaces.h"
 #include "husarnet/licensing.h"
 #include "husarnet/ngsocket_crypto.h"
-#include "husarnet/ngsocket_interfaces.h"
 #include "husarnet/ngsocket_messages.h"
-#include "husarnet/ngsocket_options.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
@@ -32,7 +32,6 @@ const int MAX_FAILED_ESTABLISHMENTS = 5;
 const int MAX_ADDRESSES = 10;
 const int MAX_SOURCE_ADDRESSES = 5;
 const int DEVICEID_LENGTH = 16;
-const int MULTICAST_PORT = 5581;
 
 BETTER_ENUM(BaseConnectionType, int, NONE = 0, TCP = 1, UDP = 2)
 
@@ -41,6 +40,7 @@ class NgSocket : public LowerLayer {
   Identity* identity;
   HusarnetManager* manager;
   PeerContainer* peerContainer;
+  ConfigStorage& configStorage;
 
   DeviceId deviceId;
   fstring<32> pubkey;
@@ -123,15 +123,11 @@ class NgSocket : public LowerLayer {
   void sendToPeer(InetAddress dest, const PeerToPeerMessage& msg);
 
  public:
-  NgSocketOptions* options = new NgSocketOptions;
-
   NgSocket(HusarnetManager* manager);
 
-  virtual void onUpperLayerData(DeviceId target, string_view data);
+  virtual void onUpperLayerData(DeviceId peerId, string_view data);
   void periodic();
 
   BaseConnectionType getCurrentBaseConnectionType();
   InetAddress getCurrentBaseAddress();
-
-  int getLatency(DeviceId peer);
 };

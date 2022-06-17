@@ -44,7 +44,7 @@ std::string HusarnetManager::getVersion()
 
 std::string HusarnetManager::getUserAgent()
 {
-  return PORT_NAME;
+  return std::string("Husarnet,") + PORT_NAME + "," + HUSARNET_VERSION;
 }
 
 Identity* HusarnetManager::getIdentity()
@@ -55,6 +55,11 @@ Identity* HusarnetManager::getIdentity()
 IpAddress HusarnetManager::getSelfAddress()
 {
   return identity.getIpAddress();
+}
+
+PeerFlags* HusarnetManager::getSelfFlags()
+{
+  return selfFlags;
 }
 
 std::string HusarnetManager::getSelfHostname()
@@ -125,8 +130,6 @@ static std::string parseJoinCode(std::string joinCode)
   return joinCode.substr(slash + 1);
 }
 
-// TODO send plain init-request on startup if has websetup secreat so it can
-// download whitelist updates
 void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
 {
   whitelistAdd(getWebsetupAddress());
@@ -146,13 +149,13 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
       parseJoinCode(joinCode), newWebsetupSecret, dashboardHostname);
 }
 
-// TODO add an endporint for cheching whether it has talked to websetup recently
 bool HusarnetManager::isJoined()
 {
-  // This implementation is very naive as it does only check local
-  // configuration for data, but it's the best we can do for now
-  return !configStorage->isInternalSettingEmpty(
-      InternalSetting::websetupSecret);
+  auto websetupId = deviceIdFromIpAddress(getWebsetupAddress());
+
+  return (!configStorage->isInternalSettingEmpty(
+             InternalSetting::websetupSecret)) &&
+         (getLatency(websetupId) >= 0);
 }
 
 void HusarnetManager::changeServer(std::string domain)
@@ -188,28 +191,31 @@ std::list<IpAddress> HusarnetManager::getWhitelist()
 
 bool HusarnetManager::isWhitelistEnabled()
 {
-  return configStorage->getUserSettingBool(UserSetting::whitelistEnable);
+  return configStorage->getUserSettingBool(UserSetting::enableWhitelist);
 }
 
 void HusarnetManager::whitelistEnable()
 {
-  configStorage->setUserSetting(UserSetting::whitelistEnable, true);
+  configStorage->setUserSetting(UserSetting::enableWhitelist, true);
 }
 
 void HusarnetManager::whitelistDisable()
 {
-  configStorage->setUserSetting(UserSetting::whitelistEnable, false);
+  configStorage->setUserSetting(UserSetting::enableWhitelist, false);
 }
 
-bool HusarnetManager::isHostAllowed(IpAddress id)
+bool HusarnetManager::isPeerAddressAllowed(IpAddress address)
 {
   if(!isWhitelistEnabled()) {
     return true;
   }
 
-  auto whitelist = getWhitelist();
-  // TODO it'd be wise to optimize it (use hashmaps or sth)
-  return std::find(begin(whitelist), end(whitelist), id) != std::end(whitelist);
+  return configStorage->isOnWhitelist(address);
+}
+
+bool HusarnetManager::isRealAddressAllowed(InetAddress addr)
+{
+  return true;
 }
 
 int HusarnetManager::getApiPort()
@@ -274,19 +280,17 @@ std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
   }
 }
 
-// TODO implement this maybe
 int HusarnetManager::getLatency(DeviceId destination)
 {
-  return ngsocket->getLatency(destination);
+  return securityLayer->getLatency(destination);
 }
 
 void HusarnetManager::cleanup()
 {
-  // configTable->runInTransaction([&]() {
-  //   configTable->removeAll("manual", "whitelist");
-  //   configTable->removeAll("manual", "host");
-  // });
-  // TODO fix this
+  configStorage->groupChanges([&]() {
+    configStorage->whitelistClear();
+    configStorage->hostTableClear();
+  });
 }
 
 HusarnetManager::HusarnetManager()
@@ -303,7 +307,8 @@ void HusarnetManager::getLicenseStage()
 
 void HusarnetManager::getIdentityStage()
 {
-  // TODO - reenable the smartcard support but with proper multiplatform support
+  // TODO Long Term - reenable the smartcard support but with proper
+  // multiplatform support
   identity = Privileged::readIdentity();
 }
 
@@ -317,10 +322,6 @@ void HusarnetManager::startNetworkingStack()
   securityLayer = new SecurityLayer(this);
   ngsocket = new NgSocket(this);
 
-  ngsocket->options->isPeerAllowed = [&](DeviceId id) {
-    return isHostAllowed(deviceIdToIpAddress(id));
-  };
-
   stackHigherOnLower(tunTap, multicast);
   stackHigherOnLower(multicast, compression);
   stackHigherOnLower(compression, securityLayer);
@@ -330,7 +331,7 @@ void HusarnetManager::startNetworkingStack()
 void HusarnetManager::startWebsetup()
 {
   websetup = new WebsetupConnection(this);
-  GIL::startThread([this]() { websetup->run(); }, "websetup", 6000);
+  websetup->start();
 }
 
 void HusarnetManager::startHTTPServer()
@@ -358,6 +359,8 @@ void HusarnetManager::stage1()
   configStorage = new ConfigStorage(
       Privileged::readConfig, Privileged::writeConfig, userDefaults,
       getEnvironmentOverrides(), internalDefaults);
+
+  selfFlags = new PeerFlags();
 
   stage1Started = true;
 }

@@ -23,6 +23,7 @@ using HostsFileUpdateFunc =
 class HusarnetManager {
  private:
   Identity identity;
+  PeerFlags* selfFlags;
   NgSocket* ngsocket;
   SecurityLayer* securityLayer;
   ConfigStorage* configStorage;
@@ -55,6 +56,7 @@ class HusarnetManager {
 
   Identity* getIdentity();
   IpAddress getSelfAddress();
+  PeerFlags* getSelfFlags();
 
   std::string getSelfHostname();
   bool setSelfHostname(std::string newHostname);
@@ -87,7 +89,8 @@ class HusarnetManager {
   void whitelistEnable();
   void whitelistDisable();
 
-  bool isHostAllowed(IpAddress id);
+  bool isPeerAddressAllowed(IpAddress id);
+  bool isRealAddressAllowed(InetAddress addr);
 
   int getApiPort();
   std::string getApiSecret();

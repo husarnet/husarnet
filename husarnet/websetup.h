@@ -13,6 +13,7 @@ class WebsetupConnection {
   HusarnetManager* manager;
 
   Time lastContact = 0;
+  Time lastInitReply = 0;
   int websetupFd;
 
   void bind();
@@ -26,9 +27,13 @@ class WebsetupConnection {
       std::string command,
       std::string payload);
 
+  void sendInit();
+  void periodicThread();
+  void handleConnectionThread();
+
  public:
   WebsetupConnection(HusarnetManager* manager);
-  void run();
+  void start();
 
   void sendJoinRequest(
       std::string joinCode,

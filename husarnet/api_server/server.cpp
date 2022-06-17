@@ -88,6 +88,17 @@ bool ApiServer::requireParams(
   return true;
 }
 
+std::list<std::string> stringifyInetAddressList(
+    const std::list<InetAddress>& source)
+{
+  std::list<std::string> stringified;
+  for(auto& element : source) {
+    stringified.push_back(element.str());
+  }
+
+  return stringified;
+}
+
 void ApiServer::runThread()
 {
   httplib::Server svr;
@@ -113,8 +124,26 @@ void ApiServer::runThread()
           whitelistStringified.push_back(element.toString());
         }
 
-        // TODO add peer data here (ip, hostname, latency + is this a websetup
-        // host data)
+        std::list<json> peerData;
+        for(auto& [peerId, rawPeer] : manager->getPeerContainer()->getPeers()) {
+          json newPeer = {
+              {"husarnet_address", rawPeer->getIpAddress().str()},
+              {"is_active", rawPeer->isActive()},
+              {"is_reestablishing", rawPeer->isReestablishing()},
+              {"is_tunelled", rawPeer->isTunelled()},
+              {"is_secure", rawPeer->isSecure()},
+              {"source_addresses",
+               stringifyInetAddressList(rawPeer->getSourceAddresses())},
+              {"target_addresses",
+               stringifyInetAddressList(rawPeer->getTargetAddresses())},
+              {"used_target_address", rawPeer->getUsedTargetAddress().str()},
+              {"link_local_address", rawPeer->getLinkLocalAddress().str()},
+              {"latency_ms", manager->getLatency(rawPeer->getDeviceId())},
+          };
+
+          peerData.push_back(newPeer);
+        }
+
         returnSuccess(
             req, res,
             json::object({
@@ -122,11 +151,14 @@ void ApiServer::runThread()
                 {"local_ip", manager->getSelfAddress().toString()},
                 {"local_hostname", manager->getSelfHostname()},
                 {"is_joined", manager->isJoined()},
-                // TODO rozkminic czy nie zmienic tego na jakis zbiorczy klucz
-                // "isReady" (co bedzie zawieralo wszystkie aktualne i przyszle
-                // atrakcje)
-                {"is_connected_to_base", manager->isConnectedToBase()},
-                {"is_connected_to_websetup", manager->isConnectedToWebsetup()},
+                {"is_ready_to_join", manager->isConnectedToBase()},
+                {"is_ready", manager->isConnectedToBase() &&
+                                 manager->isConnectedToWebsetup()},
+                {"connection_status",
+                 {
+                     {"base", manager->isConnectedToBase()},
+                     {"websetup", manager->isConnectedToWebsetup()},
+                 }},
                 {"dashboard_url", manager->getDashboardUrl()},
                 {"websetup_address", manager->getWebsetupAddress().toString()},
                 {"base_connection",
@@ -137,6 +169,7 @@ void ApiServer::runThread()
                 {"whitelist", whitelistStringified},
                 {"user_settings",
                  manager->getConfigStorage().getUserSettings()},
+                {"peers", peerData},
             }));
       });
 

@@ -9,9 +9,6 @@
 
 const uint64_t BOOT_ID_MASK = 0xFFFFFFFF00000000ull;
 
-const uint64_t FLAG_SUPPORTS_FLAGS = 0x1;
-const uint64_t FLAG_COMPRESSION = 0x2;
-
 class SecurityLayer : public BidirectionalLayer {
  private:
   HusarnetManager* manager;
@@ -19,7 +16,8 @@ class SecurityLayer : public BidirectionalLayer {
   std::string decryptedBuffer;
   std::string ciphertextBuffer;
   std::string cleartextBuffer;
-  std::string compressBuffer;
+
+  PeerContainer* peerContainer;
 
   uint64_t helloseq = 0;
 
@@ -31,20 +29,17 @@ class SecurityLayer : public BidirectionalLayer {
   void handleDataPacket(DeviceId source, string_view data);
 
   void sendHelloPacket(Peer* peer, int num = 1, uint64_t helloseq = 0);
-  uint64_t getMyFlags();
 
   void handleHelloPacket(DeviceId target, string_view data, int helloNum);
   void finishNegotiation(Peer* peer);
 
   void doSendDataPacket(Peer* peer, string_view data);
 
-  PeerContainer* peerContainer;
-
  public:
   SecurityLayer(HusarnetManager* manager);
 
-  void onUpperLayerData(DeviceId source, string_view data) override;
-  void onLowerLayerData(DeviceId target, string_view data) override;
+  void onUpperLayerData(DeviceId peerId, string_view data) override;
+  void onLowerLayerData(DeviceId peerId, string_view data) override;
 
   int getLatency(DeviceId peerId);
 };

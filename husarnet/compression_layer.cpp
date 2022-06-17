@@ -6,40 +6,73 @@
 #include "zstd.h"
 #endif
 
-// TODO this whole file
+CompressionLayer::CompressionLayer(HusarnetManager* manager)
+    : manager(manager), config(manager->getConfigStorage())
+{
+  peerContainer = manager->getPeerContainer();
 
-// string_view decryptedData;
-// if(options->compressionEnabled && (peer->flags & FLAG_COMPRESSION)) {
-// #ifdef WITH_ZSTD
-//   size_t s = ZSTD_decompress(
-//       &compressBuffer[0], compressBuffer.size(), &decryptedBuffer[8],
-//       decryptedSize - 8);
-//   if(ZSTD_isError(s)) {
-//     LOG("ZSTD decompression failed");
-//     return;
-//   }
-//   decryptedData = string_view(compressBuffer).substr(0, s);
-// #else
-//   abort();
-// #endif
-// } else {
-//   decryptedData = string_view(decryptedBuffer).substr(8, decryptedSize - 8);
-// }
+  compressionBuffer.resize(2100);
+  cleartextBuffer.resize(2010);
 
-// if(options->compressionEnabled && (peer->flags & FLAG_COMPRESSION)) {
-// #ifdef WITH_ZSTD
-//   size_t s = ZSTD_compress(
-//       &cleartextBuffer[8], cleartextBuffer.size() - 8, data.data(),
-//       data.size(),
-//       /*level=*/1);
-//   if(ZSTD_isError(s)) {
-//     LOG("ZSTD compression failed");
-//     return;
-//   }
-//   cleartextSize = (int)s + 8;
-// #else
-//   abort();
-// #endif
-// } else {
-//   memcpy(&cleartextBuffer[8], data.data(), data.size());
-// }
+#ifndef WITH_ZSTD
+  manager->getSelfFlags()->setFlag(PeerFlag::compression);
+#endif
+}
+
+bool CompressionLayer::shouldProceed(DeviceId peerId)
+{
+#ifndef WITH_ZSTD
+  return false;
+#endif
+
+  if(!config.getUserSettingBool(UserSetting::enableCompression)) {
+    return false;
+  }
+
+  auto peer = peerContainer->getPeer(peerId);
+  if(!peer->flags.checkFlag(PeerFlag::compression)) {
+    return false;
+  }
+
+  return true;
+}
+
+void CompressionLayer::onUpperLayerData(DeviceId peerId, string_view data)
+{
+  if(!shouldProceed(peerId)) {
+    sendToLowerLayer(peerId, data);
+  }
+  // TODO this is left here merely as an example. Reference old code and rewrite
+  // this #ifdef WITH_ZSTD
+  //   size_t s = ZSTD_compress(
+  //       &cleartextBuffer[8], cleartextBuffer.size() - 8, data.data(),
+  //       data.size(),
+  //       /*level=*/1);
+  //   if(ZSTD_isError(s)) {
+  //     LOG("ZSTD compression failed");
+  //     return;
+  //   }
+
+  //   sendToLowerLayer(peerId, cleartextBuffer);
+  // #endif
+}
+
+void CompressionLayer::onLowerLayerData(DeviceId peerId, string_view data)
+{
+  if(!shouldProceed(peerId)) {
+    sendToUpperLayer(peerId, data);
+  }
+
+  // TODO this is left here merely as an example. Reference old code and rewrite
+  // this
+  // #ifdef WITH_ZSTD
+  //   size_t s = ZSTD_decompress(
+  //       data, data.size(), &decryptedBuffer[8],
+  //       decryptedSize - 8);
+  //   if(ZSTD_isError(s)) {
+  //     LOG("ZSTD decompression failed");
+  //     return;
+  //   }
+  //   decryptedData = string_view(compressionBuffer).substr(0, s);
+  // #endif
+}

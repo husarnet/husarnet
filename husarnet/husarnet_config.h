@@ -11,6 +11,7 @@
 #define WEBSETUP_SERVER_PORT 5580
 #define WEBSETUP_CLIENT_PORT 4800
 #define BASESERVER_PORT 443
+#define MULTICAST_PORT 5581
 
 static const int MAX_QUEUED_PACKETS = 10;
 
@@ -21,9 +22,17 @@ const IpAddress MULTICAST_ADDR_6 =
 
 const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::dashboardUrl, "app.husarnet.com"},
-    {UserSetting::whitelistEnable, trueValue},
+    {UserSetting::enableWhitelist, trueValue},
     {UserSetting::interfaceName, "hnet0"},
     {UserSetting::apiPort, "16216"},
+    {UserSetting::enableCompression, falseValue},
+    {UserSetting::enableUdpTunelling, trueValue},
+    {UserSetting::enableTcpTunelling, trueValue},
+    {UserSetting::enableUdp, trueValue},
+    {UserSetting::enableMulticast, trueValue},
+    {UserSetting::overrideBaseAddress, ""},
+    {UserSetting::overrideSourcePort, ""},
+    {UserSetting::extraAdvertisedAddress, ""},
 };
 
 const std::map<InternalSetting, std::string> internalDefaults = {{}};

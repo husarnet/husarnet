@@ -2,8 +2,8 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
+#include "husarnet/layer_interfaces.h"
 #include "husarnet/ngsocket.h"
-#include "husarnet/ngsocket_interfaces.h"
 
 class TunTap : public HigherLayer {
  private:

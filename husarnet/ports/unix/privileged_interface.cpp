@@ -20,7 +20,7 @@ namespace fs = std::filesystem;
 
 static FILE* if_inet6;
 
-// @TODO make it sane or something - this must be called early
+// TODO make it sane or something - this must be called early
 static void beforeDropCap()
 {
   if_inet6 = fopen("/proc/self/net/if_inet6", "r");
@@ -40,8 +40,7 @@ static bool isInterfaceBlacklisted(std::string name)
 static void getLocalIpv4Addresses(std::vector<IpAddress>& ret)
 {
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
-  struct ifconf configuration {
-  };
+  struct ifconf configuration {};
 
   if(fd < 0)
     return;
@@ -170,9 +169,14 @@ const static std::string hostsPath = "/etc/hosts";
 // look for getHostsFilePath in the old code for windows paths
 
 namespace Privileged {
-  void init() {}
+  void init()
+  {
+  }
 
-  void start() { beforeDropCap(); }
+  void start()
+  {
+    beforeDropCap();
+  }
 
   std::string readConfig()
   {
@@ -183,7 +187,10 @@ namespace Privileged {
     return readFile(configPath);
   }
 
-  void writeConfig(std::string data) { writeFile(configPath, data); }
+  void writeConfig(std::string data)
+  {
+    writeFile(configPath, data);
+  }
 
   Identity readIdentity()
   {
@@ -217,7 +224,10 @@ namespace Privileged {
     return readFile(apiSecretPath);
   }
 
-  void rotateApiSecret() { writeFile(apiSecretPath, generateRandomString(32)); }
+  void rotateApiSecret()
+  {
+    writeFile(apiSecretPath, generateRandomString(32));
+  }
 
   std::vector<IpAddress> getLocalAddresses()
   {
@@ -229,7 +239,10 @@ namespace Privileged {
     return ret;
   }
 
-  std::string getSelfHostname() { return rtrim(readFile(hostnamePath)); }
+  std::string getSelfHostname()
+  {
+    return rtrim(readFile(hostnamePath));
+  }
 
   bool setSelfHostname(std::string newHostname)
   {
@@ -241,5 +254,7 @@ namespace Privileged {
     return true;
   }
 
-  void updateHostsFile(std::map<std::string, IpAddress> data) {}
+  void updateHostsFile(std::map<std::string, IpAddress> data)
+  {
+  }
 }  // namespace Privileged

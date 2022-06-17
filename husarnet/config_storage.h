@@ -12,24 +12,36 @@
 
 using namespace nlohmann;  // json
 
-// TODO rozkminić czy da się to scalić z settings (network id =
-// global/daemon/manual i wyjebane?)
-
 // TODO rozkminić że niektóre akcje powinny być mocno poblokowane/powodować
 // crash jeśli zrobione bez unlocka - typu zmiana adresu dashbaorda
 
 // TODO protect writes with gil I guess
 
+// Remember to add sane defaults in husarnet_config.h
+// Keep the naming consistent, i.e use only enable* format, and *not* *enable or
+// disable*
 BETTER_ENUM(InternalSetting, int, websetupSecret = 1)
 BETTER_ENUM(
     UserSetting,
     int,
-    dashboardUrl = 1,
-    whitelistEnable = 2,
-    interfaceName = 3,
-    apiPort = 4)
+    dashboardUrl = 1,            // string
+    enableWhitelist = 2,         // bool
+    interfaceName = 3,           // string
+    apiPort = 4,                 // int
+    enableCompression = 5,       // bool
+    enableUdpTunelling = 6,      // bool
+    enableTcpTunelling = 7,      // bool
+    enableUdp = 8,               // bool
+    enableMulticast = 9,         // bool
+    overrideBaseAddress = 10,    // inet
+    overrideSourcePort = 11,     // int
+    extraAdvertisedAddress = 12  // inet
+)
 
 const std::string trueValue = "true";
+const std::string falseValue =
+    "false";  // This is not strictly checked. It's here just to provide a known
+              // placeholder
 
 class ConfigStorage {
   std::function<std::string()> readFunc;
@@ -75,6 +87,7 @@ class ConfigStorage {
   void setInternalSetting(InternalSetting setting, std::string value);
   void setInternalSetting(InternalSetting setting, bool value);
   void setInternalSetting(InternalSetting setting, int value);
+  void clearInternalSetting(InternalSetting setting);
 
   std::string getInternalSetting(InternalSetting setting);
   bool getInternalSettingBool(InternalSetting setting);
@@ -85,10 +98,13 @@ class ConfigStorage {
   void setUserSetting(UserSetting setting, std::string value);
   void setUserSetting(UserSetting setting, bool value);
   void setUserSetting(UserSetting setting, int value);
+  void setUserSetting(UserSetting setting, InetAddress inet);
+  void clearUserSetting(UserSetting setting);
 
   std::string getUserSetting(UserSetting setting);
   bool getUserSettingBool(UserSetting setting);
   int getUserSettingInt(UserSetting setting);
+  InetAddress getUserSettingInet(UserSetting setting);
 
   std::map<std::string, std::string> getUserSettings();
 };

@@ -2,16 +2,23 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
+#include <list>
 #include <unordered_set>
 #include <vector>
 #include "husarnet/device_id.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/peer_flags.h"
 #include "husarnet/ports/port_interface.h"
 
 const int TEARDOWN_TIMEOUT = 120 * 1000;
 
 class Peer {
- public:
+ private:
+  friend class PeerContainer;
+  friend class NgSocket;
+  friend class SecurityLayer;
+  friend class CompressionLayer;
+
   DeviceId id;
   Time lastPacket = 0;
   Time lastReestablish = 0;
@@ -41,10 +48,19 @@ class Peer {
   Time lastLatencySent = 0;
   fstring<8> heartbeatIdent;
 
-  uint64_t flags;
+  PeerFlags flags;
 
-  bool active()
-  {
-    return Port::getCurrentTime() - lastPacket < TEARDOWN_TIMEOUT;
-  }
+ public:
+  bool isActive();
+  bool isReestablishing();
+  bool isTunelled();
+  bool isSecure();
+
+  DeviceId getDeviceId();
+  IpAddress getIpAddress();
+
+  std::list<InetAddress> getSourceAddresses();
+  std::list<InetAddress> getTargetAddresses();
+  InetAddress getUsedTargetAddress();
+  InetAddress getLinkLocalAddress();
 };

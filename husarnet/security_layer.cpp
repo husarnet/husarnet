@@ -24,7 +24,6 @@ SecurityLayer::SecurityLayer(HusarnetManager* manager) : manager(manager)
   decryptedBuffer.resize(2000);
   ciphertextBuffer.resize(2100);
   cleartextBuffer.resize(2010);
-  compressBuffer.resize(2100);  // TODO move compression out of this layer
 
   peerContainer = manager->getPeerContainer();
 }
@@ -67,21 +66,7 @@ void SecurityLayer::handleHeartbeatReply(DeviceId source, fstring<8> ident)
   }
 }
 
-// TODO remove this
-// std::string SecurityLayer::peerInfo(DeviceId id)
-// {
-//   std::string infostr = socket->peerInfo(id);
-//   Peer* peer = getPeer(id);
-//   if(peer) {
-//     if(peer->negotiated)
-//       infostr += "  secure connection established\n";
-//     else
-//       infostr += "  establishing secure connection\n";
-//   }
-//   return infostr;
-// }
-
-void SecurityLayer::onLowerLayerData(DeviceId source, string_view data)
+void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
 {
   if(data.size() >= decryptedBuffer.size())
     return;  // sanity check
@@ -89,11 +74,11 @@ void SecurityLayer::onLowerLayerData(DeviceId source, string_view data)
   if(data[0] == 0) {  // data packet
     if(data.size() <= 25)
       return;
-    handleDataPacket(source, data);
+    handleDataPacket(peerId, data);
   } else if(data[0] == 1 || data[0] == 2 || data[0] == 3) {  // hello packet
     if(data.size() <= 25)
       return;
-    handleHelloPacket(source, data, (int)data[0]);
+    handleHelloPacket(peerId, data, (int)data[0]);
   } else if(data[0] == 4 || data[0] == 5) {  // heartbeat (hopefully they are
                                              // not cursed)
     if(data.size() < 9)
@@ -101,20 +86,20 @@ void SecurityLayer::onLowerLayerData(DeviceId source, string_view data)
 
     std::string ident = substr<1, 8>(data);
     if(data[0] == 4) {
-      handleHeartbeat(source, ident);
+      handleHeartbeat(peerId, ident);
     } else {
-      handleHeartbeatReply(source, ident);
+      handleHeartbeatReply(peerId, ident);
     }
   }
 }
 
-void SecurityLayer::handleDataPacket(DeviceId source, string_view data)
+void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 {
   const int headerSize = 1 + 24 + 16;
   if(data.size() <= headerSize + 8)
     return;
 
-  Peer* peer = peerContainer->getOrCreatePeer(source);  // TODO: DoS
+  Peer* peer = peerContainer->getOrCreatePeer(peerId);  // TODO: DoS
   if(peer == nullptr)
     return;
 
@@ -141,7 +126,7 @@ void SecurityLayer::handleDataPacket(DeviceId source, string_view data)
       string_view(decryptedBuffer).substr(8, decryptedSize - 8);
 
   if(r == 0) {
-    sendToUpperLayer(source, decryptedData);
+    sendToUpperLayer(peerId, decryptedData);
   } else {
     LOG("received forged message");
   }
@@ -157,19 +142,10 @@ void SecurityLayer::sendHelloPacket(Peer* peer, int num, uint64_t helloseq)
   packet += peer->id;
   packet += pack(this->helloseq);
   packet += pack(helloseq);
-  packet += pack(getMyFlags());
+  packet += pack(manager->getSelfFlags()->asBin());
   packet +=
       NgSocketCrypto::sign(packet, "ng-kx-pubkey", manager->getIdentity());
   sendToLowerLayer(peer->id, packet);
-}
-
-uint64_t SecurityLayer::getMyFlags()
-{
-  uint64_t flags = 0;
-
-  flags |= FLAG_SUPPORTS_FLAGS;
-
-  return flags;
 }
 
 void SecurityLayer::handleHelloPacket(
@@ -192,11 +168,11 @@ void SecurityLayer::handleHelloPacket(
   uint64_t yourHelloseq = unpack<uint64_t>(substr<65 + 16, 8>(data));
   uint64_t myHelloseq = unpack<uint64_t>(substr<65 + 24, 8>(data));
   fstring<64> signature = data.substr(data.size() - 64).str();
-  uint64_t flags = 0;
+  uint64_t flags_bin = 0;
   if(data.size() >= 64 + 65 + 32 + 8) {
-    flags = unpack<uint64_t>(substr<65 + 32, 8>(data));
+    flags_bin = unpack<uint64_t>(substr<65 + 32, 8>(data));
   }
-  LOGV("peer flags: %llx", (unsigned long long)flags);
+  LOGV("peer flags: %llx", (unsigned long long)flags_bin);
 
   if(targetId != manager->getIdentity()->getDeviceId()) {
     LOG("misdirected hello packet");
@@ -227,7 +203,7 @@ void SecurityLayer::handleHelloPacket(
     return;
   }
 
-  peer->flags = flags;
+  peer->flags = PeerFlags(flags_bin);
 
   int r;
   // key exchange is asymmetric, pretend that device with smaller ID is a
@@ -241,11 +217,13 @@ void SecurityLayer::handleHelloPacket(
         peer->rxKey.data(), peer->txKey.data(), peer->kxPubkey.data(),
         peer->kxPrivkey.data(), peerKxPubkey.data());
 
-  if(flags != 0) {
+  if(flags_bin != 0) {
     // we need to make sure both peers agree on flags - mix them into the key
     // exchange
-    peer->rxKey = mixFlags(peer->rxKey, flags, getMyFlags());
-    peer->txKey = mixFlags(peer->txKey, getMyFlags(), flags);
+    peer->rxKey =
+        mixFlags(peer->rxKey, flags_bin, manager->getSelfFlags()->asBin());
+    peer->txKey =
+        mixFlags(peer->txKey, manager->getSelfFlags()->asBin(), flags_bin);
   }
 
   if(r == 0) {

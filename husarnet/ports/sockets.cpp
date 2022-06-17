@@ -28,28 +28,28 @@ namespace OsSocket {
   struct sockaddr_in6 makeSockaddr(InetAddress addr, bool v6 = useV6)
   {
     if(v6) {
-      struct sockaddr_in6 s {
-      };
+      struct sockaddr_in6 s {};
       s.sin6_family = AF_INET6;
       s.sin6_port = htons(addr.port);
       memcpy(&s.sin6_addr, addr.ip.data.data(), 16);
       return s;
     } else {
-      struct sockaddr_in s {
-      };
+      struct sockaddr_in s {};
       s.sin_family = AF_INET;
       s.sin_port = htons(addr.port);
       if(!addr || addr.ip.isMappedV4()) {
         memcpy(&s.sin_addr, addr.ip.data.data() + 12, 4);
       }
-      struct sockaddr_in6 s6 {
-      };
+      struct sockaddr_in6 s6 {};
       memcpy(&s6, &s, sizeof(s));
       return s6;
     }
   }
 
-  sockaddr_in6 sockaddrFromIp(InetAddress ip) { return makeSockaddr(ip); }
+  sockaddr_in6 sockaddrFromIp(InetAddress ip)
+  {
+    return makeSockaddr(ip);
+  }
 
   InetAddress ipFromSockaddr(struct sockaddr_storage st)
   {
@@ -185,8 +185,7 @@ namespace OsSocket {
         return false;
       multicastUdpFd4 = fd;
 
-      struct ip_mreq mreq {
-      };
+      struct ip_mreq mreq {};
       memcpy(&mreq.imr_multiaddr, address.ip.data.data() + 12, 4);
 
       if(SOCKFUNC(setsockopt)(
@@ -205,8 +204,7 @@ namespace OsSocket {
       multicastUdpFd6 = fd;
 
 #ifndef ESP_PLATFORM
-      struct ipv6_mreq mreq {
-      };
+      struct ipv6_mreq mreq {};
       memcpy(&mreq.ipv6mr_multiaddr, address.ip.data.data(), 16);
       mreq.ipv6mr_interface = 0;
       if(SOCKFUNC(setsockopt)(
@@ -254,7 +252,7 @@ namespace OsSocket {
     auto sa = makeSockaddr(addr, useV6);
     socklen_t socklen = sizeof(sa);
     if(SOCKFUNC(connect)(fd, (sockaddr*)&sa, socklen) < 0) {
-      LOG("connection with the server failed");
+      LOG("connection with the server (%s) failed", addr.str().c_str());
       SOCKFUNC(close)(fd);
       return -1;
     }

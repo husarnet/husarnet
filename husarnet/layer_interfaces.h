@@ -20,66 +20,60 @@
 // is *lower* than ForUpperProducer FromLowerConsumer consumes data from
 // ForLowerProducer, thus ForLowerProducer is *above* LoverConsumer
 
-// TODO rename this file to something like
-// layer_glue/layer_definitions/layer_interface/…
-
 class FromUpperConsumer {
  public:
-  virtual void onUpperLayerData(DeviceId source, string_view data) = 0;
+  virtual void onUpperLayerData(DeviceId peerId, string_view data) = 0;
 };
 
 class ForUpperProducer {
  protected:
-  std::function<void(DeviceId source, string_view data)> fromUpperConsumer =
-      [](DeviceId source, string_view data) {
+  std::function<void(DeviceId peerId, string_view data)> fromUpperConsumer =
+      [](DeviceId peerId, string_view data) {
         LOG("dropping frame for upper layer");
       };
 
  public:
   void setUpperLayerConsumer(
-      std::function<void(DeviceId, string_view data)> func)
+      std::function<void(DeviceId peerId, string_view data)> func)
   {
     fromUpperConsumer = func;
   }
 
-  void sendToUpperLayer(DeviceId source, string_view data)
+  void sendToUpperLayer(DeviceId peerId, string_view data)
   {
-    fromUpperConsumer(source, data);
+    fromUpperConsumer(peerId, data);
   }
 };
 
 class FromLowerConsumer {
  public:
-  virtual void onLowerLayerData(DeviceId source, string_view data) = 0;
+  virtual void onLowerLayerData(DeviceId peerId, string_view data) = 0;
 };
 
 class ForLowerProducer {
  protected:
-  std::function<void(DeviceId source, string_view data)> fromLowerConsumer =
-      [](DeviceId source, string_view data) {
+  std::function<void(DeviceId peerId, string_view data)> fromLowerConsumer =
+      [](DeviceId peerId, string_view data) {
         LOG("dropping frame for lower layer");
       };
 
  public:
   void setLowerLayerConsumer(
-      std::function<void(DeviceId target, string_view data)> func)
+      std::function<void(DeviceId peerId, string_view data)> func)
   {
     fromLowerConsumer = func;
   }
 
-  void sendToLowerLayer(DeviceId target, string_view data)
+  void sendToLowerLayer(DeviceId peerId, string_view data)
   {
-    fromLowerConsumer(target, data);
+    fromLowerConsumer(peerId, data);
   }
 };
 
-class HigherLayer : public ForLowerProducer, public FromLowerConsumer {
-};
-class LowerLayer : public ForUpperProducer, public FromUpperConsumer {
-};
+class HigherLayer : public ForLowerProducer, public FromLowerConsumer {};
+class LowerLayer : public ForUpperProducer, public FromUpperConsumer {};
 
-class BidirectionalLayer : public HigherLayer, public LowerLayer {
-};
+class BidirectionalLayer : public HigherLayer, public LowerLayer {};
 
 inline void stackHigherOnLower(HigherLayer* higher, LowerLayer* lower)
 {

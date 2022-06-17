@@ -11,6 +11,8 @@
 #include "husarnet/ports/sockets.h"
 #include "husarnet/util.h"
 
+#define WEBSETUP_CONTACT_TIMEOUT_MS (15 * 60 * 1000)
+
 WebsetupConnection::WebsetupConnection(HusarnetManager* manager)
     : manager(manager)
 {
@@ -67,7 +69,7 @@ void WebsetupConnection::send(
     i++;
   }
 
-  LOGV("sending to websetup: %s", frame.c_str());
+  // LOGV("sending to websetup: %s", frame.c_str());
 
   sockaddr_in6 addr{};
   addr.sin6_family = AF_INET6;
@@ -86,17 +88,14 @@ void WebsetupConnection::sendJoinRequest(
     std::string newWebsetupSecret,
     std::string selfHostname)
 {
-  // TODO make it send init request on reboot
-  // send("init-request", {});
-  // sleep(5);
-  // jesli nie ma shared secret to nie ma sensu wysylac init-request
-  // rozwazyc przechowywanie init-code w internal/user settings (ale wtedy nie
-  // eksponowac w statusie tego klucza) zeby mozna bylo sprobować w niektorych
-  // sytuacjach zrobic join + mozna bylo latwo przekazac go jako zmienna
-  // srodowiskowa jesli jest secret to zrobic init-request niezaleznie ktore
-  // jest aktualnie wywolywane dodac mechanizm do ponawiania prob co np. 5s
-  // (pamietac o throttle na websetupie)
+  LOGV("Sending join request to websetup");
   send("init-request-join-code", {joinCode, newWebsetupSecret, selfHostname});
+}
+
+void WebsetupConnection::sendInit()
+{
+  LOGV("Sending init-request to websetup");
+  send("init-request", {});
 }
 
 Time WebsetupConnection::getLastContact()
@@ -104,9 +103,19 @@ Time WebsetupConnection::getLastContact()
   return lastContact;
 }
 
-void WebsetupConnection::run()
+void WebsetupConnection::periodicThread()
 {
-  bind();
+  while(true) {
+    if(lastInitReply < (Port::getCurrentTime() - WEBSETUP_CONTACT_TIMEOUT_MS)) {
+      sendInit();
+    }
+
+    sleep(5);  // Remember that websetup has it's throttling mechanism
+  }
+}
+
+void WebsetupConnection::handleConnectionThread()
+{
   while(true) {
     std::string buffer;
     buffer.resize(1024);
@@ -136,6 +145,17 @@ void WebsetupConnection::run()
     InetAddress replyAddress{sourceIp, htons(addr.sin6_port)};
     handleWebsetupPacket(replyAddress, buffer.substr(0, ret));
   }
+}
+
+void WebsetupConnection::start()
+{
+  bind();
+
+  Port::startThread(
+      [this]() { this->periodicThread(); }, "websetupPeriodic", 6000);
+
+  GIL::startThread(
+      [this]() { this->handleConnectionThread(); }, "websetupConnection", 6000);
 }
 
 void WebsetupConnection::handleWebsetupPacket(
@@ -193,6 +213,7 @@ std::list<std::string> WebsetupConnection::handleWebsetupCommand(
   if(command == "ping") {
     return {"pong"};
   } else if(command == "init-response") {
+    lastInitReply = Port::getCurrentTime();
     return {"ok"};
   } else if(command == "whitelist-add") {
     manager->whitelistAdd(IpAddress::fromBinary(decodeHex(payload)));

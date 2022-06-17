@@ -3,19 +3,22 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include "husarnet/husarnet_manager.h"
-#include "husarnet/ngsocket_interfaces.h"
+#include "husarnet/layer_interfaces.h"
 
 class CompressionLayer : public BidirectionalLayer {
+ private:
+  HusarnetManager* manager;
+  ConfigStorage& config;
+  PeerContainer* peerContainer;
+
+  std::string compressionBuffer;
+  std::string cleartextBuffer;
+
+  bool shouldProceed(DeviceId source);
+
  public:
-  CompressionLayer(HusarnetManager* manager) {}
+  CompressionLayer(HusarnetManager* manager);
 
-  void onUpperLayerData(DeviceId source, string_view data)
-  {
-    sendToLowerLayer(source, data);
-  }
-
-  void onLowerLayerData(DeviceId source, string_view data)
-  {
-    sendToUpperLayer(source, data);
-  };
+  void onUpperLayerData(DeviceId peerId, string_view data);
+  void onLowerLayerData(DeviceId peerId, string_view data);
 };
