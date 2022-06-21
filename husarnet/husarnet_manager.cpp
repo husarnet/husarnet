@@ -14,7 +14,6 @@
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/privileged_interface.h"
 #include "husarnet/ports/sockets.h"
-#include "husarnet/ports/unix/tun.h"  // TODO this is very wrong. Fix this
 #include "husarnet/security_layer.h"
 #include "husarnet/util.h"
 
@@ -264,20 +263,15 @@ std::string HusarnetManager::getInterfaceName()
 
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
-  // Look at port_interface.cpp in unix for `ip route add` call
-  if(std::string(id).find("\xff\x15\xf2\xd3\xa3\x89") == 0) {
-    std::vector<DeviceId> res;
-
-    // for (auto row : configTable->listValuesForNetwork("manual", "whitelist"))
-    // {
-    //   res.push_back(IpAddress::parse(row.key).toBinary());
-    // }
-    // TODO fix this
-
-    return res;
-  } else {
+  if(!id == deviceIdFromIpAddress(IpAddress::parse(multicastDestination))) {
     return {};
   }
+
+  std::vector<DeviceId> r;
+  for(auto& ipAddress : configStorage->getWhitelist()) {
+    r.push_back(deviceIdFromIpAddress(ipAddress));
+  }
+  return r;
 }
 
 int HusarnetManager::getLatency(DeviceId destination)
@@ -307,7 +301,7 @@ void HusarnetManager::getLicenseStage()
 
 void HusarnetManager::getIdentityStage()
 {
-  // TODO Long Term - reenable the smartcard support but with proper
+  // TODO long term - reenable the smartcard support but with proper
   // multiplatform support
   identity = Privileged::readIdentity();
 }

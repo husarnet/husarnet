@@ -12,11 +12,6 @@
 
 using namespace nlohmann;  // json
 
-// TODO rozkminić że niektóre akcje powinny być mocno poblokowane/powodować
-// crash jeśli zrobione bez unlocka - typu zmiana adresu dashbaorda
-
-// TODO protect writes with gil I guess
-
 // Remember to add sane defaults in husarnet_config.h
 // Keep the naming consistent, i.e use only enable* format, and *not* *enable or
 // disable*

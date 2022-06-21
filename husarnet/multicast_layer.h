@@ -4,10 +4,12 @@
 #pragma once
 #include "husarnet/ngsocket.h"
 
+class HusarnetManager;
+
 class MulticastLayer : public BidirectionalLayer {
  private:
+  HusarnetManager* manager;
   DeviceId deviceId;
-  std::function<std::vector<DeviceId>(DeviceId)> getMulticastDestinations;
 
  public:
   MulticastLayer(HusarnetManager* manager);

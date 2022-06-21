@@ -146,7 +146,7 @@ void ConfigStorage::whitelistRm(IpAddress address)
 
 bool ConfigStorage::isOnWhitelist(IpAddress address)
 {
-  // TODO Long Term - it'd be wise to optimize it (use hashmaps or sth)
+  // TODO long term - it'd be wise to optimize it (use hashmaps or sth)
   auto whitelist = currentData[WHITELIST_KEY];
   return std::find(begin(whitelist), end(whitelist), address.str()) !=
          std::end(whitelist);

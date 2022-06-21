@@ -65,7 +65,10 @@ static void ares_local_callback(
 }
 
 namespace Port {
-  void init() { ares_library_init(ARES_LIB_INIT_NONE); }
+  void init()
+  {
+    ares_library_init(ARES_LIB_INIT_NONE);
+  }
 
   void startThread(
       std::function<void()> func,
@@ -110,9 +113,9 @@ namespace Port {
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000 / 1000;
   }
 
-  // TODO this whole method should be rewritten *not* to utilize inline
-  // bash(?!) and *to* utilize netlink interface
-  TunTap* startTunTap(HusarnetManager* manager)
+  // TODO long term - this whole method should be rewritten *not* to utilize
+  // inline bash(?!) and *to* utilize netlink interface
+  HigherLayer* startTunTap(HusarnetManager* manager)
   {
     if(system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c "
               "10 200)") != 0) {
@@ -143,8 +146,8 @@ namespace Port {
     }
 
     // Multicast
-    if(system(("ip -6 route add ff15:f2d3:a389::/48 dev " + interfaceName +
-               " table local")
+    if(system(("ip -6 route add " + multicastDestination + "/48 dev " +
+               interfaceName + " table local")
                   .c_str()) != 0) {
       LOG("failed to setup multicast route");
     }

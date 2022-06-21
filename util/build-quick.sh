@@ -36,7 +36,3 @@ cp ${build_base}/win64/windows/husarnet.exe ${release_base}/
 # ESP32 builds
 
 # ${util_base}/build-esp32.sh
-
-# Smartcard module builds
-
-# TODO add smartcard builder

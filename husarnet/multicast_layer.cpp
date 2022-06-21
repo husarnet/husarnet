@@ -7,13 +7,10 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/util.h"
 
-MulticastLayer::MulticastLayer(HusarnetManager* manager)
+MulticastLayer::MulticastLayer(HusarnetManager* manager) : manager(manager)
 
 {
   deviceId = manager->getIdentity()->getDeviceId();
-  getMulticastDestinations = std::bind(
-      &HusarnetManager::getMulticastDestinations, manager,
-      std::placeholders::_1);
 }
 
 void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
@@ -93,7 +90,7 @@ void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
     msgData += dstAddress;
     msgData += packet.substr(40);
 
-    auto dst = this->getMulticastDestinations(dstAddress);
+    auto dst = manager->getMulticastDestinations(dstAddress);
     for(DeviceId dest : dst) {
       sendToLowerLayer(dest, msgData);
     }

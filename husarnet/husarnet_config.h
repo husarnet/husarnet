@@ -20,6 +20,8 @@ const IpAddress MULTICAST_ADDR_4 = IpAddress::parse("::ffff:E003:FC94");
 const IpAddress MULTICAST_ADDR_6 =
     IpAddress::parse("ff02:88bb:31e4:95f7:2b87:6b52:e112:19ac");
 
+const std::string multicastDestination = "ff15:f2d3:a389::";
+
 const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::dashboardUrl, "app.husarnet.com"},
     {UserSetting::enableWhitelist, trueValue},

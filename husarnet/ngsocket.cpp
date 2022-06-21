@@ -134,7 +134,7 @@ void NgSocket::periodicPeer(Peer* peer)
 {
   if(!peer->isActive()) {
     peer->connected = false;
-    // TODO: send unsubscribe to base
+    // TODO long term - send unsubscribe to base
   } else {
     if(peer->reestablishing && peer->connected &&
        Port::getCurrentTime() - peer->lastReestablish > REESTABLISH_TIMEOUT) {
@@ -197,7 +197,7 @@ void NgSocket::sendDataToPeer(Peer* peer, string_view data)
 
 void NgSocket::attemptReestablish(Peer* peer)
 {
-  // TODO: if (peer->reestablishing) something;
+  // TODO long term - if (peer->reestablishing) something;
   if(!configStorage.getUserSettingBool(UserSetting::enableUdp))
     return;
 

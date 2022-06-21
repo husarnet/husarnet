@@ -5,26 +5,21 @@
 
 #include <net/if.h>
 #include <signal.h>
-#include <stdio.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <thread>
 #include "husarnet/util.h"
+#include "stdio.h"
 
 namespace fs = std::filesystem;
 
 // TODO this whole file
 
 static FILE* if_inet6;
-
-// TODO make it sane or something - this must be called early
-static void beforeDropCap()
-{
-  if_inet6 = fopen("/proc/self/net/if_inet6", "r");
-}
 
 static bool isInterfaceBlacklisted(std::string name)
 {
@@ -161,9 +156,10 @@ static bool validateHostname(std::string hostname)
   return true;
 }
 
-const static std::string configPath = "/var/lib/husarnet/config.json";
-const static std::string identityPath = "/var/lib/husarnet/id";
-const static std::string apiSecretPath = "/var/lib/husarnet/api_secret";
+const static std::string configDir = "/var/lib/husarnet";
+const static std::string configPath = configDir + "/config.json";
+const static std::string identityPath = configDir + "/id";
+const static std::string apiSecretPath = configDir + "/api_secret";
 const static std::string hostnamePath = "/etc/hostname";
 const static std::string hostsPath = "/etc/hosts";
 // look for getHostsFilePath in the old code for windows paths
@@ -175,7 +171,9 @@ namespace Privileged {
 
   void start()
   {
-    beforeDropCap();
+    if_inet6 = fopen("/proc/self/net/if_inet6", "r");
+    mkdir(configDir.c_str(), 0700);
+    chmod(configDir.c_str(), 0700);
   }
 
   std::string readConfig()

@@ -5,6 +5,7 @@
 #include <functional>
 #include <list>
 #include "husarnet/ipaddress.h"
+#include "husarnet/layer_interfaces.h"
 
 class HusarnetManager;
 class TunTap;
@@ -24,5 +25,5 @@ namespace Port {
 
   Time getCurrentTime();  // some monotonic time in ms
 
-  TunTap* startTunTap(HusarnetManager* manager);
+  HigherLayer* startTunTap(HusarnetManager* manager);
 }  // namespace Port

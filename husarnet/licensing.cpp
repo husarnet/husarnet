@@ -99,7 +99,7 @@ static void verifySignature(
 
 License::License(std::string dashboardHostname)
 {
-  // TODO restore license.json filesystem caching mechanism
+  // TODO long term - restore license.json filesystem caching mechanism
   auto licenseJson = retrieveLicenseJson(dashboardHostname);
   verifySignature(
       base64Decode(licenseJson[LICENSE_SIGNATURE_KEY].get<std::string>()),

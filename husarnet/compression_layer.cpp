@@ -42,8 +42,8 @@ void CompressionLayer::onUpperLayerData(DeviceId peerId, string_view data)
   if(!shouldProceed(peerId)) {
     sendToLowerLayer(peerId, data);
   }
-  // TODO this is left here merely as an example. Reference old code and rewrite
-  // this #ifdef WITH_ZSTD
+  // TODO long term - this is left here merely as an example. Reference old code
+  // and rewrite this #ifdef WITH_ZSTD
   //   size_t s = ZSTD_compress(
   //       &cleartextBuffer[8], cleartextBuffer.size() - 8, data.data(),
   //       data.size(),
@@ -63,9 +63,8 @@ void CompressionLayer::onLowerLayerData(DeviceId peerId, string_view data)
     sendToUpperLayer(peerId, data);
   }
 
-  // TODO this is left here merely as an example. Reference old code and rewrite
-  // this
-  // #ifdef WITH_ZSTD
+  // TODO long term - this is left here merely as an example. Reference old code
+  // and rewrite this #ifdef WITH_ZSTD
   //   size_t s = ZSTD_decompress(
   //       data, data.size(), &decryptedBuffer[8],
   //       decryptedSize - 8);

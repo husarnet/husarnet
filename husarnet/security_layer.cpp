@@ -99,7 +99,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
   if(data.size() <= headerSize + 8)
     return;
 
-  Peer* peer = peerContainer->getOrCreatePeer(peerId);  // TODO: DoS
+  Peer* peer = peerContainer->getOrCreatePeer(peerId);  // TODO long term - DoS
   if(peer == nullptr)
     return;
 

@@ -97,8 +97,8 @@ void writeBlob(const char* name, const std::string& data)
   }
 }
 
-// TODO this is a copy of an old code. Will require some massaging in order to
-// work
+// TODO long term - this is a copy of an old code. Will require some massaging
+// in order to work
 // __attribute__((weak))
 // IpAddress resolveIp(const std::string& hostname) {
 //     struct addrinfo* result = nullptr;

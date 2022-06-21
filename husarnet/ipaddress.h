@@ -114,13 +114,14 @@ struct InetAddress {
 
   operator bool() { return ip; }
 
-  // TODO make it not use brackets for IPv4 addresses
+  // TODO long term - make it not use brackets for IPv4 addresses
   std::string str() const
   {
     return "[" + ip.str() + "]:" + std::to_string(port);
   }
 
-  // TODO make it handle addresses without brackets too (namely IPv4 ones)
+  // TODO long term - make it handle addresses without brackets too (namely IPv4
+  // ones)
   static InetAddress parse(std::string s)
   {
     int pos = (int)s.rfind(':');
