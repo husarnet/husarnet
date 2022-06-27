@@ -4,6 +4,8 @@
 #pragma once
 #include <functional>
 #include <list>
+#include <map>
+#include "husarnet/config_storage.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
 
@@ -26,4 +28,12 @@ namespace Port {
   Time getCurrentTime();  // some monotonic time in ms
 
   HigherLayer* startTunTap(HusarnetManager* manager);
+
+  std::map<UserSetting, std::string> getEnvironmentOverrides();
+
+  std::string readFile(std::string path);
+  bool writeFile(std::string path, std::string content);
+  bool isFile(std::string path);
+
+  void notifyReady();
 }  // namespace Port

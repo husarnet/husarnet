@@ -133,9 +133,6 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
 {
   whitelistAdd(getWebsetupAddress());
 
-  auto newWebsetupSecret =
-      setWebsetupSecret(encodeHex(generateRandomString(12)));
-
   std::string dashboardHostname;
   if(newHostname.empty()) {
     dashboardHostname = Privileged::getSelfHostname();
@@ -144,8 +141,7 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
     dashboardHostname = newHostname;
   }
 
-  websetup->sendJoinRequest(
-      parseJoinCode(joinCode), newWebsetupSecret, dashboardHostname);
+  websetup->join(parseJoinCode(joinCode), dashboardHostname);
 }
 
 bool HusarnetManager::isJoined()
@@ -160,7 +156,6 @@ bool HusarnetManager::isJoined()
 void HusarnetManager::changeServer(std::string domain)
 {
   configStorage->setUserSetting(UserSetting::dashboardUrl, domain);
-  exit(1);
 }
 
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)
@@ -283,6 +278,7 @@ void HusarnetManager::cleanup()
 {
   configStorage->groupChanges([&]() {
     configStorage->whitelistClear();
+    configStorage->whitelistAdd(getWebsetupAddress());
     configStorage->hostTableClear();
   });
 }
@@ -311,6 +307,9 @@ void HusarnetManager::startNetworkingStack()
   peerContainer = new PeerContainer(this);
 
   auto tunTap = Port::startTunTap(this);
+
+  Privileged::dropCapabilities();
+
   auto multicast = new MulticastLayer(this);
   auto compression = new CompressionLayer(this);
   securityLayer = new SecurityLayer(this);
@@ -351,8 +350,8 @@ void HusarnetManager::stage1()
   globalLogManager = logManager;
 
   configStorage = new ConfigStorage(
-      Privileged::readConfig, Privileged::writeConfig, userDefaults,
-      getEnvironmentOverrides(), internalDefaults);
+      this, Privileged::readConfig, Privileged::writeConfig, userDefaults,
+      Port::getEnvironmentOverrides(), internalDefaults);
 
   selfFlags = new PeerFlags();
 
@@ -389,6 +388,8 @@ void HusarnetManager::runHusarnet()
   stage1();
   stage2();
   stage3();
+
+  Port::notifyReady();
 
   while(true) {
     ngsocket->periodic();

@@ -2,22 +2,46 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "privileged_interface.h"
-
+#include <linux/securebits.h>
 #include <net/if.h>
 #include <signal.h>
+#include <sys/capability.h>
 #include <sys/ioctl.h>
+#include <sys/prctl.h>
 #include <sys/stat.h>
+#include <sys/un.h>
 #include <unistd.h>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <thread>
+#include "husarnet/ports/unix/privileged_process.h"
 #include "husarnet/util.h"
+#include "nlohmann/json.hpp"
 #include "stdio.h"
 
-namespace fs = std::filesystem;
+using namespace nlohmann;  // json
 
-// TODO this whole file
+// This file needs some explanation (specific to the Unix/Linux implementation)
+// First of all the code in the main thread is expected to drop as much
+// capabilities as possible, including chrooting itself to /var/lib/husarnet.
+// This has a couple of implications, like - we no longer have access to /proc,
+// /dev, /etc and other important directories. On order to continue to be able
+// to do some things in those spaces, we fork before we drop capabilities and
+// are letting the child to retain those "superpowers". That process is,
+// unsurprisingly, called `privileged_process` and all of it's code is in a
+// separate file. Communication with it is limited to a single, unnamed unix
+// socket and encapsulated using JSON. JSON is definitely like using a
+// sledgehammer to crack a nut, but 1) we're already using it in another part of
+// the codebase 2) it's easy 3) this interface is super low QPS one so let it
+// slide.
+// As per the implementation details - due to the fact that we chroot after we
+// drop capabilities are paths in the main process are skewed, thus `configDir`
+// variable is introduced and it's content will change during the lifetime of
+// the process. Also - because of that we are still able to manipulate files in
+// the /var/lib/husarnet directory from the main process, but 1) not any other
+// directories 2) as I written before - they're under `/` path and not
+// `/var/lib/husarnet`.
 
 static FILE* if_inet6;
 
@@ -104,101 +128,150 @@ static void getLocalIpv6Addresses(std::vector<IpAddress>& ret)
     fclose(f);
 }
 
-static bool writeFile(std::string path, std::string data)
-{
-  FILE* f = fopen((path + ".tmp").c_str(), "wb");
-  int ret = fwrite(data.data(), data.size(), 1, f);
-  if(ret != 1) {
-    LOG("could not write to %s (failed to write to temporary file)",
-        path.c_str());
-    return false;
-  }
-  fsync(fileno(f));
-  fclose(f);
+static std::string configDir = "/var/lib/husarnet";
 
-  if(rename((path + ".tmp").c_str(), path.c_str()) < 0) {
-    LOG("could not write to %s (rename failed)", path.c_str());
-    return false;
-  }
-  return true;
+static std::string getConfigPath()
+{
+  return configDir + "/config.json";
 }
 
-static std::string readFile(std::string path)
+static std::string getIdentityPath()
 {
-  std::ifstream f(path);
-  if(!f.good()) {
-    LOG("failed to open %s", path.c_str());
+  return configDir + "/id";
+}
+
+static std::string getApiSecretPath()
+{
+  return configDir + "/api_secret";
+}
+
+static int privilegedProcessFd = 0;
+
+static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
+{
+  assert(privilegedProcessFd != 0);
+
+  json frame = {
+      {"endpoint", endpoint._to_string()},
+      {"data", data},
+  };
+
+  auto frameStr = frame.dump(0);
+  if(send(privilegedProcessFd, frameStr.data(), frameStr.size() + 1, 0) < 0) {
+    perror("send");
     exit(1);
   }
 
-  std::stringstream buffer;
-  buffer << f.rdbuf();
+  char recvBuffer[40000];
 
-  return buffer.str();
-}
-
-static bool existsFile(std::string path)
-{
-  return fs::exists(path);
-}
-
-static bool validateHostname(std::string hostname)
-{
-  if(hostname.size() == 0)
-    return false;
-  for(char c : hostname) {
-    bool ok = ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
-              ('0' <= c && c <= '9') || (c == '_' || c == '-' || c == '.');
-    if(!ok) {
-      return false;
-    }
+  if(recv(privilegedProcessFd, recvBuffer, sizeof(recvBuffer), 0) < 0) {
+    perror("recv");
+    exit(1);
   }
-  return true;
-}
 
-const static std::string configDir = "/var/lib/husarnet";
-const static std::string configPath = configDir + "/config.json";
-const static std::string identityPath = configDir + "/id";
-const static std::string apiSecretPath = configDir + "/api_secret";
-const static std::string hostnamePath = "/etc/hostname";
-const static std::string hostsPath = "/etc/hosts";
-// look for getHostsFilePath in the old code for windows paths
+  auto response = json::parse(recvBuffer);
+  return response;
+}
 
 namespace Privileged {
   void init()
-  {
-  }
-
-  void start()
   {
     if_inet6 = fopen("/proc/self/net/if_inet6", "r");
     mkdir(configDir.c_str(), 0700);
     chmod(configDir.c_str(), 0700);
   }
 
+  void start()
+  {
+    int fds[2];  // end for parent, end for privileged subprocess
+    if(socketpair(AF_UNIX, SOCK_SEQPACKET, 0, fds) < 0) {
+      perror("socketpair");
+      exit(1);
+    }
+
+    if(fork() == 0) {
+      // Privileged
+      close(fds[0]);
+
+      auto privilegedProcess = new PrivilegedProcess();
+      privilegedProcess->init(fds[1]);
+      privilegedProcess->run();
+      _exit(1);
+    } else {
+      // Parent
+      close(fds[1]);
+      privilegedProcessFd = fds[0];
+
+      // Technically this call should be done here but it makes more sense to do
+      // so after interfaces are configured, so it's exposed to upper layers.
+
+      // dropCapabilities();
+    }
+  }
+
+  void dropCapabilities()
+  {
+    if(chroot(configDir.c_str()) < 0) {
+      perror("chroot");
+      exit(1);
+    }
+
+    if(chdir("/") < 0) {
+      perror("chdir");
+      exit(1);
+    }
+
+    configDir = "/";  // this is true only after we do the chroot
+
+    if(prctl(PR_SET_SECUREBITS, SECBIT_KEEP_CAPS | SECBIT_NOROOT) < 0) {
+      perror("prctl");
+      exit(1);
+    }
+
+    cap_t caps = cap_init();
+    if(caps == NULL) {
+      perror("cap_init");
+      exit(1);
+    }
+
+    if(cap_set_proc(caps) == -1) {
+      perror("cap_set_proc");
+      exit(1);
+    }
+
+    if(cap_free(caps) != 0) {
+      perror("cap_free");
+      exit(1);
+    }
+  }
+
   std::string readConfig()
   {
-    if(!existsFile(configPath)) {
+    auto configPath = getConfigPath();
+
+    if(!Port::isFile(configPath)) {
       return "";
     }
 
-    return readFile(configPath);
+    return Port::readFile(configPath);
   }
 
   void writeConfig(std::string data)
   {
-    writeFile(configPath, data);
+    Port::writeFile(getConfigPath(), data);
   }
 
   Identity readIdentity()
   {
-    if(!existsFile(identityPath)) {
+    auto identityPath = getIdentityPath();
+
+    if(!Port::isFile(identityPath)) {
       auto identity = Identity::create();
       Privileged::writeIdentity(identity);
       return identity;
     }
 
-    auto identity = Identity::deserialize(readFile(identityPath));
+    auto identity = Identity::deserialize(Port::readFile(identityPath));
 
     if(!identity.isValid()) {
       identity = Identity::create();
@@ -210,21 +283,23 @@ namespace Privileged {
 
   void writeIdentity(Identity identity)
   {
-    writeFile(identityPath, identity.serialize());
+    Port::writeFile(getIdentityPath(), identity.serialize());
   }
 
   std::string readApiSecret()
   {
-    if(!existsFile(apiSecretPath)) {
+    auto apiSecretPath = getApiSecretPath();
+
+    if(!Port::isFile(apiSecretPath)) {
       rotateApiSecret();
     }
 
-    return readFile(apiSecretPath);
+    return Port::readFile(apiSecretPath);
   }
 
   void rotateApiSecret()
   {
-    writeFile(apiSecretPath, generateRandomString(32));
+    Port::writeFile(getApiSecretPath(), generateRandomString(32));
   }
 
   std::vector<IpAddress> getLocalAddresses()
@@ -239,20 +314,24 @@ namespace Privileged {
 
   std::string getSelfHostname()
   {
-    return rtrim(readFile(hostnamePath));
+    return callPrivilegedProcess(PrivilegedMethod::getSelfHostname, {});
   }
 
+  // TODO long term - prevent websetup from renaming this host for no reason
   bool setSelfHostname(std::string newHostname)
   {
-    if(!validateHostname(newHostname)) {
-      return false;
-    }
-
-    writeFile(hostnamePath, newHostname);
-    return true;
+    return callPrivilegedProcess(
+        PrivilegedMethod::setSelfHostname, newHostname);
   }
 
   void updateHostsFile(std::map<std::string, IpAddress> data)
   {
+    std::map<std::string, std::string> dataStringified;
+
+    for(auto& [hostname, address] : data) {
+      dataStringified.insert({hostname, address.toString()});
+    }
+
+    callPrivilegedProcess(PrivilegedMethod::updateHostsFile, dataStringified);
   }
 }  // namespace Privileged

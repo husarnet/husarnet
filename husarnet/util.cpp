@@ -142,3 +142,18 @@ std::string rtrim(std::string s)
       s.end());
   return s;
 }
+
+std::string camelCaseToUserscores(std::string camel)
+{
+  // TODO long term - add protection for strings too short
+  std::string underscored = camel.substr(0, 1);
+  for(auto it = camel.begin() + 1; it != camel.end(); it++) {
+    if(isupper(*it) && islower(*(it - 1))) {
+      underscored += "_";
+    }
+
+    underscored += *it;
+  }
+
+  return underscored;
+}

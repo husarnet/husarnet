@@ -114,9 +114,8 @@ void ApiServer::runThread()
         auto hostTable = manager->getConfigStorage().getHostTable();
         std::map<std::string, std::string> hostTableStringified;
 
-        for(auto& element : hostTable) {
-          hostTableStringified.insert(
-              {element.first, element.second.toString()});
+        for(auto& [hostname, address] : hostTable) {
+          hostTableStringified.insert({hostname, address.toString()});
         }
 
         std::list<std::string> whitelistStringified;

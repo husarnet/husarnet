@@ -200,4 +200,5 @@ struct pair_hash {
 std::string generateRandomString(const int length);
 std::string strToUpper(std::string input);
 std::string strToLower(std::string input);
-std::string rtrim(std::string);
+std::string rtrim(std::string input);
+std::string camelCaseToUserscores(std::string camel);

@@ -16,11 +16,16 @@ class WebsetupConnection {
   Time lastInitReply = 0;
   int websetupFd;
 
+  // Join data
+  std::string joinCode;
+  std::string reportedHostname;
+
   void bind();
   void send(
       InetAddress replyAddress,
       std::string command,
       std::list<std::string> arguments);
+  void sendJoinRequest();
   void send(std::string command, std::list<std::string> arguments);
   void handleWebsetupPacket(InetAddress replyAddress, std::string data);
   std::list<std::string> handleWebsetupCommand(
@@ -35,10 +40,6 @@ class WebsetupConnection {
   WebsetupConnection(HusarnetManager* manager);
   void start();
 
-  void sendJoinRequest(
-      std::string joinCode,
-      std::string newWebsetupSecret,
-      std::string selfHostname);
-
+  void join(std::string joinCode, std::string reportedHostname);
   Time getLastContact();
 };

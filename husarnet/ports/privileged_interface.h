@@ -14,6 +14,8 @@ namespace Privileged {
   void start();  // Should be called as soon as the parent process is ready to
                  // drop all privileges
 
+  void dropCapabilities();
+
   std::string readConfig();
   void writeConfig(std::string);
 
@@ -25,13 +27,8 @@ namespace Privileged {
 
   std::vector<IpAddress> getLocalAddresses();
 
-  // std::string updateLicenseFile();
-
   std::string getSelfHostname();
   bool setSelfHostname(std::string newHostname);
 
   void updateHostsFile(std::map<std::string, IpAddress> data);
-
-  // void saveLicenseFile(std::string contents);
-  // std::string readLicenseFile();
 }  // namespace Privileged

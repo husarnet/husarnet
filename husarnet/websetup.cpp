@@ -83,13 +83,20 @@ void WebsetupConnection::send(
   }
 }
 
-void WebsetupConnection::sendJoinRequest(
-    std::string joinCode,
-    std::string newWebsetupSecret,
-    std::string selfHostname)
+void WebsetupConnection::sendJoinRequest()
 {
+  if(joinCode.empty()) {
+    return;
+  }
+
+  if(reportedHostname.empty()) {
+    return;
+  }
+
   LOGV("Sending join request to websetup");
-  send("init-request-join-code", {joinCode, newWebsetupSecret, selfHostname});
+  send(
+      "init-request-join-code",
+      {joinCode, manager->getWebsetupSecret(), reportedHostname});
 }
 
 void WebsetupConnection::sendInit()
@@ -107,7 +114,11 @@ void WebsetupConnection::periodicThread()
 {
   while(true) {
     if(lastInitReply < (Port::getCurrentTime() - WEBSETUP_CONTACT_TIMEOUT_MS)) {
-      sendInit();
+      if(joinCode.empty()) {
+        sendInit();
+      } else {
+        sendJoinRequest();
+      }
     }
 
     sleep(5);  // Remember that websetup has it's throttling mechanism
@@ -150,6 +161,10 @@ void WebsetupConnection::handleConnectionThread()
 void WebsetupConnection::start()
 {
   bind();
+
+  if(manager->getWebsetupSecret().empty()) {
+    manager->setWebsetupSecret(encodeHex(generateRandomString(12)));
+  }
 
   Port::startThread(
       [this]() { this->periodicThread(); }, "websetupPeriodic", 6000);
@@ -261,4 +276,16 @@ std::list<std::string> WebsetupConnection::handleWebsetupCommand(
   }
 
   return {"bad-command"};
+}
+
+void WebsetupConnection::join(
+    std::string joinCode,
+    std::string reportedHostname)
+{
+  manager->setWebsetupSecret(encodeHex(generateRandomString(12)));
+
+  this->joinCode = joinCode;
+  this->reportedHostname = reportedHostname;
+
+  lastInitReply = 0;  // initiate immediate join action
 }

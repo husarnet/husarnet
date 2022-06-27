@@ -4,6 +4,7 @@
 #include "husarnet/config_storage.h"
 #include <stdio.h>
 #include <iostream>
+#include "husarnet/husarnet_manager.h"
 #include "husarnet/util.h"
 
 #define HOST_TABLE_KEY "host-table"
@@ -12,12 +13,14 @@
 #define USER_SETTINGS_KEY "user-settings"
 
 ConfigStorage::ConfigStorage(
+    HusarnetManager* manager,
     std::function<std::string()> readFunc,
     std::function<void(std::string)> writeFunc,
     std::map<UserSetting, std::string> userDefaults,
     std::map<UserSetting, std::string> userOverrides,
     std::map<InternalSetting, std::string> internalDefaults)
-    : readFunc(readFunc),
+    : manager(manager),
+      readFunc(readFunc),
       writeFunc(writeFunc),
       userDefaults(userDefaults),
       userOverrides(userOverrides),
@@ -66,6 +69,16 @@ void ConfigStorage::save()
   }
 
   writeFunc(serialize());
+  updateHostsInSystem();
+}
+
+void ConfigStorage::updateHostsInSystem()
+{
+  if(hostCacheInvalidated) {
+    manager->updateHosts();
+  }
+
+  hostCacheInvalidated = false;
 }
 
 json ConfigStorage::getCurrentData()
@@ -85,12 +98,15 @@ void ConfigStorage::hostTableAdd(std::string hostname, IpAddress address)
 {
   currentData[HOST_TABLE_KEY][hostname] = address.toString();
 
+  hostCacheInvalidated = true;
   save();
 }
 
 void ConfigStorage::hostTableRm(std::string hostname)
 {
   currentData[HOST_TABLE_KEY].erase(hostname);
+
+  hostCacheInvalidated = true;
   save();
 }
 
@@ -109,6 +125,8 @@ std::map<std::string, IpAddress> ConfigStorage::getHostTable()
 void ConfigStorage::hostTableClear()
 {
   currentData[HOST_TABLE_KEY].clear();
+
+  hostCacheInvalidated = true;
   save();
 }
 
@@ -305,37 +323,4 @@ std::map<std::string, std::string> ConfigStorage::getUserSettings()
   }
 
   return allSettings;
-}
-
-extern char** environ;
-
-std::map<UserSetting, std::string> getEnvironmentOverrides()
-{
-  std::map<UserSetting, std::string> result;
-  for(char** environ_ptr = environ; *environ_ptr != nullptr; environ_ptr++) {
-    std::string envUpper = strToUpper(std::string(*environ_ptr));
-    std::string prefix = "HUSARNET_";
-
-    if(!startswith(envUpper, prefix)) {
-      continue;
-    }
-
-    std::vector<std::string> splitted = split(*environ_ptr, '=', 1);
-    if(splitted.size() == 1) {
-      continue;
-    }
-
-    std::string keyName = strToLower(splitted[0].substr(prefix.size()));
-    auto keyOptional = UserSetting::_from_string_nothrow(keyName.c_str());
-    if(!keyOptional) {
-      continue;
-    }
-
-    auto key = *keyOptional;
-    std::string value = splitted[1];
-
-    result[key] = value;
-  }
-
-  return result;
 }

@@ -3,11 +3,21 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ports/port_interface.h"
 #include <ares.h>
+#include <signal.h>
+#include <stdio.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <thread>
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/unix/tun.h"
 #include "husarnet/util.h"
+
+extern char** environ;
 
 struct ares_result {
   int status;
@@ -67,6 +77,7 @@ static void ares_local_callback(
 namespace Port {
   void init()
   {
+    signal(SIGPIPE, SIG_IGN);
     ares_library_init(ARES_LIB_INIT_NONE);
   }
 
@@ -155,4 +166,89 @@ namespace Port {
     return tunTap;
   }
 
+  std::map<UserSetting, std::string> getEnvironmentOverrides()
+  {
+    std::map<UserSetting, std::string> result;
+    for(char** environ_ptr = environ; *environ_ptr != nullptr; environ_ptr++) {
+      for(auto enumName : UserSetting::_names()) {
+        auto candidate =
+            "HUSARNET_" + strToUpper(camelCaseToUserscores(enumName));
+
+        std::vector<std::string> splitted = split(*environ_ptr, '=', 1);
+        if(splitted.size() == 1) {
+          continue;
+        }
+
+        auto key = splitted[0];
+        auto value = splitted[1];
+
+        if(key == candidate) {
+          result[UserSetting::_from_string(enumName)] = value;
+          LOG("Overriding user setting %s=%s", enumName, value.c_str());
+        }
+      }
+    }
+
+    return result;
+  }
+
+  std::string readFile(std::string path)
+  {
+    std::ifstream f(path);
+    if(!f.good()) {
+      LOG("failed to open %s", path.c_str());
+      exit(1);
+    }
+
+    std::stringstream buffer;
+    buffer << f.rdbuf();
+
+    return buffer.str();
+  }
+
+  bool writeFile(std::string path, std::string data)
+  {
+    FILE* f = fopen((path + ".tmp").c_str(), "wb");
+    int ret = fwrite(data.data(), data.size(), 1, f);
+    if(ret != 1) {
+      LOG("could not write to %s (failed to write to temporary file)",
+          path.c_str());
+      return false;
+    }
+    fsync(fileno(f));
+    fclose(f);
+
+    if(rename((path + ".tmp").c_str(), path.c_str()) < 0) {
+      LOG("could not write to %s (rename failed)", path.c_str());
+      return false;
+    }
+    return true;
+  }
+
+  bool isFile(std::string path)
+  {
+    return std::filesystem::exists(path);
+  }
+
+  void notifyReady()
+  {
+    const char* msg = "READY=1";
+    const char* sockPath = getenv("NOTIFY_SOCKET");
+    if(sockPath != NULL) {
+      sockaddr_un un;
+      un.sun_family = AF_UNIX;
+      assert(strlen(sockPath) < sizeof(un.sun_path) - 1);
+
+      memcpy(&un.sun_path[0], sockPath, strlen(sockPath) + 1);
+
+      if(un.sun_path[0] == '@') {
+        un.sun_path[0] = '\0';
+      }
+
+      int fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+      assert(fd != 0);
+      sendto(fd, msg, strlen(msg), MSG_NOSIGNAL, (sockaddr*)(&un), sizeof(un));
+      close(fd);
+    }
+  }
 }  // namespace Port

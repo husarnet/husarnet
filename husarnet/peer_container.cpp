@@ -4,6 +4,7 @@
 #include "husarnet/peer_container.h"
 #include <sodium.h>
 #include "husarnet/husarnet_manager.h"
+#include "husarnet/util.h"
 
 PeerContainer::PeerContainer(HusarnetManager* manager) : manager(manager)
 {

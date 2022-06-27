@@ -7,7 +7,6 @@
 #include <stdexcept>
 #include "enum.h"
 #include "husarnet/ipaddress.h"
-#include "husarnet/util.h"
 #include "nlohmann/json.hpp"
 
 using namespace nlohmann;  // json
@@ -38,7 +37,10 @@ const std::string falseValue =
     "false";  // This is not strictly checked. It's here just to provide a known
               // placeholder
 
+class HusarnetManager;
+
 class ConfigStorage {
+  HusarnetManager* manager;
   std::function<std::string()> readFunc;
   std::function<void(std::string)> writeFunc;
   std::map<UserSetting, std::string> userDefaults;
@@ -48,6 +50,7 @@ class ConfigStorage {
   json currentData;
 
   bool shouldSaveImmediately = true;
+  bool hostCacheInvalidated = true;
 
   std::string serialize();
   void deserialize(std::string blob);
@@ -56,6 +59,7 @@ class ConfigStorage {
 
  public:
   ConfigStorage(
+      HusarnetManager* manager,
       std::function<std::string()> readFunc,
       std::function<void(std::string)> writeFunc,
       std::map<UserSetting, std::string> userDefaults,
@@ -63,6 +67,8 @@ class ConfigStorage {
       std::map<InternalSetting, std::string> internalDefaults);
 
   ConfigStorage(ConfigStorage&) = delete;
+
+  void updateHostsInSystem();
 
   json getCurrentData();
 
@@ -103,5 +109,3 @@ class ConfigStorage {
 
   std::map<std::string, std::string> getUserSettings();
 };
-
-std::map<UserSetting, std::string> getEnvironmentOverrides();
