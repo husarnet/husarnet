@@ -99,7 +99,6 @@ add_library(husarnet_core STATIC ${husarnet_core_SRC})
 include(FetchContent)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
-  target_link_libraries(husarnet_core cap)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)

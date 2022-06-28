@@ -70,8 +70,7 @@ static bool isInterfaceBlacklisted(std::string name)
 static void getLocalIpv4Addresses(std::vector<IpAddress>& ret)
 {
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
-  struct ifconf configuration {
-  };
+  struct ifconf configuration {};
 
   if(fd < 0)
     return;
@@ -185,6 +184,24 @@ static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
   return response;
 }
 
+struct cap_header_struct {
+  __u32 version;
+  int pid;
+};
+
+struct cap_data_struct {
+  __u32 effective;
+  __u32 permitted;
+  __u32 inheritable;
+};
+
+static int set_cap(int flags)
+{
+  cap_header_struct capheader = {_LINUX_CAPABILITY_VERSION_1, 0};
+  cap_data_struct capdata;
+  capdata.inheritable = capdata.permitted = capdata.effective = flags;
+  return (int)syscall(SYS_capset, &capheader, &capdata);
+}
 namespace Privileged {
   void init()
   {
@@ -240,19 +257,8 @@ namespace Privileged {
       exit(1);
     }
 
-    cap_t caps = cap_init();
-    if(caps == NULL) {
-      perror("cap_init");
-      exit(1);
-    }
-
-    if(cap_set_proc(caps) == -1) {
-      perror("cap_set_proc");
-      exit(1);
-    }
-
-    if(cap_free(caps) != 0) {
-      perror("cap_free");
+    if(set_cap(0) < 0) {
+      perror("set_cap");
       exit(1);
     }
   }
