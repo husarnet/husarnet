@@ -15,6 +15,8 @@ for arch in $unix_archs; do
     done
 done
 
+exit 0
+
 # Docker builds
 
 # This is commented out as it's intended to be disabled in CI. You can still run it manually.
