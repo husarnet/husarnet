@@ -4,10 +4,13 @@
 #pragma once
 #include <list>
 #include <string>
+
 #include "husarnet/ports/port.h"
+#include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/sockets.h"
 
 class HusarnetManager;
+struct InetAddress;
 
 class WebsetupConnection {
   HusarnetManager* manager;

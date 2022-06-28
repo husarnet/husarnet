@@ -2,6 +2,12 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/compression_layer.h"
+
+#include "husarnet/config_storage.h"
+#include "husarnet/husarnet_manager.h"
+#include "husarnet/peer.h"
+#include "husarnet/peer_container.h"
+#include "husarnet/peer_flags.h"
 #ifdef WITH_ZSTD
 #include "zstd.h"
 #endif

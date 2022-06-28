@@ -2,10 +2,11 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/util.h"
-#include <time.h>
+
 #include <algorithm>
 #include <climits>
 #include <random>
+#include <time.h>
 
 LogManager* globalLogManager = nullptr;
 

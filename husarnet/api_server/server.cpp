@@ -2,8 +2,21 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/api_server/server.h"
+
+#include <list>
+#include <map>
+#include <stdlib.h>
+#include <utility>
+
+#include "husarnet/config_storage.h"
 #include "husarnet/husarnet_manager.h"
+#include "husarnet/ipaddress.h"
+#include "husarnet/logmanager.h"
+#include "husarnet/peer.h"
+#include "husarnet/peer_container.h"
 #include "husarnet/util.h"
+
+#include "httplib.h"
 #include "nlohmann/json.hpp"
 
 using namespace nlohmann;  // json

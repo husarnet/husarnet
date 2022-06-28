@@ -3,8 +3,8 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 // A fake DNS server for use when editing /etc/hosts file is not possible.
-#include "ngsocket.h"
-#include "util.h"
+#include "husarnet/ngsocket.h"
+#include "husarnet/util.h"
 
 struct ResolveResponse {
   enum

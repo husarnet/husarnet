@@ -2,11 +2,16 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include "ports/port.h"
-
+#include <functional>
+#include <string>
+#include <thread>
 #include <unordered_set>
+#include <utility>
 #include <vector>
+
 #include "husarnet/config_storage.h"
+#include "husarnet/device_id.h"
+#include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/licensing.h"
 #include "husarnet/logmanager.h"
@@ -15,7 +20,16 @@
 #include "husarnet/security_layer.h"
 #include "husarnet/websetup.h"
 
+#include "ports/port.h"
+
 class SecurityLayer;
+class ConfigStorage;
+class License;
+class LogManager;
+class NgSocket;
+class PeerContainer;
+class PeerFlags;
+class WebsetupConnection;
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;

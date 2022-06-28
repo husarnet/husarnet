@@ -1,10 +1,11 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include <ctype.h>
-#include <stdio.h>
 #include <cassert>
 #include <cstring>
+#include <ctype.h>
+#include <stdio.h>
+
 #include "husarnet/ports/port.h"
 // Copied from LwIP core/ipv6/ip6_addr.c
 

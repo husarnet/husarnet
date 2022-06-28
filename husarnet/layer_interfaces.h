@@ -3,6 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <functional>
+
 #include "husarnet/device_id.h"
 #include "husarnet/string_view.h"
 
@@ -55,9 +56,12 @@ class ForLowerProducer {
   void sendToLowerLayer(DeviceId peerId, string_view data);
 };
 
-class HigherLayer : public ForLowerProducer, public FromLowerConsumer {};
-class LowerLayer : public ForUpperProducer, public FromUpperConsumer {};
+class HigherLayer : public ForLowerProducer, public FromLowerConsumer {
+};
+class LowerLayer : public ForUpperProducer, public FromUpperConsumer {
+};
 
-class BidirectionalLayer : public HigherLayer, public LowerLayer {};
+class BidirectionalLayer : public HigherLayer, public LowerLayer {
+};
 
 void stackHigherOnLower(HigherLayer* higher, LowerLayer* lower);

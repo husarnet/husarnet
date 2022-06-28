@@ -1,10 +1,14 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "parser.h"
-#include <iostream>
+#include "husarnet/cli/parser.h"
+
+#include <map>
+
+#include "husarnet/husarnet_config.h"
+
 #include "docopt.h"
-#include "husarnet_config.h"
+#include "docopt_value.h"
 
 static const char USAGE[] =
     R"(Husarnet Client

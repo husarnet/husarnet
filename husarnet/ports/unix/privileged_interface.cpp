@@ -1,22 +1,33 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "privileged_interface.h"
+#include "husarnet/ports/privileged_interface.h"
+
+#include <assert.h>
+#include <fcntl.h>
+#include <initializer_list>
 #include <linux/securebits.h>
+#include <map>
 #include <net/if.h>
-#include <signal.h>
+#include <netinet/in.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/capability.h>
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/un.h>
 #include <unistd.h>
-#include <filesystem>
-#include <fstream>
-#include <sstream>
-#include <thread>
+#include <utility>
+
+#include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/unix/privileged_process.h"
+
+#include "husarnet/identity.h"
+#include "husarnet/ipaddress.h"
 #include "husarnet/util.h"
+
 #include "nlohmann/json.hpp"
 #include "stdio.h"
 
@@ -59,7 +70,8 @@ static bool isInterfaceBlacklisted(std::string name)
 static void getLocalIpv4Addresses(std::vector<IpAddress>& ret)
 {
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
-  struct ifconf configuration {};
+  struct ifconf configuration {
+  };
 
   if(fd < 0)
     return;
@@ -256,10 +268,7 @@ namespace Privileged {
     return Port::readFile(configPath);
   }
 
-  void writeConfig(std::string data)
-  {
-    Port::writeFile(getConfigPath(), data);
-  }
+  void writeConfig(std::string data) { Port::writeFile(getConfigPath(), data); }
 
   Identity readIdentity()
   {

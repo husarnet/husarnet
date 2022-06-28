@@ -2,11 +2,20 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ports/unix/privileged_process.h"
+
+#include <initializer_list>
+#include <map>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
 #include <sys/prctl.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include <sys/socket.h>
+
+#include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
+
+#include "husarnet/ipaddress.h"
 #include "husarnet/util.h"
 
 const static std::string hostnamePath = "/etc/hostname";
@@ -71,6 +80,9 @@ void PrivilegedProcess::run()
 
   while(true) {
     long s = recv(fd, recvBuffer, sizeof(recvBuffer), 0);
+    if(s < 0) {
+      exit(2);
+    }
 
     auto request = json::parse(recvBuffer);
     PrivilegedMethod endpoint = *PrivilegedMethod::_from_string_nothrow(

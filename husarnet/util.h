@@ -7,10 +7,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
-#include "husarnet/fstring.h"
-#include "husarnet/logmanager.h"
+
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
+
+#include "husarnet/fstring.h"
+#include "husarnet/logmanager.h"
 #include "husarnet/string_view.h"
 
 #ifdef __ANDROID__

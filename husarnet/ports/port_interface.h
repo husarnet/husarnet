@@ -5,12 +5,17 @@
 #include <functional>
 #include <list>
 #include <map>
+#include <stdint.h>
+#include <string>
+
 #include "husarnet/config_storage.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
 
 class HusarnetManager;
 class TunTap;
+class HigherLayer;
+class UserSetting;
 
 using Time = int64_t;
 

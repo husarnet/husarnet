@@ -2,11 +2,14 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "dns_server.h"
+
 #include <unordered_map>
 #include <vector>
-#include "port.h"
-#include "sockets.h"
-#include "util.h"
+
+#include "husarnet/ports/port.h"
+#include "husarnet/ports/sockets.h"
+
+#include "husarnet/util.h"
 
 std::string read_label(const std::string& data, int& pos)
 {

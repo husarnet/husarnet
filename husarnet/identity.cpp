@@ -2,9 +2,12 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/identity.h"
+
 #include <sstream>
+
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
+
 #include "sodium.h"
 
 Identity::Identity()

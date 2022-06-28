@@ -2,9 +2,11 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/gil.h"
+
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/threads_port.h"
+
 #include "husarnet/util.h"
 
 namespace GIL {

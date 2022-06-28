@@ -3,6 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <list>
+
 #include "enum.h"
 
 // Those values are actually hardcoded in the protocol. Do *not* change the

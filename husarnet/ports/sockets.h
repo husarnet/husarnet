@@ -7,9 +7,13 @@
 
 #include <functional>
 #include <memory>
+#include <netinet/in.h>
+#include <sys/socket.h>
 #include <vector>
-#include "husarnet/ipaddress.h"
+
 #include "husarnet/ports/threads_port.h"
+
+#include "husarnet/ipaddress.h"
 #include "husarnet/string_view.h"
 
 using mutex_guard = std::lock_guard<std::recursive_mutex>;

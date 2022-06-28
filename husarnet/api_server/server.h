@@ -2,10 +2,17 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
+#include <string>
+
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 
 class HusarnetManager;
+
+namespace httplib {
+  struct Request;
+  struct Response;
+}  // namespace httplib
 
 class ApiServer {
  private:

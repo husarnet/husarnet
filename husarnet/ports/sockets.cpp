@@ -1,14 +1,12 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
+#include "husarnet/ports/sockets.h"
 
-// port.h has to be the first include, newline afterwards prevents autoformatter
-// from sorting it
 #include "husarnet/ports/port.h"
+#include "husarnet/ports/port_interface.h"
 
 #include "husarnet/gil.h"
-#include "husarnet/ports/port_interface.h"
-#include "husarnet/ports/sockets.h"
 #include "husarnet/util.h"
 
 namespace OsSocket {
@@ -28,28 +26,28 @@ namespace OsSocket {
   struct sockaddr_in6 makeSockaddr(InetAddress addr, bool v6 = useV6)
   {
     if(v6) {
-      struct sockaddr_in6 s {};
+      struct sockaddr_in6 s {
+      };
       s.sin6_family = AF_INET6;
       s.sin6_port = htons(addr.port);
       memcpy(&s.sin6_addr, addr.ip.data.data(), 16);
       return s;
     } else {
-      struct sockaddr_in s {};
+      struct sockaddr_in s {
+      };
       s.sin_family = AF_INET;
       s.sin_port = htons(addr.port);
       if(!addr || addr.ip.isMappedV4()) {
         memcpy(&s.sin_addr, addr.ip.data.data() + 12, 4);
       }
-      struct sockaddr_in6 s6 {};
+      struct sockaddr_in6 s6 {
+      };
       memcpy(&s6, &s, sizeof(s));
       return s6;
     }
   }
 
-  sockaddr_in6 sockaddrFromIp(InetAddress ip)
-  {
-    return makeSockaddr(ip);
-  }
+  sockaddr_in6 sockaddrFromIp(InetAddress ip) { return makeSockaddr(ip); }
 
   InetAddress ipFromSockaddr(struct sockaddr_storage st)
   {
@@ -185,7 +183,8 @@ namespace OsSocket {
         return false;
       multicastUdpFd4 = fd;
 
-      struct ip_mreq mreq {};
+      struct ip_mreq mreq {
+      };
       memcpy(&mreq.imr_multiaddr, address.ip.data.data() + 12, 4);
 
       if(SOCKFUNC(setsockopt)(
@@ -204,7 +203,8 @@ namespace OsSocket {
       multicastUdpFd6 = fd;
 
 #ifndef ESP_PLATFORM
-      struct ipv6_mreq mreq {};
+      struct ipv6_mreq mreq {
+      };
       memcpy(&mreq.ipv6mr_multiaddr, address.ip.data.data(), 16);
       mreq.ipv6mr_interface = 0;
       if(SOCKFUNC(setsockopt)(

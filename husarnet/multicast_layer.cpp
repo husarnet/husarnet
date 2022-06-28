@@ -2,9 +2,14 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/multicast_layer.h"
-#include <functional>
+
+#include <array>
+#include <stdint.h>
+#include <string>
+
+#include "husarnet/fstring.h"
 #include "husarnet/husarnet_manager.h"
-#include "husarnet/ports/port.h"
+#include "husarnet/identity.h"
 #include "husarnet/util.h"
 
 MulticastLayer::MulticastLayer(HusarnetManager* manager) : manager(manager)

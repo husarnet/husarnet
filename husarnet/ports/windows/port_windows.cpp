@@ -1,19 +1,17 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-
-// port.h has to be the first include, newline afterwards prevents autoformatter
-// from sorting it
-#include "port.h"
-
+#include <chrono>
 #include <iphlpapi.h>
 #include <mswsock.h>
+#include <vector>
 #include <ws2ipdef.h>
 #include <ws2tcpip.h>
-#include <chrono>
-#include <vector>
-#include "husarnet/gil.h"
+
+#include "husarnet/ports/port.h"
 #include "husarnet/ports/threads_port.h"
+
+#include "husarnet/gil.h"
 #include "husarnet/util.h"
 
 bool husarnetVerbose = true;

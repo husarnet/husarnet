@@ -2,8 +2,15 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
+
+#include <map>
 #include <sstream>
 #include <string>
+#include <utility>
+
+#include "husarnet/ports/port_interface.h"
+
+#include "husarnet/ipaddress.h"
 #include "husarnet/util.h"
 
 #ifdef _WIN32

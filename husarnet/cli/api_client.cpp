@@ -2,6 +2,12 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/cli/api_client.h"
+
+#include <fstream>
+#include <map>
+#include <stdlib.h>
+#include <utility>
+
 #include "husarnet/util.h"
 
 httplib::Client prepareApiClient()

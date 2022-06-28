@@ -2,9 +2,16 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/cli/dispatch.h"
+
+#include <exception>
 #include <iostream>
+#include <string>
+
 #include "husarnet/cli/api_client.h"
+#include "husarnet/cli/parser.h"
 #include "husarnet/husarnet_manager.h"
+
+#include "httplib.h"
 
 void dispatchCli(CLIOpts opts)
 {

@@ -1,20 +1,20 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
+#include "husarnet/licensing.h"
 
-// port.h has to be the first include, newline afterwards prevents autoformatter
-// from sorting it
-#include "ports/port.h"
-
-#include <sodium.h>
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include "husarnet/husarnet_config.h"
-#include "husarnet/licensing.h"
+#include <sodium.h>
+
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/sockets.h"
+
+#include "husarnet/husarnet_config.h"
 #include "husarnet/util.h"
+
+#include "ports/port.h"
 
 json retrieveLicenseJson(std::string dashboardHostname)
 {

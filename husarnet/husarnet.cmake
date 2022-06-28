@@ -1,9 +1,11 @@
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(DEBUG)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g -fsanitize=undefined -fsanitize=undefined") # -fsanitize=thread
-  set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
+
+# set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
+# set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "include-what-you-use")
 else()
   set(COMMONFLAGS "${COMMONFLAGS} -O3 -ffunction-sections -fdata-sections")
 endif()

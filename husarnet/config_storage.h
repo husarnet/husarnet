@@ -5,8 +5,12 @@
 #include <functional>
 #include <list>
 #include <stdexcept>
-#include "enum.h"
+#include <string>
+
+#include "husarnet/config_storage.h"
 #include "husarnet/ipaddress.h"
+
+#include "enum.h"
 #include "nlohmann/json.hpp"
 
 using namespace nlohmann;  // json

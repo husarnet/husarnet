@@ -5,10 +5,12 @@
 #include <list>
 #include <unordered_set>
 #include <vector>
+
+#include "husarnet/ports/port_interface.h"
+
 #include "husarnet/device_id.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/peer_flags.h"
-#include "husarnet/ports/port_interface.h"
 
 const int TEARDOWN_TIMEOUT = 120 * 1000;
 

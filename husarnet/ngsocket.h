@@ -4,8 +4,16 @@
 #pragma once
 #include <functional>
 #include <map>
+#include <memory>
+#include <stdint.h>
+#include <string>
+#include <utility>
 #include <vector>
-#include "enum.h"
+
+#include "husarnet/ports/port.h"
+#include "husarnet/ports/port_interface.h"
+#include "husarnet/ports/sockets.h"
+
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
@@ -13,15 +21,24 @@
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
 #include "husarnet/licensing.h"
+#include "husarnet/ngsocket.h"
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/ngsocket_messages.h"
 #include "husarnet/peer_container.h"
-#include "husarnet/ports/port.h"
-#include "husarnet/ports/port_interface.h"
-#include "husarnet/ports/sockets.h"
 #include "husarnet/queue.h"
+#include "husarnet/string_view.h"
+
+#include "enum.h"
 
 class HusarnetManager;
+class ConfigStorage;
+class Identity;
+class Peer;
+class PeerContainer;
+
+namespace OsSocket {
+  struct FramedTcpConnection;
+}  // namespace OsSocket
 
 const int REFRESH_TIMEOUT = 25 * 1000;
 const int NAT_INIT_TIMEOUT = 3 * 1000;
@@ -50,7 +67,6 @@ class NgSocket : public LowerLayer {
   Time lastRefresh = 0;
   Time lastPeriodic = 0;
   uint64_t natInitCounter = 0;
-  uint64_t tcpCounter = 0;
   std::string cookie;
 
   Time lastBaseTcpMessage = 0;
@@ -72,7 +88,6 @@ class NgSocket : public LowerLayer {
   Time lastNatInitSent = 0;
 
   bool natInitConfirmed = true;
-  int queuedPackets = 0;
 
   int sourcePort = 0;
 

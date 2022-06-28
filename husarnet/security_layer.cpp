@@ -2,11 +2,14 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/security_layer.h"
+
 #include <sodium.h>
 #include <unordered_map>
-#include "husarnet/ngsocket_crypto.h"
+
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
+
+#include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
 
 static fstring<32> mixFlags(fstring<32> key, uint64_t flags1, uint64_t flags2)

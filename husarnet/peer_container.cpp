@@ -2,7 +2,9 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/peer_container.h"
+
 #include <sodium.h>
+
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/util.h"
 

@@ -3,9 +3,12 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <mutex>
+
+#include "husarnet/ports/port.h"
+
+#include "husarnet/util.h"
+
 #include "husarnet.h"
-#include "port.h"
-#include "util.h"
 
 class WinTap {
   void* tap_fd;

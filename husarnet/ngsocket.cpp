@@ -2,19 +2,36 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ngsocket.h"
+
+#include <algorithm>
+#include <array>
+#include <assert.h>
 #include <mutex>
+#include <stdlib.h>
 #include <unordered_map>
-#include <unordered_set>
-#include <vector>
+
+#include "husarnet/ports/port_interface.h"
+#include "husarnet/ports/privileged_interface.h"
+#include "husarnet/ports/sockets.h"
+
+#include "husarnet/config_storage.h"
+#include "husarnet/device_id.h"
+#include "husarnet/fstring.h"
 #include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
+#include "husarnet/identity.h"
+#include "husarnet/ipaddress.h"
 #include "husarnet/ngsocket_crypto.h"
-#include "husarnet/ports/port.h"
-#include "husarnet/ports/port_interface.h"
-#include "husarnet/ports/privileged_interface.h"
+#include "husarnet/ngsocket_messages.h"
+#include "husarnet/peer.h"
+#include "husarnet/peer_container.h"
 #include "husarnet/queue.h"
 #include "husarnet/util.h"
+
+namespace OsSocket {
+  struct FramedTcpConnection;
+}  // namespace OsSocket
 
 #if defined(ESP_PLATFORM)
 const int WORKER_QUEUE_SIZE = 16;

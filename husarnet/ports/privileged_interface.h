@@ -6,8 +6,11 @@
 #include <map>
 #include <string>
 #include <vector>
+
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
+
+struct IpAddress;
 
 namespace Privileged {
   void init();   // Should be called as early as possible

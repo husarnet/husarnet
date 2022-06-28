@@ -4,6 +4,7 @@
 #pragma once
 #include <map>
 #include <string>
+
 #include "httplib.h"
 
 httplib::Client prepareApiClient();

@@ -2,11 +2,14 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include <tcpip_adapter.h>
+
+#include "husarnet/ports/port.h"
+
+#include "husarnet/util.h"
+
 #include "esp_system.h"
 #include "nvs.h"
 #include "nvs_flash.h"
-#include "port.h"
-#include "util.h"
 
 bool husarnetVerbose = true;
 

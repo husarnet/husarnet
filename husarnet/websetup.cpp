@@ -2,13 +2,24 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/websetup.h"
-#include <iterator>
-#include <sstream>
+
+#include <array>
+#include <assert.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <unistd.h>
+
+#include "husarnet/ports/port.h"
+
+#include "husarnet/device_id.h"
 #include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
-#include "husarnet/ports/port.h"
-#include "husarnet/ports/sockets.h"
+#include "husarnet/ipaddress.h"
+#include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
 
 #define WEBSETUP_CONTACT_TIMEOUT_MS (15 * 60 * 1000)

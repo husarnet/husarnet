@@ -2,6 +2,7 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/util.h"
+
 #include <catch2/catch.hpp>
 
 TEST_CASE("split whitespace")

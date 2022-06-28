@@ -2,10 +2,15 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/config_storage.h"
-#include <stdio.h>
-#include <iostream>
+
+#include <algorithm>
+#include <initializer_list>
+#include <iterator>
+#include <map>
+#include <utility>
+
 #include "husarnet/husarnet_manager.h"
-#include "husarnet/util.h"
+#include "husarnet/ipaddress.h"
 
 #define HOST_TABLE_KEY "host-table"
 #define WHITELIST_KEY "whitelist"

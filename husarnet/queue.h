@@ -3,6 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <deque>
+
 #include "husarnet/ports/threads_port.h"
 // simple thread safe queue
 
