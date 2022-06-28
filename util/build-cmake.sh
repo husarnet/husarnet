@@ -44,7 +44,6 @@ pushd ${build_dir}
 cmake -G "Ninja" \
       -DCMAKE_INSTALL_PREFIX=${output_dir} \
       -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
-      -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_SHARED_LIBS=false \
       ${source_dir}
 
