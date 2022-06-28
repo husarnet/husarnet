@@ -16,7 +16,7 @@ jobs:
         run: ./util/build-prepare.sh
 
       - name: Build for all platforms and archs
-        run: ./util/build-quick.sh
+        run: ./util/build-all.sh
 
       # - name: Prepare tests
       #   run: ./util/test-prepare.sh
