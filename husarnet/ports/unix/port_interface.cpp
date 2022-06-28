@@ -242,7 +242,10 @@ namespace Port {
     return true;
   }
 
-  bool isFile(std::string path) { return std::filesystem::exists(path); }
+  bool isFile(std::string path)
+  {
+    return std::filesystem::exists(path);
+  }
 
   void notifyReady()
   {

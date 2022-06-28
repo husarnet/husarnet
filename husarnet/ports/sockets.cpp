@@ -47,7 +47,10 @@ namespace OsSocket {
     }
   }
 
-  sockaddr_in6 sockaddrFromIp(InetAddress ip) { return makeSockaddr(ip); }
+  sockaddr_in6 sockaddrFromIp(InetAddress ip)
+  {
+    return makeSockaddr(ip);
+  }
 
   InetAddress ipFromSockaddr(struct sockaddr_storage st)
   {
@@ -270,7 +273,10 @@ namespace OsSocket {
     TcpDataCallback dataCallback;
     TcpErrorCallback errorCallback;
 
-    FramedTcpConnection() { readBuffer.resize(TCP_READ_BUFFER); }
+    FramedTcpConnection()
+    {
+      readBuffer.resize(TCP_READ_BUFFER);
+    }
   };
 
   std::vector<std::shared_ptr<FramedTcpConnection> > tcpConnections;

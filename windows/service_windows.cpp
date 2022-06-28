@@ -24,9 +24,14 @@ class WinTapDelegate : public NgSocketDelegate {
   WinTap* tap;
 
  public:
-  WinTapDelegate(WinTap* tap) : tap(tap) {}
+  WinTapDelegate(WinTap* tap) : tap(tap)
+  {
+  }
 
-  void onDataPacket(DeviceId source, string_view data) { tap->write(data); }
+  void onDataPacket(DeviceId source, string_view data)
+  {
+    tap->write(data);
+  }
 };
 
 int mySystem(std::string cmd)

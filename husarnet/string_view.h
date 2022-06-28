@@ -10,7 +10,9 @@ struct string_view {
   const char* m_data = nullptr;
   size_t m_size = 0;
 
-  string_view() {}
+  string_view()
+  {
+  }
 
   // cppcheck-suppress noExplicitConstructor
   string_view(const std::string& s)
@@ -19,7 +21,9 @@ struct string_view {
     m_size = s.size();
   }
 
-  string_view(const char* data, size_t size) : m_data(data), m_size(size) {}
+  string_view(const char* data, size_t size) : m_data(data), m_size(size)
+  {
+  }
 
   string_view substr(long start, long size) const
   {
@@ -37,13 +41,25 @@ struct string_view {
     return string_view(m_data + start, m_size - start);
   }
 
-  size_t size() const { return m_size; }
+  size_t size() const
+  {
+    return m_size;
+  }
 
-  const char* data() const { return m_data; }
+  const char* data() const
+  {
+    return m_data;
+  }
 
-  operator std::string() const { return std::string(m_data, m_size); }
+  operator std::string() const
+  {
+    return std::string(m_data, m_size);
+  }
 
-  std::string str() const { return std::string(m_data, m_size); }
+  std::string str() const
+  {
+    return std::string(m_data, m_size);
+  }
 
   const char& operator[](long index) const
   {

@@ -277,7 +277,10 @@ struct DnsSocketWrapper : NgSocket, NgSocketDelegate {
     OsSocket::udpSend(recursiveDnsServer, newData, dnsFd);
   }
 
-  void periodic() override { socket->periodic(); }
+  void periodic() override
+  {
+    socket->periodic();
+  }
 
   void onDataPacket(DeviceId source, string_view data) override
   {

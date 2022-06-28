@@ -9,7 +9,10 @@
 #include "husarnet/util.h"
 
 namespace ServiceHelper {
-  bool modifyHostname(std::string hostname) { return false; }
+  bool modifyHostname(std::string hostname)
+  {
+    return false;
+  }
 
   std::vector<std::pair<IpAddress, std::string>> getHostsFileAtStartup()
   {

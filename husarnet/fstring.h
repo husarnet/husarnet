@@ -21,13 +21,25 @@ struct fstring : std::array<unsigned char, size> {
     memcpy(this->data(), s.data(), size);
   }
 
-  fstring() { memset(this->data(), 0, size); }
+  fstring()
+  {
+    memset(this->data(), 0, size);
+  }
 
-  std::string substr(int a, int l) { return std::string(*this).substr(a, l); }
+  std::string substr(int a, int l)
+  {
+    return std::string(*this).substr(a, l);
+  }
 
-  explicit fstring(const char* s) { memcpy(this->data(), s, size); }
+  explicit fstring(const char* s)
+  {
+    memcpy(this->data(), s, size);
+  }
 
-  operator bool() { return *this == fstring(); }
+  operator bool()
+  {
+    return *this == fstring();
+  }
 };
 
 namespace std {

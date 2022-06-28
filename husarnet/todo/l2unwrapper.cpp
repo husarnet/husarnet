@@ -14,7 +14,10 @@ struct UnwrapperImpl : NgSocket, NgSocketDelegate {
   NgSocket* socket;
   std::string selfMacAddr;
 
-  void periodic() override { socket->periodic(); }
+  void periodic() override
+  {
+    socket->periodic();
+  }
 
   void onDataPacket(DeviceId source, string_view data) override
   {

@@ -16,7 +16,10 @@ class WinTap {
 
  public:
   static WinTap* create(std::string savedDeviceName);
-  std::string getDeviceName() { return deviceName; }
+  std::string getDeviceName()
+  {
+    return deviceName;
+  }
   std::string getNetshName();
   void bringUp();
   std::string getMac();

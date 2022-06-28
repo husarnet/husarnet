@@ -21,17 +21,34 @@ namespace std {
 struct IpAddress {
   std::array<unsigned char, 16> data;
 
-  IpAddress() : data() {}
+  IpAddress() : data()
+  {
+  }
 
-  bool operator==(const IpAddress other) const { return data == other.data; }
+  bool operator==(const IpAddress other) const
+  {
+    return data == other.data;
+  }
 
-  bool operator<(const IpAddress other) const { return data < other.data; }
+  bool operator<(const IpAddress other) const
+  {
+    return data < other.data;
+  }
 
-  bool operator!=(const IpAddress other) const { return !(*this == other); }
+  bool operator!=(const IpAddress other) const
+  {
+    return !(*this == other);
+  }
 
-  operator bool() const { return *this != IpAddress(); }
+  operator bool() const
+  {
+    return *this != IpAddress();
+  }
 
-  bool isLinkLocal() const { return data[0] == 0xfe && data[1] == 0x80; }
+  bool isLinkLocal() const
+  {
+    return data[0] == 0xfe && data[1] == 0x80;
+  }
 
   bool isMappedV4() const
   {
@@ -53,12 +70,24 @@ struct IpAddress {
     return false;
   }
 
-  bool isFC94() const { return data[0] == 0xfc && data[1] == 0x94; }
+  bool isFC94() const
+  {
+    return data[0] == 0xfc && data[1] == 0x94;
+  }
 
-  std::string toBinary() { return std::string((char*)data.data(), 16); }
+  std::string toBinary()
+  {
+    return std::string((char*)data.data(), 16);
+  }
 
-  fstring<16> toFstring() { return fstring<16>((const char*)data.data()); }
-  std::string toString() { return str(); }
+  fstring<16> toFstring()
+  {
+    return fstring<16>((const char*)data.data());
+  }
+  std::string toString()
+  {
+    return str();
+  }
 
   static IpAddress fromBinary(fstring<16> s)
   {
@@ -94,7 +123,10 @@ struct IpAddress {
   std::string str() const;
   std::string ipv4Str() const;
   static IpAddress parse(const char* s);
-  static IpAddress parse(const std::string& s) { return parse(s.c_str()); }
+  static IpAddress parse(const std::string& s)
+  {
+    return parse(s.c_str());
+  }
 };
 
 struct InetAddress {
@@ -111,9 +143,15 @@ struct InetAddress {
     return std::make_pair(ip, port) == std::make_pair(other.ip, other.port);
   }
 
-  bool operator!=(const InetAddress other) const { return !(*this == other); }
+  bool operator!=(const InetAddress other) const
+  {
+    return !(*this == other);
+  }
 
-  operator bool() { return ip; }
+  operator bool()
+  {
+    return ip;
+  }
 
   // TODO long term - make it not use brackets for IPv4 addresses
   std::string str() const

@@ -13,7 +13,10 @@ namespace GIL {
 
   std::mutex globalLock;
 
-  void init() { lock(); }
+  void init()
+  {
+    lock();
+  }
 
   void startThread(
       std::function<void()> func,
@@ -37,9 +40,15 @@ namespace GIL {
   }
 
 #ifndef DEBUG_LOCKS
-  void lock() { globalLock.lock(); }
+  void lock()
+  {
+    globalLock.lock();
+  }
 
-  void unlock() { globalLock.unlock(); }
+  void unlock()
+  {
+    globalLock.unlock();
+  }
 #else
   void lock()
   {

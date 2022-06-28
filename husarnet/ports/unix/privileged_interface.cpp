@@ -268,7 +268,10 @@ namespace Privileged {
     return Port::readFile(configPath);
   }
 
-  void writeConfig(std::string data) { Port::writeFile(getConfigPath(), data); }
+  void writeConfig(std::string data)
+  {
+    Port::writeFile(getConfigPath(), data);
+  }
 
   Identity readIdentity()
   {
