@@ -1,4 +1,5 @@
 build/
+unix/build/
 default_wifi_config.h
 /notes.md
 /husarnet.c

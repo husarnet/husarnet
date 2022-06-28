@@ -41,8 +41,7 @@ mkdir -p ${output_dir}
 # Actually build the thing
 pushd ${build_dir}
 
-cmake -G Ninja \
-      -DSODIUM_SRC=${base_dir}/deps/libsodium/src/libsodium \
+cmake -G "Ninja" \
       -DCMAKE_INSTALL_PREFIX=${output_dir} \
       -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
       -DBUILD_SHARED_LIBS=false \

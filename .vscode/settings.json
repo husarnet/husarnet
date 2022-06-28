@@ -65,6 +65,30 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "list": "cpp"
-    }
+        "forward_list": "cpp",
+        "valarray": "cpp"
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}/unix",
+    "cSpell.words": [
+        "DEVICEID",
+        "Husarion",
+        "Husarnet",
+        "HUSARNET",
+        "IDSTR",
+        "libsodium",
+        "LOGV",
+        "Michał",
+        "microcontrollers",
+        "microservices",
+        "ngsocket",
+        "qsize",
+        "secretbox",
+        "stoi",
+        "tunelled",
+        "Websetup",
+        "Zieliński",
+        "zielmicha"
+    ],
+    "cmake.configureOnOpen": true,
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

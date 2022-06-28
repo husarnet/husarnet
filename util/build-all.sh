@@ -15,12 +15,6 @@ for arch in $unix_archs; do
     done
 done
 
-# Prepare the (unix) tests runtime
-
-mkdir -p ${build_tests_base}
-cp ${build_base}/amd64/unix/husarnet ${build_tests_base}/husarnet
-cp ${build_base}/amd64/unix/tests ${build_tests_base}/unit-tests
-
 # Docker builds
 
 # This is commented out as it's intended to be disabled in CI. You can still run it manually.
@@ -39,4 +33,4 @@ cp ${build_base}/win64/windows/husarnet.exe ${release_base}/
 
 # Smartcard module builds
 
-# @TODO add smartcard builder
+# TODO long term - add smartcard builder

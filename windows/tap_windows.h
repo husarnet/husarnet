@@ -1,8 +1,14 @@
+// Copyright (c) 2022 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #pragma once
 #include <mutex>
+
+#include "husarnet/ports/port.h"
+
+#include "husarnet/util.h"
+
 #include "husarnet.h"
-#include "port.h"
-#include "util.h"
 
 class WinTap {
   void* tap_fd;
@@ -10,7 +16,10 @@ class WinTap {
 
  public:
   static WinTap* create(std::string savedDeviceName);
-  std::string getDeviceName() { return deviceName; }
+  std::string getDeviceName()
+  {
+    return deviceName;
+  }
   std::string getNetshName();
   void bringUp();
   std::string getMac();
