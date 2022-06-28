@@ -3,11 +3,13 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ports/privileged_interface.h"
 
+#include <initializer_list>
+#include <map>
+#include <utility>
+
 #include <assert.h>
 #include <fcntl.h>
-#include <initializer_list>
 #include <linux/securebits.h>
-#include <map>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <stdint.h>
@@ -19,7 +21,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <utility>
 
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/unix/privileged_process.h"

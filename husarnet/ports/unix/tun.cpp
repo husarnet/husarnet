@@ -3,10 +3,11 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ports/unix/tun.h"
 
+#include <functional>
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <functional>
 #include <linux/if_tun.h>
 #include <net/if.h>
 #include <stdio.h>

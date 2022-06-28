@@ -3,11 +3,13 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ports/port_interface.h"
 
-#include <ares.h>
-#include <assert.h>
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <thread>
+
+#include <ares.h>
+#include <assert.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <stdio.h>
@@ -16,7 +18,6 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <thread>
 #include <time.h>
 #include <unistd.h>
 

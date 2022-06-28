@@ -5,8 +5,9 @@
 
 #include <fstream>
 #include <map>
-#include <stdlib.h>
 #include <utility>
+
+#include <stdlib.h>
 
 #include "husarnet/util.h"
 

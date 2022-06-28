@@ -68,10 +68,12 @@ ForEachMacros:
   - BOOST_FOREACH
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: "^<.*"
-    Priority: 10
   - Regex: '^<.*\.h>'
+    Priority: 10
+    SortPriority: 20
+  - Regex: "^<.*"
     Priority: 20
+    SortPriority: 10
   - Regex: '^"husarnet/ports/.*\.h"'
     Priority: 30
   - Regex: '^"husarnet/.*\.h"'

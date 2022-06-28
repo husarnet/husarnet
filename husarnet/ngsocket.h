@@ -5,10 +5,11 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <stdint.h>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <stdint.h>
 
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"

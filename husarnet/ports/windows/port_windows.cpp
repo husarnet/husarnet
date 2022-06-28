@@ -2,9 +2,10 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include <chrono>
+#include <vector>
+
 #include <iphlpapi.h>
 #include <mswsock.h>
-#include <vector>
 #include <ws2ipdef.h>
 #include <ws2tcpip.h>
 
