@@ -3,7 +3,7 @@ ARG TARGETPLATFORM
 RUN echo $TARGETPLATFORM
 
 RUN apt-get update -y && apt-get install -y git
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends linux-headers-generic ninja-build cmake build-essential g++-mingw-w64
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3 linux-headers-generic ninja-build cmake build-essential g++-mingw-w64
 RUN ln -sf /usr/include/asm-generic /usr/include/asm
 
 WORKDIR /husarnet
