@@ -2,7 +2,7 @@ name: Build & test
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   # When changing build_and_test steps remember to sync the steps with the other YAMLs
@@ -16,16 +16,16 @@ jobs:
         run: ./util/build-prepare.sh
 
       - name: Build for all platforms and archs
-        run: ./util/build-all.sh
+        run: ./util/build-quick.sh
 
-      - name: Prepare tests
-        run: ./util/test-prepare.sh
+      # - name: Prepare tests
+      #   run: ./util/test-prepare.sh
 
-      - name: Run UTs
-        run: ./util/test-unit.sh
+      # - name: Run UTs
+      #   run: ./util/test-unit.sh
 
-      - name: Run static analysis (cppcheck)
-        run: ./util/test-cppcheck.sh
+      # - name: Run static analysis (cppcheck)
+      #   run: ./util/test-cppcheck.sh
 
   bump_version:
     needs: build_and_test
@@ -39,7 +39,7 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Bump version
         run: python ./util/version-bump.py

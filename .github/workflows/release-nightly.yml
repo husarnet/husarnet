@@ -2,7 +2,7 @@ name: Release nightly
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,16 +18,16 @@ jobs:
         run: ./util/build-prepare.sh
 
       - name: Build for all platforms and archs
-        run: ./util/build-all.sh
+        run: ./util/build-quick.sh
 
-      - name: Prepare tests
-        run: ./util/test-prepare.sh
+      # - name: Prepare tests
+      #   run: ./util/test-prepare.sh
 
-      - name: Run UTs
-        run: ./util/test-unit.sh
+      # - name: Run UTs
+      #   run: ./util/test-unit.sh
 
-      - name: Run static analysis (cppcheck)
-        run: ./util/test-cppcheck.sh
+      # - name: Run static analysis (cppcheck)
+      #   run: ./util/test-cppcheck.sh
 
       - name: Save artifacts
         uses: actions/upload-artifact@v2
@@ -35,38 +35,39 @@ jobs:
           name: packages
           path: ./build/release
 
-  build_windows_installer:
-    needs: build_and_test
+  # build_windows_installer:
+  #   needs: build_and_test
 
-    runs-on: windows-2019
+  #   runs-on: windows-2019
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: Fetch artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: packages
+  #     - name: Fetch artifacts
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: packages
 
-      - name: Copy .exe and license to installer dir
-        run: |
-          copy husarnet.exe windows\installer
-          copy LICENSE.txt windows\installer
-        shell: cmd
+  #     - name: Copy .exe and license to installer dir
+  #       run: |
+  #         copy husarnet.exe windows\installer
+  #         copy LICENSE.txt windows\installer
+  #       shell: cmd
 
-      - name: Building the installer
-        run: |
-          "%programfiles(x86)%\Inno Setup 6\iscc.exe" windows\installer\script.iss
-        shell: cmd
+  #     - name: Building the installer
+  #       run: |
+  #         "%programfiles(x86)%\Inno Setup 6\iscc.exe" windows\installer\script.iss
+  #       shell: cmd
 
-      - name: Upload installer
-        uses: actions/upload-artifact@v2
-        with:
-          name: windows_installer
-          path: windows\installer\Output\husarnet-setup.exe
+  #     - name: Upload installer
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: windows_installer
+  #         path: windows\installer\Output\husarnet-setup.exe
 
   release_nightly:
-    needs: [build_and_test, build_windows_installer]
+    # needs: [build_and_test, build_windows_installer]
+    needs: [build_and_test]
 
     runs-on: [self-hosted, linux, nightly]
 
@@ -79,44 +80,44 @@ jobs:
         with:
           name: packages
 
-      - name: Fetch Windows installer
-        uses: actions/download-artifact@v2
-        with:
-          name: windows_installer
+      # - name: Fetch Windows installer
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: windows_installer
 
       - name: Deploy to Husarnet nightly repository
         run: ./util/deploy.sh nightly
 
   # Note: nightly release will push to private dockerhub repo
-  push_docker_images:
-    runs-on: ubuntu-latest
+  # push_docker_images:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v2
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v1
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-        with:
-          version: latest
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v1
+  #       with:
+  #         version: latest
 
-      - name: Login to Docker Registry
-        uses: docker/login-action@v1
-        with:
-          registry: docker.io
-          username: ${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}
-          password: ${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}
+  #     - name: Login to Docker Registry
+  #       uses: docker/login-action@v1
+  #       with:
+  #         registry: docker.io
+  #         username: ${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}
+  #         password: ${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./unix/docker-misc/Dockerfile
-          platforms: linux/arm64/v8, linux/amd64, linux/arm/v7
-          push: true
-          tags: husarnet/priv_ci
-          #cache-from: type=registry,ref=
-          #cache-to: type=inline
+  #     - name: Build and push
+  #       uses: docker/build-push-action@v2
+  #       with:
+  #         context: .
+  #         file: ./unix/docker-misc/Dockerfile
+  #         platforms: linux/arm64/v8, linux/amd64, linux/arm/v7
+  #         push: true
+  #         tags: husarnet/priv_ci
+  #         #cache-from: type=registry,ref=
+  #         #cache-to: type=inline
