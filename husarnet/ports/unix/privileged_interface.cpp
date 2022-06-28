@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <initializer_list>
+#include <linux/capability.h>
 #include <linux/securebits.h>
 #include <map>
 #include <net/if.h>
@@ -13,11 +14,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/capability.h>
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 #include <utility>
 
@@ -202,6 +203,7 @@ static int set_cap(int flags)
   capdata.inheritable = capdata.permitted = capdata.effective = flags;
   return (int)syscall(SYS_capset, &capheader, &capdata);
 }
+
 namespace Privileged {
   void init()
   {
