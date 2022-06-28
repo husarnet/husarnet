@@ -7,9 +7,10 @@
 
 #include <functional>
 #include <memory>
+#include <vector>
+
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <vector>
 
 #include "husarnet/ports/threads_port.h"
 

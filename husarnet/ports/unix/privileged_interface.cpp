@@ -3,12 +3,14 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ports/privileged_interface.h"
 
+#include <initializer_list>
+#include <map>
+#include <utility>
+
 #include <assert.h>
 #include <fcntl.h>
-#include <initializer_list>
 #include <linux/capability.h>
 #include <linux/securebits.h>
-#include <map>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <stdint.h>
@@ -20,7 +22,6 @@
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-#include <utility>
 
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/unix/privileged_process.h"
@@ -71,7 +72,8 @@ static bool isInterfaceBlacklisted(std::string name)
 static void getLocalIpv4Addresses(std::vector<IpAddress>& ret)
 {
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
-  struct ifconf configuration {};
+  struct ifconf configuration {
+  };
 
   if(fd < 0)
     return;

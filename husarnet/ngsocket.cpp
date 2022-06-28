@@ -5,10 +5,11 @@
 
 #include <algorithm>
 #include <array>
-#include <assert.h>
 #include <mutex>
-#include <stdlib.h>
 #include <unordered_map>
+
+#include <assert.h>
+#include <stdlib.h>
 
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/privileged_interface.h"

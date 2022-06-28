@@ -3,8 +3,9 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/security_layer.h"
 
-#include <sodium.h>
 #include <unordered_map>
+
+#include <sodium.h>
 
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
