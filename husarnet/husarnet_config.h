@@ -8,7 +8,7 @@
 #include "husarnet/config_storage.h"
 #include "husarnet/ipaddress.h"
 
-#define HUSARNET_VERSION "2021.12.20.2"
+#define HUSARNET_VERSION "2021.12.29.1"
 #define WEBSETUP_SERVER_PORT 5580
 #define WEBSETUP_CLIENT_PORT 4800
 #define BASESERVER_PORT 443
