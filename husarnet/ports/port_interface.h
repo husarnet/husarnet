@@ -5,8 +5,9 @@
 #include <functional>
 #include <list>
 #include <map>
-#include <stdint.h>
 #include <string>
+
+#include <stdint.h>
 
 #include "husarnet/config_storage.h"
 #include "husarnet/ipaddress.h"

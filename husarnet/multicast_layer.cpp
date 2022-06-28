@@ -4,8 +4,9 @@
 #include "husarnet/multicast_layer.h"
 
 #include <array>
-#include <stdint.h>
 #include <string>
+
+#include <stdint.h>
 
 #include "husarnet/fstring.h"
 #include "husarnet/husarnet_manager.h"

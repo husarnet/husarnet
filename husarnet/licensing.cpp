@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+
 #include <sodium.h>
 
 #include "husarnet/ports/port_interface.h"

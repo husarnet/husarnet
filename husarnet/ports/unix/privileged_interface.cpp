@@ -3,23 +3,25 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ports/privileged_interface.h"
 
+#include <initializer_list>
+#include <map>
+#include <utility>
+
 #include <assert.h>
 #include <fcntl.h>
-#include <initializer_list>
+#include <linux/capability.h>
 #include <linux/securebits.h>
-#include <map>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/capability.h>
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <unistd.h>
-#include <utility>
 
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/unix/privileged_process.h"
@@ -185,6 +187,25 @@ static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
   return response;
 }
 
+struct cap_header_struct {
+  __u32 version;
+  int pid;
+};
+
+struct cap_data_struct {
+  __u32 effective;
+  __u32 permitted;
+  __u32 inheritable;
+};
+
+static int set_cap(int flags)
+{
+  cap_header_struct capheader = {_LINUX_CAPABILITY_VERSION_1, 0};
+  cap_data_struct capdata;
+  capdata.inheritable = capdata.permitted = capdata.effective = flags;
+  return (int)syscall(SYS_capset, &capheader, &capdata);
+}
+
 namespace Privileged {
   void init()
   {
@@ -240,19 +261,8 @@ namespace Privileged {
       exit(1);
     }
 
-    cap_t caps = cap_init();
-    if(caps == NULL) {
-      perror("cap_init");
-      exit(1);
-    }
-
-    if(cap_set_proc(caps) == -1) {
-      perror("cap_set_proc");
-      exit(1);
-    }
-
-    if(cap_free(caps) != 0) {
-      perror("cap_free");
+    if(set_cap(0) < 0) {
+      perror("set_cap");
       exit(1);
     }
   }
