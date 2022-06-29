@@ -72,8 +72,7 @@ static bool isInterfaceBlacklisted(std::string name)
 static void getLocalIpv4Addresses(std::vector<IpAddress>& ret)
 {
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
-  struct ifconf configuration {
-  };
+  struct ifconf configuration {};
 
   if(fd < 0)
     return;
