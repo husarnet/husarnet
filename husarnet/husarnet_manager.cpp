@@ -390,6 +390,10 @@ void HusarnetManager::stage3()
   startWebsetup();
   startHTTPServer();
 
+  if(configStorage->getUserSetting(UserSetting::joinCode) != "") {
+    joinNetwork(configStorage->getUserSetting(UserSetting::joinCode));
+  }
+
   stage3Started = true;
 }
 
@@ -399,7 +403,7 @@ void HusarnetManager::runHusarnet()
   stage2();
   stage3();
 
-  Port::notifyReady();
+  Privileged::notifyReady();
 
   while(true) {
     ngsocket->periodic();

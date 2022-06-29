@@ -74,10 +74,6 @@ file(GLOB husarnet_privileged_SRC "${CMAKE_CURRENT_LIST_DIR}/privileged/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_privileged_SRC})
 
 if(${BUILD_HTTP_CONTROL_API})
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/cli)
-  file(GLOB cli_SRC "${CMAKE_CURRENT_LIST_DIR}/cli/*.cpp")
-  list(APPEND husarnet_core_SRC ${cli_SRC})
-
   include_directories(${CMAKE_CURRENT_LIST_DIR}/api_server)
   file(GLOB api_server_SRC "${CMAKE_CURRENT_LIST_DIR}/api_server/*.cpp")
   list(APPEND husarnet_core_SRC ${api_server_SRC})
@@ -173,7 +169,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
   target_link_libraries(husarnet_core mingw_stdthreads)
 endif()
 
-# Enable HTTP control API and CLI
+# Enable HTTP control API
 if(${BUILD_HTTP_CONTROL_API})
   add_compile_definitions(HTTP_CONTROL_API)
 
@@ -196,17 +192,5 @@ if(${BUILD_HTTP_CONTROL_API})
   # include_directories(${httplib_SOURCE_DIR})
   if(IS_DIRECTORY "${httplib_SOURCE_DIR}")
     set_property(DIRECTORY ${httplib_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
-  endif()
-
-  FetchContent_Declare(
-    docopt
-    GIT_REPOSITORY https://github.com/docopt/docopt.cpp.git
-    GIT_TAG v0.6.3
-  )
-  FetchContent_MakeAvailable(docopt)
-  target_link_libraries(husarnet_core docopt_s)
-
-  if(IS_DIRECTORY "${docopt_SOURCE_DIR}")
-    set_property(DIRECTORY ${docopt_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
   endif()
 endif()

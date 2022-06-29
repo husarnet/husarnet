@@ -7,7 +7,7 @@ mkdir -p ${release_base}
 
 for arch in $unix_archs; do
     ${util_base}/build-cmake.sh $arch unix
-    cp ${build_base}/${arch}/unix/husarnet ${release_base}/husarnet-unix-${arch}
+    cp ${build_base}/${arch}/unix/husarnet-daemon ${release_base}/husarnet-daemon-unix-${arch}
 
     for package in $unix_packages; do
         ${util_base}/package-unix.sh $arch $package

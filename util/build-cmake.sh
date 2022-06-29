@@ -54,8 +54,6 @@ cmake --build ${build_dir}
 
 cmake --build ${build_dir} --target install
 
-if [[ -f "${output_dir}/usr/bin/husarnet" ]]; then
-  cp ${output_dir}/usr/bin/husarnet ${bin_dir}/husarnet
-fi
+cp ${output_dir}/usr/bin/husarnet-daemon ${bin_dir}/husarnet-daemon
 
 popd
