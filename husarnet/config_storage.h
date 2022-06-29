@@ -22,18 +22,19 @@ BETTER_ENUM(InternalSetting, int, websetupSecret = 1)
 BETTER_ENUM(
     UserSetting,
     int,
-    dashboardUrl = 1,            // string
-    enableWhitelist = 2,         // bool
-    interfaceName = 3,           // string
-    apiPort = 4,                 // int
-    enableCompression = 5,       // bool
-    enableUdpTunelling = 6,      // bool
-    enableTcpTunelling = 7,      // bool
-    enableUdp = 8,               // bool
-    enableMulticast = 9,         // bool
-    overrideBaseAddress = 10,    // inet
-    overrideSourcePort = 11,     // int
-    extraAdvertisedAddress = 12  // inet
+    dashboardUrl = 1,             // string
+    enableWhitelist = 2,          // bool
+    interfaceName = 3,            // string
+    apiPort = 4,                  // int
+    enableCompression = 5,        // bool
+    enableUdpTunelling = 6,       // bool
+    enableTcpTunelling = 7,       // bool
+    enableUdp = 8,                // bool
+    enableMulticast = 9,          // bool
+    overrideBaseAddress = 10,     // inet
+    overrideSourcePort = 11,      // int
+    extraAdvertisedAddress = 12,  // inet
+    joinCode = 13                 // string
 )
 
 const std::string trueValue = "true";

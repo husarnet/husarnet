@@ -390,6 +390,10 @@ void HusarnetManager::stage3()
   startWebsetup();
   startHTTPServer();
 
+  if(configStorage->getUserSetting(UserSetting::joinCode) != "") {
+    joinNetwork(configStorage->getUserSetting(UserSetting::joinCode));
+  }
+
   stage3Started = true;
 }
 

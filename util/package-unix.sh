@@ -18,7 +18,6 @@ fpm \
     --url "https://husarnet.com" \
     --depends iptables \
     --depends $(if [ "${package}" == "deb" ]; then echo "iproute2"; else echo "iproute"; fi) \
-    --deb-recommends "husarnet-ros" \
     --conflicts "husarnet-ros = 1.0.0" \
     --after-install ${base_dir}/unix/packaging-misc/post-install-script.sh \
     --after-remove ${base_dir}/unix/packaging-misc/post-remove-script.sh \
