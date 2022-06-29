@@ -57,8 +57,8 @@ func notImplementedYet() {
 
 func main() {
 	app := &cli.App{
-		Name:     "Husarnet Dashboard CLI",
-		HelpName: "hdm",
+		Name:     "Husarnet CLI",
+		HelpName: "husarnet",
 		Usage:    "Manage your Husarnet groups and devices from your terminal",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -78,133 +78,143 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:  "group",
-				Usage: "Husarnet group management, eg. see your groups, create, rename, delete",
-				Subcommands: []*cli.Command{
-					{
-						Name:    "list",
-						Aliases: []string{"ls"},
-						Usage:   "display a table of all your groups (with summary information)",
-						Action: func(c *cli.Context) error {
-							callAPI(handlers.ListGroupsHandler{})
-							return nil
-						},
-					},
-					{
-						Name:  "show",
-						Usage: "display a table of devices in a given group",
-						Action: func(c *cli.Context) error {
-							if c.Args().Len() < 1 {
-								fmt.Println(notEnoughArgsForShowGroup)
-								return nil
-							}
-							callAPI(handlers.ShowGroupHandler{}, c.Args().First())
-							return nil
-						},
-					},
-					{
-						Name:  "unjoin",
-						Usage: "remove given device from the given group. First arg is group ID and second is the fragment of device IPv6",
-						Action: func(c *cli.Context) error {
-							if c.Args().Len() < 2 {
-								fmt.Println(notEnoughArgsForUnjoin)
-								return nil
-							}
-							callAPI(handlers.UnjoinDeviceHandler{}, c.Args().Get(0), c.Args().Get(1))
-							return nil
-						},
-					},
-					{
-						Name:    "create",
-						Aliases: []string{"add"},
-						Usage:   "create new group with a name given as an argument",
-						Action: func(c *cli.Context) error {
-							if c.Args().Len() < 1 {
-								fmt.Println(notEnoughArgsForCreateGroup)
-								return nil
-							}
-							callAPI(handlers.CreateGroupHandler{}, c.Args().First())
-							return nil
-						},
-					},
-					{
-						Name:  "rename",
-						Usage: "change name for group with id [ID] to [new name]",
-						Action: func(c *cli.Context) error {
-							if c.Args().Len() < 2 {
-								fmt.Println(notEnoughArgsForRenameGroup)
-								return nil
-							}
-							callAPI(handlers.RenameGroupHandler{}, c.Args().Get(0), c.Args().Get(1))
-							return nil
-						},
-					},
-					{
-						Name:    "remove",
-						Aliases: []string{"rm"},
-						Usage:   "remove the group with given ID. Will ask for confirmation.",
-						Action: func(c *cli.Context) error {
-							if c.Args().Len() < 1 {
-								fmt.Println(notEnoughArgsForRemoveGroup)
-								return nil
-							}
-							askForConfirmation(removeGroupConfirmationPrompt)
-							callAPI(handlers.RemoveGroupHandler{}, c.Args().First())
-							return nil
-						},
-					},
-				},
-			},
-			{
-				Name:  "device",
-				Usage: "Husarnet device management",
-				Subcommands: []*cli.Command{
-					{
-						Name:    "list",
-						Aliases: []string{"ls"},
-						Usage:   "display a table of all your devices and which groups are they in",
-						Action: func(c *cli.Context) error {
-							callAPI(handlers.ListDevicesHandler{})
-							return nil
-						},
-					},
-					{
-						Name:  "rename",
-						Usage: "change displayed name of a device",
-						Action: func(c *cli.Context) error {
-							if c.Args().Len() < 2 {
-								fmt.Println(notEnoughArgsForRenameDevice)
-								return nil
-							}
-							callAPI(handlers.RenameDeviceHandler{}, c.Args().Get(0), c.Args().Get(1))
-							return nil
-						},
-					},
-					{
-						Name:    "remove",
-						Aliases: []string{"rm"},
-						Usage:   "remove device from your account",
-						Action: func(c *cli.Context) error {
-							notImplementedYet()
-							return nil
-						},
-					},
-				},
-			},
-			{
-				Name:  "login",
-				Usage: "obtain short-lived API token to authenticate while executing queries",
-				Action: func(c *cli.Context) error {
-					loginAndSaveAuthToken()
-					return nil
-				},
-			},
-			{
 				Name:  "version",
 				Usage: "print the version of the CLI and also of the daemon, if available",
 				Action: func(c *cli.Context) error {
 					fmt.Println(version)
 					return nil
+				},
+			},
+			{
+				Name:  "dashboard",
+				Usage: "Husarnet group management, eg. see your groups, create, rename, delete",
+				Subcommands: []*cli.Command{
+
+					{
+						Name:  "login",
+						Usage: "obtain short-lived API token to authenticate while executing queries",
+						Action: func(c *cli.Context) error {
+							loginAndSaveAuthToken()
+							return nil
+						},
+					},
+					{
+						Name:     "group",
+						Usage:    "Husarnet group management, eg. see your groups, create, rename, delete",
+						Category: "dashboard",
+						Subcommands: []*cli.Command{
+							{
+								Name:    "list",
+								Aliases: []string{"ls"},
+								Usage:   "display a table of all your groups (with summary information)",
+								Action: func(c *cli.Context) error {
+									callAPI(handlers.ListGroupsHandler{})
+									return nil
+								},
+							},
+							{
+								Name:  "show",
+								Usage: "display a table of devices in a given group",
+								Action: func(c *cli.Context) error {
+									if c.Args().Len() < 1 {
+										fmt.Println(notEnoughArgsForShowGroup)
+										return nil
+									}
+									callAPI(handlers.ShowGroupHandler{}, c.Args().First())
+									return nil
+								},
+							},
+							{
+								Name:  "unjoin",
+								Usage: "remove given device from the given group. First arg is group ID and second is the fragment of device IPv6",
+								Action: func(c *cli.Context) error {
+									if c.Args().Len() < 2 {
+										fmt.Println(notEnoughArgsForUnjoin)
+										return nil
+									}
+									callAPI(handlers.UnjoinDeviceHandler{}, c.Args().Get(0), c.Args().Get(1))
+									return nil
+								},
+							},
+							{
+								Name:    "create",
+								Aliases: []string{"add"},
+								Usage:   "create new group with a name given as an argument",
+								Action: func(c *cli.Context) error {
+									if c.Args().Len() < 1 {
+										fmt.Println(notEnoughArgsForCreateGroup)
+										return nil
+									}
+									callAPI(handlers.CreateGroupHandler{}, c.Args().First())
+									return nil
+								},
+							},
+							{
+								Name:  "rename",
+								Usage: "change name for group with id [ID] to [new name]",
+								Action: func(c *cli.Context) error {
+									if c.Args().Len() < 2 {
+										fmt.Println(notEnoughArgsForRenameGroup)
+										return nil
+									}
+									callAPI(handlers.RenameGroupHandler{}, c.Args().Get(0), c.Args().Get(1))
+									return nil
+								},
+							},
+							{
+								Name:    "remove",
+								Aliases: []string{"rm"},
+								Usage:   "remove the group with given ID. Will ask for confirmation.",
+								Action: func(c *cli.Context) error {
+									if c.Args().Len() < 1 {
+										fmt.Println(notEnoughArgsForRemoveGroup)
+										return nil
+									}
+									askForConfirmation(removeGroupConfirmationPrompt)
+									callAPI(handlers.RemoveGroupHandler{}, c.Args().First())
+									return nil
+								},
+							},
+						},
+					},
+
+					{
+						Name:     "device",
+						Usage:    "Husarnet device management",
+						Category: "dashboard",
+						Subcommands: []*cli.Command{
+							{
+								Name:    "list",
+								Aliases: []string{"ls"},
+								Usage:   "display a table of all your devices and which groups are they in",
+								Action: func(c *cli.Context) error {
+									callAPI(handlers.ListDevicesHandler{})
+									return nil
+								},
+							},
+							{
+								Name:  "rename",
+								Usage: "change displayed name of a device",
+								Action: func(c *cli.Context) error {
+									if c.Args().Len() < 2 {
+										fmt.Println(notEnoughArgsForRenameDevice)
+										return nil
+									}
+									callAPI(handlers.RenameDeviceHandler{}, c.Args().Get(0), c.Args().Get(1))
+									return nil
+								},
+							},
+							{
+								Name:    "remove",
+								Aliases: []string{"rm"},
+								Usage:   "remove device from your account",
+								Action: func(c *cli.Context) error {
+									notImplementedYet()
+									return nil
+								},
+							},
+						},
+					},
 				},
 			},
 		},
