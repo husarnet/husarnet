@@ -91,7 +91,7 @@ func main() {
 			},
 			{
 				Name:  "dashboard",
-				Usage: "Husarnet group management, eg. see your groups, create, rename, delete",
+				Usage: "Talk to Dashboard API and manage your devices and groups without using web frontend.",
 				Subcommands: []*cli.Command{
 					{
 						Name:  "login",
