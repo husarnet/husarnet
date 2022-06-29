@@ -118,6 +118,6 @@ jobs:
           file: ./unix/docker-misc/Dockerfile
           platforms: linux/arm64/v8, linux/amd64, linux/arm/v7
           push: true
-          tags: husarnet/priv_ci
+          tags: husarnet/husarnet-nightly
           #cache-from: type=registry,ref=
           #cache-to: type=inline
