@@ -85,7 +85,7 @@ func main() {
 				Name:  "version",
 				Usage: "print the version of the CLI and also of the daemon, if available",
 				Action: func(c *cli.Context) error {
-					fmt.Println("0.3")
+					fmt.Println(version)
 					return nil
 				},
 			},
