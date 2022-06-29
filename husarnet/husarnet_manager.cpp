@@ -399,7 +399,7 @@ void HusarnetManager::runHusarnet()
   stage2();
   stage3();
 
-  Port::notifyReady();
+  Privileged::notifyReady();
 
   while(true) {
     ngsocket->periodic();

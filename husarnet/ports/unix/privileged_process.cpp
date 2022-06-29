@@ -68,6 +68,12 @@ json PrivilegedProcess::handleSetSelfHostname(json data)
   return true;
 }
 
+json PrivilegedProcess::handleNotifyReady(json data)
+{
+  Port::notifyReady();
+  return true;
+}
+
 void PrivilegedProcess::run()
 {
   // so parent can't ptrace us
@@ -101,6 +107,9 @@ void PrivilegedProcess::run()
         break;
       case PrivilegedMethod::setSelfHostname:
         response = handleSetSelfHostname(data);
+        break;
+      case PrivilegedMethod::notifyReady:
+        response = handleNotifyReady(data);
         break;
     }
 
