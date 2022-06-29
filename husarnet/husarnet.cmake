@@ -193,16 +193,4 @@ if(${BUILD_HTTP_CONTROL_API})
   if(IS_DIRECTORY "${httplib_SOURCE_DIR}")
     set_property(DIRECTORY ${httplib_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
   endif()
-
-  FetchContent_Declare(
-    docopt
-    GIT_REPOSITORY https://github.com/docopt/docopt.cpp.git
-    GIT_TAG v0.6.3
-  )
-  FetchContent_MakeAvailable(docopt)
-  target_link_libraries(husarnet_core docopt_s)
-
-  if(IS_DIRECTORY "${docopt_SOURCE_DIR}")
-    set_property(DIRECTORY ${docopt_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
-  endif()
 endif()
