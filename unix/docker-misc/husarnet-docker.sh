@@ -21,7 +21,7 @@ fi
 
 # Start daemon
 if [ -z "${HUSARNET_DEBUG:-}" ]; then
-    HUSARNET_JOIN_CODE="${HUSARNET_JOIN_CODE}" husarnet daemon >/dev/null 2>&1
+    HUSARNET_JOIN_CODE="${HUSARNET_JOIN_CODE}" husarnet-daemon >/dev/null 2>&1
 else
-    HUSARNET_JOIN_CODE="${HUSARNET_JOIN_CODE}" husarnet daemon
+    HUSARNET_JOIN_CODE="${HUSARNET_JOIN_CODE}" husarnet-daemon
 fi
