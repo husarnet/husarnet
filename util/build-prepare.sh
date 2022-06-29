@@ -1,21 +1,21 @@
 #!/bin/bash
 source $(dirname "$0")/bash-base.sh
 
-sudo apt update
+sudo apt-get update
 
 # Initialize submodules
-sudo apt install -y git
+sudo apt-get install -y git
 # Skip this while building CI's golden image
 git submodule update --init --recursive
 
 # Install stuff for cross building
-sudo apt install -y ninja-build cmake python3 linux-headers-generic build-essential crossbuild-essential-i386 crossbuild-essential-amd64 crossbuild-essential-arm64 crossbuild-essential-armhf crossbuild-essential-riscv64 g++-mingw-w64
+sudo apt-get install -y ninja-build cmake python3 linux-headers-generic build-essential crossbuild-essential-i386 crossbuild-essential-amd64 crossbuild-essential-arm64 crossbuild-essential-armhf crossbuild-essential-riscv64 g++-mingw-w64
 
 # This is unfortunate but... (see https://stackoverflow.com/a/38751292 )
 sudo ln -sf /usr/include/asm-generic /usr/include/asm
 
 # Install stuff for packaging
-sudo apt install -y ruby ruby-dev rubygems rpm
+sudo apt-get install -y ruby ruby-dev rubygems rpm
 sudo gem install --no-document fpm
 
 # Install Docker dependencies

@@ -1,0 +1,13 @@
+# This a a development oriented compose file
+# For a user specific ones look at our blog/documentation
+
+# docker-compose run dev /husarnet/util/build-quick.sh
+
+version: "3.6"
+services:
+  dev:
+    build: .
+    volumes:
+      - type: bind
+        source: ./
+        target: /husarnet
