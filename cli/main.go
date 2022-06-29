@@ -17,10 +17,9 @@ import (
 )
 
 // Global TODO:
-// - [optional] allow for removal/update via name, not an ID
-// - GET transport method for queries...
-// some user friendliness, validating input e.g. is this a number?
-// type in fragment of IPv6 address to match device. Resolve if ambigous.
+// allow for removal/update via name, not an ID
+// GET transport method for queries (defaults to POST)
+// some user friendliness, validating input e.g. we expected number here
 
 type handler interface {
 	PerformRequest(client graphql.Client, args ...string) (interface{}, error)
@@ -49,6 +48,11 @@ func callAPI(handler handler, args ...string) {
 
 	// after performing any request, we hit API again to refresh token thus prolong the session
 	refreshToken(token)
+}
+
+// TODO: implement calling daemon, starting it if is not running yet, etc...
+func callDaemon() {
+
 }
 
 func notImplementedYet() {
@@ -89,7 +93,6 @@ func main() {
 				Name:  "dashboard",
 				Usage: "Husarnet group management, eg. see your groups, create, rename, delete",
 				Subcommands: []*cli.Command{
-
 					{
 						Name:  "login",
 						Usage: "obtain short-lived API token to authenticate while executing queries",
@@ -177,7 +180,6 @@ func main() {
 							},
 						},
 					},
-
 					{
 						Name:     "device",
 						Usage:    "Husarnet device management",
