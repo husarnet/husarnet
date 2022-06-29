@@ -74,10 +74,6 @@ file(GLOB husarnet_privileged_SRC "${CMAKE_CURRENT_LIST_DIR}/privileged/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_privileged_SRC})
 
 if(${BUILD_HTTP_CONTROL_API})
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/cli)
-  file(GLOB cli_SRC "${CMAKE_CURRENT_LIST_DIR}/cli/*.cpp")
-  list(APPEND husarnet_core_SRC ${cli_SRC})
-
   include_directories(${CMAKE_CURRENT_LIST_DIR}/api_server)
   file(GLOB api_server_SRC "${CMAKE_CURRENT_LIST_DIR}/api_server/*.cpp")
   list(APPEND husarnet_core_SRC ${api_server_SRC})
@@ -173,7 +169,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
   target_link_libraries(husarnet_core mingw_stdthreads)
 endif()
 
-# Enable HTTP control API and CLI
+# Enable HTTP control API
 if(${BUILD_HTTP_CONTROL_API})
   add_compile_definitions(HTTP_CONTROL_API)
 
