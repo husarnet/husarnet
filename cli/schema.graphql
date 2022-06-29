@@ -1,0 +1,83 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type CreateGroupMutation {
+  group: GroupType
+}
+
+type DeviceType {
+  name: String
+  owner: UserType!
+  deviceId: String!
+  version: String
+  userAgent: String
+  isFullyManaged: Boolean!
+  groupMemberships: [GroupType]
+}
+
+scalar GenericScalar
+
+type GroupType {
+  id: ID!
+  owner: UserType!
+  name: String!
+  joinCode: String
+  deviceCount: Int
+}
+
+type KickDeviceMutation {
+  success: Boolean
+}
+
+type Mutation {
+  tokenAuth(username: String!, password: String!): ObtainJSONWebToken
+  verifyToken(token: String): Verify
+  refreshToken(token: String): Refresh
+  createGroup(name: String!): CreateGroupMutation
+  updateGroup(id: ID!, name: String): UpdateGroupMutation
+  removeGroup(id: ID!): RemoveGroupMutation
+  kickDevice(groupId: ID!, idFragment: String!): KickDeviceMutation
+  updateDevice(idFragment: String!, name: String!): UpdateDeviceMutation
+}
+
+type ObtainJSONWebToken {
+  payload: GenericScalar!
+  refreshExpiresIn: Int!
+  token: String!
+}
+
+type Query {
+  groups: [GroupType]
+  devices: [DeviceType]
+  groupMembersById(id: ID!): [DeviceType]
+}
+
+type Refresh {
+  payload: GenericScalar!
+  refreshExpiresIn: Int!
+  token: String!
+}
+
+type RemoveGroupMutation {
+  success: Boolean
+}
+
+type UpdateDeviceMutation {
+  device: DeviceType
+}
+
+type UpdateGroupMutation {
+  group: GroupType
+}
+
+type UserType {
+  username: String!
+  firstName: String!
+  lastName: String!
+}
+
+type Verify {
+  payload: GenericScalar!
+}

@@ -1,0 +1,87 @@
+mutation ObtainToken($username: String!, $password: String!) {
+  tokenAuth(username: $username, password: $password) {
+    token
+    payload
+    refreshExpiresIn
+  },
+}
+
+mutation RefreshToken($token: String!) {
+  refreshToken(token: $token) {
+    token
+  }
+}
+
+mutation CreateGroup($name: String!) {
+  createGroup(name: $name) {
+    group {
+      id
+      name
+    }
+  }
+}
+
+mutation RenameGroup($id: ID!, $name: String!) {
+  updateGroup(id: $id, name: $name) {
+    group {
+      id
+      name
+    }
+  }
+}
+
+mutation RemoveGroup($id: ID!) {
+  removeGroup(id: $id) {
+    success
+  }
+}
+
+mutation RenameDevice($idFragment: String!, $name: String!) {
+  updateDevice(idFragment: $idFragment, name: $name) {
+    device {
+      deviceId
+      name
+    }
+  }
+}
+
+mutation KickDevice($groupId: ID!, $idFragment: String!) {
+  kickDevice(groupId: $groupId, idFragment: $idFragment) {
+    success
+  }
+}
+
+query GetGroups() {
+  groups {
+    id
+    name
+    joinCode
+    deviceCount
+  }
+}
+
+query ShowGroup($id: ID!) {
+  groupMembersById(id: $id) {
+    deviceId
+    name
+    version
+    userAgent
+  }
+}
+
+query GetDevices() {
+  devices {
+    deviceId
+    name
+    version
+    userAgent
+    owner {
+      username
+    }
+    isFullyManaged
+    groupMemberships {
+      id
+      name
+    }
+  }
+}

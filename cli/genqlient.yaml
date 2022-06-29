@@ -1,0 +1,11 @@
+# genqlient config; for documentation see:
+# https://github.com/Khan/genqlient/blob/main/docs/genqlient.yaml
+schema: schema.graphql
+operations:
+- genqlient.graphql
+generated: generated/genqlient.go
+package: generated
+context_type: "-"
+bindings:
+  GenericScalar:
+    type: hdm/types.JWTPayload
