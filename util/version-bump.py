@@ -43,7 +43,13 @@ def get_new_version(old, today=None):
 def get_current_version_from_file():
     f = open(version_file_path, "r")
     ver = f.read().rstrip()
+    f.close()
     return ver
+
+def update_version_file(new_ver):
+    f = open(version_file_path, "w")
+    f.write(new_ver)
+    f.close()
 
 def get_new_version_string_for_cpp_and_iss(new_ver):
     return '#define HUSARNET_VERSION "' + new_ver + '"'
@@ -83,6 +89,8 @@ def main():
         cli_messages_path,
         "\n"
     )
+
+    update_version_file(new_ver)
 
 if __name__ == "__main__":
     main()
