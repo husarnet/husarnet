@@ -264,9 +264,21 @@ namespace Port {
       }
 
       int fd = socket(AF_UNIX, SOCK_DGRAM, 0);
-      assert(fd != 0);
-      sendto(fd, msg, strlen(msg), MSG_NOSIGNAL, (sockaddr*)(&un), sizeof(un));
-      close(fd);
+      if(fd < 0) {
+        perror("systemd socket");
+      }
+
+      if(sendto(
+             fd, msg, strlen(msg), MSG_NOSIGNAL, (sockaddr*)(&un),
+             sizeof(un)) <= 0) {
+        perror("systemd sendto");
+      }
+
+      if(close(fd) < 0) {
+        perror("systemd close");
+      }
+
+      LOG("Systemd notification end");
     }
   }
 }  // namespace Port

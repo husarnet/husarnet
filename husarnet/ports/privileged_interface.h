@@ -34,4 +34,6 @@ namespace Privileged {
   bool setSelfHostname(std::string newHostname);
 
   void updateHostsFile(std::map<std::string, IpAddress> data);
+
+  void notifyReady();
 }  // namespace Privileged
