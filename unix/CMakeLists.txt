@@ -8,7 +8,7 @@ include(../husarnet/husarnet.cmake)
 
 file(GLOB husarnet_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
 add_executable(husarnet ${husarnet_SRC})
-target_link_libraries(husarnet -static husarnet_core)
+target_link_libraries(husarnet husarnet_core)
 
 install(TARGETS husarnet DESTINATION usr/bin)
 install(FILES
