@@ -15,6 +15,10 @@ for package in $unix_packages; do
     cp ${build_base}/${arch}/unix/husarnet-${arch}.${package} ${release_base}/husarnet-${package_version}-${arch}.${package}
 done
 
+
+echo "===== building golang cli ====="
+${util_base}/build-cli.sh
+
 exit 0
 
 # Docker builds

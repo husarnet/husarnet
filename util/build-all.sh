@@ -15,6 +15,9 @@ for arch in $unix_archs; do
     done
 done
 
+# CLI
+${util_base}/build-cli.sh
+
 exit 0
 
 # Docker builds
