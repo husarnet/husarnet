@@ -9,7 +9,10 @@ package main
 import (
 	"fmt"
 	"hdm/handlers"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/Khan/genqlient/graphql"
@@ -27,6 +30,7 @@ type handler interface {
 }
 
 var graphqlServerURL string
+var husarnetDaemonURL string = "http://127.0.0.1:16216"
 var verboseLogs bool
 
 func callAPI(handler handler, args ...string) {
@@ -51,8 +55,28 @@ func callAPI(handler handler, args ...string) {
 }
 
 // TODO: implement calling daemon, starting it if is not running yet, etc...
-func callDaemon() {
+// Basic functions that just print responses
+func callDaemonGet(route string) {
+	resp, err := http.Get(husarnetDaemonURL + route)
+	if err != nil {
+		fmt.Println("something went wrong: " + err.Error())
+	}
+	defer resp.Body.Close()
 
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+}
+
+func callDaemonPost(route string, urlencodedBody url.Values) {
+	resp, err := http.PostForm(husarnetDaemonURL+route, urlencodedBody)
+
+	if err != nil {
+		fmt.Println("something went wrong: " + err.Error())
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
 }
 
 func notImplementedYet() {
@@ -85,8 +109,136 @@ func main() {
 				Name:  "version",
 				Usage: "print the version of the CLI and also of the daemon, if available",
 				Action: func(c *cli.Context) error {
-					fmt.Println(version)
+					fmt.Println("CLI version: " + version)
+					// TODO ask daemon
 					return nil
+				},
+			},
+			{
+				Name:  "status",
+				Usage: "Display current connectivity status",
+				Action: func(c *cli.Context) error {
+					callDaemonGet("/control/status")
+					return nil
+				},
+			},
+			{
+				Name:  "join",
+				Usage: "Connect to Husarnet group with given join code and with specified hostname",
+				Action: func(c *cli.Context) error {
+					// up to two params
+					if c.Args().Len() < 1 {
+						fmt.Println("you need to provide joincode")
+						return nil
+					}
+					joincode := c.Args().Get(0)
+					hostname := ""
+
+					if c.Args().Len() == 2 {
+						hostname = c.Args().Get(1)
+					}
+
+					apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
+					if err != nil {
+						fmt.Println("Error reading secret file, are you root? " + err.Error())
+					}
+
+					urlencodedBody := url.Values{
+						"secret":   {string(apiSecret)},
+						"code":     {joincode},
+						"hostname": {hostname},
+					}
+
+					callDaemonPost("/control/join", urlencodedBody)
+					return nil
+				},
+			},
+			{
+				Name:  "setup-server",
+				Usage: "Connect your Husarnet device to different Husarnet infrastructure",
+				Action: func(c *cli.Context) error {
+					if c.Args().Len() < 1 {
+						fmt.Println("you need to provide address of the dashboard")
+						return nil
+					}
+
+					domain := c.Args().Get(0)
+
+					apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
+
+					if err != nil {
+						fmt.Println("Error reading secret file, are you root? " + err.Error())
+					}
+
+					urlencodedBody := url.Values{
+						"secret": {string(apiSecret)},
+						"domain": {domain},
+					}
+
+					callDaemonPost("/control/change-server", urlencodedBody)
+					return nil
+				},
+			},
+			{
+				Name:  "whitelist",
+				Usage: "Manage whitelist on the device.",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "ls",
+						Usage: "list entries on the whitelist",
+						Action: func(c *cli.Context) error {
+							callDaemonGet("/control/whitelist/ls")
+							return nil
+						},
+					},
+					{
+						Name:  "add",
+						Usage: "add a device to your whitelist by Husarnet address",
+						Action: func(c *cli.Context) error {
+							if c.Args().Len() < 1 {
+								fmt.Println("you need to provide Husarnet address of the device")
+								return nil
+							}
+							addr := c.Args().Get(0)
+
+							apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
+							if err != nil {
+								fmt.Println("Error reading secret file, are you root? " + err.Error())
+							}
+
+							urlencodedBody := url.Values{
+								"secret":  {string(apiSecret)},
+								"address": {addr},
+							}
+
+							callDaemonPost("/control/whitelist/add", urlencodedBody)
+							return nil
+						},
+					},
+					{
+						Name:  "rm",
+						Usage: "remove device from the whitelist",
+						Action: func(c *cli.Context) error {
+							if c.Args().Len() < 1 {
+								fmt.Println("you need to provide Husarnet address of the device")
+								return nil
+							}
+							addr := c.Args().Get(0)
+
+							apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
+							if err != nil {
+								fmt.Println("Error reading secret file, are you root? " + err.Error())
+							}
+
+							urlencodedBody := url.Values{
+								"secret":  {string(apiSecret)},
+								"address": {addr},
+							}
+
+							callDaemonPost("/control/whitelist/rm", urlencodedBody)
+							return nil
+						},
+					},
 				},
 			},
 			{
