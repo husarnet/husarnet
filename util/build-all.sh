@@ -9,14 +9,15 @@ for arch in $unix_archs; do
     ${util_base}/build-cmake.sh $arch unix
     cp ${build_base}/${arch}/unix/husarnet-daemon ${release_base}/husarnet-daemon-unix-${arch}
 
+    output_dir="${base_dir}/build/${arch}/unix/out"
+    ${util_base}/build-cli.sh
+    cp ${build_base}/bin/husarnet ${release_base}/husarnet-unix-${arch}
+
     for package in $unix_packages; do
         ${util_base}/package-unix.sh $arch $package
         cp ${build_base}/${arch}/unix/husarnet-${arch}.${package} ${release_base}/husarnet-${package_version}-${arch}.${package}
     done
 done
-
-# CLI
-${util_base}/build-cli.sh
 
 exit 0
 

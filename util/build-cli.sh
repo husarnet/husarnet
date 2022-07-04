@@ -2,7 +2,7 @@
 source $(dirname "$0")/bash-base.sh
 
 source_dir="${base_dir}/cli"
-output_dir="${base_dir}/build/bin/cli"
+output_dir="${base_dir}/build/bin"
 
 mkdir -p ${output_dir}
 
