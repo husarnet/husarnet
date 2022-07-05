@@ -8,8 +8,7 @@ package main
 
 import (
 	"fmt"
-	"hdm/handlers"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -58,24 +57,37 @@ func callAPI(handler handler, args ...string) {
 // Basic functions that just print responses
 func callDaemonGet(route string) {
 	resp, err := http.Get(husarnetDaemonURL + route)
-	if err != nil {
-		fmt.Println("something went wrong: " + err.Error())
-	}
+	handlePotentialDaemonRequestError(err)
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	fmt.Println(string(body))
+}
+
+func handlePotentialDaemonRequestError(err error) {
+	if err != nil {
+		fmt.Println("something went wrong: " + err.Error())
+		fmt.Println("Husarnet daemon is probably not running")
+		// leak here?
+		// try tu execute husarnet-daemon? via systemctl?
+		os.Exit(1)
+	}
+}
+
+func addDaemonApiSecret(params *url.Values) {
+	apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
+	if err != nil {
+		die("Error reading secret file, are you root? " + err.Error())
+	}
+	params.Add("secret", string(apiSecret))
 }
 
 func callDaemonPost(route string, urlencodedBody url.Values) {
 	resp, err := http.PostForm(husarnetDaemonURL+route, urlencodedBody)
-
-	if err != nil {
-		fmt.Println("something went wrong: " + err.Error())
-	}
+	handlePotentialDaemonRequestError(err)
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	fmt.Println(string(body))
 }
 
@@ -92,7 +104,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "url",
 				Aliases:     []string{"u"},
-				Value:       "https://aws-1.husarnet.com/graphql",
+				Value:       "https://app.husarnet.com/graphql",
 				Usage:       "URL for your GraphQL endpoint. Remember to include scheme in this!",
 				EnvVars:     []string{"HUSARNET_GRAPHQL_URL"},
 				Destination: &graphqlServerURL,
@@ -106,138 +118,43 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:  "version",
-				Usage: "print the version of the CLI and also of the daemon, if available",
-				Action: func(c *cli.Context) error {
-					fmt.Println("CLI version: " + version)
-					// TODO ask daemon
-					return nil
-				},
+				Name:   "version",
+				Usage:  "print the version of the CLI and also of the daemon, if available",
+				Action: handleVersion,
 			},
 			{
-				Name:  "status",
-				Usage: "Display current connectivity status",
-				Action: func(c *cli.Context) error {
-					callDaemonGet("/control/status")
-					return nil
-				},
+				Name:   "status",
+				Usage:  "Display current connectivity status",
+				Action: handleStatus,
 			},
 			{
-				Name:  "join",
-				Usage: "Connect to Husarnet group with given join code and with specified hostname",
-				Action: func(c *cli.Context) error {
-					// up to two params
-					if c.Args().Len() < 1 {
-						fmt.Println("you need to provide joincode")
-						return nil
-					}
-					joincode := c.Args().Get(0)
-					hostname := ""
-
-					if c.Args().Len() == 2 {
-						hostname = c.Args().Get(1)
-					}
-
-					apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
-					if err != nil {
-						fmt.Println("Error reading secret file, are you root? " + err.Error())
-					}
-
-					urlencodedBody := url.Values{
-						"secret":   {string(apiSecret)},
-						"code":     {joincode},
-						"hostname": {hostname},
-					}
-
-					callDaemonPost("/control/join", urlencodedBody)
-					return nil
-				},
+				Name:   "join",
+				Usage:  "Connect to Husarnet group with given join code and with specified hostname",
+				Action: handleJoin,
 			},
 			{
-				Name:  "setup-server",
-				Usage: "Connect your Husarnet device to different Husarnet infrastructure",
-				Action: func(c *cli.Context) error {
-					if c.Args().Len() < 1 {
-						fmt.Println("you need to provide address of the dashboard")
-						return nil
-					}
-
-					domain := c.Args().Get(0)
-
-					apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
-
-					if err != nil {
-						fmt.Println("Error reading secret file, are you root? " + err.Error())
-					}
-
-					urlencodedBody := url.Values{
-						"secret": {string(apiSecret)},
-						"domain": {domain},
-					}
-
-					callDaemonPost("/control/change-server", urlencodedBody)
-					return nil
-				},
+				Name:   "setup-server",
+				Usage:  "Connect your Husarnet device to different Husarnet infrastructure",
+				Action: handleSetupServer,
 			},
 			{
 				Name:  "whitelist",
 				Usage: "Manage whitelist on the device.",
 				Subcommands: []*cli.Command{
 					{
-						Name:  "ls",
-						Usage: "list entries on the whitelist",
-						Action: func(c *cli.Context) error {
-							callDaemonGet("/control/whitelist/ls")
-							return nil
-						},
+						Name:   "ls",
+						Usage:  "list entries on the whitelist",
+						Action: handleWhitelistLs,
 					},
 					{
-						Name:  "add",
-						Usage: "add a device to your whitelist by Husarnet address",
-						Action: func(c *cli.Context) error {
-							if c.Args().Len() < 1 {
-								fmt.Println("you need to provide Husarnet address of the device")
-								return nil
-							}
-							addr := c.Args().Get(0)
-
-							apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
-							if err != nil {
-								fmt.Println("Error reading secret file, are you root? " + err.Error())
-							}
-
-							urlencodedBody := url.Values{
-								"secret":  {string(apiSecret)},
-								"address": {addr},
-							}
-
-							callDaemonPost("/control/whitelist/add", urlencodedBody)
-							return nil
-						},
+						Name:   "add",
+						Usage:  "add a device to your whitelist by Husarnet address",
+						Action: handleWhitelistAdd,
 					},
 					{
-						Name:  "rm",
-						Usage: "remove device from the whitelist",
-						Action: func(c *cli.Context) error {
-							if c.Args().Len() < 1 {
-								fmt.Println("you need to provide Husarnet address of the device")
-								return nil
-							}
-							addr := c.Args().Get(0)
-
-							apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
-							if err != nil {
-								fmt.Println("Error reading secret file, are you root? " + err.Error())
-							}
-
-							urlencodedBody := url.Values{
-								"secret":  {string(apiSecret)},
-								"address": {addr},
-							}
-
-							callDaemonPost("/control/whitelist/rm", urlencodedBody)
-							return nil
-						},
+						Name:   "rm",
+						Usage:  "remove device from the whitelist",
+						Action: handleWhitelistRm,
 					},
 				},
 			},
@@ -246,12 +163,9 @@ func main() {
 				Usage: "Talk to Dashboard API and manage your devices and groups without using web frontend.",
 				Subcommands: []*cli.Command{
 					{
-						Name:  "login",
-						Usage: "obtain short-lived API token to authenticate while executing queries",
-						Action: func(c *cli.Context) error {
-							loginAndSaveAuthToken()
-							return nil
-						},
+						Name:   "login",
+						Usage:  "obtain short-lived API token to authenticate while executing queries",
+						Action: handleLogin,
 					},
 					{
 						Name:     "group",
@@ -262,73 +176,34 @@ func main() {
 								Name:    "list",
 								Aliases: []string{"ls"},
 								Usage:   "display a table of all your groups (with summary information)",
-								Action: func(c *cli.Context) error {
-									callAPI(handlers.ListGroupsHandler{})
-									return nil
-								},
+								Action:  handleGroupLs,
 							},
 							{
-								Name:  "show",
-								Usage: "display a table of devices in a given group",
-								Action: func(c *cli.Context) error {
-									if c.Args().Len() < 1 {
-										fmt.Println(notEnoughArgsForShowGroup)
-										return nil
-									}
-									callAPI(handlers.ShowGroupHandler{}, c.Args().First())
-									return nil
-								},
+								Name:   "show",
+								Usage:  "display a table of devices in a given group",
+								Action: handleGroupShow,
 							},
 							{
-								Name:  "unjoin",
-								Usage: "remove given device from the given group. First arg is group ID and second is the fragment of device IPv6",
-								Action: func(c *cli.Context) error {
-									if c.Args().Len() < 2 {
-										fmt.Println(notEnoughArgsForUnjoin)
-										return nil
-									}
-									callAPI(handlers.UnjoinDeviceHandler{}, c.Args().Get(0), c.Args().Get(1))
-									return nil
-								},
+								Name:   "unjoin",
+								Usage:  "remove given device from the given group. First arg is group ID and second is the fragment of device IPv6",
+								Action: handleGroupUnjoin,
 							},
 							{
 								Name:    "create",
 								Aliases: []string{"add"},
 								Usage:   "create new group with a name given as an argument",
-								Action: func(c *cli.Context) error {
-									if c.Args().Len() < 1 {
-										fmt.Println(notEnoughArgsForCreateGroup)
-										return nil
-									}
-									callAPI(handlers.CreateGroupHandler{}, c.Args().First())
-									return nil
-								},
+								Action:  handleGroupCreate,
 							},
 							{
-								Name:  "rename",
-								Usage: "change name for group with id [ID] to [new name]",
-								Action: func(c *cli.Context) error {
-									if c.Args().Len() < 2 {
-										fmt.Println(notEnoughArgsForRenameGroup)
-										return nil
-									}
-									callAPI(handlers.RenameGroupHandler{}, c.Args().Get(0), c.Args().Get(1))
-									return nil
-								},
+								Name:   "rename",
+								Usage:  "change name for group with id [ID] to [new name]",
+								Action: handleGroupRename,
 							},
 							{
 								Name:    "remove",
 								Aliases: []string{"rm"},
 								Usage:   "remove the group with given ID. Will ask for confirmation.",
-								Action: func(c *cli.Context) error {
-									if c.Args().Len() < 1 {
-										fmt.Println(notEnoughArgsForRemoveGroup)
-										return nil
-									}
-									askForConfirmation(removeGroupConfirmationPrompt)
-									callAPI(handlers.RemoveGroupHandler{}, c.Args().First())
-									return nil
-								},
+								Action:  handleGroupRemove,
 							},
 						},
 					},
@@ -341,32 +216,18 @@ func main() {
 								Name:    "list",
 								Aliases: []string{"ls"},
 								Usage:   "display a table of all your devices and which groups are they in",
-								Action: func(c *cli.Context) error {
-									callAPI(handlers.ListDevicesHandler{})
-									return nil
-								},
+								Action:  handleDeviceLs,
 							},
 							{
-								Name:  "rename",
-								Usage: "change displayed name of a device",
-								Action: func(c *cli.Context) error {
-									if c.Args().Len() < 2 {
-										fmt.Println(notEnoughArgsForRenameDevice)
-										return nil
-									}
-									callAPI(handlers.RenameDeviceHandler{}, c.Args().Get(0), c.Args().Get(1))
-									return nil
-								},
+								Name:   "rename",
+								Usage:  "change displayed name of a device",
+								Action: handleDeviceRename,
 							},
 							{
 								Name:    "remove",
 								Aliases: []string{"rm"},
 								Usage:   "remove device from your account",
-								Action: func(c *cli.Context) error {
-									notImplementedYet()
-									return nil
-								},
-							},
+								Action:  handleDeviceRemove},
 						},
 					},
 				},
