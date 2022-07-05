@@ -9,7 +9,7 @@ package main
 import (
 	"fmt"
 	"hdm/handlers"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -58,24 +58,37 @@ func callAPI(handler handler, args ...string) {
 // Basic functions that just print responses
 func callDaemonGet(route string) {
 	resp, err := http.Get(husarnetDaemonURL + route)
-	if err != nil {
-		fmt.Println("something went wrong: " + err.Error())
-	}
+	handlePotentialDaemonRequestError(err)
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	fmt.Println(string(body))
+}
+
+func handlePotentialDaemonRequestError(err error) {
+	if err != nil {
+		fmt.Println("something went wrong: " + err.Error())
+		fmt.Println("Husarnet daemon is probably not running")
+		// leak here?
+		// try tu execute husarnet-daemon? via systemctl?
+		os.Exit(1)
+	}
+}
+
+func addDaemonApiSecret(params *url.Values) {
+	apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
+	if err != nil {
+		die("Error reading secret file, are you root? " + err.Error())
+	}
+	params.Add("secret", string(apiSecret))
 }
 
 func callDaemonPost(route string, urlencodedBody url.Values) {
 	resp, err := http.PostForm(husarnetDaemonURL+route, urlencodedBody)
-
-	if err != nil {
-		fmt.Println("something went wrong: " + err.Error())
-	}
+	handlePotentialDaemonRequestError(err)
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	fmt.Println(string(body))
 }
 
@@ -92,7 +105,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "url",
 				Aliases:     []string{"u"},
-				Value:       "https://aws-1.husarnet.com/graphql",
+				Value:       "https://app.husarnet.com/graphql",
 				Usage:       "URL for your GraphQL endpoint. Remember to include scheme in this!",
 				EnvVars:     []string{"HUSARNET_GRAPHQL_URL"},
 				Destination: &graphqlServerURL,
@@ -128,8 +141,7 @@ func main() {
 				Action: func(c *cli.Context) error {
 					// up to two params
 					if c.Args().Len() < 1 {
-						fmt.Println("you need to provide joincode")
-						return nil
+						die("you need to provide joincode")
 					}
 					joincode := c.Args().Get(0)
 					hostname := ""
@@ -138,18 +150,12 @@ func main() {
 						hostname = c.Args().Get(1)
 					}
 
-					apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
-					if err != nil {
-						fmt.Println("Error reading secret file, are you root? " + err.Error())
-					}
-
-					urlencodedBody := url.Values{
-						"secret":   {string(apiSecret)},
+					params := url.Values{
 						"code":     {joincode},
 						"hostname": {hostname},
 					}
-
-					callDaemonPost("/control/join", urlencodedBody)
+					addDaemonApiSecret(&params)
+					callDaemonPost("/control/join", params)
 					return nil
 				},
 			},
@@ -164,18 +170,11 @@ func main() {
 
 					domain := c.Args().Get(0)
 
-					apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
-
-					if err != nil {
-						fmt.Println("Error reading secret file, are you root? " + err.Error())
-					}
-
-					urlencodedBody := url.Values{
-						"secret": {string(apiSecret)},
+					params := url.Values{
 						"domain": {domain},
 					}
-
-					callDaemonPost("/control/change-server", urlencodedBody)
+					addDaemonApiSecret(&params)
+					callDaemonPost("/control/change-server", params)
 					return nil
 				},
 			},
@@ -201,17 +200,11 @@ func main() {
 							}
 							addr := c.Args().Get(0)
 
-							apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
-							if err != nil {
-								fmt.Println("Error reading secret file, are you root? " + err.Error())
-							}
-
-							urlencodedBody := url.Values{
-								"secret":  {string(apiSecret)},
+							params := url.Values{
 								"address": {addr},
 							}
-
-							callDaemonPost("/control/whitelist/add", urlencodedBody)
+							addDaemonApiSecret(&params)
+							callDaemonPost("/control/whitelist/add", params)
 							return nil
 						},
 					},
@@ -225,17 +218,11 @@ func main() {
 							}
 							addr := c.Args().Get(0)
 
-							apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
-							if err != nil {
-								fmt.Println("Error reading secret file, are you root? " + err.Error())
-							}
-
-							urlencodedBody := url.Values{
-								"secret":  {string(apiSecret)},
+							params := url.Values{
 								"address": {addr},
 							}
-
-							callDaemonPost("/control/whitelist/rm", urlencodedBody)
+							addDaemonApiSecret(&params)
+							callDaemonPost("/control/whitelist/rm", params)
 							return nil
 						},
 					},
