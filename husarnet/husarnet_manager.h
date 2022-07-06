@@ -112,7 +112,7 @@ class HusarnetManager {
   std::string rotateApiSecret();
 
   // Copy of methods from License class
-  std::string getDashboardUrl();
+  std::string getDashboardFqdn();
   IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
 

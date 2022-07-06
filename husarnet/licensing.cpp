@@ -106,7 +106,7 @@ License::License(std::string dashboardHostname)
       base64Decode(licenseJson[LICENSE_SIGNATURE_KEY].get<std::string>()),
       getSignatureData(licenseJson));
 
-  this->dashboardUrl =
+  this->dashboardFqdn =
       licenseJson[LICENSE_DASHBOARD_URL_KEY].get<std::string>();
   this->websetupAddress = IpAddress::parse(
       licenseJson[LICENSE_WEBSETUP_HOST_KEY].get<std::string>());
@@ -117,9 +117,9 @@ License::License(std::string dashboardHostname)
   }
 }
 
-std::string License::getDashboardUrl()
+std::string License::getDashboardFqdn()
 {
-  return this->dashboardUrl;
+  return this->dashboardFqdn;
 }
 
 IpAddress License::getWebsetupAddress()

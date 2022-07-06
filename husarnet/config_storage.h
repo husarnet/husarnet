@@ -22,10 +22,10 @@ BETTER_ENUM(InternalSetting, int, websetupSecret = 1)
 BETTER_ENUM(
     UserSetting,
     int,
-    dashboardUrl = 1,             // string
+    dashboardFqdn = 1,            // string
     enableWhitelist = 2,          // bool
     interfaceName = 3,            // string
-    apiPort = 4,                  // int
+    daemonApiPort = 4,            // int
     enableCompression = 5,        // bool
     enableUdpTunelling = 6,       // bool
     enableTcpTunelling = 7,       // bool
@@ -106,6 +106,9 @@ class ConfigStorage {
   void setUserSetting(UserSetting setting, int value);
   void setUserSetting(UserSetting setting, InetAddress inet);
   void clearUserSetting(UserSetting setting);
+
+  bool isUserSettingOverriden(UserSetting setting);
+  std::string getPersistentUserSetting(UserSetting setting);
 
   std::string getUserSetting(UserSetting setting);
   bool getUserSettingBool(UserSetting setting);

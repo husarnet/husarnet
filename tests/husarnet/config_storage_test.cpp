@@ -136,43 +136,43 @@ TEST_CASE("User settings")
   SECTION("Unset fields should be empty and not error out")
   {
     CAPTURE(cs->getCurrentData());
-    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "");
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardFqdn) == "");
   }
 
   SECTION("Direct setting")
   {
-    cs->setUserSetting(UserSetting::dashboardUrl, "foo");
-    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "foo");
+    cs->setUserSetting(UserSetting::dashboardFqdn, "foo");
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardFqdn) == "foo");
   }
 
   cs = new ConfigStorage(
       new HusarnetManager(), []() { return ""; }, [&](std::string s) {},
-      {{UserSetting::dashboardUrl, "foo"}}, {}, {});
+      {{UserSetting::dashboardFqdn, "foo"}}, {}, {});
 
   SECTION("Default setting")
   {
-    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "foo");
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardFqdn) == "foo");
   }
 
   SECTION("Default setting override")
   {
-    cs->setUserSetting(UserSetting::dashboardUrl, "bar");
-    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "bar");
+    cs->setUserSetting(UserSetting::dashboardFqdn, "bar");
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardFqdn) == "bar");
   }
 
   cs = new ConfigStorage(
       new HusarnetManager(), []() { return ""; }, [&](std::string s) {},
-      {{UserSetting::dashboardUrl, "foo"}},
-      {{UserSetting::dashboardUrl, "bar"}}, {});
+      {{UserSetting::dashboardFqdn, "foo"}},
+      {{UserSetting::dashboardFqdn, "bar"}}, {});
 
   SECTION("Override setting")
   {
-    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "bar");
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardFqdn) == "bar");
   }
 
   SECTION("Override still wins")
   {
-    cs->setUserSetting(UserSetting::dashboardUrl, "baz");
-    REQUIRE(cs->getUserSetting(UserSetting::dashboardUrl) == "bar");
+    cs->setUserSetting(UserSetting::dashboardFqdn, "baz");
+    REQUIRE(cs->getUserSetting(UserSetting::dashboardFqdn) == "bar");
   }
 }

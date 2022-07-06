@@ -26,7 +26,7 @@ func (t *authedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func makeAuthenticatedClient(authToken string) graphql.Client {
-	return graphql.NewClient(graphqlServerURL,
+	return graphql.NewClient(getDashboardUrl(),
 		&http.Client{Transport: &authedTransport{token: authToken, wrapped: http.DefaultTransport}})
 }
 
@@ -45,7 +45,7 @@ func saveAuthTokenToFile(authToken string) {
 
 func loginAndSaveAuthToken() string {
 	username, password := getUserCredentialsFromStandardInput()
-	authClient := graphql.NewClient(graphqlServerURL, http.DefaultClient)
+	authClient := graphql.NewClient(getDashboardUrl(), http.DefaultClient)
 	tokenResp, tokenErr := generated.ObtainToken(authClient, username, password)
 	if tokenErr != nil {
 		fmt.Println("Authentication error occured.")
@@ -67,7 +67,7 @@ func getAuthToken() string {
 }
 
 func getRefreshedToken(authToken string) string {
-	client := graphql.NewClient(graphqlServerURL,
+	client := graphql.NewClient(getDashboardUrl(),
 		&http.Client{Transport: &authedTransport{token: authToken, wrapped: http.DefaultTransport}})
 	resp, err := generated.RefreshToken(client, authToken)
 	if err != nil {

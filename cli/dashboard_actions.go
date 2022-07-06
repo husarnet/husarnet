@@ -5,7 +5,7 @@ package main
 
 import (
 	"fmt"
-	"hdm/handlers"
+	"hdm/dashboard_handlers"
 
 	"github.com/urfave/cli/v2"
 )
@@ -16,16 +16,17 @@ func handleLogin(c *cli.Context) error {
 }
 
 func handleGroupLs(c *cli.Context) error {
-	callAPI(handlers.ListGroupsHandler{})
+	callAPI(dashboard_handlers.ListGroupsHandler{})
 	return nil
 }
 
+// TODO this should be able to get the group by name
 func handleGroupShow(c *cli.Context) error {
 	if c.Args().Len() < 1 {
 		fmt.Println(notEnoughArgsForShowGroup)
 		return nil
 	}
-	callAPI(handlers.ShowGroupHandler{}, c.Args().First())
+	callAPI(dashboard_handlers.ShowGroupHandler{}, c.Args().First())
 	return nil
 }
 
@@ -34,7 +35,7 @@ func handleGroupUnjoin(c *cli.Context) error {
 		fmt.Println(notEnoughArgsForUnjoin)
 		return nil
 	}
-	callAPI(handlers.UnjoinDeviceHandler{}, c.Args().Get(0), c.Args().Get(1))
+	callAPI(dashboard_handlers.UnjoinDeviceHandler{}, c.Args().Get(0), c.Args().Get(1))
 	return nil
 }
 
@@ -43,7 +44,7 @@ func handleGroupCreate(c *cli.Context) error {
 		fmt.Println(notEnoughArgsForCreateGroup)
 		return nil
 	}
-	callAPI(handlers.CreateGroupHandler{}, c.Args().First())
+	callAPI(dashboard_handlers.CreateGroupHandler{}, c.Args().First())
 	return nil
 }
 
@@ -52,7 +53,7 @@ func handleGroupRename(c *cli.Context) error {
 		fmt.Println(notEnoughArgsForRenameGroup)
 		return nil
 	}
-	callAPI(handlers.RenameGroupHandler{}, c.Args().Get(0), c.Args().Get(1))
+	callAPI(dashboard_handlers.RenameGroupHandler{}, c.Args().Get(0), c.Args().Get(1))
 	return nil
 }
 
@@ -62,12 +63,12 @@ func handleGroupRemove(c *cli.Context) error {
 		return nil
 	}
 	askForConfirmation(removeGroupConfirmationPrompt)
-	callAPI(handlers.RemoveGroupHandler{}, c.Args().First())
+	callAPI(dashboard_handlers.RemoveGroupHandler{}, c.Args().First())
 	return nil
 }
 
 func handleDeviceLs(c *cli.Context) error {
-	callAPI(handlers.ListDevicesHandler{})
+	callAPI(dashboard_handlers.ListDevicesHandler{})
 	return nil
 }
 
@@ -76,7 +77,7 @@ func handleDeviceRename(c *cli.Context) error {
 		fmt.Println(notEnoughArgsForRenameDevice)
 		return nil
 	}
-	callAPI(handlers.RenameDeviceHandler{}, c.Args().Get(0), c.Args().Get(1))
+	callAPI(dashboard_handlers.RenameDeviceHandler{}, c.Args().Get(0), c.Args().Get(1))
 	return nil
 }
 

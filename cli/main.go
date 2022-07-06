@@ -13,13 +13,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// Global TODO:
-// allow for removal/update via name, not an ID
-// GET transport method for queries (defaults to POST)
-// some user friendliness, validating input e.g. we expected number here
-
-var graphqlServerURL string
-var husarnetDaemonURL string = "http://127.0.0.1:16216"
+var husarnetDashboardFqdn string
+var husarnetDaemonApiPort int
 var verboseLogs bool
 
 func main() {
@@ -29,12 +24,20 @@ func main() {
 		Usage:    "Manage your Husarnet groups and devices from your terminal",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "url",
-				Aliases:     []string{"u"},
-				Value:       "https://app.husarnet.com/graphql",
-				Usage:       "URL for your GraphQL endpoint. Remember to include scheme in this!",
-				EnvVars:     []string{"HUSARNET_GRAPHQL_URL"},
-				Destination: &graphqlServerURL,
+				Name:        "dashboard_fqdn",
+				Aliases:     []string{"d"},
+				Value:       "app.husarnet.com",
+				Usage:       "FQDN for your dashboard instance.",
+				EnvVars:     []string{"HUSARNET_DASHBOARD_FQDN"},
+				Destination: &husarnetDashboardFqdn,
+			},
+			&cli.IntFlag{
+				Name:        "daemon_api_port",
+				Aliases:     []string{"p"},
+				Value:       16216,
+				Usage:       "Port your Husarnet Daemon is listening at",
+				EnvVars:     []string{"HUSARNET_DAEMON_API_PORT"},
+				Destination: &husarnetDaemonApiPort,
 			},
 			&cli.BoolFlag{
 				Name:        "verbose",

@@ -172,7 +172,7 @@ void ApiServer::runThread()
                      {"base", manager->isConnectedToBase()},
                      {"websetup", manager->isConnectedToWebsetup()},
                  }},
-                {"dashboard_url", manager->getDashboardUrl()},
+                {"dashboard_fqdn", manager->getDashboardFqdn()},
                 {"websetup_address", manager->getWebsetupAddress().toString()},
                 {"base_connection",
                  {{"type", manager->getCurrentBaseProtocol()},

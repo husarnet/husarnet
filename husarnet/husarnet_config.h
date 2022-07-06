@@ -24,10 +24,10 @@ const IpAddress MULTICAST_ADDR_6 =
 const std::string multicastDestination = "ff15:f2d3:a389::";
 
 const std::map<UserSetting, std::string> userDefaults = {
-    {UserSetting::dashboardUrl, "app.husarnet.com"},
+    {UserSetting::dashboardFqdn, "app.husarnet.com"},
     {UserSetting::enableWhitelist, trueValue},
     {UserSetting::interfaceName, "hnet0"},
-    {UserSetting::apiPort, "16216"},
+    {UserSetting::daemonApiPort, "16216"},
     {UserSetting::enableCompression, falseValue},
     {UserSetting::enableUdpTunelling, trueValue},
     {UserSetting::enableTcpTunelling, trueValue},

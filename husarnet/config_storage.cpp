@@ -284,12 +284,18 @@ void ConfigStorage::clearUserSetting(UserSetting setting)
   save();
 }
 
-std::string ConfigStorage::getUserSetting(UserSetting setting)
+bool ConfigStorage::isUserSettingOverriden(UserSetting setting)
+{
+  if(userOverrides.contains(setting)) {
+    return true;
+  }
+
+  return false;
+}
+
+std::string ConfigStorage::getPersistentUserSetting(UserSetting setting)
 {
   auto settingStr = setting._to_string();
-  if(userOverrides.contains(setting)) {
-    return userOverrides[setting];
-  }
   if(currentData[USER_SETTINGS_KEY].contains(settingStr)) {
     return currentData[USER_SETTINGS_KEY][settingStr];
   }
@@ -298,6 +304,16 @@ std::string ConfigStorage::getUserSetting(UserSetting setting)
   }
 
   return "";
+}
+
+std::string ConfigStorage::getUserSetting(UserSetting setting)
+{
+  auto settingStr = setting._to_string();
+  if(userOverrides.contains(setting)) {
+    return userOverrides[setting];
+  }
+
+  return getPersistentUserSetting(setting);
 }
 
 bool ConfigStorage::getUserSettingBool(UserSetting setting)

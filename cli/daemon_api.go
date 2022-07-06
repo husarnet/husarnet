@@ -9,44 +9,24 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-
-	"github.com/Khan/genqlient/graphql"
 )
-
-type handler interface {
-	PerformRequest(client graphql.Client, args ...string) (interface{}, error)
-	PrintResults(data interface{})
-}
-
-func callAPI(handler handler, args ...string) {
-	token := getAuthToken()
-	client := makeAuthenticatedClient(token)
-	resp, err := handler.PerformRequest(client, args...)
-
-	if isSignatureExpiredOrInvalid(err) {
-		token = loginAndSaveAuthToken()
-		client := makeAuthenticatedClient(token)
-		resp, err = handler.PerformRequest(client, args...)
-	}
-
-	if err != nil {
-		die("GraphQL server at " + graphqlServerURL + " returned an error: " + err.Error())
-	}
-
-	handler.PrintResults(resp)
-
-	// after performing any request, we hit API again to refresh token thus prolong the session
-	refreshToken(token)
-}
 
 // TODO: implement calling daemon, starting it if is not running yet, etc...
 // Basic functions that just print responses
+func getDaemonApiUrl() string {
+	return fmt.Sprintf("http://127.0.0.1:%d", husarnetDaemonApiPort)
+}
+
 func callDaemonGet(route string) {
-	resp, err := http.Get(husarnetDaemonURL + route)
+	resp, err := http.Get(getDaemonApiUrl() + route)
 	handlePotentialDaemonRequestError(err)
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		dieE(err)
+	}
+
 	fmt.Println(string(body))
 }
 
@@ -69,14 +49,10 @@ func addDaemonApiSecret(params *url.Values) {
 }
 
 func callDaemonPost(route string, urlencodedBody url.Values) {
-	resp, err := http.PostForm(husarnetDaemonURL+route, urlencodedBody)
+	resp, err := http.PostForm(getDaemonApiUrl()+route, urlencodedBody)
 	handlePotentialDaemonRequestError(err)
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	fmt.Println(string(body))
-}
-
-func notImplementedYet() {
-	fmt.Println("Not implemented yet")
 }
