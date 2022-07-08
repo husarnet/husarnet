@@ -9,6 +9,7 @@ include(../husarnet/husarnet.cmake)
 file(GLOB husarnet_tests_SRC "${CMAKE_CURRENT_LIST_DIR}/husarnet/*.cpp")
 add_executable(husarnet_tests ${husarnet_tests_SRC})
 
+target_compile_definitions(husarnet_core PRIVATE UT=1)
 target_link_libraries(husarnet_tests husarnet_core)
 
 if(IS_DIRECTORY "${husarnet_core_SOURCE_DIR}")
