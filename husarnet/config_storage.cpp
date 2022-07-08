@@ -200,6 +200,11 @@ void ConfigStorage::setInternalSetting(
   save();
 }
 
+void ConfigStorage::setInternalSetting(InternalSetting setting, const char* value)
+{
+  setInternalSetting(setting, static_cast<std::string>(value));
+}
+
 void ConfigStorage::setInternalSetting(InternalSetting setting, bool value)
 {
   setInternalSetting(setting, value ? trueValue : "");
@@ -261,6 +266,11 @@ void ConfigStorage::setUserSetting(UserSetting setting, std::string value)
 {
   currentData[USER_SETTINGS_KEY][setting._to_string()] = value;
   save();
+}
+
+void ConfigStorage::setUserSetting(UserSetting setting, const char* value)
+{
+  setUserSetting(setting, static_cast<std::string>(value));
 }
 
 void ConfigStorage::setUserSetting(UserSetting setting, bool value)

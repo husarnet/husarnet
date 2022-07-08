@@ -108,9 +108,7 @@ TEST_CASE("Internal settings")
 
   SECTION("Direct setting")
   {
-    // confusing problem - string literal gets treated as bool
-    // hence static_cast
-    cs->setInternalSetting(InternalSetting::websetupSecret, static_cast<std::string>("foo"));
+    cs->setInternalSetting(InternalSetting::websetupSecret, "foo");
     REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "foo");
   }
 
@@ -127,7 +125,7 @@ TEST_CASE("Internal settings")
 
   SECTION("Default setting override")
   {
-    cs->setInternalSetting(InternalSetting::websetupSecret, static_cast<std::string>("bar"));
+    cs->setInternalSetting(InternalSetting::websetupSecret, "bar");
     REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "bar");
   }
 }
@@ -144,7 +142,7 @@ TEST_CASE("User settings")
 
   SECTION("Direct setting")
   {
-    cs->setUserSetting(UserSetting::dashboardFqdn, static_cast<std::string>("foo"));
+    cs->setUserSetting(UserSetting::dashboardFqdn, "foo");
     REQUIRE(cs->getUserSetting(UserSetting::dashboardFqdn) == "foo");
   }
 
@@ -161,7 +159,7 @@ TEST_CASE("User settings")
 
   SECTION("Default setting override")
   {
-    cs->setUserSetting(UserSetting::dashboardFqdn, static_cast<std::string>("bar"));
+    cs->setUserSetting(UserSetting::dashboardFqdn, "bar");
     REQUIRE(cs->getUserSetting(UserSetting::dashboardFqdn) == "bar");
   }
 

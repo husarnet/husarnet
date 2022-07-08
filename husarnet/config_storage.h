@@ -91,6 +91,7 @@ class ConfigStorage {
   void whitelistClear();
 
   void setInternalSetting(InternalSetting setting, std::string value);
+  void setInternalSetting(InternalSetting setting, const char* value);
   void setInternalSetting(InternalSetting setting, bool value);
   void setInternalSetting(InternalSetting setting, int value);
   void clearInternalSetting(InternalSetting setting);
@@ -102,6 +103,7 @@ class ConfigStorage {
   bool isInternalSettingEmpty(InternalSetting setting);
 
   void setUserSetting(UserSetting setting, std::string value);
+  void setUserSetting(UserSetting setting, const char* value);
   void setUserSetting(UserSetting setting, bool value);
   void setUserSetting(UserSetting setting, int value);
   void setUserSetting(UserSetting setting, InetAddress inet);
