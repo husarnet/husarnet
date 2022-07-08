@@ -45,34 +45,34 @@ TEST_CASE("ConfigStorage initialization")
   makeTestStorage();
 }
 
-// TEST_CASE("Host table operations")
-// {
-//   auto cs = makeTestStorage();
-//   REQUIRE(cs->getHostTable().empty());
+TEST_CASE("Host table operations")
+{
+  auto cs = makeTestStorage();
+  REQUIRE(cs->getHostTable().empty());
 
-//   std::string foo_hostname = "foo";
-//   auto foo_ip = IpAddress::parse("dead:beef::1");
+  std::string foo_hostname = "foo";
+  auto foo_ip = IpAddress::parse("dead:beef::1");
 
-//   cs->hostTableAdd(foo_hostname, foo_ip);
-//   REQUIRE(cs->getHostTable().size() == 1);
-//   REQUIRE(cs->getHostTable().count(foo_hostname) == 1);
-//   REQUIRE(cs->getHostTable()[foo_hostname] == foo_ip);
+  cs->hostTableAdd(foo_hostname, foo_ip);
+  REQUIRE(cs->getHostTable().size() == 1);
+  REQUIRE(cs->getHostTable().count(foo_hostname) == 1);
+  REQUIRE(cs->getHostTable()[foo_hostname] == foo_ip);
 
-//   std::string bar_hostname = "bar";
-//   auto bar_ip = IpAddress::parse("dead:beef::2");
+  std::string bar_hostname = "bar";
+  auto bar_ip = IpAddress::parse("dead:beef::2");
 
-//   cs->hostTableAdd(bar_hostname, bar_ip);
-//   REQUIRE(cs->getHostTable().size() == 2);
-//   REQUIRE(cs->getHostTable().count(bar_hostname) == 1);
-//   REQUIRE(cs->getHostTable()[bar_hostname] == bar_ip);
+  cs->hostTableAdd(bar_hostname, bar_ip);
+  REQUIRE(cs->getHostTable().size() == 2);
+  REQUIRE(cs->getHostTable().count(bar_hostname) == 1);
+  REQUIRE(cs->getHostTable()[bar_hostname] == bar_ip);
 
-//   cs->hostTableRm(bar_hostname);
-//   REQUIRE(cs->getHostTable().size() == 1);
-//   REQUIRE(cs->getHostTable().count(bar_hostname) == 0);
+  cs->hostTableRm(bar_hostname);
+  REQUIRE(cs->getHostTable().size() == 1);
+  REQUIRE(cs->getHostTable().count(bar_hostname) == 0);
 
-//   cs->hostTableClear();
-//   REQUIRE(cs->getHostTable().empty());
-// }
+  cs->hostTableClear();
+  REQUIRE(cs->getHostTable().empty());
+}
 
 TEST_CASE("Whitelist operations")
 {
@@ -108,13 +108,17 @@ TEST_CASE("Internal settings")
 
   SECTION("Direct setting")
   {
-    cs->setInternalSetting(InternalSetting::websetupSecret, "foo");
+    // confusing problem - string literal gets treated as bool
+    // hence static_cast
+    cs->setInternalSetting(InternalSetting::websetupSecret, static_cast<std::string>("foo"));
     REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "foo");
   }
 
+  HusarnetManager* manager = new HusarnetManager();
   cs = new ConfigStorage(
-      new HusarnetManager(), []() { return ""; }, [&](std::string s) {}, {}, {},
+      manager, []() { return ""; }, [&](std::string s) {}, {}, {},
       {{InternalSetting::websetupSecret, "foo"}});
+  manager->setConfigStorage(cs);
 
   SECTION("Default setting")
   {
@@ -123,16 +127,14 @@ TEST_CASE("Internal settings")
 
   SECTION("Default setting override")
   {
-    cs->setInternalSetting(InternalSetting::websetupSecret, "bar");
+    cs->setInternalSetting(InternalSetting::websetupSecret, static_cast<std::string>("bar"));
     REQUIRE(cs->getInternalSetting(InternalSetting::websetupSecret) == "bar");
   }
 }
 
 TEST_CASE("User settings")
 {
-  auto cs = new ConfigStorage(
-      new HusarnetManager(), []() { return ""; }, [&](std::string s) {}, {}, {},
-      {});
+  auto cs = makeTestStorage();
 
   SECTION("Unset fields should be empty and not error out")
   {
@@ -142,13 +144,15 @@ TEST_CASE("User settings")
 
   SECTION("Direct setting")
   {
-    cs->setUserSetting(UserSetting::dashboardFqdn, "foo");
+    cs->setUserSetting(UserSetting::dashboardFqdn, static_cast<std::string>("foo"));
     REQUIRE(cs->getUserSetting(UserSetting::dashboardFqdn) == "foo");
   }
 
+  HusarnetManager* manager = new HusarnetManager();
   cs = new ConfigStorage(
-      new HusarnetManager(), []() { return ""; }, [&](std::string s) {},
+      manager, []() { return ""; }, [&](std::string s) {}, 
       {{UserSetting::dashboardFqdn, "foo"}}, {}, {});
+  manager->setConfigStorage(cs);
 
   SECTION("Default setting")
   {
@@ -157,14 +161,15 @@ TEST_CASE("User settings")
 
   SECTION("Default setting override")
   {
-    cs->setUserSetting(UserSetting::dashboardFqdn, "bar");
+    cs->setUserSetting(UserSetting::dashboardFqdn, static_cast<std::string>("bar"));
     REQUIRE(cs->getUserSetting(UserSetting::dashboardFqdn) == "bar");
   }
 
   cs = new ConfigStorage(
-      new HusarnetManager(), []() { return ""; }, [&](std::string s) {},
+      manager, []() { return ""; }, [&](std::string s) {},
       {{UserSetting::dashboardFqdn, "foo"}},
       {{UserSetting::dashboardFqdn, "bar"}}, {});
+  manager->setConfigStorage(cs);
 
   SECTION("Override setting")
   {
