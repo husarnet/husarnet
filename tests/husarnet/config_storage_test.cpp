@@ -7,6 +7,16 @@
 
 #include "husarnet/husarnet_manager.h"
 
+static ConfigStorage* makeTestStorage()
+{
+    HusarnetManager* manager = new HusarnetManager();
+    auto cs = new ConfigStorage(
+              manager, []() { return ""; }, [&](std::string s) {}, {}, {}, {});
+
+    manager->setConfigStorage(cs);
+    return cs;
+}
+
 TEST_CASE("Group changes")
 {
   int writes = 0;
@@ -28,13 +38,6 @@ TEST_CASE("Group changes")
   // });
 
   // REQUIRE(writes == 4);
-}
-
-static ConfigStorage* makeTestStorage()
-{
-  return new ConfigStorage(
-      new HusarnetManager(), []() { return ""; }, [&](std::string s) {}, {}, {},
-      {});
 }
 
 TEST_CASE("ConfigStorage initialization")
@@ -95,9 +98,7 @@ TEST_CASE("Whitelist operations")
 
 TEST_CASE("Internal settings")
 {
-  auto cs = new ConfigStorage(
-      new HusarnetManager(), []() { return ""; }, [&](std::string s) {}, {}, {},
-      {});
+  auto cs = makeTestStorage();
 
   SECTION("Unset fields should be empty and not error out")
   {

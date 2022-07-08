@@ -77,6 +77,11 @@ std::string HusarnetManager::getSelfHostname()
   return Privileged::getSelfHostname();
 }
 
+void HusarnetManager::setConfigStorage(ConfigStorage* cs)
+{
+  this->configStorage = cs;
+}
+
 bool HusarnetManager::setSelfHostname(std::string newHostname)
 {
   return Privileged::setSelfHostname(newHostname);

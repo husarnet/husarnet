@@ -64,6 +64,7 @@ class HusarnetManager {
 
   LogManager& getLogManager();
   ConfigStorage& getConfigStorage();
+  void setConfigStorage(ConfigStorage* cs);
   PeerContainer* getPeerContainer();
 
   std::string getVersion();
