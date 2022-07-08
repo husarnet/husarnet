@@ -25,6 +25,7 @@
 #include "husarnet/peer_container.h"
 #include "husarnet/peer_flags.h"
 #include "husarnet/security_layer.h"
+#include "husarnet/util.h"
 #include "husarnet/websetup.h"
 
 #ifdef HTTP_CONTROL_API
@@ -74,6 +75,11 @@ PeerFlags* HusarnetManager::getSelfFlags()
 std::string HusarnetManager::getSelfHostname()
 {
   return Privileged::getSelfHostname();
+}
+
+void HusarnetManager::setConfigStorage(ConfigStorage* cs)
+{
+  this->configStorage = cs;
 }
 
 bool HusarnetManager::setSelfHostname(std::string newHostname)
@@ -165,7 +171,11 @@ bool HusarnetManager::isJoined()
 
 void HusarnetManager::changeServer(std::string domain)
 {
-  configStorage->setUserSetting(UserSetting::dashboardUrl, domain);
+  configStorage->setUserSetting(UserSetting::dashboardFqdn, domain);
+  LOG("Dashboard URL has been changed to %s. Daemon will now quit so you can "
+      "restart it with new setting.",
+      domain.c_str());
+  exit(0);
 }
 
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)
@@ -224,7 +234,7 @@ bool HusarnetManager::isRealAddressAllowed(InetAddress addr)
 
 int HusarnetManager::getApiPort()
 {
-  return configStorage->getUserSettingInt(UserSetting::apiPort);
+  return configStorage->getUserSettingInt(UserSetting::daemonApiPort);
 }
 
 std::string HusarnetManager::getApiSecret()
@@ -238,9 +248,9 @@ std::string HusarnetManager::rotateApiSecret()
   return getApiSecret();
 }
 
-std::string HusarnetManager::getDashboardUrl()
+std::string HusarnetManager::getDashboardFqdn()
 {
-  return license->getDashboardUrl();
+  return license->getDashboardFqdn();
 }
 IpAddress HusarnetManager::getWebsetupAddress()
 {
@@ -302,7 +312,7 @@ HusarnetManager::HusarnetManager()
 void HusarnetManager::getLicenseStage()
 {
   license =
-      new License(configStorage->getUserSetting(UserSetting::dashboardUrl));
+      new License(configStorage->getUserSetting(UserSetting::dashboardFqdn));
 }
 
 void HusarnetManager::getIdentityStage()
@@ -390,7 +400,13 @@ void HusarnetManager::stage3()
   startWebsetup();
   startHTTPServer();
 
-  if(configStorage->getUserSetting(UserSetting::joinCode) != "") {
+  if(configStorage->isUserSettingOverriden(UserSetting::dashboardFqdn) &&
+     configStorage->getPersistentUserSetting(UserSetting::dashboardFqdn) !=
+         configStorage->getUserSetting(UserSetting::dashboardFqdn)) {
+    changeServer(configStorage->getUserSetting(UserSetting::dashboardFqdn));
+  }
+
+  if(configStorage->isUserSettingOverriden(UserSetting::joinCode)) {
     joinNetwork(configStorage->getUserSetting(UserSetting::joinCode));
   }
 

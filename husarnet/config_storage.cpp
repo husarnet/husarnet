@@ -200,6 +200,11 @@ void ConfigStorage::setInternalSetting(
   save();
 }
 
+void ConfigStorage::setInternalSetting(InternalSetting setting, const char* value)
+{
+  setInternalSetting(setting, static_cast<std::string>(value));
+}
+
 void ConfigStorage::setInternalSetting(InternalSetting setting, bool value)
 {
   setInternalSetting(setting, value ? trueValue : "");
@@ -263,6 +268,11 @@ void ConfigStorage::setUserSetting(UserSetting setting, std::string value)
   save();
 }
 
+void ConfigStorage::setUserSetting(UserSetting setting, const char* value)
+{
+  setUserSetting(setting, static_cast<std::string>(value));
+}
+
 void ConfigStorage::setUserSetting(UserSetting setting, bool value)
 {
   setUserSetting(setting, value ? trueValue : "");
@@ -284,12 +294,18 @@ void ConfigStorage::clearUserSetting(UserSetting setting)
   save();
 }
 
-std::string ConfigStorage::getUserSetting(UserSetting setting)
+bool ConfigStorage::isUserSettingOverriden(UserSetting setting)
+{
+  if(userOverrides.contains(setting)) {
+    return true;
+  }
+
+  return false;
+}
+
+std::string ConfigStorage::getPersistentUserSetting(UserSetting setting)
 {
   auto settingStr = setting._to_string();
-  if(userOverrides.contains(setting)) {
-    return userOverrides[setting];
-  }
   if(currentData[USER_SETTINGS_KEY].contains(settingStr)) {
     return currentData[USER_SETTINGS_KEY][settingStr];
   }
@@ -298,6 +314,16 @@ std::string ConfigStorage::getUserSetting(UserSetting setting)
   }
 
   return "";
+}
+
+std::string ConfigStorage::getUserSetting(UserSetting setting)
+{
+  auto settingStr = setting._to_string();
+  if(userOverrides.contains(setting)) {
+    return userOverrides[setting];
+  }
+
+  return getPersistentUserSetting(setting);
 }
 
 bool ConfigStorage::getUserSettingBool(UserSetting setting)

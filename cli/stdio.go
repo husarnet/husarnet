@@ -13,12 +13,17 @@ import (
 	"golang.org/x/term"
 )
 
-// if verbose logs are enabled, pass the arguments to fmt.Println(). Otherwise do nothing.
+// if verbose logs are enabled, pass the arguments to fmt.Println(). Otherwise do nothing
 func logV(args ...interface{}) {
 	if verboseLogs {
 		fmt.Print("[verbose log] ")
 		fmt.Println(args...)
 	}
+}
+
+// print not implemented yet warning
+func notImplementedYet() {
+	fmt.Println("Not implemented yet")
 }
 
 // exit the program with the given message and status code 1.
@@ -27,7 +32,12 @@ func die(message string) {
 	os.Exit(1)
 }
 
-// prompts user for username and password and returns them. Password is not visible while typing.
+// die, printing exception
+func dieE(err error) {
+	die(fmt.Sprintln("%v", err))
+}
+
+// prompts user for username and password and returns them. Password is not visible while typing
 func getUserCredentialsFromStandardInput() (string, string) {
 	fmt.Println(credentialsPrompt)
 	reader := bufio.NewReader(os.Stdin)
@@ -41,7 +51,7 @@ func getUserCredentialsFromStandardInput() (string, string) {
 	return username, password
 }
 
-// Prompts user for confirmation and exits the whole program if user does not confirm.
+// prompts user for confirmation and exits the whole program if user does not confirm
 func askForConfirmation(question string) {
 	fmt.Print(question + " [y/N]: ")
 	reader := bufio.NewReader(os.Stdin)

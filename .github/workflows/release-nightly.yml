@@ -20,11 +20,11 @@ jobs:
       - name: Build for all platforms and archs
         run: ./util/build-all.sh
 
-      # - name: Prepare tests
-      #   run: ./util/test-prepare.sh
+      - name: Prepare tests
+        run: ./util/test-prepare.sh
 
-      # - name: Run UTs
-      #   run: ./util/test-unit.sh
+      - name: Run UTs
+        run: ./util/test-unit.sh
 
       # - name: Run static analysis (cppcheck)
       #   run: ./util/test-cppcheck.sh

@@ -90,5 +90,6 @@
         "zielmicha"
     ],
     "cmake.configureOnOpen": true,
-    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+    "go.inferGopath": false
 }

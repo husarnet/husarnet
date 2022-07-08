@@ -15,9 +15,9 @@ func areSlicesEqual(first []string, second []string) bool {
 		return false
 	}
 
-	// yes, inefficient implementation,
-	// but the func is only used in tests so far - so no worries yet
-	// it will be good refactoring excercise - always look on the bright side of life.
+	// yes, inefficient implementation, but
+	// the func is only used in tests so far - so no worries yet
+	// it will be good refactoring excercise - always look on the bright side of life
 	firstCopy := make([]string, count)
 	secondCopy := make([]string, count)
 	copy(firstCopy, first)

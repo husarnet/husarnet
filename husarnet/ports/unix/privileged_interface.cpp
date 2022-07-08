@@ -160,6 +160,15 @@ static std::string getApiSecretPath()
 
 static int privilegedProcessFd = 0;
 
+#ifdef UT
+static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
+{
+  // disable privileged process while unit testing core
+  (void) endpoint;
+  (void) data;
+  return json::parse("{}");
+}
+#else
 static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
 {
   assert(privilegedProcessFd != 0);
@@ -185,6 +194,7 @@ static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
   auto response = json::parse(recvBuffer);
   return response;
 }
+#endif
 
 struct cap_header_struct {
   __u32 version;
