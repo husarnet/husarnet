@@ -10,9 +10,9 @@ for arch in $unix_archs; do
     cp ${build_base}/${arch}/unix/husarnet-daemon ${release_base}/husarnet-daemon-unix-${arch}
 
     output_dir="${base_dir}/build/${arch}/unix/out"
-    ${util_base}/build-cli.sh
-    cp ${build_base}/bin/husarnet ${release_base}/husarnet-unix-${arch}
-    cp ${build_base}/bin/husarnet ${output_dir}/usr/bin/husarnet
+    ${util_base}/build-cli.sh ${arch} unix
+    cp ${build_base}/bin/husarnet-linux-${arch} ${release_base}/husarnet-unix-${arch}
+    cp ${build_base}/bin/husarnet-linux-${arch} ${output_dir}/usr/bin/husarnet
 
     for package in $unix_packages; do
         ${util_base}/package-unix.sh $arch $package
@@ -30,9 +30,9 @@ exit 0
 # Windows builds
 
 ${util_base}/build-cmake.sh win64 windows
-# ${util_base}/build-cmake.sh win32 windows
-
-cp ${build_base}/win64/windows/husarnet.exe ${release_base}/
+${util_base}/build-cli.sh win64 windows
+# cp ${build_base}/win64/windows/husarnet.exe
+cp ${build_base}/bin/husarnet-windows-amd64 ${release_base}/husarnet.exe
 
 # ESP32 builds
 
