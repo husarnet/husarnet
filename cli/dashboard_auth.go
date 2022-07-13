@@ -8,12 +8,11 @@ import (
 	"hdm/generated"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/Khan/genqlient/graphql"
 )
-
-const tokenFilePath = "/tmp/hdm-token"
 
 type authedTransport struct {
 	token   string
@@ -25,6 +24,14 @@ func (t *authedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return t.wrapped.RoundTrip(req)
 }
 
+func getTokenFilePath() string {
+	if runtime.GOOS == "windows" {
+		sep := string(os.PathSeparator)
+		return os.ExpandEnv("${%localappdata%}") + sep + "Temp" + sep + "hsrnet-webtoken"
+	}
+	return "/tmp/hsrnet-webtoken"
+}
+
 func makeAuthenticatedClient(authToken string) graphql.Client {
 	return graphql.NewClient(getDashboardUrl(),
 		&http.Client{Transport: &authedTransport{token: authToken, wrapped: http.DefaultTransport}})
@@ -34,7 +41,7 @@ func saveAuthTokenToFile(authToken string) {
 	// the token could possibly be stored in /var/lib/husarnet
 	// but that's not ideal, since it would imply the need for sudo before each command
 	// TODO solve this.
-	writeFileErr := os.WriteFile(tokenFilePath, []byte(authToken), 0644)
+	writeFileErr := os.WriteFile(getTokenFilePath(), []byte(authToken), 0644)
 
 	if writeFileErr != nil {
 		fmt.Println("Error: could not save the auth token. " + writeFileErr.Error())
@@ -57,7 +64,7 @@ func loginAndSaveAuthToken() string {
 }
 
 func getAuthToken() string {
-	tokenFromFile, err := os.ReadFile(tokenFilePath)
+	tokenFromFile, err := os.ReadFile(getTokenFilePath())
 	if err == nil {
 		logV("Found token in file!")
 		return string(tokenFromFile)

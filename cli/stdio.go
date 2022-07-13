@@ -45,8 +45,10 @@ func getUserCredentialsFromStandardInput() (string, string) {
 	username, _ := reader.ReadString('\n')
 	fmt.Print("Password: ")
 	bytePassword, _ := term.ReadPassword(int(syscall.Stdin))
+	username = strings.TrimSuffix(username, "\r\n")
 	username = strings.TrimSuffix(username, "\n")
-	password := strings.TrimSuffix(string(bytePassword), "\n")
+	password := strings.TrimSuffix(string(bytePassword), "\r\n")
+	password = strings.TrimSuffix(string(bytePassword), "\n")
 	fmt.Println()
 	return username, password
 }

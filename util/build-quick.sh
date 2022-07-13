@@ -11,7 +11,7 @@ ${util_base}/build-cmake.sh $arch unix
 cp ${build_base}/${arch}/unix/husarnet-daemon ${release_base}/husarnet-daemon-unix-${arch}
 
 output_dir="${base_dir}/build/${arch}/unix/out"
-${util_base}/build-cli.sh
+${util_base}/build-cli.sh ${arch} unix
 cp ${build_base}/bin/husarnet ${release_base}/husarnet-unix-${arch}
 cp ${build_base}/bin/husarnet ${output_dir}/usr/bin/husarnet
 
