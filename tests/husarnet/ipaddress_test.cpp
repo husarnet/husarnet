@@ -35,10 +35,10 @@ TEST_CASE("ipaddress classify")
 
 TEST_CASE("inetaddress parse/stringify")
 {
-  REQUIRE(InetAddress::parse("127.0.0.1:80").str() == "[127.0.0.1]:80");
+  REQUIRE(InetAddress::parse("127.0.0.1:80").str() == "127.0.0.1:80");
   REQUIRE(!InetAddress::parse("127.0.0.1"));
   REQUIRE(
       InetAddress::parse("[::1]:80").str() ==
       "[0000:0000:0000:0000:0000:0000:0000:0001]:80");
-  REQUIRE(InetAddress::parse("[127.0.0.1]:80").str() == "[127.0.0.1]:80");
+  REQUIRE(InetAddress::parse("[127.0.0.1]:80").str() == "127.0.0.1:80");
 }

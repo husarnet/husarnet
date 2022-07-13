@@ -162,11 +162,11 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
 
 bool HusarnetManager::isJoined()
 {
-  auto websetupId = deviceIdFromIpAddress(getWebsetupAddress());
-
-  return (!configStorage->isInternalSettingEmpty(
-             InternalSetting::websetupSecret)) &&
-         (getLatency(websetupId) >= 0);
+  // TODO long-term - add a periodic latency check for websetup
+  // auto websetupId = deviceIdFromIpAddress(getWebsetupAddress());
+  // getLatency(websetupId) >= 0
+  return !configStorage->isInternalSettingEmpty(
+      InternalSetting::websetupSecret);
 }
 
 void HusarnetManager::changeServer(std::string domain)

@@ -14,6 +14,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+var defaultDashboard = "app.husarnet.com"
+
 var husarnetDashboardFQDN string
 var husarnetDaemonAPIPort int
 var verboseLogs bool
@@ -27,7 +29,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "dashboard_fqdn",
 				Aliases:     []string{"d"},
-				Value:       "app.husarnet.com",
+				Value:       defaultDashboard,
 				Usage:       "FQDN for your dashboard instance.",
 				EnvVars:     []string{"HUSARNET_DASHBOARD_FQDN"},
 				Destination: &husarnetDashboardFQDN,

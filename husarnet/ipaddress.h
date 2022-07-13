@@ -156,6 +156,10 @@ struct InetAddress {
   // TODO long term - make it not use brackets for IPv4 addresses
   std::string str() const
   {
+    if(ip.isMappedV4()) {
+      return ip.str() + ":" + std::to_string(port);
+    }
+
     return "[" + ip.str() + "]:" + std::to_string(port);
   }
 

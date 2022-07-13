@@ -119,6 +119,10 @@ License::License(std::string dashboardHostname)
 
 std::string License::getDashboardFqdn()
 {
+  if(this->dashboardFqdn.starts_with("https://")) {
+    return this->dashboardFqdn.substr(strlen("https://"));
+  }
+
   return this->dashboardFqdn;
 }
 

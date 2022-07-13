@@ -6,15 +6,139 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
+	"github.com/pterm/pterm"
 	"github.com/urfave/cli/v2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var daemonStatusCommand = &cli.Command{
 	Name:  "status",
 	Usage: "Display current connectivity status",
 	Action: func(ctx *cli.Context) error {
-		fmt.Printf("status: %v\n", getDaemonStatus()) // TODO
+		status := getDaemonStatus()
+
+		errorStyle := pterm.NewStyle(pterm.FgWhite, pterm.BgRed)
+		warningStyle := pterm.NewStyle(pterm.FgBlack, pterm.BgYellow)
+
+		casualStyle := pterm.NewStyle()
+
+		flashyStyle := pterm.NewStyle(pterm.Bold)
+		greenStyle := pterm.NewStyle(pterm.Bold, pterm.BgGreen, pterm.FgWhite)
+
+		versionStyle := casualStyle
+		dashboardStyle := casualStyle
+		baseConnectionStyle := casualStyle
+
+		if version != status.Version {
+			versionStyle = errorStyle
+		}
+
+		if husarnetDashboardFQDN != defaultDashboard {
+			dashboardStyle = warningStyle
+		}
+
+		if husarnetDashboardFQDN != status.DashboardFQDN {
+			dashboardStyle = errorStyle
+		}
+
+		statusItems := []pterm.BulletListItem{
+			{Level: 0, Text: "Version", TextStyle: versionStyle},
+			{Level: 1, Text: fmt.Sprintf("Daemon: %s", status.Version), TextStyle: versionStyle},
+			{Level: 1, Text: fmt.Sprintf("CLI:    %s", version), TextStyle: versionStyle},
+			{Level: 0, Text: "Dashboard", TextStyle: dashboardStyle},
+			{Level: 1, Text: fmt.Sprintf("Daemon: %s", status.DashboardFQDN), TextStyle: dashboardStyle},
+			{Level: 1, Text: fmt.Sprintf("CLI:    %s", husarnetDashboardFQDN), TextStyle: dashboardStyle},
+			{Level: 0, Text: "Husarnet address"},
+			{Level: 1, Text: status.LocalIP.String(), Bullet: " ", TextStyle: greenStyle}, // This is on a separate line and without a bullet so it can be easily copied with a triple click
+			{Level: 0, Text: fmt.Sprintf("Local hostname: %s", status.LocalHostname)},
+			{Level: 0, Text: "Whitelist"},
+		}
+
+		for _, address := range status.Whitelist {
+			statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: address.String(), TextStyle: flashyStyle})
+
+			for hostname, HTaddress := range status.HostTable {
+				if address == HTaddress {
+					statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Hostname: %s", pterm.Bold.Sprintf(hostname))})
+				}
+			}
+
+			if address == status.WebsetupAddress {
+				statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: pterm.Bold.Sprint("Role: ") + "websetup"})
+			}
+
+			for _, peer := range status.Peers {
+				if peer.HusarnetAddress != address {
+					continue
+				}
+
+				tags := []string{}
+
+				if peer.IsActive {
+					tags = append(tags, "active")
+				}
+				if peer.IsTunelled {
+					tags = append(tags, "tunelled")
+				}
+				if peer.IsSecure {
+					tags = append(tags, "secure")
+				}
+
+				statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Tags: %v", strings.Join(tags, ", "))})
+
+				if peer.LatencyMs != -1 {
+					statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Latency (ms): %v", peer.LatencyMs)})
+				}
+
+				if !peer.UsedTargetAddress.Addr().IsUnspecified() {
+					statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Used regular network address: %v", peer.UsedTargetAddress)})
+				}
+
+				if verboseLogs {
+					statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Advertised network addresses: %v", peer.TargetAddresses)})
+				}
+
+			}
+		}
+
+		statusItems = append(statusItems, pterm.BulletListItem{Level: 0, Text: "Connection status"})
+
+		// As UDP is the desired one - warn wbout everything that's not it
+		if status.BaseConnection.Type == "UDP" {
+			baseConnectionStyle = casualStyle
+		} else if status.BaseConnection.Type == "TCP" {
+			baseConnectionStyle = warningStyle
+		} else {
+			baseConnectionStyle = errorStyle
+		}
+		statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("Base server: %s:%v (%s)", status.BaseConnection.Address, status.BaseConnection.Port, status.BaseConnection.Type), TextStyle: baseConnectionStyle})
+
+		if verboseLogs {
+			for element, connectionStatus := range status.ConnectionStatus {
+				statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("%s: %t", cases.Title(language.English).String(element), connectionStatus)})
+			}
+		}
+
+		statusItems = append(statusItems, pterm.BulletListItem{Level: 0, Text: "Readiness"})
+		statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("Is ready to handle data: %v", status.IsReady)})
+		if status.IsJoined {
+			statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("Is joined/adopted: %v", status.IsJoined)})
+		} else {
+			statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("Is ready to be joined/adopted: %v", status.IsReadyToJoin)})
+		}
+
+		if verboseLogs {
+			statusItems = append(statusItems, pterm.BulletListItem{Level: 0, Text: "User settings"})
+			for settingName, settingValue := range status.UserSettings {
+				statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("%s: %v", settingName, settingValue)})
+			}
+		}
+
+		pterm.DefaultBulletList.WithItems(statusItems).Render()
+
 		return nil
 	},
 }

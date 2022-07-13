@@ -164,8 +164,8 @@ static int privilegedProcessFd = 0;
 static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
 {
   // disable privileged process while unit testing core
-  (void) endpoint;
-  (void) data;
+  (void)endpoint;
+  (void)data;
   return json::parse("{}");
 }
 #else

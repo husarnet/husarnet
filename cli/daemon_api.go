@@ -43,7 +43,7 @@ type DaemonResponse[ResultType any] struct {
 	Result ResultType
 }
 
-type EmptyResult struct{}
+type EmptyResult interface{}
 
 type BaseConnectionStatus struct {
 	Address net.IP
@@ -52,39 +52,39 @@ type BaseConnectionStatus struct {
 }
 
 type PeerStatus struct {
-	HusarnetAddress  netip.Addr
-	LinkLocalAddress netip.AddrPort
+	HusarnetAddress  netip.Addr     `json:"husarnet_address"`
+	LinkLocalAddress netip.AddrPort `json:"link_local_address"`
 
-	IsActive         bool
-	IsReestablishing bool
-	IsSecure         bool
-	IsTunelled       bool
+	IsActive         bool `json:"is_active"`
+	IsReestablishing bool `json:"is_reestablishing"`
+	IsSecure         bool `json:"is_secure"`
+	IsTunelled       bool `json:"is_tunelled"`
 
-	LatencyMs int // TODO long-term figure out how to convert it to time.Duration
+	LatencyMs int `json:"latency_ms"` // TODO long-term figure out how to convert it to time.Duration
 
-	SourceAddresses   []netip.AddrPort
-	TargetAddresses   []netip.AddrPort
-	UsedTargetAddress netip.AddrPort
+	SourceAddresses   []netip.AddrPort `json:"source_addresses"`
+	TargetAddresses   []netip.AddrPort `json:"target_addresses"`
+	UsedTargetAddress netip.AddrPort   `json:"used_target_address"`
 }
 
 type DaemonStatus struct {
 	Version       string
-	DashboardFQDN string
+	DashboardFQDN string `json:"dashboard_fqdn"`
 
-	WebsetupAddress netip.Addr
-	BaseConnection  BaseConnectionStatus
+	WebsetupAddress netip.Addr           `json:"websetup_address"`
+	BaseConnection  BaseConnectionStatus `json:"base_connection"`
 
-	LocalIP       net.IP
-	LocalHostname string
+	LocalIP       net.IP `json:"local_ip"`
+	LocalHostname string `json:"local_hostname"`
 
-	IsJoined         bool
-	IsReady          bool
-	IsReadyToJoin    bool
-	ConnectionStatus map[string]bool
+	IsJoined         bool            `json:"is_joined"`
+	IsReady          bool            `json:"is_ready"`
+	IsReadyToJoin    bool            `json:"is_ready_to_join"`
+	ConnectionStatus map[string]bool `json:"connection_status"`
 
 	Whitelist    []netip.Addr
-	UserSettings map[string]string // TODO long-term - think about a batter structure to hold this if needed
-	HostTable    map[string]netip.Addr
+	UserSettings map[string]string     `json:"user_settings"` // TODO long-term - think about a better structure (more importantly enums) to hold this if needed
+	HostTable    map[string]netip.Addr `json:"host_table"`
 	Peers        []PeerStatus
 }
 
@@ -92,6 +92,10 @@ func readResponse[ResultType any](resp *http.Response) DaemonResponse[ResultType
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		dieE(err)
+	}
+
+	if verboseLogs {
+		fmt.Println(string(body))
 	}
 
 	var response DaemonResponse[ResultType]
