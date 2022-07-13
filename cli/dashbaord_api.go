@@ -15,7 +15,7 @@ type handler interface {
 }
 
 func getDashboardUrl() string {
-	return fmt.Sprintf("https://%s/graphql", husarnetDashboardFqdn)
+	return fmt.Sprintf("https://%s/graphql", husarnetDashboardFQDN)
 }
 
 func callAPI(handler handler, args ...string) {

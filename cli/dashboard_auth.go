@@ -41,7 +41,8 @@ func saveAuthTokenToFile(authToken string) {
 	// the token could possibly be stored in /var/lib/husarnet
 	// but that's not ideal, since it would imply the need for sudo before each command
 	// TODO solve this.
-	writeFileErr := os.WriteFile(getTokenFilePath(), []byte(authToken), 0644)
+	// Don't make the token readable for other users though
+	writeFileErr := os.WriteFile(getTokenFilePath(), []byte(authToken), 0600)
 
 	if writeFileErr != nil {
 		fmt.Println("Error: could not save the auth token. " + writeFileErr.Error())
