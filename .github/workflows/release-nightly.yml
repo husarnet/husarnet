@@ -17,6 +17,11 @@ jobs:
       - name: Prepare build
         run: ./util/build-prepare.sh
 
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.18"
+
       - name: Build for all platforms and archs
         run: ./util/build-all.sh
 

@@ -7,14 +7,17 @@ package main
 //go:generate go run github.com/Khan/genqlient
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/urfave/cli/v2"
 )
 
-var husarnetDashboardFqdn string
-var husarnetDaemonApiPort int
+var defaultDashboard = "app.husarnet.com"
+
+var husarnetDashboardFQDN string
+var husarnetDaemonAPIPort int
 var verboseLogs bool
 
 func main() {
@@ -26,10 +29,10 @@ func main() {
 			&cli.StringFlag{
 				Name:        "dashboard_fqdn",
 				Aliases:     []string{"d"},
-				Value:       "app.husarnet.com",
+				Value:       defaultDashboard,
 				Usage:       "FQDN for your dashboard instance.",
 				EnvVars:     []string{"HUSARNET_DASHBOARD_FQDN"},
-				Destination: &husarnetDashboardFqdn,
+				Destination: &husarnetDashboardFQDN,
 			},
 			&cli.IntFlag{
 				Name:        "daemon_api_port",
@@ -37,7 +40,7 @@ func main() {
 				Value:       16216,
 				Usage:       "Port your Husarnet Daemon is listening at",
 				EnvVars:     []string{"HUSARNET_DAEMON_API_PORT"},
-				Destination: &husarnetDaemonApiPort,
+				Destination: &husarnetDaemonAPIPort,
 			},
 			&cli.BoolFlag{
 				Name:        "verbose",
@@ -47,119 +50,21 @@ func main() {
 			},
 		},
 		Commands: []*cli.Command{
+			dashboardCommand,
+			daemonCommand,
+			daemonStatusCommand,
+			daemonJoinCommand,
+			daemonSetupServerCommand,
+			dashboardLoginCommand,
 			{
-				Name:   "version",
-				Usage:  "print the version of the CLI and also of the daemon, if available",
-				Action: handleVersion,
-			},
-			{
-				Name:   "status",
-				Usage:  "Display current connectivity status",
-				Action: handleStatus,
-			},
-			{
-				Name:   "join",
-				Usage:  "Connect to Husarnet group with given join code and with specified hostname",
-				Action: handleJoin,
-			},
-			{
-				Name:   "setup-server",
-				Usage:  "Connect your Husarnet device to different Husarnet infrastructure",
-				Action: handleSetupServer,
-			},
-			{
-				Name:  "whitelist",
-				Usage: "Manage whitelist on the device.",
-				Subcommands: []*cli.Command{
-					{
-						Name:   "ls",
-						Usage:  "list entries on the whitelist",
-						Action: handleWhitelistLs,
-					},
-					{
-						Name:   "add",
-						Usage:  "add a device to your whitelist by Husarnet address",
-						Action: handleWhitelistAdd,
-					},
-					{
-						Name:   "rm",
-						Usage:  "remove device from the whitelist",
-						Action: handleWhitelistRm,
-					},
-				},
-			},
-			{
-				Name:  "dashboard",
-				Usage: "Talk to Dashboard API and manage your devices and groups without using web frontend.",
-				Subcommands: []*cli.Command{
-					{
-						Name:   "login",
-						Usage:  "obtain short-lived API token to authenticate while executing queries",
-						Action: handleLogin,
-					},
-					{
-						Name:     "group",
-						Usage:    "Husarnet group management, eg. see your groups, create, rename, delete",
-						Category: "dashboard",
-						Subcommands: []*cli.Command{
-							{
-								Name:    "list",
-								Aliases: []string{"ls"},
-								Usage:   "display a table of all your groups (with summary information)",
-								Action:  handleGroupLs,
-							},
-							{
-								Name:   "show",
-								Usage:  "display a table of devices in a given group",
-								Action: handleGroupShow,
-							},
-							{
-								Name:   "unjoin",
-								Usage:  "remove given device from the given group. First arg is group ID and second is the fragment of device IPv6",
-								Action: handleGroupUnjoin,
-							},
-							{
-								Name:    "create",
-								Aliases: []string{"add"},
-								Usage:   "create new group with a name given as an argument",
-								Action:  handleGroupCreate,
-							},
-							{
-								Name:   "rename",
-								Usage:  "change name for group with id [ID] to [new name]",
-								Action: handleGroupRename,
-							},
-							{
-								Name:    "remove",
-								Aliases: []string{"rm"},
-								Usage:   "remove the group with given ID. Will ask for confirmation.",
-								Action:  handleGroupRemove,
-							},
-						},
-					},
-					{
-						Name:     "device",
-						Usage:    "Husarnet device management",
-						Category: "dashboard",
-						Subcommands: []*cli.Command{
-							{
-								Name:    "list",
-								Aliases: []string{"ls"},
-								Usage:   "display a table of all your devices and which groups are they in",
-								Action:  handleDeviceLs,
-							},
-							{
-								Name:   "rename",
-								Usage:  "change displayed name of a device",
-								Action: handleDeviceRename,
-							},
-							{
-								Name:    "remove",
-								Aliases: []string{"rm"},
-								Usage:   "remove device from your account",
-								Action:  handleDeviceRemove},
-						},
-					},
+				Name:  "version",
+				Usage: "print the version of the CLI and also of the daemon, if available",
+				Action: func(ctx *cli.Context) error {
+					fmt.Printf("husarnet (CLI): %s\n", version)
+					fmt.Printf("husarnet-daemon (binary): %s\n", getDaemonBinaryVersion())
+					fmt.Printf("husarnet-daemon (running): %s\n", getDaemonRunningVersion())
+
+					return nil
 				},
 			},
 		},

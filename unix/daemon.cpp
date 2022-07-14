@@ -22,7 +22,7 @@ int main(int argc, const char* argv[])
     std::string argument(argv[1]);
     if(argument == "-v" || argument == "--version" || argument == "version") {
       std::cout << HUSARNET_VERSION << std::endl;
-      return 1;
+      return 0;
     }
   }
 
@@ -31,5 +31,5 @@ int main(int argc, const char* argv[])
                "version run husarnet-daemon --version."
             << std::endl;
 
-  return 2;
+  return 1;
 }

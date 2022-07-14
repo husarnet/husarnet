@@ -34,7 +34,7 @@ func die(message string) {
 
 // die, printing exception
 func dieE(err error) {
-	die(fmt.Sprintln("%v", err))
+	die(fmt.Sprintf("%v\n", err))
 }
 
 // prompts user for username and password and returns them. Password is not visible while typing
@@ -48,7 +48,7 @@ func getUserCredentialsFromStandardInput() (string, string) {
 	username = strings.TrimSuffix(username, "\r\n")
 	username = strings.TrimSuffix(username, "\n")
 	password := strings.TrimSuffix(string(bytePassword), "\r\n")
-	password = strings.TrimSuffix(string(bytePassword), "\n")
+	password = strings.TrimSuffix(string(password), "\n")
 	fmt.Println()
 	return username, password
 }
