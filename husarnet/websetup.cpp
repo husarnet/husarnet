@@ -7,9 +7,11 @@
 
 #include <assert.h>
 #include <errno.h>
+#ifndef _WIN32
 #include <netinet/in.h>
-#include <string.h>
 #include <sys/socket.h>
+#endif
+#include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
 

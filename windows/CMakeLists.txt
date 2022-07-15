@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.5.0)
 cmake_policy(SET CMP0003 NEW)
+
 project (husarnet VERSION "0.0.0")
 
 include(../husarnet/husarnet.cmake)

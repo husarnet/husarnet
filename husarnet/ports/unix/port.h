@@ -12,5 +12,6 @@
 #include <unistd.h>
 
 #define SOCKFUNC(name) ::name
+#define SOCKFUNC_close SOCKFUNC(close)
 
 #define ENABLE_IPV6

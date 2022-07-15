@@ -126,7 +126,7 @@ namespace OsSocket {
     auto sa = makeSockaddr(addr, useV6);
     socklen_t socklen = sizeof(sa);
     if(SOCKFUNC(bind)(fd, (sockaddr*)&sa, socklen) < 0) {
-      SOCKFUNC(close)(fd);
+      SOCKFUNC_close(fd);
       return -1;
     }
     return fd;
@@ -251,7 +251,7 @@ namespace OsSocket {
     socklen_t socklen = sizeof(sa);
     if(SOCKFUNC(connect)(fd, (sockaddr*)&sa, socklen) < 0) {
       LOG("connection with the server (%s) failed", addr.str().c_str());
-      SOCKFUNC(close)(fd);
+      SOCKFUNC_close(fd);
       return -1;
     }
     return fd;
@@ -399,7 +399,7 @@ namespace OsSocket {
     if(conn->fd == -1)
       return;
 
-    SOCKFUNC(close)(conn->fd);
+    SOCKFUNC_close(conn->fd);
     conn->fd = -1;
     tcpConnectionsErrored.push_back(conn);
   }

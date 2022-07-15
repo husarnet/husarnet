@@ -8,7 +8,7 @@
 
 #include "husarnet/util.h"
 
-#include "husarnet.h"
+// #include "husarnet.h"
 
 class WinTap {
   void* tap_fd;

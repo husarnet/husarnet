@@ -1,14 +1,13 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "husarnet/tap_windows.h"
+#include "windows/tap_windows.h"
 
 #include "husarnet/ports/port.h"
 
 #include "husarnet/gil.h"
 #include "husarnet/util.h"
 
-#include "husarnet.h"
 // Based on code from libtuntap (https://github.com/LaKabane/libtuntap, ISC
 // License)
 

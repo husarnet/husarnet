@@ -4,11 +4,6 @@
 #include <chrono>
 #include <vector>
 
-#include <iphlpapi.h>
-#include <mswsock.h>
-#include <ws2ipdef.h>
-#include <ws2tcpip.h>
-
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/threads_port.h"
 
@@ -17,8 +12,72 @@
 
 bool husarnetVerbose = true;
 
+namespace Port {
+  void init() 
+  {
+    // here is old init function...
+    // needs massage... GIL was originally inited erlier on... (stage1)
+    threadName = "main";
+    GIL::init();
+    WSADATA wsaData;
+    WSAStartup(0x202, &wsaData);
+  }
+
+  void startThread(
+      std::function<void()> func,
+      const char* name,
+      int stack,
+      int priority)
+  {
+    // old startThread function usss _beginthread which is windows api
+    // good.
+    auto* f =
+        new std::pair<const char*, std::function<void()>>(name, std::move(func));
+    _beginthread(runThread, 0, f);
+  }
+
+  IpAddress resolveToIp(std::string hostname)
+  {
+    // we are using raw getaddrinfo, not ares
+    // this might be not cool
+    // but also it might work
+    struct addrinfo* result = nullptr;
+    int error;
+
+    error = SOCKFUNC(getaddrinfo)(hostname.c_str(), "443", NULL, &result);
+    if(error != 0) {
+      return IpAddress();
+    }
+
+    for(struct addrinfo* res = result; res != NULL; res = res->ai_next) {
+      if(res->ai_family == AF_INET || res->ai_family == AF_INET6) {
+        sockaddr_storage ss{};
+        ss.ss_family = res->ai_family;
+        assert(sizeof(sockaddr_storage) >= res->ai_addrlen);
+        memcpy(&ss, res->ai_addr, res->ai_addrlen);
+        SOCKFUNC(freeaddrinfo)(result);
+        return ipFromSockaddr(&ss).ip;
+      }
+    }
+
+    SOCKFUNC(freeaddrinfo)(result);
+
+    return IpAddress();
+  }
+
+  int64_t getCurrentTime()
+  {
+    // TODO check if this is okay xD
+    using namespace std::chrono;
+    milliseconds ms =
+        duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+    return ms.count();
+  }
+}
+
 InetAddress ipFromSockaddr(sockaddr_storage* st)
 {
+  // same function is defined in sockets.cpp
   if(st->ss_family == AF_INET) {
     struct sockaddr_in* st4 = (sockaddr_in*)(st);
     InetAddress r{};
@@ -38,13 +97,6 @@ InetAddress ipFromSockaddr(sockaddr_storage* st)
   }
 }
 
-int64_t currentTime()
-{
-  using namespace std::chrono;
-  milliseconds ms =
-      duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-  return ms.count();
-}
 
 std::vector<IpAddress> getLocalAddresses()
 {
@@ -103,47 +155,3 @@ void runThread(void* arg)
   f->second();
 }
 
-void startThread(
-    std::function<void()> func,
-    const char* name,
-    int stack,
-    int priority)
-{
-  auto* f =
-      new std::pair<const char*, std::function<void()>>(name, std::move(func));
-  _beginthread(runThread, 0, f);
-}
-
-void initPort()
-{
-  threadName = "main";
-  GIL::init();
-  WSADATA wsaData;
-  WSAStartup(0x202, &wsaData);
-}
-
-IpAddress resolveIp(std::string hostname)
-{
-  struct addrinfo* result = nullptr;
-  int error;
-
-  error = SOCKFUNC(getaddrinfo)(hostname.c_str(), "443", NULL, &result);
-  if(error != 0) {
-    return IpAddress();
-  }
-
-  for(struct addrinfo* res = result; res != NULL; res = res->ai_next) {
-    if(res->ai_family == AF_INET || res->ai_family == AF_INET6) {
-      sockaddr_storage ss{};
-      ss.ss_family = res->ai_family;
-      assert(sizeof(sockaddr_storage) >= res->ai_addrlen);
-      memcpy(&ss, res->ai_addr, res->ai_addrlen);
-      SOCKFUNC(freeaddrinfo)(result);
-      return ipFromSockaddr(&ss).ip;
-    }
-  }
-
-  SOCKFUNC(freeaddrinfo)(result);
-
-  return IpAddress();
-}

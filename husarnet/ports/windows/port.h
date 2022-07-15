@@ -5,10 +5,13 @@
 #include <cassert>
 #include <cstdlib>
 #ifdef _WIN32
-#include <mswsock.h>
+// #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
+#include <mswsock.h>
 #include <ws2ipdef.h>
 #include <ws2tcpip.h>
+#include <iphlpapi.h>
+#include <winioctl.h>
 #undef IGNORE  // ...
 #endif
 #include <string>
@@ -19,6 +22,7 @@ inline void sleep(int sec)
   Sleep(sec * 1000);
 }
 #define SOCKFUNC(name) ::name
+#define SOCKFUNC_close closesocket
 
 inline long random()
 {

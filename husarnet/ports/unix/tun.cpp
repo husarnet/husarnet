@@ -47,7 +47,7 @@ static int openTun(std::string name, bool isTap)
 
 void TunTap::close()
 {
-  SOCKFUNC(close)(fd);
+  SOCKFUNC_close(fd);
 }
 
 bool TunTap::isRunning()
