@@ -32,8 +32,6 @@ inline long random()
   return res;
 }
 
-const char* getThreadName();
-
 inline int renameFile(const char* src, const char* dst)
 {
   return MoveFileEx(src, dst, MOVEFILE_REPLACE_EXISTING) ? 0 : -1;

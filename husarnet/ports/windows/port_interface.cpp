@@ -3,22 +3,33 @@
 // License: specified in project_root/LICENSE.txt
 #include <chrono>
 #include <vector>
+#include <fstream>
+
 
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/threads_port.h"
+#include "husarnet/ports/sockets.h"
+
+#include "shlwapi.h"
 
 #include "husarnet/gil.h"
 #include "husarnet/util.h"
 
 bool husarnetVerbose = true;
 
+void runThread(void* arg)
+{
+  auto f = (std::pair<char*, std::function<void()>>*)arg;
+  // threadName = f->first;
+  f->second();
+}
+
+
 namespace Port {
   void init() 
   {
-    // here is old init function...
-    // needs massage... GIL was originally inited erlier on... (stage1)
-    threadName = "main";
-    GIL::init();
+    // GIL is inited on (stage1)
+    // GIL::init();
     WSADATA wsaData;
     WSAStartup(0x202, &wsaData);
   }
@@ -33,7 +44,7 @@ namespace Port {
     // good.
     auto* f =
         new std::pair<const char*, std::function<void()>>(name, std::move(func));
-    _beginthread(runThread, 0, f);
+    _beginthread(::runThread, 0, f);
   }
 
   IpAddress resolveToIp(std::string hostname)
@@ -56,7 +67,7 @@ namespace Port {
         assert(sizeof(sockaddr_storage) >= res->ai_addrlen);
         memcpy(&ss, res->ai_addr, res->ai_addrlen);
         SOCKFUNC(freeaddrinfo)(result);
-        return ipFromSockaddr(&ss).ip;
+        return OsSocket::ipFromSockaddr(ss).ip;
       }
     }
 
@@ -73,85 +84,81 @@ namespace Port {
         duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     return ms.count();
   }
-}
-
-InetAddress ipFromSockaddr(sockaddr_storage* st)
-{
-  // same function is defined in sockets.cpp
-  if(st->ss_family == AF_INET) {
-    struct sockaddr_in* st4 = (sockaddr_in*)(st);
-    InetAddress r{};
-    r.ip.data[10] = 0xFF;  // ipv4-mapped ipv6
-    r.ip.data[11] = 0xFF;
-    memcpy((char*)r.ip.data.data() + 12, &st4->sin_addr, 4);
-    r.port = htons(st4->sin_port);
-    return r;
-  } else if(st->ss_family == AF_INET6) {
-    struct sockaddr_in6* st6 = (sockaddr_in6*)(st);
-    InetAddress r{};
-    memcpy(r.ip.data.data(), &st6->sin6_addr, 16);
-    r.port = htons(st6->sin6_port);
-    return r;
-  } else {
-    return InetAddress();
-  }
-}
 
 
-std::vector<IpAddress> getLocalAddresses()
-{
-  // this takes 18 ms on a test system
-  std::vector<IpAddress> result;
-
-  int ret;
-  PIP_ADAPTER_ADDRESSES buffer;
-  unsigned long buffer_size = 20000;
-
-  while(true) {
-    buffer = (PIP_ADAPTER_ADDRESSES) new char[buffer_size];
-
-    ret = GetAdaptersAddresses(
-        AF_UNSPEC,
-        GAA_FLAG_INCLUDE_ALL_INTERFACES | GAA_FLAG_SKIP_FRIENDLY_NAME |
-            GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_MULTICAST |
-            GAA_FLAG_SKIP_ANYCAST,
-        0, buffer, &buffer_size);
-    if(ret != ERROR_BUFFER_OVERFLOW)
-      break;
-    delete[] buffer;
-    buffer = nullptr;
-    buffer_size *= 2;
+  HigherLayer* startTunTap(HusarnetManager* manager)
+  {
+    // yess
+    return nullptr;
   }
 
-  PIP_ADAPTER_ADDRESSES current_adapter = buffer;
-  while(current_adapter) {
-    PIP_ADAPTER_UNICAST_ADDRESS current = current_adapter->FirstUnicastAddress;
-    while(current) {
-      InetAddress addr = ipFromSockaddr(
-          reinterpret_cast<sockaddr_storage*>(current->Address.lpSockaddr));
-      // LOG("detected IP: %s", addr.str().c_str());
-      result.push_back(addr.ip);
-      current = current->Next;
+  std::map<UserSetting, std::string> getEnvironmentOverrides()
+  {
+    // oh well, I copied it and it needs massaging.
+    std::map<UserSetting, std::string> result;
+    for(char** environ_ptr = environ; *environ_ptr != nullptr; environ_ptr++) {
+      for(auto enumName : UserSetting::_names()) {
+        auto candidate =
+            "HUSARNET_" + strToUpper(camelCaseToUserscores(enumName));
+
+        std::vector<std::string> splitted = split(*environ_ptr, '=', 1);
+        if(splitted.size() == 1) {
+          continue;
+        }
+
+        auto key = splitted[0];
+        auto value = splitted[1];
+
+        if(key == candidate) {
+          result[UserSetting::_from_string(enumName)] = value;
+          LOG("Overriding user setting %s=%s", enumName, value.c_str());
+        }
+      }
     }
-    current_adapter = current_adapter->Next;
+
+    return result;
+
   }
 
-  delete[] buffer;
-  buffer = nullptr;
-  return result;
-}
+  std::string readFile(std::string path)
+  {
+    // ympek TODO
+    // copied from Unix implementation
+    // but for some reason I need to add std::ifstream::in
+    std::ifstream f(path);
+    if(!f.good()) {
+      LOG("failed to open %s", path.c_str());
+      exit(1);
+    }
 
-thread_local const char* threadName = nullptr;
+    std::stringstream buffer;
+    buffer << f.rdbuf();
 
-const char* getThreadName()
-{
-  return threadName ? threadName : "null";
-}
+    return buffer.str();
+  }
 
-void runThread(void* arg)
-{
-  auto f = (std::pair<char*, std::function<void()>>*)arg;
-  threadName = f->first;
-  f->second();
+  bool writeFile(std::string path, std::string content)
+  {
+    std::ofstream f(path, std::ofstream::out);
+    if (!f.good()) {
+      LOG("failed to write: %s", path.c_str());
+      // hmm
+      f.close();
+      return false;
+    }
+    f << content;
+    f.close();
+    return true;
+  }
+
+  bool isFile(std::string path)
+  {
+    return PathFileExists(path.c_str());
+  }
+
+  void notifyReady()
+  {
+
+  }
 }
 
