@@ -8,27 +8,28 @@
 #include "husarnet/util.h"
 
 #include "shlwapi.h"
+#include "sysinfoapi.h"
 
 static std::string configDir;
 
 std::string getConfigDirPath()
 {
-  return std::string(getenv("PROGRAMDATA")) + "/husarnet/";
+  return std::string(getenv("PROGRAMDATA")) + "\\husarnet";
 }
 
 static std::string getConfigPath()
 {
-  return configDir + "/config.json";
+  return configDir + "\\config.json";
 }
 
 static std::string getIdentityPath()
 {
-  return configDir + "/id";
+  return configDir + "\\id";
 }
 
 static std::string getApiSecretPath()
 {
-  return configDir + "/api_secret";
+  return configDir + "\\api_secret";
 }
 
 namespace Privileged {
@@ -61,6 +62,7 @@ namespace Privileged {
     auto configPath = getConfigPath();
 
     if(!Port::isFile(configPath)) {
+      // log error?
       return "";
     }
 
@@ -158,18 +160,25 @@ namespace Privileged {
 
   std::string getSelfHostname()
   {
-    // TODO ympek implement
-    return "";
-    // return callPrivilegedProcess(PrivilegedMethod::getSelfHostname, {});
+    TCHAR buf[256];
+    DWORD size = _countof(buf);
+    bool result = GetComputerNameEx(ComputerNamePhysicalDnsHostname, buf, &size);
+    if (!result) {
+      LOG("Cant retrieve hostname");
+      return "windows-pc";
+    } 
+
+    // TODO ympek
+    // is this really that simple?
+    // I am suspicious af
+    std::string s(buf);
+    return s;
   }
 
   // TODO long term - prevent websetup from renaming this host for no reason
   bool setSelfHostname(std::string newHostname)
   {
-    // just do it here
-
-    // return callPrivilegedProcess(
-    //     PrivilegedMethod::setSelfHostname, newHostname);
+    // yeah I'm setting it, trust me
     return true;
   }
 

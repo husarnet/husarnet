@@ -40,6 +40,8 @@ void ForLowerProducer::sendToLowerLayer(DeviceId peerId, string_view data)
 
 void stackHigherOnLower(HigherLayer* higher, LowerLayer* lower)
 {
+  // TODO ympek
+  // crash on Windows
   higher->setLowerLayerConsumer(std::bind(
       &FromUpperConsumer::onUpperLayerData, lower, std::placeholders::_1,
       std::placeholders::_2));
