@@ -178,7 +178,7 @@ namespace Privileged {
   // TODO long term - prevent websetup from renaming this host for no reason
   bool setSelfHostname(std::string newHostname)
   {
-    // yeah I'm setting it, trust me
+    // it was never implemented on Windows actually.
     return true;
   }
 

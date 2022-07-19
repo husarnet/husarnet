@@ -9,11 +9,21 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/threads_port.h"
 #include "husarnet/ports/sockets.h"
+#include "husarnet/husarnet_manager.h"
+#include "husarnet/ports/windows/tun.h"
 
 #include "shlwapi.h"
 
 #include "husarnet/gil.h"
 #include "husarnet/util.h"
+
+// Based on code from libtuntap (https://github.com/LaKabane/libtuntap, ISC License)
+#define MAX_KEY_LENGTH 255
+#define MAX_VALUE_NAME 16383
+#define NETWORK_ADAPTERS                                                 \
+  "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-" \
+  "08002BE10318}"
+
 
 bool husarnetVerbose = true;
 
@@ -24,6 +34,99 @@ void runThread(void* arg)
   f->second();
 }
 
+static std::vector<std::string> getExistingDeviceNames()
+{
+  std::vector<std::string> names;
+  const char* key_name = NETWORK_ADAPTERS;
+  HKEY adapters, adapter;
+  DWORD i, ret, len;
+  DWORD sub_keys = 0;
+
+  ret =
+      RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(key_name), 0, KEY_READ, &adapters);
+  if(ret != ERROR_SUCCESS) {
+    LOG("RegOpenKeyEx returned error");
+    return {};
+  }
+
+  ret = RegQueryInfoKey(
+      adapters, NULL, NULL, NULL, &sub_keys, NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL);
+  if(ret != ERROR_SUCCESS) {
+    LOG("RegQueryInfoKey returned error");
+    return {};
+  }
+
+  if(sub_keys <= 0) {
+    LOG("Wrong registry key");
+    return {};
+  }
+
+  /* Walk througt all adapters */
+  for(i = 0; i < sub_keys; i++) {
+    char new_key[MAX_KEY_LENGTH];
+    char data[256];
+    TCHAR key[MAX_KEY_LENGTH];
+    DWORD keylen = MAX_KEY_LENGTH;
+
+    /* Get the adapter key name */
+    ret = RegEnumKeyEx(adapters, i, key, &keylen, NULL, NULL, NULL, NULL);
+    if(ret != ERROR_SUCCESS) {
+      continue;
+    }
+
+    /* Append it to NETWORK_ADAPTERS and open it */
+    snprintf(new_key, sizeof new_key, "%s\\%s", key_name, key);
+    ret =
+        RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(new_key), 0, KEY_READ, &adapter);
+    if(ret != ERROR_SUCCESS) {
+      continue;
+    }
+
+    /* Check its values */
+    len = sizeof data;
+    ret =
+        RegQueryValueEx(adapter, "ComponentId", NULL, NULL, (LPBYTE)data, &len);
+    if(ret != ERROR_SUCCESS) {
+      /* This value doesn't exist in this adaptater tree */
+      goto clean;
+    }
+    /* If its a tap adapter, its all good */
+    if(strncmp(data, "tap", 3) == 0) {
+      DWORD type;
+
+      len = sizeof data;
+      ret = RegQueryValueEx(
+          adapter, "NetCfgInstanceId", NULL, &type, (LPBYTE)data, &len);
+      if(ret != ERROR_SUCCESS) {
+        LOG("RegQueryValueEx returned error");
+        goto clean;
+      }
+      LOG("found tap device: %s", data);
+
+      names.push_back(std::string(data));
+      // break;
+    }
+  clean:
+    RegCloseKey(adapter);
+  }
+  RegCloseKey(adapters);
+  return names;
+}
+
+static std::string whatNewDeviceWasCreated(
+    std::vector<std::string> previousNames)
+{
+  for(std::string name : getExistingDeviceNames()) {
+    if(std::find(previousNames.begin(), previousNames.end(), name) ==
+       previousNames.end()) {
+      LOG("new device: %s", name.c_str());
+      return name;
+    }
+  }
+  LOG("no new device was created?");
+  abort();
+}
 
 namespace Port {
   void init() 
@@ -78,18 +181,29 @@ namespace Port {
 
   int64_t getCurrentTime()
   {
-    // TODO check if this is okay xD
+    // TODO ympek check if this is okay xD
     using namespace std::chrono;
     milliseconds ms =
         duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     return ms.count();
   }
 
-
   HigherLayer* startTunTap(HusarnetManager* manager)
   {
-    // yess
-    return nullptr;
+    auto existingDevices = getExistingDeviceNames();
+    auto deviceName = manager->getInterfaceName();
+    // this should also work if deviceName is ""
+    LOG("WINDOWS DEVICE NAME is %s", deviceName.c_str());
+    if(std::find(existingDevices.begin(), existingDevices.end(), deviceName) == existingDevices.end()) {
+      system("addtap.bat");
+      auto newDeviceName = whatNewDeviceWasCreated(existingDevices);
+      manager->setInterfaceName(newDeviceName);
+    }
+
+    auto interfaceName = manager->getInterfaceName();
+    auto tunTap = new TunTap(interfaceName);
+
+    return tunTap;
   }
 
   std::map<UserSetting, std::string> getEnvironmentOverrides()

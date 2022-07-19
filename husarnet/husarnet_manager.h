@@ -120,6 +120,7 @@ class HusarnetManager {
   NgSocket* getNGSocket();
   SecurityLayer* getSecurityLayer();
   std::string getInterfaceName();
+  void setInterfaceName(std::string name);
   std::vector<DeviceId> getMulticastDestinations(DeviceId id);
   int getLatency(DeviceId destination);
 

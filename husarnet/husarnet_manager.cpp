@@ -276,6 +276,14 @@ std::string HusarnetManager::getInterfaceName()
   return configStorage->getUserSetting(UserSetting::interfaceName);
 }
 
+void HusarnetManager::setInterfaceName(std::string name)
+{
+  configStorage->setUserSetting(UserSetting::interfaceName, name);
+  // ympek could return
+  // now there is some inconsistency in how setters work...
+  // but it's secondary now...
+}
+
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
   if(!id == deviceIdFromIpAddress(IpAddress::parse(multicastDestination))) {
