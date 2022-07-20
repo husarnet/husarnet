@@ -12,6 +12,7 @@ import (
 	"net/netip"
 	"net/url"
 	"os"
+	"runtime"
 )
 
 // TODO: implement calling daemon, starting it if is not running yet, etc...
@@ -30,10 +31,18 @@ func handlePotentialDaemonRequestError(err error) {
 	}
 }
 
+func getDaemonApiSecretPath() string {
+	if runtime.GOOS == "windows" {
+		sep := string(os.PathSeparator)
+		return os.ExpandEnv("${programdata}") + sep + "Husarnet" + sep + "api_secret"
+	}
+	return "/var/lib/husarnet/api_secret"
+}
+
 func addDaemonApiSecret(params *url.Values) {
-	apiSecret, err := os.ReadFile("/var/lib/husarnet/api_secret")
+	apiSecret, err := os.ReadFile(getDaemonApiSecretPath())
 	if err != nil {
-		die("Error reading secret file, are you root? " + err.Error())
+		die("Error reading secret file, are you root/administrator? " + err.Error())
 	}
 	params.Add("secret", string(apiSecret))
 }
