@@ -18,6 +18,7 @@
 #include "husarnet/ports/sockets.h"
 #include "husarnet/gil.h"
 #include "husarnet/util.h"
+#include "husarnet/identity.h"
 
 // From OpenVPN tap driver, common.h
 #define TAP_CONTROL_CODE(request, method) \
@@ -32,6 +33,9 @@
 #define TAP_IOCTL_GET_LOG_LINE TAP_CONTROL_CODE(8, METHOD_BUFFERED)
 #define TAP_IOCTL_CONFIG_DHCP_SET_OPT TAP_CONTROL_CODE(9, METHOD_BUFFERED)
 #define TAP_IOCTL_CONFIG_TUN TAP_CONTROL_CODE(10, METHOD_BUFFERED)
+
+static const std::string peerMacAddr = decodeHex("525400fc944d");
+static const std::string defaultSelfMacAddr = decodeHex("525400fc944c");
 
 static std::string getNetshNameForGuid(std::string guid)
 {
@@ -50,6 +54,11 @@ static std::string getNetshNameForGuid(std::string guid)
   return value;
 }
 
+static int mySystem(std::string cmd) {                
+  return system(("\"" + cmd + "\"").c_str());  
+}                                        
+
+
 static HANDLE openTun(std::string name)
 {
   HANDLE tun_fd;
@@ -65,6 +74,7 @@ static HANDLE openTun(std::string name)
     LOG("failed to open tap device: %d", errcode);
     return INVALID_HANDLE_VALUE;
   }
+  LOG("success: tap device opened");
 
   return tun_fd;
 }
@@ -82,12 +92,54 @@ bool TunTap::isRunning()
 
 void TunTap::onTunTapData()
 {
-  string_view packet = read(tunBuffer);
-  sendToLowerLayer(BadDeviceId, packet);
+  LOG("TunTap::onTunTapData was called");
+  // string_view packet = read(tunBuffer);
+  // sendToLowerLayer(BadDeviceId, packet);
 }
 
-// to są te rzeczy co trzeba zaimplemenntowac
-// dzisiaj to bede se pisal
+void TunTap::setPowershellStuff(std::string name)
+{
+  auto identityPath = std::string(getenv("PROGRAMDATA")) + "\\husarnet\\id";
+  auto identity = Identity::deserialize(Port::readFile(identityPath));
+
+  std::string sourceNetshName = getNetshNameForGuid(name);
+  LOG("sourceNetshName: %s", sourceNetshName.c_str());
+  std::string netshName = "Husarnet";
+  if(netshName != sourceNetshName) {
+    if(mySystem(
+          "netsh interface set interface name = \"" + sourceNetshName +
+          "\" newname = \"" + netshName + "\"") == 0) {
+      LOG("renamed successfully");
+    } else {
+      netshName = sourceNetshName;
+      LOG("rename failed");
+    }
+  }
+  std::string quotedName = "\"" + netshName + "\"";
+
+  mySystem(
+      "netsh interface ipv6 add neighbors " + quotedName +
+      " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001 52-54-00-fc-94-4d");
+  std::string myIp = IpAddress::fromBinary(identity.getDeviceId()).str();
+  LOG("myIp is: %s", myIp.c_str());
+  mySystem(
+      "netsh interface ipv6 add address " + quotedName + " " + myIp + "/128");
+  mySystem(
+      "netsh interface ipv6 add route "
+      "fc94:8385:160b:88d1:c2ec:af1b:06ac:0001/128 " +
+      quotedName);
+  mySystem(
+      "netsh interface ipv6 add route fc94::/16 " + quotedName +
+      " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001");
+
+  std::string cmd =
+    "powershell New-NetFirewallRule -DisplayName AllowHusarnet -Direction "
+    "Inbound -Action Allow -LocalAddress fc94::/16 -RemoteAddress fc94::/16 "
+    "-InterfaceAlias \"\"\"" +
+    netshName + "\"\"\"";
+  mySystem((cmd).c_str());
+
+}
 
 TunTap::TunTap(std::string name, bool isTap)
 {
@@ -96,9 +148,46 @@ TunTap::TunTap(std::string name, bool isTap)
   tap_fd = openTun(name);
   tunBuffer.resize(4096);
   // let's NOT do this 
-  //OsSocket::bindCustomFd(, std::bind(&TunTap::onTunTapData, this));
+  // OsSocket::bindCustomFd(, std::bind(&TunTap::onTunTapData, this));
+  // Instead I will try to bring back old solution with seperate polling thread
 
   bringUp();
+
+  setPowershellStuff(name);
+
+  selfMacAddr = getMac();
+
+  GIL::startThread(
+      [&] {
+        std::string buf;
+        buf.resize(4096);
+
+        while(true) {
+          string_view packet = read(buf);
+          // L2 packet received, unwrap L2 frame and transmit L3 futher
+          // LOG("to: %s (exp: %s), from: %s (exp: %s), proto: %s",
+          //     encodeHex(packet.substr(0, 6)).c_str(), encodeHex(peerMacAddr).c_str(),
+          //     encodeHex(packet.substr(6, 6)).c_str(), encodeHex(selfMacAddr).c_str(),
+          //     encodeHex(packet.substr(12, 2)).c_str());
+
+
+          if(/*packet.substr(0, 6) == peerMacAddr &&*/
+              // packet.substr(6, 6) == selfMacAddr &&
+              packet.substr(12, 2) == string_view("\x86\xdd", 2)) {
+            // auto packetToShow = encodeHex(std::string(packet.substr(14)));
+            // LOG("PACKET: size: %llu contents: %s", packet.size(), packetToShow.c_str());
+            LOG("PACKET: size: %llu", packet.size());
+            sendToLowerLayer(BadDeviceId, packet.substr(14));
+          } else {
+            LOG("WRONG PACKET: size: %llu", packet.size());
+          }
+        }
+      },
+      "wintap-read");
+  // NgSocket* netDev = L2Unwrapper::wrap(netDevL3, winTap->getMac());
+
+  // netDev->delegate = new WinTapDelegate(winTap);
+  // bindControlSocket(configManager);
 }
 
 std::string TunTap::getNetshName()
@@ -135,7 +224,7 @@ void TunTap::write(string_view data)
   GIL::unlocked<void>([&] {
     OVERLAPPED overlapped = {0, 0, 0};
     overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
+    LOG("Yeah lets write %lld bytes into tap", data.size());
     if(WriteFile(tap_fd, data.data(), (DWORD)data.size(), NULL, &overlapped)) {
       if(GetLastError() != ERROR_IO_PENDING) {
         LOG("tap write failed");
@@ -183,9 +272,17 @@ std::string TunTap::getMac()
 
 void TunTap::onLowerLayerData(DeviceId source, string_view data)
 {
+  (void) source;
+  LOG("TunTap::onLowerLayerData, DeviceId: %s data size is: %lld", encodeHex(source).c_str(), data.size());
   // HMM
   // TODO ympek implement
-  // long wr = write(fd, data.data(), data.size());
+  std::string wrapped;
+  
+  wrapped += selfMacAddr;
+  wrapped += peerMacAddr;
+  wrapped += string_view("\x86\xdd", 2);
+  wrapped += data;
+  write(wrapped);
   // if(wr != data.size()) {
   //   LOG("short tun write");
   // }

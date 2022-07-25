@@ -78,10 +78,13 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
   if(data[0] == 0) {  // data packet
     if(data.size() <= 25)
       return;
+    LOG("It seems to be DATA");
     handleDataPacket(peerId, data);
   } else if(data[0] == 1 || data[0] == 2 || data[0] == 3) {  // hello packet
     if(data.size() <= 25)
       return;
+
+    LOG("It seems to be HELLO");
     handleHelloPacket(peerId, data, (int)data[0]);
   } else if(data[0] == 4 || data[0] == 5) {  // heartbeat (hopefully they are
                                              // not cursed)
@@ -90,8 +93,10 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
 
     std::string ident = substr<1, 8>(data);
     if(data[0] == 4) {
+      LOG("It seems to be HEARTBEAT");
       handleHeartbeat(peerId, ident);
     } else {
+      LOG("It seems to be HEARTBEAT-REPLY");
       handleHeartbeatReply(peerId, ident);
     }
   }

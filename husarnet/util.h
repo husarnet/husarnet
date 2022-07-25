@@ -30,7 +30,7 @@
   do {                                                                         \
     fprintf(                                                                   \
         stderr, "[%lld] %s: " msg "\n", (long long int)Port::getCurrentTime(), \
-        "main_thr", ##x);                                                 \
+        Port::getThreadName(), ##x);                                                 \
     fflush(stderr);                                                            \
   } while(0)
 #else

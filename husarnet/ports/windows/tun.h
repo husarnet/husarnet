@@ -15,6 +15,7 @@ class TunTap : public HigherLayer {
  private:
   HANDLE tap_fd;
   std::string tunBuffer;
+  std::string selfMacAddr;
 
   void close();
   bool isRunning();
@@ -22,6 +23,7 @@ class TunTap : public HigherLayer {
   // my additions ympek (from tap_windows)
   std::string getNetshName();
   void bringUp();
+  void setPowershellStuff(std::string name);
   std::string getMac();
   string_view read(std::string& buffer);
   void write(string_view data);

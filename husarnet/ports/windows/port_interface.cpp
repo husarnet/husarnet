@@ -25,14 +25,10 @@
   "08002BE10318}"
 
 
+// TODO change later ympek
 bool husarnetVerbose = true;
 
-void runThread(void* arg)
-{
-  auto f = (std::pair<char*, std::function<void()>>*)arg;
-  // threadName = f->first;
-  f->second();
-}
+
 
 static std::vector<std::string> getExistingDeviceNames()
 {
@@ -128,13 +124,27 @@ static std::string whatNewDeviceWasCreated(
   abort();
 }
 
+
 namespace Port {
+  thread_local const char* threadName = nullptr;
+
+  void runThread(void* arg)
+  {
+    auto f = (std::pair<char*, std::function<void()>>*)arg;
+    threadName = f->first;
+    f->second();
+  }
+
   void init() 
   {
     // GIL is inited on (stage1)
     // GIL::init();
     WSADATA wsaData;
     WSAStartup(0x202, &wsaData);
+  }
+
+  const char* getThreadName() {
+    return threadName ? threadName : "null";
   }
 
   void startThread(
@@ -147,7 +157,7 @@ namespace Port {
     // good.
     auto* f =
         new std::pair<const char*, std::function<void()>>(name, std::move(func));
-    _beginthread(::runThread, 0, f);
+    _beginthread(runThread, 0, f);
   }
 
   IpAddress resolveToIp(std::string hostname)
@@ -208,37 +218,33 @@ namespace Port {
 
   std::map<UserSetting, std::string> getEnvironmentOverrides()
   {
-    // oh well, I copied it and it needs massaging.
     std::map<UserSetting, std::string> result;
-    for(char** environ_ptr = environ; *environ_ptr != nullptr; environ_ptr++) {
-      for(auto enumName : UserSetting::_names()) {
-        auto candidate =
-            "HUSARNET_" + strToUpper(camelCaseToUserscores(enumName));
 
-        std::vector<std::string> splitted = split(*environ_ptr, '=', 1);
-        if(splitted.size() == 1) {
-          continue;
-        }
+    std::string envVarBuffer;
+    envVarBuffer.resize(512);
 
-        auto key = splitted[0];
-        auto value = splitted[1];
+    for(auto enumName : UserSetting::_names()) {
+      auto candidate =
+          "HUSARNET_" + strToUpper(camelCaseToUserscores(enumName));
 
-        if(key == candidate) {
-          result[UserSetting::_from_string(enumName)] = value;
-          LOG("Overriding user setting %s=%s", enumName, value.c_str());
-        }
+      DWORD envVarLength = GetEnvironmentVariable(candidate.c_str(), &envVarBuffer[0], (DWORD)envVarBuffer.size());
+      if (GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
+        continue;
       }
+
+      std::string value(&envVarBuffer[0], envVarLength);
+      result[UserSetting::_from_string(enumName)] = value;
+      LOG("Overriding user setting %s=%s", enumName, value.c_str());
     }
 
     return result;
-
   }
 
   std::string readFile(std::string path)
   {
     // ympek TODO
     // copied from Unix implementation
-    // but for some reason I need to add std::ifstream::in
+    // candidate for ports_common.cpp or something
     std::ifstream f(path);
     if(!f.good()) {
       LOG("failed to open %s", path.c_str());
