@@ -94,8 +94,6 @@ void WebsetupConnection::send(
          websetupFd, frame.data(), frame.size(), 0, (sockaddr*)&addr,
          sizeof(addr)) < 0) {
     LOG("websetup UDP send failed (%d)", (int)errno);
-  } else {
-    LOG("ympek sent to websetup: %s", frame.c_str());
   }
 }
 
@@ -143,24 +141,19 @@ void WebsetupConnection::periodicThread()
 
 void WebsetupConnection::handleConnectionThread()
 {
-  LOG("....................................>>>HANDLECONNTHREADSTARTING.........................................");
   while(true) {
-    LOG("enter while");
     std::string buffer;
     buffer.resize(1024);
     sockaddr_in6 addr{};
     socklen_t addrsize = sizeof(addr);
     int ret = GIL::unlocked<int>([&]() {
-      LOG("DO WE EVER ENTER THIS...................................................................................................................................................................2222222222222222222223333333333333333333333333333333333.............................................");
       return SOCKFUNC(recvfrom)(
           websetupFd, &buffer[0], buffer.size(), 0, (sockaddr*)&addr,
           &addrsize);
     });
-    LOG("oj rety rety received %d of data", ret);
 
 #ifdef _WIN32
     int err = WSAGetLastError();
-    LOG("ERROR::::::::::::::::::::::::::::::::: %d", err);
     if(ret < 0 && (err == WSAETIMEDOUT || err == WSAECONNRESET))
       continue;
 #else
@@ -169,7 +162,6 @@ void WebsetupConnection::handleConnectionThread()
 #endif
     assert(ret > 0 && addr.sin6_family == AF_INET6);
 
-    LOG("WE GOT WEBSETUP PACKET");
 
     auto sourceIp = IpAddress::fromBinary((char*)&addr.sin6_addr);
     if(sourceIp != manager->getWebsetupAddress()) {
@@ -230,8 +222,6 @@ void WebsetupConnection::handleWebsetupPacket(
   }
 
   lastContact = Port::getCurrentTime();
-
-  LOG("LAST CONTACT: %lld", lastContact);
 
   auto response = handleWebsetupCommand(command, payload);
 

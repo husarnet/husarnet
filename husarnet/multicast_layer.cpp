@@ -69,7 +69,6 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
     packet += deviceId;
     packet += data.substr(1);
 
-    LOG("SENDING UNICAST TRANSMISSION TO TUN/TAP its from %s", encodeHex(source).c_str());
     sendToUpperLayer(BadDeviceId, packet);
   }
 }

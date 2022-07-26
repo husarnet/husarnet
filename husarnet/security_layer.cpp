@@ -78,13 +78,11 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
   if(data[0] == 0) {  // data packet
     if(data.size() <= 25)
       return;
-    LOG("It seems to be DATA");
     handleDataPacket(peerId, data);
   } else if(data[0] == 1 || data[0] == 2 || data[0] == 3) {  // hello packet
     if(data.size() <= 25)
       return;
 
-    LOG("It seems to be HELLO");
     handleHelloPacket(peerId, data, (int)data[0]);
   } else if(data[0] == 4 || data[0] == 5) {  // heartbeat (hopefully they are
                                              // not cursed)
@@ -93,10 +91,8 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
 
     std::string ident = substr<1, 8>(data);
     if(data[0] == 4) {
-      LOG("It seems to be HEARTBEAT");
       handleHeartbeat(peerId, ident);
     } else {
-      LOG("It seems to be HEARTBEAT-REPLY");
       handleHeartbeatReply(peerId, ident);
     }
   }
@@ -104,7 +100,6 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
 
 void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 {
-  LOG("handleDataPacket");
   const int headerSize = 1 + 24 + 16;
   if(data.size() <= headerSize + 8)
     return;
@@ -136,7 +131,6 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
       string_view(decryptedBuffer).substr(8, decryptedSize - 8);
 
   if(r == 0) {
-    LOG("decryptedData: %s", encodeHex(decryptedData.substr(0)).c_str());
     sendToUpperLayer(peerId, decryptedData);
   } else {
     LOG("received forged message");
