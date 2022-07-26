@@ -44,7 +44,6 @@ void WebsetupConnection::bind()
   // TODO: we could probably handle the error and display some helpful info for user
   // e.g. EADRRINUSE -> you probably have Husarnet running... etc.
   assert(ret == 0);
-  return;
   // this timeout is needed, so we can check initResponseReceived
 
 #ifdef _WIN32
@@ -152,6 +151,7 @@ void WebsetupConnection::handleConnectionThread()
     sockaddr_in6 addr{};
     socklen_t addrsize = sizeof(addr);
     int ret = GIL::unlocked<int>([&]() {
+      LOG("DO WE EVER ENTER THIS...................................................................................................................................................................2222222222222222222223333333333333333333333333333333333.............................................");
       return SOCKFUNC(recvfrom)(
           websetupFd, &buffer[0], buffer.size(), 0, (sockaddr*)&addr,
           &addrsize);

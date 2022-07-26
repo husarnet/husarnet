@@ -153,8 +153,6 @@ namespace Port {
       int stack,
       int priority)
   {
-    // old startThread function usss _beginthread which is windows api
-    // good.
     auto* f =
         new std::pair<const char*, std::function<void()>>(name, std::move(func));
     _beginthread(runThread, 0, f);
@@ -191,7 +189,6 @@ namespace Port {
 
   int64_t getCurrentTime()
   {
-    // TODO ympek check if this is okay xD
     using namespace std::chrono;
     milliseconds ms =
         duration_cast<milliseconds>(system_clock::now().time_since_epoch());

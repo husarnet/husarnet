@@ -21,7 +21,6 @@ class TunTap : public HigherLayer {
   bool isRunning();
 
   // my additions ympek (from tap_windows)
-  std::string getNetshName();
   void bringUp();
   void setPowershellStuff(std::string name);
   std::string getMac();

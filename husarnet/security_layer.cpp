@@ -104,6 +104,7 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
 
 void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 {
+  LOG("handleDataPacket");
   const int headerSize = 1 + 24 + 16;
   if(data.size() <= headerSize + 8)
     return;
@@ -135,6 +136,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
       string_view(decryptedBuffer).substr(8, decryptedSize - 8);
 
   if(r == 0) {
+    LOG("decryptedData: %s", encodeHex(decryptedData.substr(0)).c_str());
     sendToUpperLayer(peerId, decryptedData);
   } else {
     LOG("received forged message");

@@ -39,7 +39,7 @@ namespace GIL {
     globalLock.lock();
   }
 
-#ifdef DEBUG_LOCKS
+#ifndef DEBUG_LOCKS
   void lock()
   {
     globalLock.lock();

@@ -170,13 +170,12 @@ TunTap::TunTap(std::string name, bool isTap)
           //     encodeHex(packet.substr(6, 6)).c_str(), encodeHex(selfMacAddr).c_str(),
           //     encodeHex(packet.substr(12, 2)).c_str());
 
-
-          if(/*packet.substr(0, 6) == peerMacAddr &&*/
-              // packet.substr(6, 6) == selfMacAddr &&
+          if(packet.substr(0, 6) == peerMacAddr &&
+              packet.substr(6, 6) == selfMacAddr &&
               packet.substr(12, 2) == string_view("\x86\xdd", 2)) {
-            // auto packetToShow = encodeHex(std::string(packet.substr(14)));
-            // LOG("PACKET: size: %llu contents: %s", packet.size(), packetToShow.c_str());
-            LOG("PACKET: size: %llu", packet.size());
+            auto packetToShow = encodeHex(std::string(packet.substr(14)));
+            LOG("PACKET: size: %llu contents: %s", packet.size(), packetToShow.c_str());
+            // LOG("PACKET: size: %llu", packet.size());
             sendToLowerLayer(BadDeviceId, packet.substr(14));
           } else {
             LOG("WRONG PACKET: size: %llu", packet.size());
@@ -188,13 +187,6 @@ TunTap::TunTap(std::string name, bool isTap)
 
   // netDev->delegate = new WinTapDelegate(winTap);
   // bindControlSocket(configManager);
-}
-
-std::string TunTap::getNetshName()
-{
-  // TODO ympek implement and see where it is used
-  return "";
-  // return getNetshNameForGuid(deviceName);
 }
 
 string_view TunTap::read(std::string& buffer)
@@ -226,9 +218,12 @@ void TunTap::write(string_view data)
     overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     LOG("Yeah lets write %lld bytes into tap", data.size());
     if(WriteFile(tap_fd, data.data(), (DWORD)data.size(), NULL, &overlapped)) {
-      if(GetLastError() != ERROR_IO_PENDING) {
+      auto error = GetLastError();
+      LOG("can WriteFile fail? ................@@@@@@@@@@@@@@@@@@@@22222222 error %ld", error);
+      if(error != ERROR_IO_PENDING) {
         LOG("tap write failed");
       }
+      // assert(false);
     }
 
     WaitForSingleObject(overlapped.hEvent, INFINITE);
