@@ -62,7 +62,7 @@ namespace Privileged {
     auto configPath = getConfigPath();
 
     if(!Port::isFile(configPath)) {
-      // log error?
+      // TODO log error?
       return "";
     }
 
@@ -139,8 +139,7 @@ namespace Privileged {
       buffer = nullptr;
       buffer_size *= 2;
     }
-
-    PIP_ADAPTER_ADDRESSES current_adapter = buffer;
+PIP_ADAPTER_ADDRESSES current_adapter = buffer;
     while(current_adapter) {
       PIP_ADAPTER_UNICAST_ADDRESS current = current_adapter->FirstUnicastAddress;
       while(current) {
@@ -168,17 +167,16 @@ namespace Privileged {
       return "windows-pc";
     } 
 
-    // TODO ympek
-    // is this really that simple?
-    // I am suspicious af
     std::string s(buf);
     return s;
   }
 
-  // TODO long term - prevent websetup from renaming this host for no reason
   bool setSelfHostname(std::string newHostname)
   {
-    // it was never implemented on Windows actually.
+    // Not implemented on Windows.
+    // This can be done through SetComputerNameEx()
+    // Caveat is that the reboot is required for the change to be picked up
+    // My opinion is to not touch the netbios hostname, and just add entry into hosts
     return true;
   }
 
@@ -189,6 +187,8 @@ namespace Privileged {
     for(auto& [hostname, address] : data) {
       dataStringified.insert({hostname, address.toString()});
     }
+
+    // TODO ympek implement this!
 
     // just do it here
     // callPrivilegedProcess(PrivilegedMethod::updateHostsFile, dataStringified);
