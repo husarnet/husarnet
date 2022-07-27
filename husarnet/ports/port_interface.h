@@ -20,7 +20,6 @@ class UserSetting;
 
 using Time = int64_t;
 
-
 namespace Port {
   void init();  // Should be called as early as possible
 

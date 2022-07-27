@@ -14,9 +14,9 @@
 #include <sys/socket.h>
 #else
 #include <winsock2.h>
+#include <iphlpapi.h>
 #include <ws2ipdef.h>
 #include <ws2tcpip.h>
-#include <iphlpapi.h>
 #endif
 
 #include "husarnet/ports/threads_port.h"

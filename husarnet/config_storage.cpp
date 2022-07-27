@@ -200,7 +200,9 @@ void ConfigStorage::setInternalSetting(
   save();
 }
 
-void ConfigStorage::setInternalSetting(InternalSetting setting, const char* value)
+void ConfigStorage::setInternalSetting(
+    InternalSetting setting,
+    const char* value)
 {
   setInternalSetting(setting, static_cast<std::string>(value));
 }
@@ -318,7 +320,6 @@ std::string ConfigStorage::getPersistentUserSetting(UserSetting setting)
 
 std::string ConfigStorage::getUserSetting(UserSetting setting)
 {
-  auto settingStr = setting._to_string();
   if(userOverrides.contains(setting)) {
     return userOverrides[setting];
   }

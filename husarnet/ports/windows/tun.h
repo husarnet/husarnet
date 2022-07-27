@@ -4,12 +4,12 @@
 #pragma once
 #include <string>
 
-#include "windef.h"
-
 #include "husarnet/device_id.h"
 #include "husarnet/layer_interfaces.h"
 #include "husarnet/ngsocket.h"
 #include "husarnet/string_view.h"
+
+#include "windef.h"
 
 class TunTap : public HigherLayer {
  private:

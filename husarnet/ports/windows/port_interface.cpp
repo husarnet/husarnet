@@ -2,33 +2,30 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include <chrono>
-#include <vector>
 #include <fstream>
-
+#include <vector>
 
 #include "husarnet/ports/port.h"
-#include "husarnet/ports/threads_port.h"
 #include "husarnet/ports/sockets.h"
-#include "husarnet/husarnet_manager.h"
+#include "husarnet/ports/threads_port.h"
 #include "husarnet/ports/windows/tun.h"
+
+#include "husarnet/gil.h"
+#include "husarnet/husarnet_manager.h"
+#include "husarnet/util.h"
 
 #include "shlwapi.h"
 
-#include "husarnet/gil.h"
-#include "husarnet/util.h"
-
-// Based on code from libtuntap (https://github.com/LaKabane/libtuntap, ISC License)
+// Based on code from libtuntap (https://github.com/LaKabane/libtuntap, ISC
+// License)
 #define MAX_KEY_LENGTH 255
 #define MAX_VALUE_NAME 16383
 #define NETWORK_ADAPTERS                                                 \
   "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-" \
   "08002BE10318}"
 
-
 // TODO change later ympek
 bool husarnetVerbose = true;
-
-
 
 static std::vector<std::string> getExistingDeviceNames()
 {
@@ -124,7 +121,6 @@ static std::string whatNewDeviceWasCreated(
   abort();
 }
 
-
 namespace Port {
   thread_local const char* threadName = nullptr;
 
@@ -135,7 +131,7 @@ namespace Port {
     f->second();
   }
 
-  void init() 
+  void init()
   {
     // GIL is inited on (stage1)
     // GIL::init();
@@ -143,7 +139,8 @@ namespace Port {
     WSAStartup(0x202, &wsaData);
   }
 
-  const char* getThreadName() {
+  const char* getThreadName()
+  {
     return threadName ? threadName : "null";
   }
 
@@ -153,8 +150,8 @@ namespace Port {
       int stack,
       int priority)
   {
-    auto* f =
-        new std::pair<const char*, std::function<void()>>(name, std::move(func));
+    auto* f = new std::pair<const char*, std::function<void()>>(
+        name, std::move(func));
     _beginthread(runThread, 0, f);
   }
 
@@ -201,7 +198,8 @@ namespace Port {
     auto deviceName = manager->getInterfaceName();
     // this should also work if deviceName is ""
     LOG("WINDOWS DEVICE NAME is %s", deviceName.c_str());
-    if(std::find(existingDevices.begin(), existingDevices.end(), deviceName) == existingDevices.end()) {
+    if(std::find(existingDevices.begin(), existingDevices.end(), deviceName) ==
+       existingDevices.end()) {
       system("addtap.bat");
       auto newDeviceName = whatNewDeviceWasCreated(existingDevices);
       manager->setInterfaceName(newDeviceName);
@@ -224,8 +222,9 @@ namespace Port {
       auto candidate =
           "HUSARNET_" + strToUpper(camelCaseToUserscores(enumName));
 
-      DWORD envVarLength = GetEnvironmentVariable(candidate.c_str(), &envVarBuffer[0], (DWORD)envVarBuffer.size());
-      if (GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
+      DWORD envVarLength = GetEnvironmentVariable(
+          candidate.c_str(), &envVarBuffer[0], (DWORD)envVarBuffer.size());
+      if(GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
         continue;
       }
 
@@ -257,7 +256,7 @@ namespace Port {
   bool writeFile(std::string path, std::string content)
   {
     std::ofstream f(path, std::ofstream::out);
-    if (!f.good()) {
+    if(!f.good()) {
       LOG("failed to write: %s", path.c_str());
       // hmm
       f.close();
@@ -275,7 +274,5 @@ namespace Port {
 
   void notifyReady()
   {
-
   }
-}
-
+}  // namespace Port

@@ -5,13 +5,12 @@
 #include <cassert>
 #include <cstdlib>
 #ifdef _WIN32
-// #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
+#include <iphlpapi.h>
 #include <mswsock.h>
+#include <winioctl.h>
 #include <ws2ipdef.h>
 #include <ws2tcpip.h>
-#include <iphlpapi.h>
-#include <winioctl.h>
 #undef IGNORE  // ...
 #endif
 #include <string>

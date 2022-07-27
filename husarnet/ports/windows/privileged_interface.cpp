@@ -1,10 +1,10 @@
-#include <vector>
 #include <chrono>
 #include <vector>
 
 #include "husarnet/ports/port.h"
-#include "husarnet/ports/threads_port.h"
 #include "husarnet/ports/sockets.h"
+#include "husarnet/ports/threads_port.h"
+
 #include "husarnet/util.h"
 
 #include "shlwapi.h"
@@ -130,8 +130,8 @@ namespace Privileged {
       ret = GetAdaptersAddresses(
           AF_UNSPEC,
           GAA_FLAG_INCLUDE_ALL_INTERFACES | GAA_FLAG_SKIP_FRIENDLY_NAME |
-          GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_MULTICAST |
-          GAA_FLAG_SKIP_ANYCAST,
+              GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_MULTICAST |
+              GAA_FLAG_SKIP_ANYCAST,
           0, buffer, &buffer_size);
       if(ret != ERROR_BUFFER_OVERFLOW)
         break;
@@ -139,11 +139,13 @@ namespace Privileged {
       buffer = nullptr;
       buffer_size *= 2;
     }
-PIP_ADAPTER_ADDRESSES current_adapter = buffer;
+    PIP_ADAPTER_ADDRESSES current_adapter = buffer;
     while(current_adapter) {
-      PIP_ADAPTER_UNICAST_ADDRESS current = current_adapter->FirstUnicastAddress;
+      PIP_ADAPTER_UNICAST_ADDRESS current =
+          current_adapter->FirstUnicastAddress;
       while(current) {
-        auto ss = reinterpret_cast<sockaddr_storage*>(current->Address.lpSockaddr);
+        auto ss =
+            reinterpret_cast<sockaddr_storage*>(current->Address.lpSockaddr);
         InetAddress addr = OsSocket::ipFromSockaddr(*ss);
         // LOG("detected IP: %s", addr.str().c_str());
         result.push_back(addr.ip);
@@ -161,11 +163,12 @@ PIP_ADAPTER_ADDRESSES current_adapter = buffer;
   {
     TCHAR buf[256];
     DWORD size = _countof(buf);
-    bool result = GetComputerNameEx(ComputerNamePhysicalDnsHostname, buf, &size);
-    if (!result) {
+    bool result =
+        GetComputerNameEx(ComputerNamePhysicalDnsHostname, buf, &size);
+    if(!result) {
       LOG("Cant retrieve hostname");
       return "windows-pc";
-    } 
+    }
 
     std::string s(buf);
     return s;
@@ -176,7 +179,8 @@ PIP_ADAPTER_ADDRESSES current_adapter = buffer;
     // Not implemented on Windows.
     // This can be done through SetComputerNameEx()
     // Caveat is that the reboot is required for the change to be picked up
-    // My opinion is to not touch the netbios hostname, and just add entry into hosts
+    // My opinion is to not touch the netbios hostname, and just add entry into
+    // hosts
     return true;
   }
 
@@ -191,11 +195,12 @@ PIP_ADAPTER_ADDRESSES current_adapter = buffer;
     // TODO ympek implement this!
 
     // just do it here
-    // callPrivilegedProcess(PrivilegedMethod::updateHostsFile, dataStringified);
+    // callPrivilegedProcess(PrivilegedMethod::updateHostsFile,
+    // dataStringified);
   }
 
   void notifyReady()
   {
     // callPrivilegedProcess(PrivilegedMethod::notifyReady, {});
   }
-}
+}  // namespace Privileged
