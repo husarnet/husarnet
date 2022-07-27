@@ -82,8 +82,7 @@ static HANDLE openTun(std::string name)
 
 void TunTap::close()
 {
-  // Chyba CloseHandle
-  // SOCKFUNC_close(fd);
+  CloseHandle(tap_fd);
 }
 
 bool TunTap::isRunning()
@@ -143,13 +142,10 @@ void TunTap::setPowershellStuff(std::string name)
 
 TunTap::TunTap(std::string name, bool isTap)
 {
-  // TODO ympek po co to nam jest
   (void)isTap;
   tap_fd = openTun(name);
   tunBuffer.resize(4096);
-  // let's NOT do this
-  // OsSocket::bindCustomFd(, std::bind(&TunTap::onTunTapData, this));
-  // Instead I will try to bring back old solution with seperate polling thread
+
 
   bringUp();
 
@@ -157,6 +153,12 @@ TunTap::TunTap(std::string name, bool isTap)
 
   selfMacAddr = getMac();
 
+  // TODO ympek
+  // At this point, we should call bindCustomFd and plug
+  // our function into select() call from OsSocket
+  // but there is mismatch in underlying implementation,
+  // as win32 impl uses pointers and unix impl uses regular int descriptors
+  // so therefore I decided to simply make a new thread here
   GIL::startThread(
       [&] {
         std::string buf;
@@ -218,16 +220,11 @@ void TunTap::write(string_view data)
   GIL::unlocked<void>([&] {
     OVERLAPPED overlapped = {0, 0, 0};
     overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    LOG("Yeah lets write %lld bytes into tap", data.size());
     if(WriteFile(tap_fd, data.data(), (DWORD)data.size(), NULL, &overlapped)) {
       auto error = GetLastError();
-      LOG("can WriteFile fail? ................@@@@@@@@@@@@@@@@@@@@22222222 "
-          "error %ld",
-          error);
       if(error != ERROR_IO_PENDING) {
         LOG("tap write failed");
       }
-      // assert(false);
     }
 
     WaitForSingleObject(overlapped.hEvent, INFINITE);
