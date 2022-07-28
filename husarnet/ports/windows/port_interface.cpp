@@ -19,13 +19,9 @@
 // Based on code from libtuntap (https://github.com/LaKabane/libtuntap, ISC
 // License)
 #define MAX_KEY_LENGTH 255
-#define MAX_VALUE_NAME 16383
 #define NETWORK_ADAPTERS                                                 \
   "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-" \
   "08002BE10318}"
-
-// TODO change later ympek
-bool husarnetVerbose = true;
 
 static std::vector<std::string> getExistingDeviceNames()
 {
@@ -197,7 +193,7 @@ namespace Port {
     auto existingDevices = getExistingDeviceNames();
     auto deviceName = manager->getInterfaceName();
     // this should also work if deviceName is ""
-    LOG("WINDOWS DEVICE NAME is %s", deviceName.c_str());
+    LOG("Windows interface ID is %s", deviceName.c_str());
     if(std::find(existingDevices.begin(), existingDevices.end(), deviceName) ==
        existingDevices.end()) {
       system("addtap.bat");
@@ -238,9 +234,7 @@ namespace Port {
 
   std::string readFile(std::string path)
   {
-    // ympek TODO
-    // copied from Unix implementation
-    // candidate for ports_common.cpp or something
+    // TODO: identical as in unix port - merge candidate 
     std::ifstream f(path);
     if(!f.good()) {
       LOG("failed to open %s", path.c_str());
@@ -258,7 +252,6 @@ namespace Port {
     std::ofstream f(path, std::ofstream::out);
     if(!f.good()) {
       LOG("failed to write: %s", path.c_str());
-      // hmm
       f.close();
       return false;
     }

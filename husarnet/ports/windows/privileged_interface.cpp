@@ -1,6 +1,7 @@
 #include <chrono>
 #include <vector>
 
+#include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 #include "husarnet/ports/threads_port.h"
@@ -176,7 +177,7 @@ namespace Privileged {
 
   bool setSelfHostname(std::string newHostname)
   {
-    // Not implemented on Windows.
+    // Not implemented in Windows port.
     // This can be done through SetComputerNameEx()
     // Caveat is that the reboot is required for the change to be picked up
     // My opinion is to not touch the netbios hostname, and just add entry into
@@ -186,21 +187,11 @@ namespace Privileged {
 
   void updateHostsFile(std::map<std::string, IpAddress> data)
   {
-    std::map<std::string, std::string> dataStringified;
-
-    for(auto& [hostname, address] : data) {
-      dataStringified.insert({hostname, address.toString()});
-    }
-
-    // TODO ympek implement this!
-
-    // just do it here
-    // callPrivilegedProcess(PrivilegedMethod::updateHostsFile,
-    // dataStringified);
+    updateHostsFileInternal(data);
   }
 
   void notifyReady()
   {
-    // callPrivilegedProcess(PrivilegedMethod::notifyReady, {});
+    // Not implemented in Windows port.
   }
 }  // namespace Privileged

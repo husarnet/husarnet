@@ -166,23 +166,11 @@ TunTap::TunTap(std::string name, bool isTap)
 
         while(true) {
           string_view packet = read(buf);
-          // L2 packet received, unwrap L2 frame and transmit L3 futher
-          // LOG("to: %s (exp: %s), from: %s (exp: %s), proto: %s",
-          //     encodeHex(packet.substr(0, 6)).c_str(),
-          //     encodeHex(peerMacAddr).c_str(), encodeHex(packet.substr(6,
-          //     6)).c_str(), encodeHex(selfMacAddr).c_str(),
-          //     encodeHex(packet.substr(12, 2)).c_str());
 
           if(packet.substr(0, 6) == peerMacAddr &&
              packet.substr(6, 6) == selfMacAddr &&
              packet.substr(12, 2) == string_view("\x86\xdd", 2)) {
-            auto packetToShow = encodeHex(std::string(packet.substr(14)));
-            LOG("PACKET: size: %llu contents: %s", packet.size(),
-                packetToShow.c_str());
-            // LOG("PACKET: size: %llu", packet.size());
             sendToLowerLayer(BadDeviceId, packet.substr(14));
-          } else {
-            LOG("WRONG PACKET: size: %llu", packet.size());
           }
         }
       },
