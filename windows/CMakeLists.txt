@@ -8,3 +8,5 @@ include(../husarnet/husarnet.cmake)
 file(GLOB husarnet_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
 add_executable(husarnet-daemon ${husarnet_SRC})
 target_link_libraries(husarnet-daemon husarnet_core)
+
+install(TARGETS husarnet-daemon DESTINATION bin)

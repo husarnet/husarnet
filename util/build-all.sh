@@ -20,18 +20,11 @@ for arch in $unix_archs; do
     done
 done
 
-exit 0
-
-# Docker builds
-
-# This is commented out as it's intended to be disabled in CI. You can still run it manually.
-# ${util_base}/build-docker.sh
-
 # Windows builds
 
 ${util_base}/build-cmake.sh win64 windows
 ${util_base}/build-cli.sh win64 windows
-# cp ${build_base}/win64/windows/husarnet.exe
+
 cp ${build_base}/bin/husarnet-windows-amd64 ${release_base}/husarnet.exe
 
 # ESP32 builds
