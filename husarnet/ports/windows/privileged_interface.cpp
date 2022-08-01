@@ -41,7 +41,6 @@ namespace Privileged {
     if(!Port::isFile(configDir)) {
       CreateDirectory(configDir.c_str(), NULL);
       // fixPermissions(configDir);
-      // FileStorage::generateAndWriteId(configDir);
       // ympek TODO
       // here we will need to cover a bunch of cases like
       // old config present->run migrator, , new config present, etc.

@@ -279,9 +279,9 @@ std::string HusarnetManager::getInterfaceName()
 void HusarnetManager::setInterfaceName(std::string name)
 {
   configStorage->setUserSetting(UserSetting::interfaceName, name);
-  // ympek could return
-  // now there is some inconsistency in how setters work...
-  // but it's secondary now...
+  // TODO / ympek could return
+  // now there is some inconsistency in how setters work
+  // also this should probably be internal setting in windows case
 }
 
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)

@@ -5,7 +5,6 @@
 
 #include <functional>
 
-// TODO ympek chec unused imports...
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -97,7 +96,7 @@ void TunTap::onTunTapData()
   // sendToLowerLayer(BadDeviceId, packet);
 }
 
-void TunTap::setPowershellStuff(std::string name)
+void TunTap::setupNetshAndWindowsFirewall(std::string name)
 {
   auto identityPath = std::string(getenv("PROGRAMDATA")) + "\\husarnet\\id";
   auto identity = Identity::deserialize(Port::readFile(identityPath));
@@ -149,7 +148,7 @@ TunTap::TunTap(std::string name, bool isTap)
 
   bringUp();
 
-  setPowershellStuff(name);
+  setupNetshAndWindowsFirewall(name);
 
   selfMacAddr = getMac();
 
@@ -256,11 +255,13 @@ std::string TunTap::getMac()
 
 void TunTap::onLowerLayerData(DeviceId source, string_view data)
 {
+  // TODO ympek
+  // This is currently dead code, as this is handled by separate thread
+  // Next step will be to incorporate this into callback mechanism
   (void)source;
   LOG("TunTap::onLowerLayerData, DeviceId: %s data size is: %lld",
       encodeHex(source).c_str(), data.size());
-  // HMM
-  // TODO ympek implement
+
   std::string wrapped;
 
   wrapped += selfMacAddr;
@@ -268,7 +269,4 @@ void TunTap::onLowerLayerData(DeviceId source, string_view data)
   wrapped += string_view("\x86\xdd", 2);
   wrapped += data;
   write(wrapped);
-  // if(wr != data.size()) {
-  //   LOG("short tun write");
-  // }
 }
