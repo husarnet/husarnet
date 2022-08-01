@@ -20,12 +20,13 @@ for arch in $unix_archs; do
     done
 done
 
-# Windows builds
+# Windows build - win64 only
 
 ${util_base}/build-cmake.sh win64 windows
-${util_base}/build-cli.sh win64 windows
+cp ${build_base}/win64/windows/out/exe/husarnet-daemon.exe ${release_base}/husarnet-daemon.exe
 
-cp ${build_base}/bin/husarnet-windows-amd64 ${release_base}/husarnet.exe
+${util_base}/build-cli.sh win64 windows
+cp ${build_base}/bin/husarnet-windows-win64 ${release_base}/husarnet.exe
 
 # ESP32 builds
 
