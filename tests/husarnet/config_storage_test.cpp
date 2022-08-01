@@ -9,12 +9,12 @@
 
 static ConfigStorage* makeTestStorage()
 {
-    HusarnetManager* manager = new HusarnetManager();
-    auto cs = new ConfigStorage(
-              manager, []() { return ""; }, [&](std::string s) {}, {}, {}, {});
+  HusarnetManager* manager = new HusarnetManager();
+  auto cs = new ConfigStorage(
+      manager, []() { return ""; }, [&](std::string s) {}, {}, {}, {});
 
-    manager->setConfigStorage(cs);
-    return cs;
+  manager->setConfigStorage(cs);
+  return cs;
 }
 
 TEST_CASE("Group changes")
@@ -148,7 +148,7 @@ TEST_CASE("User settings")
 
   HusarnetManager* manager = new HusarnetManager();
   cs = new ConfigStorage(
-      manager, []() { return ""; }, [&](std::string s) {}, 
+      manager, []() { return ""; }, [&](std::string s) {},
       {{UserSetting::dashboardFqdn, "foo"}}, {}, {});
   manager->setConfigStorage(cs);
 

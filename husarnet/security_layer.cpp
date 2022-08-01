@@ -82,6 +82,7 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
   } else if(data[0] == 1 || data[0] == 2 || data[0] == 3) {  // hello packet
     if(data.size() <= 25)
       return;
+
     handleHelloPacket(peerId, data, (int)data[0]);
   } else if(data[0] == 4 || data[0] == 5) {  // heartbeat (hopefully they are
                                              // not cursed)

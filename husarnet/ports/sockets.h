@@ -9,8 +9,15 @@
 #include <memory>
 #include <vector>
 
+#ifndef _WIN32
 #include <netinet/in.h>
 #include <sys/socket.h>
+#else
+#include <winsock2.h>
+#include <iphlpapi.h>
+#include <ws2ipdef.h>
+#include <ws2tcpip.h>
+#endif
 
 #include "husarnet/ports/threads_port.h"
 

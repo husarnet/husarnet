@@ -176,7 +176,7 @@ if(${BUILD_HTTP_CONTROL_API})
   FetchContent_Declare(
     httplib
     GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
-    GIT_TAG v0.10.1
+    GIT_TAG v0.10.9
   )
   set(BUILD_SHARED_LIBS OFF)
   set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF)
@@ -185,7 +185,7 @@ if(${BUILD_HTTP_CONTROL_API})
   set(HTTPLIB_REQUIRE_ZLIB OFF)
   set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF)
   set(HTTPLIB_REQUIRE_BROTLI OFF)
-  set(HTTPLIB_COMPILE ON)
+  set(HTTPLIB_COMPILE OFF)
   FetchContent_MakeAvailable(httplib)
   target_link_libraries(husarnet_core httplib)
 
@@ -194,3 +194,4 @@ if(${BUILD_HTTP_CONTROL_API})
     set_property(DIRECTORY ${httplib_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
   endif()
 endif()
+

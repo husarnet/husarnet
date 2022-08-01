@@ -7,9 +7,11 @@
 
 #include <assert.h>
 #include <errno.h>
+#ifndef _WIN32
 #include <netinet/in.h>
-#include <string.h>
 #include <sys/socket.h>
+#endif
+#include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
 
@@ -39,8 +41,9 @@ void WebsetupConnection::bind()
   addr.sin6_port = htons(WEBSETUP_SERVER_PORT);
 
   int ret = SOCKFUNC(bind)(websetupFd, (sockaddr*)&addr, sizeof(addr));
+  // TODO: we could probably handle the error and display some helpful info for
+  // user e.g. EADRRINUSE -> you probably have Husarnet running... etc.
   assert(ret == 0);
-
   // this timeout is needed, so we can check initResponseReceived
 
 #ifdef _WIN32
@@ -80,8 +83,6 @@ void WebsetupConnection::send(
     }
     i++;
   }
-
-  // LOGV("sending to websetup: %s", frame.c_str());
 
   sockaddr_in6 addr{};
   addr.sin6_family = AF_INET6;

@@ -5,8 +5,10 @@
 #include <cassert>
 #include <cstdlib>
 #ifdef _WIN32
-#include <mswsock.h>
 #include <winsock2.h>
+#include <iphlpapi.h>
+#include <mswsock.h>
+#include <winioctl.h>
 #include <ws2ipdef.h>
 #include <ws2tcpip.h>
 #undef IGNORE  // ...
@@ -19,6 +21,7 @@ inline void sleep(int sec)
   Sleep(sec * 1000);
 }
 #define SOCKFUNC(name) ::name
+#define SOCKFUNC_close closesocket
 
 inline long random()
 {
@@ -27,8 +30,6 @@ inline long random()
   assert(ok == 0);
   return res;
 }
-
-const char* getThreadName();
 
 inline int renameFile(const char* src, const char* dst)
 {

@@ -2,10 +2,10 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Husarnet"
-#define HUSARNET_VERSION "2022.07.13.2"
+#define HUSARNET_VERSION "2022.08.01.1"
 #define MyAppPublisher "Husarnet Sp. z o.o."
 #define MyAppURL "https://husarnet.com"
-#define MyAppExeName "husarnet-gui.exe"
+#define MyAppExeName "husarnet.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -114,7 +114,8 @@ begin
 end;
 
 [Files]
-Source: "husarnet.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; BeforeInstall: BeforeReplaceService
+Source: "husarnet-daemon.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; BeforeInstall: BeforeReplaceService
+Source: "husarnet.exe"; DestDir: "{app}\bin"; Flags: ignoreversion;
 Source: "addtap.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "tap-windows.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "nssm.exe"; DestDir: "{app}"; Flags: ignoreversion

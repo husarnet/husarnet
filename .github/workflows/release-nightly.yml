@@ -40,39 +40,40 @@ jobs:
           name: packages
           path: ./build/release
 
-  # build_windows_installer:
-  #   needs: build_and_test
+  build_windows_installer:
+    needs: build_and_test
 
-  #   runs-on: windows-2019
+    runs-on: windows-2019
 
-  #   steps:
-  #     - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v2
 
-  #     - name: Fetch artifacts
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: packages
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: packages
 
-  #     - name: Copy .exe and license to installer dir
-  #       run: |
-  #         copy husarnet.exe windows\installer
-  #         copy LICENSE.txt windows\installer
-  #       shell: cmd
+      # no tutaj trzeba pozmieniac
+      - name: Copy .exe and license to installer dir
+        run: |
+          copy husarnet-daemon.exe windows\installer
+          copy husarnet.exe windows\installer
+          copy LICENSE.txt windows\installer
+        shell: cmd
 
-  #     - name: Building the installer
-  #       run: |
-  #         "%programfiles(x86)%\Inno Setup 6\iscc.exe" windows\installer\script.iss
-  #       shell: cmd
+      - name: Building the installer
+        run: |
+          "%programfiles(x86)%\Inno Setup 6\iscc.exe" windows\installer\script.iss
+        shell: cmd
 
-  #     - name: Upload installer
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         name: windows_installer
-  #         path: windows\installer\Output\husarnet-setup.exe
+      - name: Upload installer
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_installer
+          path: windows\installer\Output\husarnet-setup.exe
 
   release_nightly:
-    # needs: [build_and_test, build_windows_installer]
-    needs: [build_and_test]
+    needs: [build_and_test, build_windows_installer]
 
     runs-on: [self-hosted, linux, nightly]
 
@@ -85,10 +86,10 @@ jobs:
         with:
           name: packages
 
-      # - name: Fetch Windows installer
-      #   uses: actions/download-artifact@v2
-      #   with:
-      #     name: windows_installer
+      - name: Fetch Windows installer
+        uses: actions/download-artifact@v2
+        with:
+          name: windows_installer
 
       - name: Deploy to Husarnet nightly repository
         run: ./util/deploy.sh nightly

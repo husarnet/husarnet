@@ -2,9 +2,9 @@ mkdir "%PROGRAMDATA%\Husarnet"
 icacls "%PROGRAMDATA%\Husarnet" /grant:r "*S-1-5-18:(F)" "*S-1-3-0:(F)" "*S-1-5-32-544:(F)" /inheritance:r
 icacls "%PROGRAMDATA%\Husarnet" /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-3-0:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" /inheritance:r
 
-nssm install husarnet "%PROGRAMFILES%\Husarnet\bin\husarnet.exe"
-nssm set husarnet Application "%PROGRAMFILES%\Husarnet\bin\husarnet.exe"
-nssm set husarnet AppParameters "daemon"
+nssm install husarnet "%PROGRAMFILES%\Husarnet\bin\husarnet-daemon.exe"
+nssm set husarnet Application "%PROGRAMFILES%\Husarnet\bin\husarnet-daemon.exe"
+nssm set husarnet AppParameters ""
 nssm set husarnet AppDirectory "%PROGRAMFILES%\Husarnet"
 nssm set husarnet AppNoConsole 1
 nssm set husarnet DisplayName "Husarnet"

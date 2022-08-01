@@ -54,6 +54,9 @@ cmake --build ${build_dir}
 
 cmake --build ${build_dir} --target install
 
-cp ${output_dir}/usr/bin/husarnet-daemon ${bin_dir}/husarnet-daemon
+# this check is because of win64, the file wont be there while building win64
+if [[ -f "${output_dir}/usr/bin/husarnet-daemon" ]]; then
+  cp ${output_dir}/usr/bin/husarnet-daemon ${bin_dir}/husarnet-daemon
+fi
 
 popd

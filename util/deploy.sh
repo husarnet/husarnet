@@ -72,10 +72,9 @@ if [ "${deploy_target}" == "nightly" ]; then
   sed "s=install.husarnet=nightly.husarnet=" ${working_path}/husarnet.repo > ${working_path}/husarnet-nightly.repo
 fi
 
+echo "[==] Copy also windows installer exe"
+
+cp husarnet-setup.exe ${working_path}/husarnet2alpha-unstable-${package_version}-setup.exe
+ln -fs ${working_path}/husarnet2alpha-unstable-${package_version}-setup.exe ${working_path}/husarnet2alpha-unstable-latest-setup.exe
+
 echo "[==] Done, and should work."
-
-exit 0
-
-# expose also windows installer exe
-cp husarnet-setup.exe ${working_path}/husarnet-${package_version}-setup.exe
-ln -fs ${working_path}/husarnet-${package_version}-setup.exe ${working_path}/husarnet-setup-latest.exe
