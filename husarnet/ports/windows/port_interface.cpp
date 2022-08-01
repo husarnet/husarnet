@@ -137,7 +137,7 @@ namespace Port {
 
   const char* getThreadName()
   {
-    return threadName ? threadName : "null";
+    return threadName ? threadName : "main";
   }
 
   void startThread(

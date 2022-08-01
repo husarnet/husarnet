@@ -91,9 +91,9 @@ bool TunTap::isRunning()
 
 void TunTap::onTunTapData()
 {
-  LOG("TunTap::onTunTapData was called");
-  // string_view packet = read(tunBuffer);
-  // sendToLowerLayer(BadDeviceId, packet);
+  // TODO ympek
+  // This is currently NOOP, as reading from TunTap is handled by separate thread
+  // on Windows. Next step will be to incorporate this into callback mechanism
 }
 
 void TunTap::setupNetshAndWindowsFirewall(std::string name)
@@ -255,13 +255,7 @@ std::string TunTap::getMac()
 
 void TunTap::onLowerLayerData(DeviceId source, string_view data)
 {
-  // TODO ympek
-  // This is currently dead code, as this is handled by separate thread
-  // Next step will be to incorporate this into callback mechanism
   (void)source;
-  LOG("TunTap::onLowerLayerData, DeviceId: %s data size is: %lld",
-      encodeHex(source).c_str(), data.size());
-
   std::string wrapped;
 
   wrapped += selfMacAddr;

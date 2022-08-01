@@ -23,6 +23,8 @@ using Time = int64_t;
 namespace Port {
   void init();  // Should be called as early as possible
 
+  // TODO ympek: getThreadName() exists only in Windows port
+  // good idea would be to unify this
   const char* getThreadName();
   void startThread(
       std::function<void()> func,

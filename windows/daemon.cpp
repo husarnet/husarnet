@@ -9,7 +9,10 @@
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/util.h"
 
-// right now is the same as unix
+// TODO ympek
+// this file is identical (copypasted) as unix one
+// candidate for common/ folder but need to make sure
+// if really no modifications are required
 
 int main(int argc, const char* argv[])
 {
