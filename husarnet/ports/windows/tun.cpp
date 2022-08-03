@@ -15,9 +15,9 @@
 
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
+#include "husarnet/ports/windows/networking.h"
 
 #include "husarnet/gil.h"
-#include "husarnet/identity.h"
 #include "husarnet/util.h"
 
 // From OpenVPN tap driver, common.h
@@ -36,28 +36,6 @@
 
 static const std::string peerMacAddr = decodeHex("525400fc944d");
 static const std::string defaultSelfMacAddr = decodeHex("525400fc944c");
-
-static std::string getNetshNameForGuid(std::string guid)
-{
-  std::string path =
-      "SYSTEM\\CurrentControlSet\\Control\\Network\\{4d36e972-e325-11ce-bfc1-"
-      "08002be10318}\\" +
-      guid + "\\connection";
-
-  DWORD dwType = REG_SZ;
-  HKEY hKey = 0;
-  char value[1024];
-  DWORD value_length = 1024;
-  RegOpenKey(HKEY_LOCAL_MACHINE, path.c_str(), &hKey);
-  RegQueryValueEx(hKey, "name", NULL, &dwType, (LPBYTE)&value, &value_length);
-
-  return value;
-}
-
-static int mySystem(std::string cmd)
-{
-  return system(("\"" + cmd + "\"").c_str());
-}
 
 static HANDLE openTun(std::string name)
 {
@@ -92,51 +70,9 @@ bool TunTap::isRunning()
 void TunTap::onTunTapData()
 {
   // TODO ympek
-  // This is currently NOOP, as reading from TunTap is handled by separate thread
-  // on Windows. Next step will be to incorporate this into callback mechanism
-}
-
-void TunTap::setupNetshAndWindowsFirewall(std::string name)
-{
-  auto identityPath = std::string(getenv("PROGRAMDATA")) + "\\husarnet\\id";
-  auto identity = Identity::deserialize(Port::readFile(identityPath));
-
-  std::string sourceNetshName = getNetshNameForGuid(name);
-  LOG("sourceNetshName: %s", sourceNetshName.c_str());
-  std::string netshName = "Husarnet";
-  if(netshName != sourceNetshName) {
-    if(mySystem(
-           "netsh interface set interface name = \"" + sourceNetshName +
-           "\" newname = \"" + netshName + "\"") == 0) {
-      LOG("renamed successfully");
-    } else {
-      netshName = sourceNetshName;
-      LOG("rename failed");
-    }
-  }
-  std::string quotedName = "\"" + netshName + "\"";
-
-  mySystem(
-      "netsh interface ipv6 add neighbors " + quotedName +
-      " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001 52-54-00-fc-94-4d");
-  std::string myIp = IpAddress::fromBinary(identity.getDeviceId()).str();
-  LOG("myIp is: %s", myIp.c_str());
-  mySystem(
-      "netsh interface ipv6 add address " + quotedName + " " + myIp + "/128");
-  mySystem(
-      "netsh interface ipv6 add route "
-      "fc94:8385:160b:88d1:c2ec:af1b:06ac:0001/128 " +
-      quotedName);
-  mySystem(
-      "netsh interface ipv6 add route fc94::/16 " + quotedName +
-      " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001");
-
-  std::string cmd =
-      "powershell New-NetFirewallRule -DisplayName AllowHusarnet -Direction "
-      "Inbound -Action Allow -LocalAddress fc94::/16 -RemoteAddress fc94::/16 "
-      "-InterfaceAlias \"\"\"" +
-      netshName + "\"\"\"";
-  mySystem((cmd).c_str());
+  // This is currently NOOP, as reading from TunTap is handled by separate
+  // thread on Windows. Next step will be to incorporate this into callback
+  // mechanism
 }
 
 TunTap::TunTap(std::string name, bool isTap)
@@ -145,10 +81,11 @@ TunTap::TunTap(std::string name, bool isTap)
   tap_fd = openTun(name);
   tunBuffer.resize(4096);
 
-
   bringUp();
 
-  setupNetshAndWindowsFirewall(name);
+  WindowsNetworking windowsNetworking;
+  windowsNetworking.setupNetworkInterface(name);
+  windowsNetworking.allowHusarnetThroughWindowsFirewall("AllowHusarnet");
 
   selfMacAddr = getMac();
 
@@ -174,10 +111,6 @@ TunTap::TunTap(std::string name, bool isTap)
         }
       },
       "wintap-read");
-  // NgSocket* netDev = L2Unwrapper::wrap(netDevL3, winTap->getMac());
-
-  // netDev->delegate = new WinTapDelegate(winTap);
-  // bindControlSocket(configManager);
 }
 
 string_view TunTap::read(std::string& buffer)

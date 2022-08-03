@@ -234,7 +234,7 @@ namespace Port {
 
   std::string readFile(std::string path)
   {
-    // TODO: identical as in unix port - merge candidate 
+    // TODO: identical as in unix port - merge candidate
     std::ifstream f(path);
     if(!f.good()) {
       LOG("failed to open %s", path.c_str());
