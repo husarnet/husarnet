@@ -1,8 +1,8 @@
 #include <chrono>
 #include <vector>
 
-#include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
 #include "husarnet/ports/port.h"
+#include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
 #include "husarnet/ports/sockets.h"
 #include "husarnet/ports/threads_port.h"
 

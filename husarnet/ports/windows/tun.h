@@ -21,7 +21,6 @@ class TunTap : public HigherLayer {
   bool isRunning();
 
   void bringUp();
-  void setupNetshAndWindowsFirewall(std::string name);
   std::string getMac();
   string_view read(std::string& buffer);
   void write(string_view data);
