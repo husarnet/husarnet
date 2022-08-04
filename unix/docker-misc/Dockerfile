@@ -1,4 +1,4 @@
-FROM ubuntu:hirsute AS app_builder
+FROM ubuntu:22.04 AS app_builder
 ARG TARGETPLATFORM
 RUN echo $TARGETPLATFORM
 
@@ -13,7 +13,7 @@ RUN git submodule update --init --recursive
 RUN ./util/build-cmake.sh $TARGETPLATFORM
 
 # stage 2
-FROM ubuntu:hirsute
+FROM ubuntu:22.04
 RUN apt-get update -y && apt-get install -y iptables procps iproute2
 RUN update-alternatives --set ip6tables /usr/sbin/ip6tables-nft
 
