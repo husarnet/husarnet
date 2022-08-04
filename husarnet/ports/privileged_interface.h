@@ -19,6 +19,7 @@ namespace Privileged {
 
   void dropCapabilities();
 
+  std::string getLegacyConfigPath();
   std::string readConfig();
   void writeConfig(std::string);
 

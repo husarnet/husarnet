@@ -138,6 +138,13 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(better_enums)
 target_include_directories(husarnet_core PUBLIC ${better_enums_SOURCE_DIR})
 
+FetchContent_Declare(
+  sqlite3
+  URL  https://sqlite.org/2022/sqlite-amalgamation-3390200.zip
+)
+FetchContent_MakeAvailable(sqlite3)
+target_link_libraries(husarnet_core sqlite3)
+
 # Include unix port libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   FetchContent_Declare(

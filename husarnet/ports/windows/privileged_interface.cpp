@@ -33,6 +33,11 @@ static std::string getApiSecretPath()
   return configDir + "\\api_secret";
 }
 
+static std::string getLegacyConfigPath()
+{
+    return configDir + "\\config.db";
+}
+
 namespace Privileged {
 
   void init()

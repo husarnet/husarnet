@@ -265,6 +265,15 @@ namespace Port {
     return PathFileExists(path.c_str());
   }
 
+  bool renameFile(std::string src, std::string dst)
+  {
+    bool success = MoveFileEx(src.c_str(), dst.c_str(), MOVEFILE_REPLACE_EXISTING);
+    if (!success) {
+      LOG("failed to rename %s to %s with following error code: %d", src.c_str(), dst.c_str(), GetLastError());
+    }
+    return success;
+  }
+
   void notifyReady()
   {
   }

@@ -70,6 +70,8 @@ class HusarnetManager {
   std::string getVersion();
   std::string getUserAgent();
 
+  void readLegacyConfig();
+
   Identity* getIdentity();
   IpAddress getSelfAddress();
   PeerFlags* getSelfFlags();

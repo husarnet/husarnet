@@ -276,6 +276,11 @@ namespace Privileged {
     }
   }
 
+  std::string getLegacyConfigPath()
+  {
+    return configDir + "/config.db";
+  }
+
   std::string readConfig()
   {
     auto configPath = getConfigPath();
