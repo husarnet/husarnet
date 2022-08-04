@@ -100,24 +100,11 @@ void WindowsNetworking::allowHusarnetThroughWindowsFirewall(
   int returnCode = callWindowsCmd(checkCmd);
 
   if(returnCode == 0) {
-    LOG("Firewall rule: %s already exists!", firewallRuleName.c_str());
     // Due to bug in earlier versions of Windows client, the rule was inserted
     // on each start of the service, which means users could have a lot of
     // redundant rules in their firewall. we delete them here to cleanup
-    std::string countCmd =
-        "powershell -command \"(Get-NetFirewallRule -DisplayName " +
-        firewallRuleName + ").Count\"";
-    int numOfRules = callWindowsCmd(countCmd);
-    LOG("num of rules %d", numOfRules);
-
-    if(numOfRules >= 2) {
-      LOG("Cleaning up redundant firewall rules...");
-      deleteFirewallRules(firewallRuleName);
-      insertFirewallRule(firewallRuleName);
-    } else {
-      LOG("Skipping insertion of firewall rule, as it is already present.");
-    }
-  } else {
-    insertFirewallRule(firewallRuleName);
+    LOG("Firewall rule: %s already exists! Cleaning up...", firewallRuleName.c_str());
+    deleteFirewallRules(firewallRuleName);
   }
+  insertFirewallRule(firewallRuleName);
 }
