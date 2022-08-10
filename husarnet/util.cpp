@@ -145,7 +145,7 @@ std::string rtrim(std::string s)
   return s;
 }
 
-std::string camelCaseToUserscores(std::string camel)
+std::string camelCaseToUnderscores(std::string camel)
 {
   // TODO long term - add protection for strings too short
   std::string underscored = camel.substr(0, 1);

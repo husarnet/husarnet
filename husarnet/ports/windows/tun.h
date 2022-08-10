@@ -11,7 +11,7 @@
 
 #include "windef.h"
 
-class TunTap : public HigherLayer {
+class TunTap : public UpperLayer {
  private:
   HANDLE tap_fd;
   std::string tunBuffer;
@@ -25,7 +25,7 @@ class TunTap : public HigherLayer {
   string_view read(std::string& buffer);
   void write(string_view data);
 
-  // This is called by the OsSocket as a callback
+  void startReaderThread();
   void onTunTapData();
 
  public:

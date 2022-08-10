@@ -33,7 +33,7 @@
 
 #include "enum.h"
 
-class HigherLayer;
+class UpperLayer;
 
 extern char** environ;
 
@@ -144,7 +144,7 @@ namespace Port {
 
   // TODO long term - this whole method should be rewritten *not* to utilize
   // inline bash(?!) and *to* utilize netlink interface
-  HigherLayer* startTunTap(HusarnetManager* manager)
+  UpperLayer* startTunTap(HusarnetManager* manager)
   {
     if(system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c "
               "10 200)") != 0) {
@@ -190,7 +190,7 @@ namespace Port {
     for(char** environ_ptr = environ; *environ_ptr != nullptr; environ_ptr++) {
       for(auto enumName : UserSetting::_names()) {
         auto candidate =
-            "HUSARNET_" + strToUpper(camelCaseToUserscores(enumName));
+            "HUSARNET_" + strToUpper(camelCaseToUnderscores(enumName));
 
         std::vector<std::string> splitted = split(*environ_ptr, '=', 1);
         if(splitted.size() == 1) {

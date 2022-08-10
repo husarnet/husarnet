@@ -9,7 +9,7 @@
 #include "husarnet/ngsocket.h"
 #include "husarnet/string_view.h"
 
-class TunTap : public HigherLayer {
+class TunTap : public UpperLayer {
  private:
   int fd;
   std::string tunBuffer;
