@@ -89,9 +89,10 @@ var daemonStatusCommand = &cli.Command{
 
 				statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Tags: %v", strings.Join(tags, ", "))})
 
-				if peer.LatencyMs != -1 {
-					statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Latency (ms): %v", peer.LatencyMs)})
-				}
+				// TODO reenable this after latency support is readded
+				// if peer.LatencyMs != -1 {
+				// 	statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Latency (ms): %v", peer.LatencyMs)})
+				// }
 
 				if !peer.UsedTargetAddress.Addr().IsUnspecified() {
 					statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Used regular network address: %v", peer.UsedTargetAddress)})
