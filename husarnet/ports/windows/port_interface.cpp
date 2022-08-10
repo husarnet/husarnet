@@ -188,7 +188,7 @@ namespace Port {
     return ms.count();
   }
 
-  HigherLayer* startTunTap(HusarnetManager* manager)
+  UpperLayer* startTunTap(HusarnetManager* manager)
   {
     auto existingDevices = getExistingDeviceNames();
     auto deviceName = manager->getInterfaceName();
@@ -216,7 +216,7 @@ namespace Port {
 
     for(auto enumName : UserSetting::_names()) {
       auto candidate =
-          "HUSARNET_" + strToUpper(camelCaseToUserscores(enumName));
+          "HUSARNET_" + strToUpper(camelCaseToUnderscores(enumName));
 
       DWORD envVarLength = GetEnvironmentVariable(
           candidate.c_str(), &envVarBuffer[0], (DWORD)envVarBuffer.size());

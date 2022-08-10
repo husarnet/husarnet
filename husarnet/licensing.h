@@ -12,7 +12,7 @@
 
 using namespace nlohmann;  // json
 
-json retrieveLicenseJSON(std::string dashboardHostname);
+json retrieveLicenseJson(std::string dashboardHostname);
 
 class License {
   std::string dashboardFqdn;

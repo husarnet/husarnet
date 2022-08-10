@@ -69,32 +69,12 @@ bool TunTap::isRunning()
 
 void TunTap::onTunTapData()
 {
-  // TODO ympek
-  // This is currently NOOP, as reading from TunTap is handled by separate
-  // thread on Windows. Next step will be to incorporate this into callback
-  // mechanism
+  // This is NOOP, as reading from TunTap is handled by separate
+  // thread on Windows. We don't handle it via bindCustomFd and select()
 }
 
-TunTap::TunTap(std::string name, bool isTap)
+void TunTap::startReaderThread()
 {
-  (void)isTap;
-  tap_fd = openTun(name);
-  tunBuffer.resize(4096);
-
-  bringUp();
-
-  WindowsNetworking windowsNetworking;
-  windowsNetworking.setupNetworkInterface(name);
-  windowsNetworking.allowHusarnetThroughWindowsFirewall("AllowHusarnet");
-
-  selfMacAddr = getMac();
-
-  // TODO ympek
-  // At this point, we should call bindCustomFd and plug
-  // our function into select() call from OsSocket
-  // but there is mismatch in underlying implementation,
-  // as win32 impl uses pointers and unix impl uses regular int descriptors
-  // so therefore I decided to simply make a new thread here
   GIL::startThread(
       [&] {
         std::string buf;
@@ -111,6 +91,22 @@ TunTap::TunTap(std::string name, bool isTap)
         }
       },
       "wintap-read");
+}
+
+TunTap::TunTap(std::string name, bool isTap)
+{
+  (void)isTap;
+  tap_fd = openTun(name);
+  tunBuffer.resize(4096);
+
+  bringUp();
+
+  WindowsNetworking windowsNetworking;
+  windowsNetworking.setupNetworkInterface(name);
+  windowsNetworking.allowHusarnetThroughWindowsFirewall("AllowHusarnet");
+
+  selfMacAddr = getMac();
+  startReaderThread();
 }
 
 string_view TunTap::read(std::string& buffer)

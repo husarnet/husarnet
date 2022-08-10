@@ -20,7 +20,7 @@
 //
 // FromUpperConsumer consumes data from ForUpperProducer, thus FromUpperConsumer
 // is *lower* than ForUpperProducer FromLowerConsumer consumes data from
-// ForLowerProducer, thus ForLowerProducer is *above* LoverConsumer
+// ForLowerProducer, thus ForLowerProducer is *above* LowerConsumer
 
 class FromUpperConsumer {
  public:
@@ -56,9 +56,9 @@ class ForLowerProducer {
   void sendToLowerLayer(DeviceId peerId, string_view data);
 };
 
-class HigherLayer : public ForLowerProducer, public FromLowerConsumer {};
+class UpperLayer : public ForLowerProducer, public FromLowerConsumer {};
 class LowerLayer : public ForUpperProducer, public FromUpperConsumer {};
 
-class BidirectionalLayer : public HigherLayer, public LowerLayer {};
+class BidirectionalLayer : public UpperLayer, public LowerLayer {};
 
-void stackHigherOnLower(HigherLayer* higher, LowerLayer* lower);
+void stackUpperOnLower(UpperLayer* upper, LowerLayer* lower);

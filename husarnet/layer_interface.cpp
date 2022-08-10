@@ -38,13 +38,13 @@ void ForLowerProducer::sendToLowerLayer(DeviceId peerId, string_view data)
   fromLowerConsumer(peerId, data);
 }
 
-void stackHigherOnLower(HigherLayer* higher, LowerLayer* lower)
+void stackUpperOnLower(UpperLayer* upper, LowerLayer* lower)
 {
-  higher->setLowerLayerConsumer(std::bind(
+  upper->setLowerLayerConsumer(std::bind(
       &FromUpperConsumer::onUpperLayerData, lower, std::placeholders::_1,
       std::placeholders::_2));
 
   lower->setUpperLayerConsumer(std::bind(
-      &FromLowerConsumer::onLowerLayerData, higher, std::placeholders::_1,
+      &FromLowerConsumer::onLowerLayerData, upper, std::placeholders::_1,
       std::placeholders::_2));
 }

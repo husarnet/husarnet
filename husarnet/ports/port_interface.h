@@ -15,7 +15,7 @@
 
 class HusarnetManager;
 class TunTap;
-class HigherLayer;
+class UpperLayer;
 class UserSetting;
 
 using Time = int64_t;
@@ -36,7 +36,7 @@ namespace Port {
 
   Time getCurrentTime();  // some monotonic time in ms
 
-  HigherLayer* startTunTap(HusarnetManager* manager);
+  UpperLayer* startTunTap(HusarnetManager* manager);
 
   std::map<UserSetting, std::string> getEnvironmentOverrides();
 

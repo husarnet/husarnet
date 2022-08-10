@@ -343,10 +343,10 @@ void HusarnetManager::startNetworkingStack()
   securityLayer = new SecurityLayer(this);
   ngsocket = new NgSocket(this);
 
-  stackHigherOnLower(tunTap, multicast);
-  stackHigherOnLower(multicast, compression);
-  stackHigherOnLower(compression, securityLayer);
-  stackHigherOnLower(securityLayer, ngsocket);
+  stackUpperOnLower(tunTap, multicast);
+  stackUpperOnLower(multicast, compression);
+  stackUpperOnLower(compression, securityLayer);
+  stackUpperOnLower(securityLayer, ngsocket);
 }
 
 void HusarnetManager::startWebsetup()
