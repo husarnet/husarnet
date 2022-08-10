@@ -69,7 +69,8 @@ type PeerStatus struct {
 	IsSecure         bool `json:"is_secure"`
 	IsTunelled       bool `json:"is_tunelled"`
 
-	LatencyMs int `json:"latency_ms"` // TODO long-term figure out how to convert it to time.Duration
+	// TODO reenable this after latency support is readded
+	// LatencyMs int `json:"latency_ms"` // TODO long-term figure out how to convert it to time.Duration
 
 	SourceAddresses   []netip.AddrPort `json:"source_addresses"`
 	TargetAddresses   []netip.AddrPort `json:"target_addresses"`

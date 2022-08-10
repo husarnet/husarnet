@@ -151,7 +151,8 @@ void ApiServer::runThread()
                stringifyInetAddressList(rawPeer->getTargetAddresses())},
               {"used_target_address", rawPeer->getUsedTargetAddress().str()},
               {"link_local_address", rawPeer->getLinkLocalAddress().str()},
-              {"latency_ms", manager->getLatency(rawPeer->getDeviceId())},
+              // {"latency_ms", manager->getLatency(rawPeer->getDeviceId())}, //
+              // TODO this is kinda bugged at the moment. Fix this
           };
 
           peerData.push_back(newPeer);
