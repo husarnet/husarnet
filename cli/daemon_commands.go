@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/pterm/pterm"
@@ -57,17 +58,26 @@ var daemonStatusCommand = &cli.Command{
 			{Level: 0, Text: "Whitelist"},
 		}
 
+		sort.Slice(status.Whitelist, func(i, j int) bool { return status.Whitelist[i].String() < status.Whitelist[j].String() })
+
 		for _, address := range status.Whitelist {
 			statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: address.String(), TextStyle: flashyStyle})
 
+			var peerHostnames []string
+
 			for hostname, HTaddress := range status.HostTable {
 				if address == HTaddress {
-					statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Hostname: %s", pterm.Bold.Sprintf(hostname))})
+					peerHostnames = append(peerHostnames, hostname)
 				}
 			}
 
+			if len(peerHostnames) > 0 {
+				sort.Strings(peerHostnames)
+				statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Hostnames: %s", pterm.Bold.Sprintf(strings.Join(peerHostnames, ", ")))})
+			}
+
 			if address == status.WebsetupAddress {
-				statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: pterm.Bold.Sprint("Role: ") + "websetup"})
+				statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: pterm.Bold.Sprint("Role: websetup")})
 			}
 
 			for _, peer := range status.Peers {
