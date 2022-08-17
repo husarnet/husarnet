@@ -22,9 +22,10 @@ var verboseLogs bool
 
 func main() {
 	app := &cli.App{
-		Name:     "Husarnet CLI",
-		HelpName: "husarnet",
-		Usage:    "Manage your Husarnet groups and devices from your terminal",
+		Name:                 "Husarnet CLI",
+		HelpName:             "husarnet",
+		Usage:                "Manage your Husarnet groups and devices from your terminal",
+		EnableBashCompletion: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "dashboard_fqdn",
