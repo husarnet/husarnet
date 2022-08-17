@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Husarnet"
-#define HUSARNET_VERSION "2022.08.10.2"
+#define HUSARNET_VERSION "2022.08.11.1"
 #define MyAppPublisher "Husarnet Sp. z o.o."
 #define MyAppURL "https://husarnet.com"
 #define MyAppExeName "husarnet.exe"
