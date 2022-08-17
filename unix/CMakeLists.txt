@@ -15,5 +15,6 @@ install(FILES
     packaging-misc/husarnet.service
     DESTINATION lib/systemd/system)
 install(FILES
+    packaging-misc/autocomplete
     RENAME husarnet
     DESTINATION usr/share/bash-completion/completions)
