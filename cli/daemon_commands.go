@@ -214,7 +214,7 @@ var daemonWhitelistCommand = &cli.Command{
 		},
 		{
 			Name:  "add",
-			Usage: "add a device to your whitelist by Husarnet address",
+			Usage: "Add a device to your whitelist by Husarnet address",
 			Action: func(ctx *cli.Context) error {
 				if ctx.Args().Len() < 1 {
 					fmt.Println("you need to provide Husarnet address of the device")
@@ -232,7 +232,7 @@ var daemonWhitelistCommand = &cli.Command{
 		},
 		{
 			Name:  "rm",
-			Usage: "remove device from the whitelist",
+			Usage: "Remove device from the whitelist",
 			Action: func(ctx *cli.Context) error {
 				if ctx.Args().Len() < 1 {
 					fmt.Println("you need to provide Husarnet address of the device")
