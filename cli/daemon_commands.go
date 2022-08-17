@@ -260,6 +260,7 @@ func waitAction(ctx *cli.Context, message string, lambda func(*DaemonStatus) boo
 
 	failedCounter := 0
 	for {
+		// TODO don't crash the wait command if the deamon is not yet responding
 		status := getDaemonStatus()
 		success := lambda(&status)
 		time.Sleep(time.Second)
