@@ -6,10 +6,15 @@ package main
 import (
 	"fmt"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
 func getDaemonBinaryPath() string {
+	if runtime.GOOS == "windows" {
+		return "husarnet-daemon"
+	}
+
 	return "/usr/bin/husarnet-daemon"
 }
 
