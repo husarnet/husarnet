@@ -60,6 +60,7 @@ func main() {
 				Name:  "version",
 				Usage: "print the version of the CLI and also of the daemon, if available",
 				Action: func(ctx *cli.Context) error {
+					// TODO: hash the versions and give each hash a different color?
 					fmt.Printf("husarnet (CLI): %s\n", version)
 					fmt.Printf("husarnet-daemon (binary): %s\n", getDaemonBinaryVersion())
 					fmt.Printf("husarnet-daemon (running): %s\n", getDaemonRunningVersion())

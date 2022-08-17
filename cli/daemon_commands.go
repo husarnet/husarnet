@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/pterm/pterm"
 	"github.com/urfave/cli/v2"
@@ -250,6 +251,83 @@ var daemonWhitelistCommand = &cli.Command{
 	},
 }
 
+func waitAction(ctx *cli.Context, message string, lambda func(*DaemonStatus) bool) error {
+	if ctx.Args().Len() > 0 {
+		cli.ShowSubcommandHelp(ctx)
+	}
+
+	spinner, _ := pterm.DefaultSpinner.Start(message)
+
+	failedCounter := 0
+	for {
+		status := getDaemonStatus()
+		success := lambda(&status)
+		time.Sleep(time.Second)
+		if success {
+			spinner.Success()
+			return nil
+		}
+		failedCounter++
+		if failedCounter > 60 {
+			spinner.Fail()
+			return fmt.Errorf("timeout while waiting for a given service")
+		}
+	}
+}
+
+func waitBaseANY(ctx *cli.Context) error {
+	return waitAction(ctx, "Waiting for Base server connection (any protocol)…", func(status *DaemonStatus) bool {
+		return status.BaseConnection.Type == "TCP" || status.BaseConnection.Type == "UDP"
+	})
+}
+
+func waitBaseUDP(ctx *cli.Context) error {
+	return waitAction(ctx, "Waiting for Base server connection (UDP)…", func(status *DaemonStatus) bool { return status.BaseConnection.Type == "UDP" })
+}
+
+func waitWebsetup(ctx *cli.Context) error {
+	return waitAction(ctx, "Waiting for websetup connection…", func(status *DaemonStatus) bool { return status.ConnectionStatus["websetup"] })
+}
+
+var daemonWaitCommand = &cli.Command{
+	Name:  "wait",
+	Usage: "Wait until certain events occur. If no events provided will wait for as many elements as it can (the best case scenario). Husarnet will continue working even if some of those elements are unreachable, so consider narrowing your search down a bit.",
+	Action: func(ctx *cli.Context) error {
+		waitBaseANY(ctx)
+		waitBaseUDP(ctx)
+		waitWebsetup(ctx)
+		return nil
+	},
+	Subcommands: []*cli.Command{
+		{
+			Name:  "base",
+			Usage: "Wait until there is a base-server connection established (via any protocol)",
+			Action: func(ctx *cli.Context) error {
+				waitBaseANY(ctx)
+				return nil
+			},
+			Subcommands: []*cli.Command{
+				{
+					Name:  "udp",
+					Usage: "Wait until there is a base-server connection established via UDP. This is the best case scenario. Husarnet will work even without it.",
+					Action: func(ctx *cli.Context) error {
+						waitBaseUDP(ctx)
+						return nil
+					},
+				},
+			},
+		},
+		{
+			Name:  "join",
+			Usage: "Wait until there is enough connectivity to join a network/adopt a device",
+			Action: func(ctx *cli.Context) error {
+				waitWebsetup(ctx)
+				return nil
+			},
+		},
+	},
+}
+
 var daemonCommand = &cli.Command{
 	Name:  "daemon",
 	Usage: "Control the local daemon",
@@ -258,5 +336,6 @@ var daemonCommand = &cli.Command{
 		daemonJoinCommand,
 		daemonSetupServerCommand,
 		daemonWhitelistCommand,
+		daemonWaitCommand,
 	},
 }
