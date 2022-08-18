@@ -33,10 +33,6 @@ static std::string getApiSecretPath()
   return configDir + "\\api_secret";
 }
 
-static std::string getLegacyConfigPath()
-{
-    return configDir + "\\config.db";
-}
 
 namespace Privileged {
 
@@ -102,6 +98,11 @@ namespace Privileged {
   void writeIdentity(Identity identity)
   {
     Port::writeFile(getIdentityPath(), identity.serialize());
+  }
+
+  std::string getLegacyConfigPath()
+  {
+      return configDir + "\\config.db";
   }
 
   std::string readApiSecret()

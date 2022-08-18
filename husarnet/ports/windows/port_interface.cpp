@@ -269,7 +269,7 @@ namespace Port {
   {
     bool success = MoveFileEx(src.c_str(), dst.c_str(), MOVEFILE_REPLACE_EXISTING);
     if (!success) {
-      LOG("failed to rename %s to %s with following error code: %d", src.c_str(), dst.c_str(), GetLastError());
+      LOG("failed to rename %s to %s with following error code: %ld", src.c_str(), dst.c_str(), GetLastError());
     }
     return success;
   }

@@ -143,7 +143,9 @@ FetchContent_Declare(
   URL  https://sqlite.org/2022/sqlite-amalgamation-3390200.zip
 )
 FetchContent_MakeAvailable(sqlite3)
-target_link_libraries(husarnet_core sqlite3)
+include_directories(${sqlite3_SOURCE_DIR})
+add_library(sqlite3 STATIC ${sqlite3_SOURCE_DIR}/sqlite3.c)
+target_link_libraries(husarnet_core sqlite3 ${CMAKE_DL_LIBS})
 
 # Include unix port libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
