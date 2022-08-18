@@ -321,35 +321,34 @@ HusarnetManager::HusarnetManager()
 void HusarnetManager::readLegacyConfig()
 {
   const std::string legacyConfigPath = Privileged::getLegacyConfigPath();
-  if (Port::isFile(legacyConfigPath)) {
-      LegacyConfig legacyConfig(legacyConfigPath);
-      legacyConfig.open();
+  if(Port::isFile(legacyConfigPath)) {
+    LegacyConfig legacyConfig(legacyConfigPath);
+    legacyConfig.open();
 
-      if (legacyConfig.isValid()) {
-        LOG("Found legacy config, will attempt to transfer the values to new format");
+    if(legacyConfig.isValid()) {
+      LOG("Found legacy config, will attempt to transfer the values to new "
+          "format");
 
-        auto websetupSecretOld = legacyConfig.getWebsetupSecret();
-        auto whitelistEnabledOld = legacyConfig.getWhitelistEnabled();
-        auto whitelistOld = legacyConfig.getWhitelistEntries();
+      auto websetupSecretOld = legacyConfig.getWebsetupSecret();
+      auto whitelistEnabledOld = legacyConfig.getWhitelistEnabled();
+      auto whitelistOld = legacyConfig.getWhitelistEntries();
 
-        configStorage->groupChanges([&]() {
-          for (auto& entry : whitelistOld)
-          {
-            if(whitelistEnabledOld) {
-              whitelistEnable();
-            } else {
-              whitelistDisable();
-            }
-            whitelistAdd(IpAddress::parse(entry));
-            setWebsetupSecret(websetupSecretOld);
+      configStorage->groupChanges([&]() {
+        for(auto& entry : whitelistOld) {
+          if(whitelistEnabledOld) {
+            whitelistEnable();
+          } else {
+            whitelistDisable();
           }
-        });
+          whitelistAdd(IpAddress::parse(entry));
+          setWebsetupSecret(websetupSecretOld);
+        }
+      });
 
-        Port::renameFile(legacyConfigPath, legacyConfigPath + ".old");
-      }
-      else {
-        LOG("WARN: Legacy config is present, but couldn't read its contents");
-      }
+      Port::renameFile(legacyConfigPath, legacyConfigPath + ".old");
+    } else {
+      LOG("WARN: Legacy config is present, but couldn't read its contents");
+    }
   }
 }
 

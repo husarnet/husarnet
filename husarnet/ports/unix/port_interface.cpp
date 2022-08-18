@@ -247,7 +247,7 @@ namespace Port {
   bool renameFile(std::string src, std::string dst)
   {
     bool success = rename(src.c_str(), dst.c_str()) == 0;
-    if (!success) {
+    if(!success) {
       LOG("failed to rename %s to %s", src.c_str(), dst.c_str());
     }
     return success;
