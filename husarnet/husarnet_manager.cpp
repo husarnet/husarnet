@@ -334,14 +334,14 @@ void HusarnetManager::readLegacyConfig()
       auto whitelistOld = legacyConfig.getWhitelistEntries();
 
       configStorage->groupChanges([&]() {
+        setWebsetupSecret(websetupSecretOld);
         for(auto& entry : whitelistOld) {
-          if(whitelistEnabledOld) {
-            whitelistEnable();
-          } else {
-            whitelistDisable();
-          }
           whitelistAdd(IpAddress::parse(entry));
-          setWebsetupSecret(websetupSecretOld);
+        }
+        if(whitelistEnabledOld) {
+          whitelistEnable();
+        } else {
+          whitelistDisable();
         }
       });
 
