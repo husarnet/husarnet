@@ -99,6 +99,11 @@ namespace Privileged {
     Port::writeFile(getIdentityPath(), identity.serialize());
   }
 
+  std::string getLegacyConfigPath()
+  {
+    return configDir + "\\config.db";
+  }
+
   std::string readApiSecret()
   {
     auto apiSecretPath = getApiSecretPath();

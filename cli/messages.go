@@ -3,7 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 package main
 
-const version string = "2022.08.17.7"
+const version string = "2022.08.19.1"
 
 const credentialsPrompt string = "Please provide your credentials to Husarnet Dashboard."
 const removeGroupConfirmationPrompt string = "Are you sure you want to delete this group? All the devices inside the group will be deleted as well."

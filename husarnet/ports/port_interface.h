@@ -43,6 +43,7 @@ namespace Port {
   std::string readFile(std::string path);
   bool writeFile(std::string path, std::string content);
   bool isFile(std::string path);
+  bool renameFile(std::string src, std::string dst);
 
   void notifyReady();
 }  // namespace Port

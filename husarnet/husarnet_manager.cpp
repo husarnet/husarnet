@@ -18,6 +18,7 @@
 #include "husarnet/husarnet_config.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
+#include "husarnet/legacy_config.h"
 #include "husarnet/licensing.h"
 #include "husarnet/logmanager.h"
 #include "husarnet/multicast_layer.h"
@@ -317,6 +318,41 @@ HusarnetManager::HusarnetManager()
   Privileged::init();
 }
 
+void HusarnetManager::readLegacyConfig()
+{
+  const std::string legacyConfigPath = Privileged::getLegacyConfigPath();
+  if(!Port::isFile(legacyConfigPath)) {
+    return;
+  }
+
+  LegacyConfig legacyConfig(legacyConfigPath);
+  if(!legacyConfig.open()) {
+    LOG("WARN: Legacy config is present, but couldn't read its contents");
+    return;
+  }
+
+  LOG("Found legacy config, will attempt to transfer the values to new "
+      "format");
+
+  auto websetupSecretOld = legacyConfig.getWebsetupSecret();
+  auto whitelistEnabledOld = legacyConfig.getWhitelistEnabled();
+  auto whitelistOld = legacyConfig.getWhitelistEntries();
+
+  configStorage->groupChanges([&]() {
+    setWebsetupSecret(websetupSecretOld);
+    for(auto& entry : whitelistOld) {
+      whitelistAdd(IpAddress::parse(entry));
+    }
+    if(whitelistEnabledOld) {
+      whitelistEnable();
+    } else {
+      whitelistDisable();
+    }
+  });
+
+  Port::renameFile(legacyConfigPath, legacyConfigPath + ".old");
+}
+
 void HusarnetManager::getLicenseStage()
 {
   license =
@@ -380,6 +416,8 @@ void HusarnetManager::stage1()
   configStorage = new ConfigStorage(
       this, Privileged::readConfig, Privileged::writeConfig, userDefaults,
       Port::getEnvironmentOverrides(), internalDefaults);
+
+  readLegacyConfig();
 
   selfFlags = new PeerFlags();
 

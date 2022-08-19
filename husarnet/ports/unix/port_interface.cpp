@@ -236,16 +236,21 @@ namespace Port {
     fsync(fileno(f));
     fclose(f);
 
-    if(rename((path + ".tmp").c_str(), path.c_str()) < 0) {
-      LOG("could not write to %s (rename failed)", path.c_str());
-      return false;
-    }
-    return true;
+    return renameFile(path + ".tmp", path);
   }
 
   bool isFile(std::string path)
   {
     return std::filesystem::exists(path);
+  }
+
+  bool renameFile(std::string src, std::string dst)
+  {
+    bool success = rename(src.c_str(), dst.c_str()) == 0;
+    if(!success) {
+      LOG("failed to rename %s to %s", src.c_str(), dst.c_str());
+    }
+    return success;
   }
 
   void notifyReady()
