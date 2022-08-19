@@ -321,35 +321,36 @@ HusarnetManager::HusarnetManager()
 void HusarnetManager::readLegacyConfig()
 {
   const std::string legacyConfigPath = Privileged::getLegacyConfigPath();
-  if(Port::isFile(legacyConfigPath)) {
-    LegacyConfig legacyConfig(legacyConfigPath);
-    legacyConfig.open();
-
-    if(legacyConfig.isValid()) {
-      LOG("Found legacy config, will attempt to transfer the values to new "
-          "format");
-
-      auto websetupSecretOld = legacyConfig.getWebsetupSecret();
-      auto whitelistEnabledOld = legacyConfig.getWhitelistEnabled();
-      auto whitelistOld = legacyConfig.getWhitelistEntries();
-
-      configStorage->groupChanges([&]() {
-        setWebsetupSecret(websetupSecretOld);
-        for(auto& entry : whitelistOld) {
-          whitelistAdd(IpAddress::parse(entry));
-        }
-        if(whitelistEnabledOld) {
-          whitelistEnable();
-        } else {
-          whitelistDisable();
-        }
-      });
-
-      Port::renameFile(legacyConfigPath, legacyConfigPath + ".old");
-    } else {
-      LOG("WARN: Legacy config is present, but couldn't read its contents");
-    }
+  if(!Port::isFile(legacyConfigPath)) {
+    return;
   }
+
+  LegacyConfig legacyConfig(legacyConfigPath);
+  if(!legacyConfig.open()) {
+    LOG("WARN: Legacy config is present, but couldn't read its contents");
+    return;
+  }
+
+  LOG("Found legacy config, will attempt to transfer the values to new "
+      "format");
+
+  auto websetupSecretOld = legacyConfig.getWebsetupSecret();
+  auto whitelistEnabledOld = legacyConfig.getWhitelistEnabled();
+  auto whitelistOld = legacyConfig.getWhitelistEntries();
+
+  configStorage->groupChanges([&]() {
+    setWebsetupSecret(websetupSecretOld);
+    for(auto& entry : whitelistOld) {
+      whitelistAdd(IpAddress::parse(entry));
+    }
+    if(whitelistEnabledOld) {
+      whitelistEnable();
+    } else {
+      whitelistDisable();
+    }
+  });
+
+  Port::renameFile(legacyConfigPath, legacyConfigPath + ".old");
 }
 
 void HusarnetManager::getLicenseStage()

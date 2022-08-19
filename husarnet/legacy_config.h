@@ -12,7 +12,6 @@ class LegacyConfig {
  private:
   sqlite3* db;
   std::string pathToLegacyConfig;
-  bool valid;
 
   // we only need some sqlite wrapper functions,
   // keep them private
@@ -25,13 +24,11 @@ class LegacyConfig {
 
  public:
   LegacyConfig(std::string configPath)
-      : db(nullptr), pathToLegacyConfig(configPath), valid(false)
+      : db(nullptr), pathToLegacyConfig(configPath)
   {
   }
 
-  void open();
-  bool isValid();
-
+  bool open();
   std::string getWebsetupSecret();
   bool getWhitelistEnabled();
   std::vector<std::string> getWhitelistEntries();

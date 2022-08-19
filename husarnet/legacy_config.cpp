@@ -56,20 +56,14 @@ std::string LegacyConfig::sqliteGetValue(sqlite3_stmt* stmt, int pos)
   return std::string((const char*)data, length);
 }
 
-bool LegacyConfig::isValid()
-{
-  return valid;
-}
-
-void LegacyConfig::open()
+bool LegacyConfig::open()
 {
   if(sqlite3_open(pathToLegacyConfig.c_str(), &db) != SQLITE_OK) {
     LOG("WARN: failed to open legacy config database");
-    valid = false;
-    return;
+    return false;
   }
 
-  valid = true;
+  return true;
 }
 
 std::string LegacyConfig::getWebsetupSecret()
