@@ -16,6 +16,112 @@ import (
 	"golang.org/x/text/language"
 )
 
+func waitAction(message string, lambda func(*DaemonStatus) bool) error {
+	spinner, _ := pterm.DefaultSpinner.Start(message)
+
+	failedCounter := 0
+	for {
+		failedCounter++
+		if failedCounter > 60 {
+			spinner.Fail()
+			return fmt.Errorf("timeout while waiting for a given service")
+		}
+
+		response, err := getDaemonStatusRaw(false)
+		if err != nil {
+			spinner.Fail(err)
+			time.Sleep(time.Second)
+			continue
+		}
+
+		success := lambda(&response.Result)
+		if success {
+			spinner.Success()
+			return nil
+		}
+
+		time.Sleep(time.Second)
+	}
+}
+
+func waitDaemon() error {
+	return waitAction("Waiting until we can communicate with husarnet daemon…", func(status *DaemonStatus) bool { return true })
+}
+
+func waitBaseANY() error {
+	return waitAction("Waiting for Base server connection (any protocol)…", func(status *DaemonStatus) bool {
+		return status.BaseConnection.Type == "TCP" || status.BaseConnection.Type == "UDP"
+	})
+}
+
+func waitBaseUDP() error {
+	return waitAction("Waiting for Base server connection (UDP)…", func(status *DaemonStatus) bool { return status.BaseConnection.Type == "UDP" })
+}
+
+func waitWebsetup() error {
+	return waitAction("Waiting for websetup connection…", func(status *DaemonStatus) bool { return status.ConnectionStatus["websetup"] })
+}
+
+func waitJoined() error {
+	return waitAction("Waiting until the device is joined…", func(status *DaemonStatus) bool { return status.IsJoined })
+}
+
+var daemonStartCommand = &cli.Command{
+	Name:  "start",
+	Usage: "start husarnet daemon",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:        "wait",
+			Aliases:     []string{"w"},
+			Usage:       "wait until the daemon is running",
+			Destination: &wait,
+		},
+	},
+	Action: func(ctx *cli.Context) error {
+		runSubcommand(false, "sudo", "systemctl", "start", "husarnet")
+		printSuccess("Started husarnet-daemon")
+
+		if wait {
+			waitDaemon()
+		}
+
+		return nil
+	},
+}
+
+var daemonRestartCommand = &cli.Command{
+	Name:  "restart",
+	Usage: "restart husarnet daemon",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:        "wait",
+			Aliases:     []string{"w"},
+			Usage:       "wait until the daemon is running",
+			Destination: &wait,
+		},
+	},
+	Action: func(ctx *cli.Context) error {
+		runSubcommand(false, "sudo", "systemctl", "restart", "husarnet")
+		printSuccess("Restarted husarnet-daemon")
+
+		if wait {
+			waitDaemon()
+		}
+
+		return nil
+	},
+}
+
+var daemonStopCommand = &cli.Command{
+	Name:  "stop",
+	Usage: "stop husarnet daemon",
+	Action: func(ctx *cli.Context) error {
+		runSubcommand(false, "sudo", "systemctl", "stop", "husarnet")
+		printSuccess("Stopped husarnet-daemon")
+		return nil
+	},
+}
+
 var daemonStatusCommand = &cli.Command{
 	Name:  "status",
 	Usage: "Display current connectivity status",
@@ -174,8 +280,11 @@ var daemonJoinCommand = &cli.Command{
 			"code":     {joincode},
 			"hostname": {hostname},
 		}
-		addDaemonApiSecret(&params)
 		callDaemonPost[EmptyResult]("/control/join", params)
+		printSuccess("Successfully registered a join request")
+		waitBaseANY()
+		waitWebsetup()
+		waitJoined()
 		return nil
 	},
 }
@@ -194,8 +303,11 @@ var daemonSetupServerCommand = &cli.Command{
 		params := url.Values{
 			"domain": {domain},
 		}
-		addDaemonApiSecret(&params)
 		callDaemonPost[EmptyResult]("/control/change-server", params)
+		printSuccess(fmt.Sprintf("Successfully requested a change to %s server", domain))
+		printInfo("This action requires you to restart the daemon in order to use the new value")
+		runSubcommand(true, "sudo", "systemctl", "restart", "husarnet")
+		waitDaemon()
 		return nil
 	},
 }
@@ -205,8 +317,29 @@ var daemonWhitelistCommand = &cli.Command{
 	Usage: "Manage whitelist on the device.",
 	Subcommands: []*cli.Command{
 		{
-			Name:  "ls",
-			Usage: "list entries on the whitelist",
+			Name:    "enable",
+			Aliases: []string{"on"},
+			Usage:   "enable whitelist",
+			Action: func(ctx *cli.Context) error {
+				callDaemonPost[EmptyResult]("/control/whitelist/enable", url.Values{})
+				printSuccess("Enabled the whitelist")
+				return nil
+			},
+		},
+		{
+			Name:    "disable",
+			Aliases: []string{"off"},
+			Usage:   "disable whitelist",
+			Action: func(ctx *cli.Context) error {
+				callDaemonPost[EmptyResult]("/control/whitelist/whitelist", url.Values{})
+				printSuccess("Disabled the whitelist")
+				return nil
+			},
+		},
+		{
+			Name:    "ls",
+			Aliases: []string{"show", "dir"},
+			Usage:   "list entries on the whitelist",
 			Action: func(ctx *cli.Context) error {
 				// callDaemonGet("/control/whitelist/ls") TODO
 				return nil
@@ -225,8 +358,8 @@ var daemonWhitelistCommand = &cli.Command{
 				params := url.Values{
 					"address": {addr},
 				}
-				addDaemonApiSecret(&params)
 				callDaemonPost[EmptyResult]("/control/whitelist/add", params)
+				printSuccess(fmt.Sprintf("Added %s to whitelist", addr))
 				return nil
 			},
 		},
@@ -243,60 +376,22 @@ var daemonWhitelistCommand = &cli.Command{
 				params := url.Values{
 					"address": {addr},
 				}
-				addDaemonApiSecret(&params)
 				callDaemonPost[EmptyResult]("/control/whitelist/rm", params)
+				printSuccess(fmt.Sprintf("Removed %s from whitelist", addr))
 				return nil
 			},
 		},
 	},
 }
 
-func waitAction(ctx *cli.Context, message string, lambda func(*DaemonStatus) bool) error {
-	if ctx.Args().Len() > 0 {
-		cli.ShowSubcommandHelp(ctx)
-	}
-
-	spinner, _ := pterm.DefaultSpinner.Start(message)
-
-	failedCounter := 0
-	for {
-		// TODO don't crash the wait command if the deamon is not yet responding
-		status := getDaemonStatus()
-		success := lambda(&status)
-		time.Sleep(time.Second)
-		if success {
-			spinner.Success()
-			return nil
-		}
-		failedCounter++
-		if failedCounter > 60 {
-			spinner.Fail()
-			return fmt.Errorf("timeout while waiting for a given service")
-		}
-	}
-}
-
-func waitBaseANY(ctx *cli.Context) error {
-	return waitAction(ctx, "Waiting for Base server connection (any protocol)…", func(status *DaemonStatus) bool {
-		return status.BaseConnection.Type == "TCP" || status.BaseConnection.Type == "UDP"
-	})
-}
-
-func waitBaseUDP(ctx *cli.Context) error {
-	return waitAction(ctx, "Waiting for Base server connection (UDP)…", func(status *DaemonStatus) bool { return status.BaseConnection.Type == "UDP" })
-}
-
-func waitWebsetup(ctx *cli.Context) error {
-	return waitAction(ctx, "Waiting for websetup connection…", func(status *DaemonStatus) bool { return status.ConnectionStatus["websetup"] })
-}
-
 var daemonWaitCommand = &cli.Command{
 	Name:  "wait",
 	Usage: "Wait until certain events occur. If no events provided will wait for as many elements as it can (the best case scenario). Husarnet will continue working even if some of those elements are unreachable, so consider narrowing your search down a bit.",
 	Action: func(ctx *cli.Context) error {
-		waitBaseANY(ctx)
-		waitBaseUDP(ctx)
-		waitWebsetup(ctx)
+		ignoreExtraParameters(ctx)
+		waitBaseANY()
+		waitBaseUDP()
+		waitWebsetup()
 		return nil
 	},
 	Subcommands: []*cli.Command{
@@ -304,7 +399,8 @@ var daemonWaitCommand = &cli.Command{
 			Name:  "base",
 			Usage: "Wait until there is a base-server connection established (via any protocol)",
 			Action: func(ctx *cli.Context) error {
-				waitBaseANY(ctx)
+				ignoreExtraParameters(ctx)
+				waitBaseANY()
 				return nil
 			},
 			Subcommands: []*cli.Command{
@@ -312,17 +408,29 @@ var daemonWaitCommand = &cli.Command{
 					Name:  "udp",
 					Usage: "Wait until there is a base-server connection established via UDP. This is the best case scenario. Husarnet will work even without it.",
 					Action: func(ctx *cli.Context) error {
-						waitBaseUDP(ctx)
+						ignoreExtraParameters(ctx)
+						waitBaseUDP()
 						return nil
 					},
 				},
 			},
 		},
 		{
-			Name:  "join",
+			Name:  "joinable",
 			Usage: "Wait until there is enough connectivity to join a network/adopt a device",
 			Action: func(ctx *cli.Context) error {
-				waitWebsetup(ctx)
+				ignoreExtraParameters(ctx)
+				waitBaseANY()
+				waitWebsetup()
+				return nil
+			},
+		},
+		{
+			Name:  "joined",
+			Usage: "Wait until there is enough connectivity to join a network/adopt a device",
+			Action: func(ctx *cli.Context) error {
+				ignoreExtraParameters(ctx)
+				waitJoined()
 				return nil
 			},
 		},
@@ -336,6 +444,9 @@ var daemonCommand = &cli.Command{
 		daemonStatusCommand,
 		daemonJoinCommand,
 		daemonSetupServerCommand,
+		daemonStartCommand,
+		daemonRestartCommand,
+		daemonStopCommand,
 		daemonWhitelistCommand,
 		daemonWaitCommand,
 	},

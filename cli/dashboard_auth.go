@@ -56,7 +56,7 @@ func loginAndSaveAuthToken() string {
 	authClient := graphql.NewClient(getDashboardUrl(), http.DefaultClient)
 	tokenResp, tokenErr := generated.ObtainToken(authClient, username, password)
 	if tokenErr != nil {
-		fmt.Println("Authentication error occured.")
+		printError("Authentication error occured")
 		die(tokenErr.Error())
 	}
 	token := tokenResp.TokenAuth.Token

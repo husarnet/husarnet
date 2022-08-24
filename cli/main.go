@@ -15,10 +15,12 @@ import (
 )
 
 var defaultDashboard = "app.husarnet.com"
+var defaultDaemonAPIPort = 16216
 
 var husarnetDashboardFQDN string
-var husarnetDaemonAPIPort int
+var husarnetDaemonAPIPort = 0
 var verboseLogs bool
+var wait bool
 
 func main() {
 	app := &cli.App{
@@ -30,7 +32,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "dashboard_fqdn",
 				Aliases:     []string{"d"},
-				Value:       defaultDashboard,
+				Value:       getDaemonsDashboardFqdn(),
 				Usage:       "FQDN for your dashboard instance.",
 				EnvVars:     []string{"HUSARNET_DASHBOARD_FQDN"},
 				Destination: &husarnetDashboardFQDN,
@@ -38,21 +40,24 @@ func main() {
 			&cli.IntFlag{
 				Name:        "daemon_api_port",
 				Aliases:     []string{"p"},
-				Value:       16216,
-				Usage:       "Port your Husarnet Daemon is listening at",
+				Value:       defaultDaemonAPIPort,
+				Usage:       "port your Husarnet Daemon is listening at",
 				EnvVars:     []string{"HUSARNET_DAEMON_API_PORT"},
 				Destination: &husarnetDaemonAPIPort,
 			},
 			&cli.BoolFlag{
 				Name:        "verbose",
 				Aliases:     []string{"v"},
-				Usage:       "Show verbose logs (for debugging purposes)",
+				Usage:       "show verbose logs (for debugging purposes)",
 				Destination: &verboseLogs,
 			},
 		},
 		Commands: []*cli.Command{
 			dashboardCommand,
 			daemonCommand,
+			daemonStartCommand,
+			daemonRestartCommand,
+			daemonStopCommand,
 			daemonStatusCommand,
 			daemonJoinCommand,
 			daemonSetupServerCommand,

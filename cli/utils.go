@@ -4,8 +4,13 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+	"runtime"
 	"sort"
 	"strings"
+	"syscall"
 )
 
 // returns true if first slice has equal len() and exactly the same elements as the other one
@@ -44,4 +49,59 @@ func filterSlice(fragment string, slice []string) []string {
 	}
 
 	return filtered
+}
+
+// checks whether currently running platform is Windows
+func onWindows() bool {
+	return runtime.GOOS == "windows"
+}
+
+func rerunWithSudo() {
+	if !askForConfirmation(runSelfWithSudoQuestion) {
+		dieEmpty()
+	}
+
+	sudoPath, err := exec.LookPath("sudo")
+	if err != nil {
+		printError("sudo does not appear to be in PATH. Are you sure it is installed?")
+		sudoPath = "/usr/bin/sudo"
+	}
+	err = syscall.Exec(sudoPath, append([]string{sudoPath}, os.Args...), os.Environ())
+	if err != nil {
+		dieE(err)
+	}
+}
+
+func runSubcommand(confirm bool, command string, args ...string) {
+	logCommandString := command + " " + strings.Join(args, " ")
+	if confirm {
+		if !askForConfirmation(fmt.Sprintf("Do you want to run: %s?", logCommandString)) {
+			dieEmpty()
+		}
+	} else {
+		printInfo(fmt.Sprintf("Running: %s", logCommandString))
+	}
+
+	commandPath, err := exec.LookPath(command)
+	if err != nil {
+		printError(fmt.Sprintf("%s does not appear to be in PATH. Are you sure it is installed?", command))
+		commandPath = fmt.Sprintf("/usr/bin/%s", command)
+	}
+
+	cmd := exec.Command(commandPath, args...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		dieE(err)
+	}
+
+	if len(output) > 0 {
+		printInfo(string(output))
+	}
+}
+
+func trimNewlines(input string) string {
+	input = strings.TrimSuffix(input, "\r\n")
+	input = strings.TrimSuffix(input, "\n")
+
+	return input
 }

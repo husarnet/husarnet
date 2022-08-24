@@ -173,10 +173,8 @@ bool HusarnetManager::isJoined()
 void HusarnetManager::changeServer(std::string domain)
 {
   configStorage->setUserSetting(UserSetting::dashboardFqdn, domain);
-  LOG("Dashboard URL has been changed to %s. Daemon will now quit so you can "
-      "restart it with new setting.",
-      domain.c_str());
-  exit(0);
+  LOG("Dashboard URL has been changed to %s.", domain.c_str());
+  LOG("DAEMON WILL CONTINUE TO USE THE OLD ONE UNTIL YOU RESTART IT");
 }
 
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)

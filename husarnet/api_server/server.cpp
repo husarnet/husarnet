@@ -44,7 +44,7 @@ void ApiServer::returnSuccess(
     const httplib::Request& req,
     httplib::Response& res)
 {
-  returnSuccess(req, res, "ok");
+  returnSuccess(req, res, "success");
 }
 
 void ApiServer::returnInvalidQuery(
@@ -321,6 +321,8 @@ void ApiServer::runThread()
         returnSuccess(req, res, manager->getLogManager().getLogs());
       });
 
+  // TODO this one makes a GET request require auth token in some cases - change
+  // this so all write operations are under POST endpoint
   svr.Get(
       "/control/logs/settings",
       [&](const httplib::Request& req, httplib::Response& res) {
