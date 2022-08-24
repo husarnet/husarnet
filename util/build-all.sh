@@ -17,6 +17,7 @@ for arch in $unix_archs; do
     for package in $unix_packages; do
         ${util_base}/package-unix.sh $arch $package
         cp ${build_base}/${arch}/unix/husarnet-${arch}.${package} ${release_base}/husarnet-${package_version}-${arch}.${package}
+        ln -s ${release_base}/husarnet-${package_version}-${arch}.${package} ${release_base}/husarnet-${arch}.${package}
     done
 done
 

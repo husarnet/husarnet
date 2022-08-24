@@ -5,7 +5,7 @@ package main
 
 const version string = "2022.08.19.1"
 
-const credentialsPrompt string = "Please provide your credentials to Husarnet Dashboard."
+const credentialsPrompt string = "Please provide your credentials to Husarnet Dashboard. Please note that those credentials won't be stored locally at all. You will be authenticated and a special token will be generated and saved locally so you won't have to login in the future."
 const removeGroupConfirmationPrompt string = "Are you sure you want to delete this group? All the devices inside the group will be deleted as well."
 
 const notEnoughArgsForCreateGroup string = "Not enough arguments for: group create. Provide a name. Example: group create foo"
@@ -14,3 +14,5 @@ const notEnoughArgsForRenameGroup string = "Not enough arguments for: group rena
 const notEnoughArgsForUnjoin string = "Not enough arguments for: group unjoin. Provide group ID as first argument and device IPv6 fragment as the second. Example: group unjoin 3456 beef"
 const notEnoughArgsForShowGroup string = "Not enough arguments for: group show. Provide numeric ID of the group. Example: group show 3456"
 const notEnoughArgsForRenameDevice string = "Not enough arguments for: device rename. Provide an IPv6 (fc94...) and new name for the device. Example: device rename fc94:dead:beef:1234:9b8d:8beb:9999:8888 foodev"
+
+const runSelfWithSudoQuestion string = "This operation requires superuser access. Rerun with sudo?"

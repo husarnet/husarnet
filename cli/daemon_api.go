@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -12,44 +13,17 @@ import (
 	"net/netip"
 	"net/url"
 	"os"
-	"runtime"
+	"syscall"
 )
-
-// TODO: implement calling daemon, starting it if is not running yet, etc...
-// Basic functions that just print responses
-func getDaemonApiUrl() string {
-	return fmt.Sprintf("http://127.0.0.1:%d", husarnetDaemonAPIPort)
-}
-
-func handlePotentialDaemonRequestError(err error) {
-	if err != nil {
-		fmt.Println("something went wrong: " + err.Error())
-		fmt.Println("Husarnet daemon is probably not running")
-		// leak here?
-		// try tu execute husarnet-daemon? via systemctl?
-		os.Exit(1)
-	}
-}
-
-func getDaemonApiSecretPath() string {
-	if runtime.GOOS == "windows" {
-		sep := string(os.PathSeparator)
-		return os.ExpandEnv("${programdata}") + sep + "Husarnet" + sep + "api_secret"
-	}
-	return "/var/lib/husarnet/api_secret"
-}
-
-func addDaemonApiSecret(params *url.Values) {
-	apiSecret, err := os.ReadFile(getDaemonApiSecretPath())
-	if err != nil {
-		die("Error reading secret file, are you root/administrator? " + err.Error())
-	}
-	params.Add("secret", string(apiSecret))
-}
 
 type DaemonResponse[ResultType any] struct {
 	Status string
+	Error  string
 	Result ResultType
+}
+
+func (response *DaemonResponse[ResultType]) IsOk() bool {
+	return response.Status == "success" || response.Status == "ok"
 }
 
 type EmptyResult interface{}
@@ -98,8 +72,55 @@ type DaemonStatus struct {
 	Peers        []PeerStatus
 }
 
+func getDaemonApiUrl() string {
+	if husarnetDaemonAPIPort != 0 {
+		return fmt.Sprintf("http://127.0.0.1:%d", husarnetDaemonAPIPort)
+	}
+
+	return fmt.Sprintf("http://127.0.0.1:%d", defaultDaemonAPIPort)
+}
+
+func getDaemonApiSecretPath() string {
+	if onWindows() {
+		sep := string(os.PathSeparator)
+		return os.ExpandEnv("${programdata}") + sep + "Husarnet" + sep + "api_secret"
+	}
+	return "/var/lib/husarnet/api_secret"
+}
+
+func addDaemonApiSecret(params *url.Values) {
+	apiSecret, err := os.ReadFile(getDaemonApiSecretPath())
+	if err != nil {
+		if onWindows() {
+			die("Error reading secret file, are you root/administrator? " + err.Error())
+		}
+		rerunWithSudo()
+	}
+
+	params.Add("secret", string(apiSecret))
+}
+
+func getApiErrorString[ResultType any](response DaemonResponse[ResultType]) string {
+	if response.Status == "success" {
+		return "status ok/no error"
+	}
+
+	return fmt.Sprintf("response status: %s, error: %s", response.Status, response.Error)
+}
+
+func handlePotentialDaemonApiRequestError[ResultType any](response DaemonResponse[ResultType], err error) {
+	if err != nil {
+		dieE(err)
+	}
+
+	if !response.IsOk() {
+		die(getApiErrorString(response))
+	}
+}
+
 func readResponse[ResultType any](resp *http.Response) DaemonResponse[ResultType] {
 	body, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
 	if err != nil {
 		dieE(err)
 	}
@@ -117,30 +138,83 @@ func readResponse[ResultType any](resp *http.Response) DaemonResponse[ResultType
 	return response
 }
 
-// TODO add versions of those calls for getting plain json/string response
-// so users can specify --json
+func callDaemonRetryable[ResultType any](retryable bool, route string, urlencodedBody url.Values, lambda func(route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error)) (DaemonResponse[ResultType], error) {
+	response, err := lambda(route, urlencodedBody)
+	if err != nil {
+		printErrorE(err)
+
+		if !onWindows() && retryable && errors.Is(err, syscall.ECONNREFUSED) {
+			printInfo("Daemon does not seem to be running")
+			runSubcommand(true, "sudo", "systemctl", "restart", "husarnet")
+			waitDaemon()
+			return lambda(route, urlencodedBody)
+		}
+	}
+
+	return response, err
+}
+
+// Technically those should not requre auth tokens so can be run at any time
+func callDaemonGetRaw[ResultType any](retryable bool, route string) (DaemonResponse[ResultType], error) {
+	return callDaemonRetryable(retryable, route, url.Values{}, func(route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error) {
+		response, err := http.Get(getDaemonApiUrl() + route)
+		if err != nil {
+			return DaemonResponse[ResultType]{}, err
+		}
+
+		return readResponse[ResultType](response), nil
+	})
+}
 
 func callDaemonGet[ResultType any](route string) DaemonResponse[ResultType] {
-	resp, err := http.Get(getDaemonApiUrl() + route)
-	handlePotentialDaemonRequestError(err)
-	defer resp.Body.Close()
+	response, err := callDaemonGetRaw[ResultType](true, route)
+	handlePotentialDaemonApiRequestError(response, err)
+	return response
+}
 
-	return readResponse[ResultType](resp)
+// Those will always require an auth token
+func callDaemonPostRaw[ResultType any](retryable bool, route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error) {
+	return callDaemonRetryable(retryable, route, urlencodedBody, func(route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error) {
+		response, err := http.PostForm(getDaemonApiUrl()+route, urlencodedBody)
+		if err != nil {
+			return DaemonResponse[ResultType]{}, err
+		}
+
+		return readResponse[ResultType](response), nil
+	})
 }
 
 func callDaemonPost[ResultType any](route string, urlencodedBody url.Values) DaemonResponse[ResultType] {
-	resp, err := http.PostForm(getDaemonApiUrl()+route, urlencodedBody)
-	handlePotentialDaemonRequestError(err)
-	defer resp.Body.Close()
-
-	return readResponse[ResultType](resp)
+	addDaemonApiSecret(&urlencodedBody)
+	response, err := callDaemonPostRaw[ResultType](true, route, urlencodedBody)
+	handlePotentialDaemonApiRequestError(response, err)
+	return response
 }
 
+func getDaemonStatusRaw(retryable bool) (DaemonResponse[DaemonStatus], error) {
+	return callDaemonGetRaw[DaemonStatus](retryable, "/control/status")
+}
 func getDaemonStatus() DaemonStatus {
-	response := callDaemonGet[DaemonStatus]("/control/status")
-	return response.Result
+	return callDaemonGet[DaemonStatus]("/control/status").Result
 }
 
 func getDaemonRunningVersion() string {
-	return getDaemonStatus().Version
+	response, err := getDaemonStatusRaw(true)
+	if err != nil {
+		return fmt.Sprintf("Unknown (%s)", err)
+	}
+	if !response.IsOk() {
+		return fmt.Sprintf("Unknown (%s)", getApiErrorString(response))
+	}
+
+	return response.Result.Version
+}
+
+func getDaemonsDashboardFqdn() string {
+	response, err := getDaemonStatusRaw(false)
+	if err != nil {
+		return defaultDashboard
+	}
+
+	return response.Result.DashboardFQDN
 }
