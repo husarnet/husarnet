@@ -28,7 +28,7 @@ fi
 
 build_dir="${base_dir}/build/${arch}/${platform}"
 output_dir="${build_dir}/out"
-source_dir="${base_dir}/${platform}"
+source_dir="${base_dir}/daemon/${platform}"
 bin_dir="${base_dir}/build/bin"
 
 # Prepare required directories

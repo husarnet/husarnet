@@ -19,8 +19,8 @@ fpm \
     --depends iptables \
     --depends $(if [ "${package}" == "deb" ]; then echo "iproute2"; else echo "iproute"; fi) \
     --conflicts "husarnet-ros = 1.0.0" \
-    --after-install ${base_dir}/unix/packaging-misc/post-install-script.sh \
-    --after-remove ${base_dir}/unix/packaging-misc/post-remove-script.sh \
+    --after-install ${base_dir}/platforms/unix/packaging-misc/post-install-script.sh \
+    --after-remove ${base_dir}/platforms/unix/packaging-misc/post-remove-script.sh \
     --package ${build_dir}/husarnet-${arch}.${package} \
     --force \
     --chdir ${output_dir}
