@@ -5,7 +5,7 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
 project (husarnet VERSION "0.0.0")
 
-include(../../husarnet/husarnet.cmake)
+include(../../core/husarnet.cmake)
 
 file(GLOB husarnet_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
 add_executable(husarnet-daemon ${husarnet_SRC})

@@ -46,10 +46,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
   set(BUILD_HTTP_CONTROL_API TRUE)
 endif()
 
-
 # Add all required headers and source files
 list(APPEND husarnet_core_SRC) # This is more of a define rather than an append
-
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/unix)
@@ -97,7 +95,7 @@ file(COPY ../../core/ DESTINATION ${TEMP_INCLUDE_DIR}/husarnet/ FILES_MATCHING P
 # Join all of the above
 add_library(husarnet_core STATIC ${husarnet_core_SRC})
 
-target_include_directories(husarnet_core PUBLIC $<BUILD_INTERFACE:${TEMP_INCLUDE_DIR}>)
+target_include_directories(husarnet_core PUBLIC ${TEMP_INCLUDE_DIR})
 
 # Configure dependencies
 include(FetchContent)
