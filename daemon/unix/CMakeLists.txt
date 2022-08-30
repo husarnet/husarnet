@@ -12,9 +12,9 @@ target_link_libraries(husarnet-daemon husarnet_core)
 
 install(TARGETS husarnet-daemon DESTINATION usr/bin)
 install(FILES
-    ../../platforms/unix/packaging-misc/husarnet.service
+    ../../platforms/unix/packaging/husarnet.service
     DESTINATION lib/systemd/system)
 install(FILES
-    ../../platforms/unix/packaging-misc/autocomplete
+    ../../platforms/unix/packaging/autocomplete
     RENAME husarnet
     DESTINATION usr/share/bash-completion/completions)

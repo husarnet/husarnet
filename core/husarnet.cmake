@@ -90,7 +90,10 @@ list(APPEND husarnet_core_SRC ${core_SRC})
 # So includes like "husarnet/something.h" do work too
 set(TEMP_INCLUDE_DIR ${CMAKE_BINARY_DIR}/tempIncludes)
 file(MAKE_DIRECTORY ${TEMP_INCLUDE_DIR})
-file(COPY ../../core/ DESTINATION ${TEMP_INCLUDE_DIR}/husarnet/ FILES_MATCHING PATTERN "*.h")
+file(COPY ../../core/ DESTINATION ${TEMP_INCLUDE_DIR}/husarnet/ FILES_MATCHING
+  PATTERN "*.h"
+  PATTERN "*.hpp"
+)
 
 # Join all of the above
 add_library(husarnet_core STATIC ${husarnet_core_SRC})
