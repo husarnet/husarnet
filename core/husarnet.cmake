@@ -83,18 +83,16 @@ endif()
 
 # Top level project files
 
-# So includes like "husarnet/something.h" do work too
-include_directories(${CMAKE_CURRENT_LIST_DIR}/..)
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 file(GLOB core_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
 list(APPEND husarnet_core_SRC ${core_SRC})
 
-# szacher macher yo
-# tworzymy folderek sobie
+# "Aliasing" (copying) core folder as "husarnet"
+# So includes like "husarnet/something.h" do work too
 set(TEMP_INCLUDE_DIR ${CMAKE_BINARY_DIR}/tempIncludes)
 file(MAKE_DIRECTORY ${TEMP_INCLUDE_DIR})
-file(COPY ../../core/ DESTINATION ${TEMP_INCLUDE_DIR}/husarnet/)
+file(COPY ../../core/ DESTINATION ${TEMP_INCLUDE_DIR}/husarnet/ FILES_MATCHING PATTERN "*.h")
 
 # Join all of the above
 add_library(husarnet_core STATIC ${husarnet_core_SRC})
