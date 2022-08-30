@@ -47,6 +47,7 @@ cmake -G "Ninja" \
       -DBUILD_SHARED_LIBS=false \
       ${source_dir}
 
+
 # If you want to include debugging symbols move it up a fair bit
 #      -DCMAKE_BUILD_TYPE=Debug \
 
