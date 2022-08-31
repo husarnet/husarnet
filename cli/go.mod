@@ -3,12 +3,10 @@ module hdm
 go 1.18
 
 require (
-	github.com/99designs/gqlgen v0.17.16
 	github.com/Khan/genqlient v0.5.0
 	github.com/pterm/pterm v0.12.45
 	github.com/rjNemo/underscore v0.4.0
 	github.com/urfave/cli/v2 v2.11.2
-	github.com/vektah/gqlparser/v2 v2.5.0
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
 	golang.org/x/text v0.3.7
 )
@@ -26,6 +24,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.0 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91 // indirect
