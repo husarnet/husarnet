@@ -11,9 +11,9 @@ build_daemon=1
 build_windows=1
 
 if [ $is_quick ]; then
-    unix_archs="amd64"
+    unix_archs=""
     unix_packages=""
-    build_windows= # if you want to disable something - make the variable empty
+    # build_windows= # if you want to disable something - make the variable empty
 fi
 
 # Unix builds
@@ -52,7 +52,7 @@ fi
 if [ ${build_windows} ] && [ ${build_cli} ]; then
     echo "[HUSARNET BS] Building windows CLI"
     ${util_base}/build-cli.sh win64 windows
-    cp ${build_base}/bin/husarnet-windows-win64 ${release_base}/husarnet.exe
+    cp ${release_base}/husarnet-windows-win64 ${release_base}/husarnet.exe
 fi
 
 # ESP32 builds
