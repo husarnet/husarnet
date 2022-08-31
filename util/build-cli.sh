@@ -13,34 +13,39 @@ platform=$2
 
 # directory setup
 source_dir="${base_dir}/cli"
-output_dir="${base_dir}/build/bin"
-
-mkdir -p ${output_dir}
-
-pushd ${source_dir}
+output_dir="${base_dir}/build/release"
 
 # GOOS and GOARCH setup
-goos="linux"
-goarch="amd64"
-if [ $arch = "i386" ]
-then
+go_variables_suffix=""
+if [ $arch = "amd64" ]; then
+  goos="linux"
+  goarch="amd64"
+  arch_alias="unix"
+elif [ $arch = "i386" ]; then
+  goos="linux"
   goarch="386"
-  go_variables="GOOS=${goos} GOARCH=${goarch}"
-elif [ $arch = "armhf" ]
-then
+  arch_alias="unix"
+elif [ $arch = "armhf" ]; then
+  goos="linux"
   goarch="arm"
-  go_variables="GOOS=${goos} GOARCH=${goarch} GOARM=7"
-elif [ $arch = "win64" ]
-then
+  go_variables_suffix="GOARM=7"
+  arch_alias="unix"
+elif [ $arch = "win64" ]; then
   goos="windows"
   goarch="amd64"
-  go_variables="GOOS=${goos} GOARCH=${goarch}"
+  arch_alias="windows"
 else
-  go_variables="GOOS=${goos} GOARCH=${arch}"
+  echo "Unknown architecture"
+  exit 1
 fi
 
+go_variables="GOOS=${goos} GOARCH=${goarch} ${go_variables_suffix}"
+
 # let's build this
+mkdir -p ${output_dir}
+pushd ${source_dir}
+
 go generate
-env ${go_variables} go build -o ${output_dir}/husarnet-${goos}-${arch} .
+env ${go_variables} go build -o ${output_dir}/husarnet-${arch_alias}-${arch} .
 
 popd
