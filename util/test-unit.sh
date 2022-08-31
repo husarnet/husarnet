@@ -12,7 +12,7 @@ pushd ${build_tests_base}
 
 cmake -G Ninja \
       -DCMAKE_INSTALL_PREFIX=${output_dir} \
-      -DCMAKE_TOOLCHAIN_FILE=${base_dir}/unix/arch_amd64.cmake \
+      -DCMAKE_TOOLCHAIN_FILE=${base_dir}/daemon/unix/arch_amd64.cmake \
       -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_SHARED_LIBS=false \
       ${tests_base}

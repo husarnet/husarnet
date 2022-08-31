@@ -18,6 +18,6 @@ RUN apt-get update -y && apt-get install -y iptables procps iproute2
 RUN update-alternatives --set ip6tables /usr/sbin/ip6tables-nft
 
 COPY --from=app_builder /husarnet/build/bin/husarnet-daemon /usr/bin/husarnet-daemon
-COPY ./unix/docker-misc/husarnet-docker.sh /usr/bin/husarnet-docker
+COPY ./platforms/unix/docker/husarnet-docker.sh /usr/bin/husarnet-docker
 
 CMD husarnet-docker

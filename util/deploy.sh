@@ -64,7 +64,7 @@ mkdir -p ${working_path}/deb
 cp -R ${golden_tar_path}/.  ${working_path}/tgz/
 cp -R ${golden_rpm_path}/.  ${working_path}/yum/
 cp -R $HOME/.aptly/public/. ${working_path}/deb/
-cp -R ${base_dir}/deploy/static/. ${working_path}/
+cp -R ${base_dir}/deploy/. ${working_path}/
 
 
 if [ "${deploy_target}" == "nightly" ]; then

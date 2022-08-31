@@ -28,7 +28,7 @@ fi
 
 build_dir="${base_dir}/build/${arch}/${platform}"
 output_dir="${build_dir}/out"
-source_dir="${base_dir}/${platform}"
+source_dir="${base_dir}/daemon/${platform}"
 bin_dir="${base_dir}/build/bin"
 
 # Prepare required directories
@@ -46,6 +46,7 @@ cmake -G "Ninja" \
       -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
       -DBUILD_SHARED_LIBS=false \
       ${source_dir}
+
 
 # If you want to include debugging symbols move it up a fair bit
 #      -DCMAKE_BUILD_TYPE=Debug \
