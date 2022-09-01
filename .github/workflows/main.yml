@@ -40,10 +40,10 @@ jobs:
         run: ./util/package-unix.sh ${{matrix.arch}} rpm
 
       - name: Save artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: packages
-          path: ./build/release
+          path: ./build/release/.*(amd64|i386|arm64|armhf|riscv64|win64).*
 
   build_windows:
     runs-on: ubuntu-latest
@@ -69,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: packages
-          path: ./build/release
+          path: ./build/release/.*(amd64|i386|arm64|armhf|riscv64|win64).*
 
   build_windows_installer:
     needs: build_windows
@@ -86,8 +86,8 @@ jobs:
 
       - name: Copy .exe and license to installer dir
         run: |
-          copy husarnet-daemon.exe platforms\windows
-          copy husarnet.exe platforms\windows
+          copy husarnet-daemon-windows-win64.exe platforms\windows
+          copy husarnet-windows-win64.exe platforms\windows
           copy LICENSE.txt platforms\windows
         shell: cmd
 
