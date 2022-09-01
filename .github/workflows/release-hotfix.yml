@@ -3,7 +3,164 @@ name: Push to dockerhub only
 on: workflow_dispatch
 
 jobs:
+  build_unix:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [amd64, i386, arm64, armhf, riscv64]
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          ref: hotfix
+
+      - name: Prepare build
+        run: ./util/build-prepare.sh
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.18"
+
+      - name: Build C++
+        run: ./util/build-cmake.sh ${{matrix.arch}} unix
+
+      - name: Build CLI
+        run: ./util/build-cli.sh ${{matrix.arch}} unix
+
+      - name: Build tar
+        run: ./util/package-unix.sh ${{matrix.arch}} tar
+
+      - name: Build deb
+        run: ./util/package-unix.sh ${{matrix.arch}} deb
+
+      - name: Build rpm
+        run: ./util/package-unix.sh ${{matrix.arch}} rpm
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages
+          path: ./build/release/
+          if-no-files-found: error
+
+  build_windows:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          ref: hotfix
+
+      - name: Prepare build
+        run: ./util/build-prepare.sh
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.18"
+
+      - name: Build C++
+        run: ./util/build-cmake.sh win64 windows
+
+      - name: Build CLI
+        run: ./util/build-cli.sh win64 windows
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages
+          path: ./build/release/
+          if-no-files-found: error
+
+  build_windows_installer:
+    needs: build_windows
+
+    runs-on: windows-2019
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          ref: hotfix
+
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages
+
+      - name: Copy .exe and license to installer dir
+        run: |
+          copy husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
+          copy husarnet-windows-win64.exe platforms\windows\husarnet.exe
+          copy LICENSE.txt platforms\windows
+        shell: cmd
+
+      - name: Building the installer
+        run: |
+          "%programfiles(x86)%\Inno Setup 6\iscc.exe" platforms\windows\script.iss
+        shell: cmd
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows_installer
+          path: platforms\windows\Output\husarnet-setup.exe
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          ref: hotfix
+
+      - name: Prepare tests
+        run: ./util/test-prepare.sh
+
+      - name: Build UTs
+        run: ./util/test-unit-build.sh
+
+      - name: Run UTs
+        run: ./util/test-unit-run.sh
+
+      # - name: Run static analysis (cppcheck)
+      #   run: ./util/test-cppcheck.sh
+
+  release_github:
+    needs: [test, build_unix, build_windows_installer]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch linux packages
+        uses: actions/download-artifact@v3
+        with:
+          name: packages
+
+      - name: Fetch windows installer
+        uses: actions/download-artifact@v3
+        with:
+          name: windows_installer
+
+      - uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
+          prerelease: false
+          automatic_release_tag: ${{ github.ref_name }}
+          files: |
+            *.deb
+            *.tar
+            *.rpm
+            *.exe
+
   push_docker_images:
+    needs: test
 
     runs-on: ubuntu-latest
 
@@ -39,3 +196,26 @@ jobs:
           #cache-from: type=registry,ref=
           #cache-to: type=inline
 
+  release_prod:
+    needs: [test, build_unix, build_windows_installer]
+
+    runs-on: [self-hosted, linux, prod]
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          ref: hotfix
+
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages
+
+      - name: Fetch windows installer
+        uses: actions/download-artifact@v3
+        with:
+          name: windows_installer
+
+      - name: Deploy to main Husarnet repository
+        run: ./util/deploy.sh main

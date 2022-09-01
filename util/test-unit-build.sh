@@ -19,6 +19,4 @@ cmake -G Ninja \
 
 cmake --build ${build_tests_base}
 
-./husarnet_tests
-
 popd
