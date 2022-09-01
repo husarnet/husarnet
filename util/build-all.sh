@@ -7,6 +7,7 @@ build_cli=1
 build_daemon=1
 
 build_windows=1
+build_docker=1
 
 if [ $is_quick ]; then
     unix_archs="amd64"
