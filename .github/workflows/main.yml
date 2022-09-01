@@ -86,6 +86,7 @@ jobs:
 
       - name: Copy .exe and license to installer dir
         run: |
+          copy husarnet-daemon.exe platforms\windows
           copy husarnet.exe platforms\windows
           copy LICENSE.txt platforms\windows
         shell: cmd
@@ -101,8 +102,13 @@ jobs:
           name: windows_installer
           path: platforms\windows\Output\husarnet-setup.exe
 
+  # Do not use this workflow on release workflows as it can't be uploaded to a single tag
   build_docker:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [linux/arm64/v8, linux/amd64, linux/arm/v7]
 
     steps:
       - name: Check out the repo
@@ -121,7 +127,7 @@ jobs:
         with:
           context: .
           file: ./platforms/docker/Dockerfile
-          platforms: linux/arm64/v8, linux/amd64, linux/arm/v7
+          platforms: ${{matrix.arch}}
           push: false
 
   test:
