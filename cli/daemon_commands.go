@@ -388,7 +388,7 @@ var daemonWaitCommand = &cli.Command{
 	Name:  "wait",
 	Usage: "Wait until certain events occur. If no events provided will wait for as many elements as it can (the best case scenario). Husarnet will continue working even if some of those elements are unreachable, so consider narrowing your search down a bit.",
 	Action: func(ctx *cli.Context) error {
-		ignoreExtraParameters(ctx)
+		ignoreExtraArguments(ctx)
 		waitBaseANY()
 		waitBaseUDP()
 		waitWebsetup()
@@ -399,7 +399,7 @@ var daemonWaitCommand = &cli.Command{
 			Name:  "base",
 			Usage: "Wait until there is a base-server connection established (via any protocol)",
 			Action: func(ctx *cli.Context) error {
-				ignoreExtraParameters(ctx)
+				ignoreExtraArguments(ctx)
 				waitBaseANY()
 				return nil
 			},
@@ -408,7 +408,7 @@ var daemonWaitCommand = &cli.Command{
 					Name:  "udp",
 					Usage: "Wait until there is a base-server connection established via UDP. This is the best case scenario. Husarnet will work even without it.",
 					Action: func(ctx *cli.Context) error {
-						ignoreExtraParameters(ctx)
+						ignoreExtraArguments(ctx)
 						waitBaseUDP()
 						return nil
 					},
@@ -419,7 +419,7 @@ var daemonWaitCommand = &cli.Command{
 			Name:  "joinable",
 			Usage: "Wait until there is enough connectivity to join a network/adopt a device",
 			Action: func(ctx *cli.Context) error {
-				ignoreExtraParameters(ctx)
+				ignoreExtraArguments(ctx)
 				waitBaseANY()
 				waitWebsetup()
 				return nil
@@ -429,7 +429,7 @@ var daemonWaitCommand = &cli.Command{
 			Name:  "joined",
 			Usage: "Wait until there is enough connectivity to join a network/adopt a device",
 			Action: func(ctx *cli.Context) error {
-				ignoreExtraParameters(ctx)
+				ignoreExtraArguments(ctx)
 				waitJoined()
 				return nil
 			},

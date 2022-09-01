@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/Khan/genqlient/graphql"
+	"github.com/pterm/pterm"
 )
 
 type authedTransport struct {
@@ -85,8 +86,10 @@ func getRefreshedToken(authToken string) string {
 }
 
 func refreshToken(authToken string) {
+	spinner, _ := pterm.DefaultSpinner.Start("Refreshing token…")
 	refreshedToken := getRefreshedToken(authToken)
 	saveAuthTokenToFile(refreshedToken)
+	spinner.Success()
 }
 
 func isSignatureExpiredOrInvalid(err error) bool {

@@ -7,34 +7,39 @@ import (
 	"fmt"
 
 	"github.com/Khan/genqlient/graphql"
+	"github.com/pterm/pterm"
 )
-
-type handler interface {
-	PerformRequest(client graphql.Client, args ...string) (interface{}, error)
-	PrintResults(data interface{})
-}
 
 func getDashboardUrl() string {
 	return fmt.Sprintf("https://%s/graphql", husarnetDashboardFQDN)
 }
 
-func callAPI(handler handler, args ...string) {
+func callDashboardAPI[responseType any](executeRequest func(client graphql.Client) (responseType, error)) responseType {
+	const spinnerMessage = "Executing an API call…"
+	spinner, _ := pterm.DefaultSpinner.Start(spinnerMessage)
+
 	token := getAuthToken()
 	client := makeAuthenticatedClient(token)
-	resp, err := handler.PerformRequest(client, args...)
+	response, err := executeRequest(client)
 
 	if isSignatureExpiredOrInvalid(err) {
+		spinner.Fail("Invalid/expired token")
 		token = loginAndSaveAuthToken()
+
+		spinner, _ = pterm.DefaultSpinner.Start(spinnerMessage)
 		client := makeAuthenticatedClient(token)
-		resp, err = handler.PerformRequest(client, args...)
+		response, err = executeRequest(client)
 	}
 
 	if err != nil {
+		spinner.Fail(err)
 		die("GraphQL server at " + getDashboardUrl() + " returned an error: " + err.Error())
 	}
 
-	handler.PrintResults(resp)
+	spinner.Success()
 
 	// after performing any request, we hit API again to refresh token thus prolong the session
 	refreshToken(token)
+
+	return response
 }

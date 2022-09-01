@@ -105,3 +105,16 @@ func trimNewlines(input string) string {
 
 	return input
 }
+
+func ShortenJoinCode(originalCode string) string {
+	splited := strings.SplitN(originalCode, "/", 2)
+
+	if len(splited) == 1 {
+		return splited[0]
+	} else if len(splited) == 2 {
+		return splited[1]
+	} else {
+		die("Unknown join code format")
+		return "" // hopefully won't happen… :P
+	}
+}
