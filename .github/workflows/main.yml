@@ -31,13 +31,13 @@ jobs:
         run: ./util/build-cli.sh ${{matrix.arch}} unix
 
       - name: Build tar
-        run: ./util/package-unix.sh ${{matrix.arch}}
+        run: ./util/package-unix.sh ${{matrix.arch}} tar
 
       - name: Build deb
-        run: ./util/package-unix.sh ${{matrix.arch}}
+        run: ./util/package-unix.sh ${{matrix.arch}} deb
 
       - name: Build rpm
-        run: ./util/package-unix.sh ${{matrix.arch}}
+        run: ./util/package-unix.sh ${{matrix.arch}} rpm
 
   build_windows:
     runs-on: ubuntu-latest
