@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        arch: [ubuntu-22.04, ubuntu-20.04]
+        arch: [amd64, i386, arm64, armhf, riscv64]
 
     steps:
       - uses: actions/checkout@v2
@@ -25,10 +25,10 @@ jobs:
           go-version: "1.18"
 
       - name: Build C++
-        run: ./util/build-cmake.sh unix ${{matrix.arch}}
+        run: ./util/build-cmake.sh ${{matrix.arch}} unix
 
       - name: Build CLI
-        run: ./util/build-cli.sh unix ${{matrix.arch}}
+        run: ./util/build-cli.sh ${{matrix.arch}} unix
 
       - name: Build tar
         run: ./util/package-unix.sh ${{matrix.arch}}
@@ -54,10 +54,10 @@ jobs:
           go-version: "1.18"
 
       - name: Build C++
-        run: ./util/build-cmake.sh windows win64
+        run: ./util/build-cmake.sh win64 windows
 
       - name: Build CLI
-        run: ./util/build-cli.sh windows win64
+        run: ./util/build-cli.sh win64 windows
 
   build_windows_installer:
     needs: build_windows
