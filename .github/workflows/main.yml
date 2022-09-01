@@ -39,6 +39,12 @@ jobs:
       - name: Build rpm
         run: ./util/package-unix.sh ${{matrix.arch}} rpm
 
+      - name: Save artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages
+          path: ./build/release
+
   build_windows:
     runs-on: ubuntu-latest
 
@@ -58,6 +64,12 @@ jobs:
 
       - name: Build CLI
         run: ./util/build-cli.sh win64 windows
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages
+          path: ./build/release
 
   build_windows_installer:
     needs: build_windows
@@ -98,8 +110,11 @@ jobs:
       - name: Prepare tests
         run: ./util/test-prepare.sh
 
+      - name: Build UTs
+        run: ./util/test-unit-build.sh
+
       - name: Run UTs
-        run: ./util/test-unit.sh
+        run: ./util/test-unit-run.sh
 
       # - name: Run static analysis (cppcheck)
       #   run: ./util/test-cppcheck.sh
