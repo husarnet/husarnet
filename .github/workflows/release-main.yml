@@ -6,8 +6,47 @@ on:
       - "v*"
 
 jobs:
-  # When changing build_and_test steps remember to sync the steps with the other YAMLs
-  build_and_test:
+  build_unix:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [amd64, i386, arm64, armhf, riscv64]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Prepare build
+        run: ./util/build-prepare.sh
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.18"
+
+      - name: Build C++
+        run: ./util/build-cmake.sh ${{matrix.arch}} unix
+
+      - name: Build CLI
+        run: ./util/build-cli.sh ${{matrix.arch}} unix
+
+      - name: Build tar
+        run: ./util/package-unix.sh ${{matrix.arch}} tar
+
+      - name: Build deb
+        run: ./util/package-unix.sh ${{matrix.arch}} deb
+
+      - name: Build rpm
+        run: ./util/package-unix.sh ${{matrix.arch}} rpm
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages
+          path: ./build/release/
+          if-no-files-found: error
+
+  build_windows:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,26 +60,21 @@ jobs:
         with:
           go-version: "1.18"
 
-      - name: Build for all platforms and archs
-        run: ./util/build-all.sh
+      - name: Build C++
+        run: ./util/build-cmake.sh win64 windows
 
-      - name: Prepare tests
-        run: ./util/test-prepare.sh
-
-      - name: Run UTs
-        run: ./util/test-unit.sh
-
-      - name: Run static analysis (cppcheck)
-        run: ./util/test-cppcheck.sh
+      - name: Build CLI
+        run: ./util/build-cli.sh win64 windows
 
       - name: Save artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: packages
-          path: ./build/release
+          path: ./build/release/
+          if-no-files-found: error
 
   build_windows_installer:
-    needs: build_and_test
+    needs: build_windows
 
     runs-on: windows-2019
 
@@ -48,13 +82,14 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Fetch artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: packages
 
       - name: Copy .exe and license to installer dir
         run: |
-          copy husarnet.exe platforms\windows
+          copy husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
+          copy husarnet-windows-win64.exe platforms\windows\husarnet.exe
           copy LICENSE.txt platforms\windows
         shell: cmd
 
@@ -64,24 +99,42 @@ jobs:
         shell: cmd
 
       - name: Upload installer
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: windows_installer
           path: platforms\windows\Output\husarnet-setup.exe
 
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Prepare tests
+        run: ./util/test-prepare.sh
+
+      - name: Build UTs
+        run: ./util/test-unit-build.sh
+
+      - name: Run UTs
+        run: ./util/test-unit-run.sh
+
+      # - name: Run static analysis (cppcheck)
+      #   run: ./util/test-cppcheck.sh
+
   release_github:
-    needs: [build_and_test, build_windows_installer]
+    needs: [test, build_unix, build_windows_installer]
 
     runs-on: ubuntu-latest
 
     steps:
       - name: Fetch linux packages
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: packages
 
       - name: Fetch windows installer
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: windows_installer
 
@@ -98,7 +151,7 @@ jobs:
             *.exe
 
   push_docker_images:
-    needs: build_and_test
+    needs: test
 
     runs-on: ubuntu-latest
 
@@ -133,7 +186,7 @@ jobs:
           #cache-to: type=inline
 
   release_prod:
-    needs: [build_and_test, build_windows_installer]
+    needs: [test, build_unix, build_windows_installer]
 
     runs-on: [self-hosted, linux, prod]
 
@@ -142,12 +195,12 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Fetch artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: packages
 
       - name: Fetch windows installer
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: windows_installer
 

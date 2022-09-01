@@ -4,8 +4,8 @@ on:
   pull_request:
     branches: [master]
 
+# When changing steps remember to sync the steps with the other YAMLs
 jobs:
-  # When changing build_and_test steps remember to sync the steps with the other YAMLs
   build_unix:
     runs-on: ubuntu-latest
 
