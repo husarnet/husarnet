@@ -25,7 +25,7 @@ build_tests_base="${build_base}/tests"
 deploy_base="$(realpath $(dirname "$0")/../deploy)"
 
 function update_version {
-  package_version="$(cat ${base_dir}/core/husarnet_config.h | grep -P '#define HUSARNET_VERSION "\d+.\d+.\d+.\d+"' | cut -d'"' -f2)"
+  package_version="$(cat ${base_dir}/version.txt)"
 }
 
 update_version

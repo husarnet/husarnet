@@ -6,6 +6,8 @@ package=$2
 build_dir=${base_dir}/build/${arch}/unix
 output_dir=${build_dir}/out
 
+echo "[HUSARNET BS] Building unix ${arch} ${package} package"
+
 fpm \
     --input-type dir \
     --output-type ${package} \
@@ -24,3 +26,6 @@ fpm \
     --package ${build_dir}/husarnet-${arch}.${package} \
     --force \
     --chdir ${output_dir}
+
+cp ${build_dir}/husarnet-${arch}.${package} ${release_base}/husarnet-${package_version}-${arch}.${package}
+cp ${build_dir}/husarnet-${arch}.${package} ${release_base}/husarnet.${package}
