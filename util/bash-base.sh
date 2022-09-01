@@ -30,5 +30,5 @@ function update_version {
 
 update_version
 
-unix_archs="i386 armhf amd64 arm64 riscv64"
+unix_archs="amd64 i386 arm64 armhf riscv64"
 unix_packages="tar deb rpm"

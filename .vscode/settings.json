@@ -68,7 +68,7 @@
     "forward_list": "cpp",
     "valarray": "cpp"
   },
-  "cmake.sourceDirectory": "${workspaceFolder}/unix",
+  "cmake.sourceDirectory": "${workspaceFolder}/daemon/unix",
   "cSpell.words": [
     "DEVICEID",
     "Husarion",

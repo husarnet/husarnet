@@ -102,9 +102,10 @@ std::string base64Decode(std::string s)
   return result;
 }
 
+static std::random_device rd;
+
 std::string generateRandomString(const int length)
 {
-  std::random_device rd;
   std::mt19937 rng(rd());
   std::uniform_int_distribution<int> uni('a', 'z');
 
