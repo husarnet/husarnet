@@ -88,8 +88,8 @@ jobs:
 
       - name: Copy .exe and license to installer dir
         run: |
-          copy husarnet-daemon-windows-win64.exe platforms\windows
-          copy husarnet-windows-win64.exe platforms\windows
+          copy husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
+          copy husarnet-windows-win64.exe platforms\windows\husarnet.exe
           copy LICENSE.txt platforms\windows
         shell: cmd
 
