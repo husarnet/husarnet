@@ -108,7 +108,7 @@ jobs:
 
     strategy:
       matrix:
-        arch: [linux/arm64/v8, linux/amd64, linux/arm/v7]
+        arch: [linux/amd64] # This is limited due to performance reasons. Remember to enable them on production/release builds
 
     steps:
       - name: Check out the repo
