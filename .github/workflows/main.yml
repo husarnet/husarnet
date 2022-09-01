@@ -43,7 +43,8 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: packages
-          path: ./build/release/.*(amd64|i386|arm64|armhf|riscv64|win64).*
+          path: ./build/release/
+          if-no-files-found: error
 
   build_windows:
     runs-on: ubuntu-latest
@@ -66,10 +67,11 @@ jobs:
         run: ./util/build-cli.sh win64 windows
 
       - name: Save artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: packages
-          path: ./build/release/.*(amd64|i386|arm64|armhf|riscv64|win64).*
+          path: ./build/release/
+          if-no-files-found: error
 
   build_windows_installer:
     needs: build_windows
@@ -80,7 +82,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Fetch artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: packages
 
@@ -97,7 +99,7 @@ jobs:
         shell: cmd
 
       - name: Upload installer
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: windows_installer
           path: platforms\windows\Output\husarnet-setup.exe
