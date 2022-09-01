@@ -6,7 +6,40 @@ on:
 
 jobs:
   # When changing build_and_test steps remember to sync the steps with the other YAMLs
-  build_and_test:
+  build_unix:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [ubuntu-22.04, ubuntu-20.04]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Prepare build
+        run: ./util/build-prepare.sh
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.18"
+
+      - name: Build C++
+        run: ./util/build-cmake.sh unix ${{matrix.arch}}
+
+      - name: Build CLI
+        run: ./util/build-cli.sh unix ${{matrix.arch}}
+
+      - name: Build tar
+        run: ./util/package-unix.sh ${{matrix.arch}}
+
+      - name: Build deb
+        run: ./util/package-unix.sh ${{matrix.arch}}
+
+      - name: Build rpm
+        run: ./util/package-unix.sh ${{matrix.arch}}
+
+  build_windows:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,8 +53,47 @@ jobs:
         with:
           go-version: "1.18"
 
-      - name: Build for all platforms and archs
-        run: ./util/build-all.sh
+      - name: Build C++
+        run: ./util/build-cmake.sh windows win64
+
+      - name: Build CLI
+        run: ./util/build-cli.sh windows win64
+
+  build_windows_installer:
+    needs: build_windows
+
+    runs-on: windows-2019
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: packages
+
+      - name: Copy .exe and license to installer dir
+        run: |
+          copy husarnet.exe platforms\windows
+          copy LICENSE.txt platforms\windows
+        shell: cmd
+
+      - name: Building the installer
+        run: |
+          "%programfiles(x86)%\Inno Setup 6\iscc.exe" platforms\windows\script.iss
+        shell: cmd
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows_installer
+          path: platforms\windows\Output\husarnet-setup.exe
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
 
       - name: Prepare tests
         run: ./util/test-prepare.sh
@@ -32,26 +104,26 @@ jobs:
       # - name: Run static analysis (cppcheck)
       #   run: ./util/test-cppcheck.sh
 
-  bump_version:
-    needs: build_and_test
+  # bump_version:
+  #   needs: build_and_test
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.head_ref }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         ref: ${{ github.head_ref }}
 
-      - uses: actions/setup-python@v2
-        with:
-          python-version: "3.x"
+  #     - uses: actions/setup-python@v2
+  #       with:
+  #         python-version: "3.x"
 
-      - name: Bump version
-        run: python ./util/version-bump.py
+  #     - name: Bump version
+  #       run: python ./util/version-bump.py
 
-      - name: Push version bump on top of PR-ed branch
-        run: |
-          git config --global user.name 'Husarnet CI man'
-          git config --global user.email 'szymon.niemiec@husarnet.com'
-          git commit -am "Automatic version bump. The PR branch is ready to be merged."
-          git push
+  #     - name: Push version bump on top of PR-ed branch
+  #       run: |
+  #         git config --global user.name 'Husarnet CI man'
+  #         git config --global user.email 'szymon.niemiec@husarnet.com'
+  #         git commit -am "Automatic version bump. The PR branch is ready to be merged."
+  #         git push
