@@ -125,7 +125,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./platforms/unix/docker/Dockerfile
+          file: ./platforms/docker/Dockerfile
           platforms: linux/arm64/v8, linux/amd64, linux/arm/v7
           push: true
           tags: husarnet/husarnet
