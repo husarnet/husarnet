@@ -26,7 +26,8 @@ jobs:
           git config --global user.name 'Husarnet CI man'
           git config --global user.email 'szymon.niemiec@husarnet.com'
           git commit -am "Automatic version bump"
-          echo commit_ref=$(git rev-parse HEAD) >> $GITHUB_ENV
+          echo "commit_ref=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          cat $GITHUB_ENV
           git push
 
   build_unix:
@@ -52,7 +53,10 @@ jobs:
           go-version: "1.18"
 
       - name: Build C++
-        run: ./util/build-cmake.sh ${{matrix.arch}} unix
+        run: |
+          ./util/build-cmake.sh ${{matrix.arch}} unix
+          cat $GITHUB_ENV
+          cat version.txt
 
       - name: Build CLI
         run: ./util/build-cli.sh ${{matrix.arch}} unix
