@@ -11,6 +11,9 @@ jobs:
   bump_version:
     runs-on: ubuntu-latest
 
+    outputs:
+      commit_ref: ${{ steps.push.outputs.commit_ref }}
+
     steps:
       - uses: actions/checkout@v3
 
@@ -22,12 +25,13 @@ jobs:
         run: python ./util/version-bump.py
 
       - name: Push version bump
+        id: push
         run: |
           git config --global user.name 'Husarnet CI man'
           git config --global user.email 'szymon.niemiec@husarnet.com'
           git commit -am "Automatic version bump"
-          echo "commit_ref=$(git rev-parse HEAD)" >> $GITHUB_ENV
           git push
+          echo "::set-output name=commit_ref::$(git rev-parse HEAD)"
 
   build_unix:
     needs: bump_version
@@ -41,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ job.bump_version.env.commit_ref }}
+          ref: ${{ needs.bump_version.outputs.commit_ref }}
 
       - name: Use the value
         id: step_two
@@ -87,7 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ env.commit_ref }}
+          ref: ${{ needs.bump_version.outputs.commit_ref }}
 
       - name: Prepare build
         run: ./util/build-prepare.sh
@@ -118,7 +122,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ env.commit_ref }}
+          ref: ${{ needs.bump_version.outputs.commit_ref }}
 
       - name: Fetch artifacts
         uses: actions/download-artifact@v3
@@ -151,7 +155,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ env.commit_ref }}
+          ref: ${{ needs.bump_version.outputs.commit_ref }}
 
       - name: Prepare tests
         run: ./util/test-prepare.sh
@@ -173,7 +177,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ env.commit_ref }}
+          ref: ${{ needs.bump_version.outputs.commit_ref }}
 
       - name: Fetch artifacts
         uses: actions/download-artifact@v3
@@ -206,7 +210,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ env.commit_ref }}
+          ref: ${{ needs.bump_version.outputs.commit_ref }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
