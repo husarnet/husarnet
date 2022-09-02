@@ -68,18 +68,20 @@ ForEachMacros:
   - BOOST_FOREACH
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^<.*\.h>'
+  - Regex: '^<winsock2'
     Priority: 10
-    SortPriority: 20
-  - Regex: "^<.*"
+  - Regex: '^<.*\.h>'
     Priority: 20
-    SortPriority: 10
-  - Regex: '^"husarnet/ports/.*\.h"'
+    SortPriority: 30
+  - Regex: "^<.*"
     Priority: 30
-  - Regex: '^"husarnet/.*\.h"'
+    SortPriority: 20
+  - Regex: '^"husarnet/ports/.*\.h"'
     Priority: 40
-  - Regex: ".*"
+  - Regex: '^"husarnet/.*\.h"'
     Priority: 50
+  - Regex: ".*"
+    Priority: 60
 IncludeIsMainRegex: "([-_](test|unittest))?$"
 IncludeIsMainSourceRegex: ""
 IndentCaseLabels: true

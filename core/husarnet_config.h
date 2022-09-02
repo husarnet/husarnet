@@ -8,7 +8,6 @@
 #include "husarnet/config_storage.h"
 #include "husarnet/ipaddress.h"
 
-
 #define HUSARNET_VERSION "2022.09.02.9"
 #define WEBSETUP_SERVER_PORT 5580
 #define WEBSETUP_CLIENT_PORT 4800
