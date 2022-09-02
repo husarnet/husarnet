@@ -12,9 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.head_ref }}
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-python@v2
         with:
@@ -23,11 +21,12 @@ jobs:
       - name: Bump version
         run: python ./util/version-bump.py
 
-      - name: Push version bump on top of PR-ed branch
+      - name: Push version bump
         run: |
           git config --global user.name 'Husarnet CI man'
           git config --global user.email 'szymon.niemiec@husarnet.com'
-          git commit -am "Automatic version bump. The PR branch is ready to be merged."
+          git commit -am "Automatic version bump"
+          echo commit_ref=$(git rev-parse HEAD) >> $GITHUB_ENV
           git push
 
   build_unix:
@@ -40,7 +39,9 @@ jobs:
         arch: [amd64, i386, arm64, armhf, riscv64]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ env.commit_ref }}
 
       - name: Prepare build
         run: ./util/build-prepare.sh
@@ -78,7 +79,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ env.commit_ref }}
 
       - name: Prepare build
         run: ./util/build-prepare.sh
@@ -107,7 +110,9 @@ jobs:
     runs-on: windows-2019
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ env.commit_ref }}
 
       - name: Fetch artifacts
         uses: actions/download-artifact@v3
@@ -138,7 +143,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ env.commit_ref }}
 
       - name: Prepare tests
         run: ./util/test-prepare.sh
@@ -158,8 +165,9 @@ jobs:
     runs-on: [self-hosted, linux, nightly]
 
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ env.commit_ref }}
 
       - name: Fetch artifacts
         uses: actions/download-artifact@v3
@@ -190,8 +198,9 @@ jobs:
             arch_alias: armhf
 
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ env.commit_ref }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -217,7 +226,7 @@ jobs:
           push: true
           tags: husarnet/husarnet-nightly:${{matrix.arch_alias}}
 
-  publish_docker:
+  release_docker:
     needs: [test, build_docker]
 
     runs-on: ubuntu-latest

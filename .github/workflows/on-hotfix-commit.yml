@@ -224,7 +224,7 @@ jobs:
           push: true
           tags: husarnet/husarnet:${{matrix.arch_alias}}
 
-  publish_docker:
+  release_docker:
     needs: [test, build_docker]
 
     runs-on: ubuntu-latest
