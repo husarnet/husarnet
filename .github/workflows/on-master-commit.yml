@@ -8,7 +8,31 @@ on:
   workflow_dispatch:
 
 jobs:
+  bump_version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Bump version
+        run: python ./util/version-bump.py
+
+      - name: Push version bump on top of PR-ed branch
+        run: |
+          git config --global user.name 'Husarnet CI man'
+          git config --global user.email 'szymon.niemiec@husarnet.com'
+          git commit -am "Automatic version bump. The PR branch is ready to be merged."
+          git push
+
   build_unix:
+    needs: bump_version
+
     runs-on: ubuntu-latest
 
     strategy:
@@ -49,6 +73,8 @@ jobs:
           if-no-files-found: error
 
   build_windows:
+    needs: bump_version
+
     runs-on: ubuntu-latest
 
     steps:
@@ -107,6 +133,8 @@ jobs:
           path: platforms\windows\Output\husarnet-setup.exe
 
   test:
+    needs: bump_version
+
     runs-on: ubuntu-latest
 
     steps:
@@ -147,6 +175,8 @@ jobs:
         run: ./util/deploy.sh nightly
 
   build_docker:
+    needs: bump_version
+
     runs-on: ubuntu-latest
 
     strategy:
