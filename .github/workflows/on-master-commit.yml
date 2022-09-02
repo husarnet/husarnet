@@ -170,7 +170,7 @@ jobs:
       #   run: ./util/test-cppcheck.sh
 
   release_nightly:
-    needs: [test, build_unix, build_windows_installer]
+    needs: [bump_version, test, build_unix, build_windows_installer]
 
     runs-on: [self-hosted, linux, nightly]
 
