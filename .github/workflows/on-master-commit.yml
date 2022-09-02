@@ -29,13 +29,6 @@ jobs:
           echo "commit_ref=$(git rev-parse HEAD)" >> $GITHUB_ENV
           git push
 
-      - name: Set the value
-        run: |
-          echo "action_state=yellow" >> $GITHUB_ENV
-      - name: Use the value
-        run: |
-          echo "${{ env.action_state }}" # This will output 'yellow'
-
   build_unix:
     needs: bump_version
 
@@ -46,13 +39,9 @@ jobs:
         arch: [amd64, i386, arm64, armhf, riscv64]
 
     steps:
-      - name: Use the value
-        run: |
-          echo "${{ env.action_state }}" # This will output 'yellow'
-
       - uses: actions/checkout@v3
         with:
-          ref: ${{ env.commit_ref }}
+          ref: ${{ job.bump_version.env.commit_ref }}
 
       - name: Use the value
         id: step_two
