@@ -235,11 +235,15 @@ jobs:
           tags: husarnet/husarnet-nightly:${{matrix.arch_alias}}
 
   release_docker:
-    needs: [run_tests, build_docker]
+    needs: [bump_version, run_tests, build_docker]
 
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.bump_version.outputs.commit_ref }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 

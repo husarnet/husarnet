@@ -230,6 +230,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+        with:
+          ref: hotfix
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
