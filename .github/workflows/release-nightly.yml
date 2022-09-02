@@ -151,8 +151,13 @@ jobs:
 
     strategy:
       matrix:
-        arch: [linux/arm64/v8, linux/amd64, linux/arm/v7]
-        arch_alias: [arm64, amd64, armhf]
+        include:
+          - arch: linux/amd64
+            arch_alias: amd64
+          - arch: linux/arm64/v8
+            arch_alias: arm64
+          - arch: linux/arm/v7
+            arch_alias: armhf
 
     steps:
       - name: Check out the repo
@@ -178,9 +183,9 @@ jobs:
         with:
           context: .
           file: ./platforms/docker/Dockerfile
-          platforms: "{{matrix.arch}}"
+          platforms: ${{matrix.arch}}
           push: true
-          tags: husarnet/husarnet-nightly:{{matrix.arch_alias}}
+          tags: husarnet/husarnet-nightly:${{matrix.arch_alias}}
 
   publish_docker:
     needs: [test, build_docker]
