@@ -9,17 +9,21 @@
 #include "husarnet/ipaddress.h"
 #include "husarnet/string_view.h"
 
-struct BaseToPeerMessage {
-  enum
-  {
+#include "enum.h"
+
+BETTER_ENUM(
+    BaseToPeerMessageKind,
+    uint8_t,
     HELLO,
     DEVICE_ADDRESSES,
     DATA,
     NAT_OK,
     STATE,
     REDIRECT,
-    INVALID
-  } kind;
+    INVALID)
+
+struct BaseToPeerMessage {
+  BaseToPeerMessageKind kind;
 
   // Hello message
   fstring<16> cookie;
@@ -40,9 +44,9 @@ struct BaseToPeerMessage {
   InetAddress newBaseAddress;
 };
 
-struct PeerToBaseMessage {
-  enum
-  {
+BETTER_ENUM(
+    PeerToBaseMessageKind,
+    uint8_t,
     REQUEST_INFO,
     DATA,
     INFO,
@@ -50,8 +54,10 @@ struct PeerToBaseMessage {
     USER_AGENT,
     NAT_OK_CONFIRM,
     NAT_INIT_TRANSIENT,
-    INVALID
-  } kind;
+    INVALID)
+
+struct PeerToBaseMessage {
+  PeerToBaseMessageKind kind;
 
   // All
   fstring<16> cookie;
@@ -73,14 +79,10 @@ struct PeerToBaseMessage {
   std::string userAgent;
 };
 
+BETTER_ENUM(PeerToPeerMessageKind, uint8_t, HELLO, HELLO_REPLY, DATA, INVALID)
+
 struct PeerToPeerMessage {
-  enum
-  {
-    HELLO,
-    HELLO_REPLY,
-    DATA,
-    INVALID
-  } kind;
+  PeerToPeerMessageKind kind;
 
   // hello and hello_reply
   DeviceId myId;

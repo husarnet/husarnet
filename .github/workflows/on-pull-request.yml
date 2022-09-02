@@ -131,7 +131,7 @@ jobs:
           platforms: ${{matrix.arch}}
           push: false
 
-  test:
+  run_tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -140,11 +140,5 @@ jobs:
       - name: Prepare tests
         run: ./util/test-prepare.sh
 
-      - name: Build UTs
-        run: ./util/test-unit-build.sh
-
-      - name: Run UTs
-        run: ./util/test-unit-run.sh
-
-      # - name: Run static analysis (cppcheck)
-      #   run: ./util/test-cppcheck.sh
+      - name: Run all tests
+        run: ./util/test-all.sh

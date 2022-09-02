@@ -110,7 +110,7 @@ jobs:
           name: windows_installer
           path: platforms\windows\Output\husarnet-setup.exe
 
-  test:
+  run_tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -122,17 +122,11 @@ jobs:
       - name: Prepare tests
         run: ./util/test-prepare.sh
 
-      - name: Build UTs
-        run: ./util/test-unit-build.sh
-
-      - name: Run UTs
-        run: ./util/test-unit-run.sh
-
-      # - name: Run static analysis (cppcheck)
-      #   run: ./util/test-cppcheck.sh
+      - name: Run all tests
+        run: ./util/test-all.sh
 
   release_github:
-    needs: [test, build_unix, build_windows_installer]
+    needs: [run_tests, build_unix, build_windows_installer]
 
     runs-on: ubuntu-latest
 
@@ -160,7 +154,7 @@ jobs:
             *.exe
 
   release_prod:
-    needs: [test, build_unix, build_windows_installer]
+    needs: [run_tests, build_unix, build_windows_installer]
 
     runs-on: [self-hosted, linux, prod]
 
@@ -227,7 +221,7 @@ jobs:
           tags: husarnet/husarnet:${{matrix.arch_alias}}
 
   release_docker:
-    needs: [test, build_docker]
+    needs: [run_tests, build_docker]
 
     runs-on: ubuntu-latest
 
@@ -249,13 +243,13 @@ jobs:
 
       - name: create manifest
         run: |
-          docker manifest create husarnet/husarnet:latest
-          --amend husarnet/husarnet:amd64
-          --amend husarnet/husarnet:arm64
+          docker manifest create husarnet/husarnet:latest \
+          --amend husarnet/husarnet:amd64 \
+          --amend husarnet/husarnet:arm64 \
           --amend husarnet/husarnet:armhf
-          docker manifest create husarnet/husarnet:$(cat version.txt)
-          --amend husarnet/husarnet:amd64
-          --amend husarnet/husarnet:arm64
+          docker manifest create husarnet/husarnet:$(cat version.txt) \
+          --amend husarnet/husarnet:amd64 \
+          --amend husarnet/husarnet:arm64 \
           --amend husarnet/husarnet:armhf
 
       - name: push manifest
