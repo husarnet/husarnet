@@ -104,7 +104,6 @@ jobs:
           name: windows_installer
           path: platforms\windows\Output\husarnet-setup.exe
 
-  # Do not use this workflow on release workflows as it can't be uploaded to a single tag
   build_docker:
     runs-on: ubuntu-latest
 

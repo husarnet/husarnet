@@ -14,7 +14,7 @@ jobs:
         arch: [amd64, i386, arm64, armhf, riscv64]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Prepare build
         run: ./util/build-prepare.sh
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Prepare build
         run: ./util/build-prepare.sh
@@ -79,7 +79,7 @@ jobs:
     runs-on: windows-2019
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Fetch artifacts
         uses: actions/download-artifact@v3
@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Prepare tests
         run: ./util/test-prepare.sh
@@ -157,7 +157,7 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Fetch artifacts
         uses: actions/download-artifact@v3
@@ -187,7 +187,7 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -235,11 +235,17 @@ jobs:
           password: ${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}
 
       - name: create manifest
-        run: >
+        run: |
           docker manifest create husarnet/husarnet:latest
+          --amend husarnet/husarnet:amd64
+          --amend husarnet/husarnet:arm64
+          --amend husarnet/husarnet:armhf
+          docker manifest create husarnet/husarnet:$(cat version.txt)
           --amend husarnet/husarnet:amd64
           --amend husarnet/husarnet:arm64
           --amend husarnet/husarnet:armhf
 
       - name: push manifest
-        run: docker manifest push husarnet/husarnet:latest
+        run: |
+          docker manifest push husarnet/husarnet:latest
+          docker manifest push husarnet/husarnet:$(cat version.txt)

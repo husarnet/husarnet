@@ -258,11 +258,17 @@ jobs:
           password: ${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}
 
       - name: create manifest
-        run: >
+        run: |
           docker manifest create husarnet/husarnet-nightly:latest
+          --amend husarnet/husarnet-nightly:amd64
+          --amend husarnet/husarnet-nightly:arm64
+          --amend husarnet/husarnet-nightly:armhf
+          docker manifest create husarnet/husarnet-nightly:$(cat version.txt)
           --amend husarnet/husarnet-nightly:amd64
           --amend husarnet/husarnet-nightly:arm64
           --amend husarnet/husarnet-nightly:armhf
 
       - name: push manifest
-        run: docker manifest push husarnet/husarnet-nightly:latest
+        run: |
+          docker manifest push husarnet/husarnet-nightly:latest
+          docker manifest push husarnet/husarnet-nightly:$(cat version.txt)
