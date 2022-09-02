@@ -119,6 +119,10 @@ jobs:
         with:
           ref: hotfix
 
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
       - name: Prepare tests
         run: ./util/test-prepare.sh
 

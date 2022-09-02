@@ -157,6 +157,10 @@ jobs:
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
       - name: Prepare tests
         run: ./util/test-prepare.sh
 
