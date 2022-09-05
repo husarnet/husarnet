@@ -71,6 +71,8 @@ static void ares_local_callback(
   if(status != ARES_SUCCESS) {
     LOG("DNS resolution failed. c-ares status code: %i (%s)", status,
         ares_strerror(status));
+    // ympek:
+    // This is first fragment to look at.
     return;
   }
 
