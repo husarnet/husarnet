@@ -23,7 +23,9 @@ json retrieveLicenseJson(std::string dashboardHostname)
   InetAddress address{ip, 80};
   int sockfd = OsSocket::connectTcpSocket(address);
   if(sockfd < 0) {
-    exit(1);
+    LOG("Can't contact %s - is DNS resolution working properly?",
+        dashboardHostname.c_str());
+    return json::parse("{}");
   }
 
   std::string readBuffer;
@@ -48,6 +50,11 @@ json retrieveLicenseJson(std::string dashboardHostname)
   }
   pos += 4;
   return json::parse(readBuffer.substr(pos, len - pos));
+}
+
+json retrieveCachedLicenseJson()
+{
+  return json::parse(Privileged::readLicenseJson());
 }
 
 static const unsigned char* PUBLIC_KEY = reinterpret_cast<const unsigned char*>(
@@ -100,8 +107,19 @@ static void verifySignature(
 
 License::License(std::string dashboardHostname)
 {
-  // TODO long term - restore license.json filesystem caching mechanism
   auto licenseJson = retrieveLicenseJson(dashboardHostname);
+
+  if(licenseJson.empty()) {
+    licenseJson = retrieveCachedLicenseJson();
+
+    if(licenseJson.empty()) {
+      LOG("No license!");
+      abort();
+    }
+
+    LOG("Found cached license.json on local disk, proceed");
+  }
+
   verifySignature(
       base64Decode(licenseJson[LICENSE_SIGNATURE_KEY].get<std::string>()),
       getSignatureData(licenseJson));
@@ -115,6 +133,8 @@ License::License(std::string dashboardHostname)
     this->baseServerAddresses.emplace_back(
         IpAddress::parse(baseAddress.get<std::string>()));
   }
+
+  Privileged::writeLicenseJson(licenseJson.dump());
 }
 
 std::string License::getDashboardFqdn()
