@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      commit_ref: ${{ steps.push.outputs.commit_ref }}
+      commit_ref: ${{ steps.auto-commit-action.outputs.commit_hash }}
 
     steps:
       - uses: actions/checkout@v3
@@ -24,14 +24,9 @@ jobs:
       - name: Bump version
         run: python ./util/version-bump.py
 
-      - name: Push version bump
-        id: push
-        run: |
-          git config --global user.name 'Husarnet CI man'
-          git config --global user.email 'szymon.niemiec@husarnet.com'
-          git commit -am "Automatic version bump"
-          git push
-          echo "::set-output name=commit_ref::$(git rev-parse HEAD)"
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Automatic version bump
 
   build_unix:
     needs: bump_version
