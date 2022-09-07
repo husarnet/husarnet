@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      commit_ref: ${{ steps.auto-commit-action.outputs.commit_hash }}
+      commit_ref: ${{ steps.autocommit.outputs.commit_hash }}
 
     steps:
       - uses: actions/checkout@v3
@@ -25,6 +25,7 @@ jobs:
         run: python ./util/version-bump.py
 
       - uses: stefanzweifel/git-auto-commit-action@v4
+        id: autocommit
         with:
           commit_message: Automatic version bump
 
