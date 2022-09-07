@@ -19,7 +19,15 @@ namespace Privileged {
 
   void dropCapabilities();
 
+  std::string getConfigPath();
+  std::string getIdentityPath();
+  std::string getApiSecretPath();
   std::string getLegacyConfigPath();
+  std::string getLicenseJsonPath();
+
+  std::string readLicenseJson();
+  void writeLicenseJson(std::string);
+
   std::string readConfig();
   void writeConfig(std::string);
 

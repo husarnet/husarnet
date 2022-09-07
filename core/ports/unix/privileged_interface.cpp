@@ -143,21 +143,6 @@ static void getLocalIpv6Addresses(std::vector<IpAddress>& ret)
 
 static std::string configDir = "/var/lib/husarnet";
 
-static std::string getConfigPath()
-{
-  return configDir + "/config.json";
-}
-
-static std::string getIdentityPath()
-{
-  return configDir + "/id";
-}
-
-static std::string getApiSecretPath()
-{
-  return configDir + "/api_secret";
-}
-
 static int privilegedProcessFd = 0;
 
 #ifdef UT
@@ -276,9 +261,45 @@ namespace Privileged {
     }
   }
 
+  std::string getConfigPath()
+  {
+    return configDir + "/config.json";
+  }
+
+  std::string getIdentityPath()
+  {
+    return configDir + "/id";
+  }
+
+  std::string getApiSecretPath()
+  {
+    return configDir + "/api_secret";
+  }
+
   std::string getLegacyConfigPath()
   {
     return configDir + "/config.db";
+  }
+
+  std::string getLicenseJsonPath()
+  {
+    return configDir + "/license.json";
+  }
+
+  std::string readLicenseJson()
+  {
+    auto licenseJsonPath = getLicenseJsonPath();
+
+    if(!Port::isFile(licenseJsonPath)) {
+      return "";
+    }
+
+    return Port::readFile(licenseJsonPath);
+  }
+
+  void writeLicenseJson(std::string data)
+  {
+    Port::writeFile(getLicenseJsonPath(), data);
   }
 
   std::string readConfig()

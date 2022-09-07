@@ -16,37 +16,14 @@
 
 static std::string configDir;
 
-std::string getConfigDirPath()
-{
-  return std::string(getenv("PROGRAMDATA")) + "\\husarnet";
-}
-
-static std::string getConfigPath()
-{
-  return configDir + "\\config.json";
-}
-
-static std::string getIdentityPath()
-{
-  return configDir + "\\id";
-}
-
-static std::string getApiSecretPath()
-{
-  return configDir + "\\api_secret";
-}
-
 namespace Privileged {
 
   void init()
   {
-    configDir = getConfigDirPath();
+    configDir = std::string(getenv("PROGRAMDATA")) + "\\husarnet";
     if(!Port::isFile(configDir)) {
       CreateDirectory(configDir.c_str(), NULL);
       // fixPermissions(configDir);
-      // ympek TODO
-      // here we will need to cover a bunch of cases like
-      // old config present->run migrator, , new config present, etc.
     }
   }
 
@@ -58,6 +35,47 @@ namespace Privileged {
   void dropCapabilities()
   {
     // there is no separate privileged thread on Windows (rn)
+  }
+
+  std::string getConfigPath()
+  {
+    return configDir + "\\config.json";
+  }
+
+  std::string getIdentityPath()
+  {
+    return configDir + "\\id";
+  }
+
+  std::string getApiSecretPath()
+  {
+    return configDir + "\\api_secret";
+  }
+
+  std::string getLegacyConfigPath()
+  {
+    return configDir + "\\config.db";
+  }
+
+  std::string getLicenseJsonPath()
+  {
+    return configDir + "\\license.json";
+  }
+
+  std::string readLicenseJson()
+  {
+    auto licenseJsonPath = getLicenseJsonPath();
+
+    if(!Port::isFile(licenseJsonPath)) {
+      return "";
+    }
+
+    return Port::readFile(licenseJsonPath);
+  }
+
+  void writeLicenseJson(std::string data)
+  {
+    Port::writeFile(getLicenseJsonPath(), data);
   }
 
   std::string readConfig()
@@ -100,11 +118,6 @@ namespace Privileged {
   void writeIdentity(Identity identity)
   {
     Port::writeFile(getIdentityPath(), identity.serialize());
-  }
-
-  std::string getLegacyConfigPath()
-  {
-    return configDir + "\\config.db";
   }
 
   std::string readApiSecret()
