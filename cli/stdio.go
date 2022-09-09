@@ -13,6 +13,16 @@ import (
 	"golang.org/x/term"
 )
 
+var defaultStyle = pterm.DefaultBasicText.Style
+
+var errorStyle = pterm.NewStyle(pterm.FgWhite, pterm.BgRed)
+var warningStyle = pterm.NewStyle(pterm.FgBlack, pterm.BgYellow)
+
+var casualStyle = pterm.NewStyle()
+
+var flashyStyle = pterm.NewStyle(pterm.Bold)
+var greenStyle = pterm.NewStyle(pterm.Bold, pterm.BgGreen, pterm.FgWhite)
+
 // Throw an error, show help and die if a different number of arguments than specified is provided
 func requiredArgumentsNumber(ctx *cli.Context, number int) {
 	if ctx.Args().Len() != number {

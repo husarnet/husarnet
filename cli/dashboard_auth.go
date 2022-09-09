@@ -39,10 +39,11 @@ func makeAuthenticatedClient(authToken string) graphql.Client {
 }
 
 func saveAuthTokenToFile(authToken string) {
+	// TODO figure out whether it'd make sense to store this somethere else (like home directory of a user (but handle the sudo variant in that case too))
 	// the token could possibly be stored in /var/lib/husarnet
 	// but that's not ideal, since it would imply the need for sudo before each command
 	// TODO solve this.
-	// Don't make the token readable for other users though
+	// Don't make the token readable for other users
 	writeFileErr := os.WriteFile(getTokenFilePath(), []byte(authToken), 0600)
 
 	if writeFileErr != nil {

@@ -15,10 +15,11 @@ func getDashboardUrl() string {
 }
 
 func callDashboardAPI[responseType any](executeRequest func(client graphql.Client) (responseType, error)) responseType {
+	token := getAuthToken()
+
 	const spinnerMessage = "Executing an API call…"
 	spinner, _ := pterm.DefaultSpinner.Start(spinnerMessage)
 
-	token := getAuthToken()
 	client := makeAuthenticatedClient(token)
 	response, err := executeRequest(client)
 
