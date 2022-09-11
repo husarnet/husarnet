@@ -72,6 +72,16 @@ type DaemonStatus struct {
 	Peers        []PeerStatus
 }
 
+func (s DaemonStatus) getPeerByAddr(addr netip.Addr) *PeerStatus {
+	for _, peer := range s.Peers {
+		if peer.HusarnetAddress == addr {
+			return &peer
+		}
+	}
+
+	return nil
+}
+
 func getDaemonApiUrl() string {
 	if husarnetDaemonAPIPort != 0 {
 		return fmt.Sprintf("http://127.0.0.1:%d", husarnetDaemonAPIPort)

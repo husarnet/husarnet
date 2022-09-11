@@ -79,7 +79,7 @@ var dashboardDeviceCommand = &cli.Command{
 					groups := strings.Join(u.Map(device.GroupMemberships, func(membership generated.GetDevicesDevicesDeviceTypeGroupMembershipsGroupType) string {
 						return membership.Name
 					}), ", ")
-					table.AddRow(device.DeviceId, device.Name, device.Version, strings.TrimSpace(device.UserAgent), groups)
+					table.AddRow(makeCannonicalAddr(device.DeviceId), device.Name, device.Version, strings.TrimSpace(device.UserAgent), groups)
 				}
 
 				table.Println()
