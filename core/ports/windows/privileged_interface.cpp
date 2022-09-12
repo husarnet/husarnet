@@ -49,7 +49,7 @@ namespace Privileged {
 
   std::string getApiSecretPath()
   {
-    return configDir + "\\api_secret";
+    return configDir + "\\daemon_api_token";
   }
 
   std::string getLegacyConfigPath()
