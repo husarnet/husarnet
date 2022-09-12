@@ -4,6 +4,12 @@
 package main
 
 import (
+	"hdm/generated"
+	"strings"
+
+	"github.com/Khan/genqlient/graphql"
+	"github.com/pterm/pterm"
+	u "github.com/rjNemo/underscore"
 	"github.com/urfave/cli/v2"
 )
 
@@ -16,26 +22,25 @@ var dashboardLoginCommand = &cli.Command{
 	},
 }
 
-// TODO implement this
-// func getDeviceIdAndGroupIdFromUser(ctx *cli.Context) (string, string) {
-// 	requiredArgumentsRange(ctx, 0, 2)
+func getDeviceIdAndGroupIdFromUser(ctx *cli.Context) (string, string) {
+	requiredArgumentsRange(ctx, 0, 2)
 
-// 	var deviceId, groupId string
+	var deviceId, groupId string
 
-// 	if ctx.Args().Len() > 0 {
-// 		deviceId = getDeviceIpByNameOrIp(ctx.Args().Get(0))
-// 	} else {
-// 		deviceId = interactiveGetDeviceIpByName()
-// 	}
+	if ctx.Args().Len() > 0 {
+		deviceId = getDeviceIpByNameOrIp(ctx.Args().Get(0))
+	} else {
+		deviceId = interactiveGetDeviceIpByName()
+	}
 
-// 	if ctx.Args().Len() > 1 {
-// 		groupId = getGroupIdByNameOrId(ctx.Args().Get(1))
-// 	} else {
-// 		groupId = interactiveGetGroupByName().Id
-// 	}
+	if ctx.Args().Len() > 1 {
+		groupId = getGroupIdByNameOrId(ctx.Args().Get(1))
+	} else {
+		groupId = interactiveGetGroupByName().Id
+	}
 
-// 	return deviceId, groupId
-// }
+	return deviceId, groupId
+}
 
 var dashboardCommand = &cli.Command{
 	Name:  "dashboard",
@@ -52,22 +57,34 @@ var dashboardCommand = &cli.Command{
 			Usage:     "assign device to a group",
 			ArgsUsage: "[device ip or name] [group id or name]",
 			Action: func(ctx *cli.Context) error {
-				// deviceId, groupId := getDeviceIdAndGroupIdFromUser(ctx)
+				deviceId, groupId := getDeviceIdAndGroupIdFromUser(ctx)
 
-				notImplementedYet() // TODO implement this
+				response := callDashboardAPI(func(client graphql.Client) (*generated.AssignDeviceGroupResponse, error) {
+					return generated.AssignDeviceGroup(client, deviceId, groupId)
+				})
+
+				pterm.Printfln("Current list of groups for device %s: %s", response.UpdateDevice.Device.Name, strings.Join(u.Map(response.UpdateDevice.Device.GroupMemberships, func(m generated.AssignDeviceGroupUpdateDeviceUpdateDeviceMutationDeviceDeviceTypeGroupMembershipsGroupType) string {
+					return m.Name
+				}), ", "))
 
 				return nil
 			},
 		},
 		{
 			Name:      "unassign",
-			Aliases:   []string{"deassign", "remove", "pop"}, // Don't get too attached to those aliases - some will go :P
+			Aliases:   []string{"deassign", "rm", "remove", "pop"}, // Don't get too attached to those aliases - some will go :P
 			Usage:     "remove device from a group",
 			ArgsUsage: "[device ip or name] [group id or name]",
 			Action: func(ctx *cli.Context) error {
-				// deviceId, groupId := getDeviceIdAndGroupIdFromUser(ctx)
+				deviceId, groupId := getDeviceIdAndGroupIdFromUser(ctx)
 
-				notImplementedYet() // TODO implement this
+				response := callDashboardAPI(func(client graphql.Client) (*generated.UnassignDeviceGroupResponse, error) {
+					return generated.UnassignDeviceGroup(client, deviceId, groupId)
+				})
+
+				pterm.Printfln("Current list of groups for device %s: %s", response.UpdateDevice.Device.Name, strings.Join(u.Map(response.UpdateDevice.Device.GroupMemberships, func(m generated.UnassignDeviceGroupUpdateDeviceUpdateDeviceMutationDeviceDeviceTypeGroupMembershipsGroupType) string {
+					return m.Name
+				}), ", "))
 
 				return nil
 			},

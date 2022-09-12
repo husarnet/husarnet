@@ -27,10 +27,6 @@ type GroupType {
   deviceCount: Int
 }
 
-type KickDeviceMutation {
-  success: Boolean
-}
-
 type Mutation {
   tokenAuth(username: String!, password: String!): ObtainJSONWebToken
   verifyToken(token: String): Verify
@@ -38,8 +34,7 @@ type Mutation {
   createGroup(name: String!): CreateGroupMutation
   updateGroup(id: ID!, name: String): UpdateGroupMutation
   removeGroup(id: ID!): RemoveGroupMutation
-  kickDevice(groupId: ID!, idFragment: String!): KickDeviceMutation
-  updateDevice(idFragment: String!, name: String!): UpdateDeviceMutation
+  updateDevice(addGroups: [ID], deviceIdFragment: String!, name: String, removeGroups: [ID]): UpdateDeviceMutation
 }
 
 type ObtainJSONWebToken {
