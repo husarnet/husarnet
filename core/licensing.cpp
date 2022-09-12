@@ -143,6 +143,10 @@ std::string License::getDashboardFqdn()
     return this->dashboardFqdn.substr(strlen("https://"));
   }
 
+  if(this->dashboardFqdn.starts_with("http://")) {
+    return this->dashboardFqdn.substr(strlen("http://"));
+  }
+
   return this->dashboardFqdn;
 }
 

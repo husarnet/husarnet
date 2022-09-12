@@ -55,13 +55,17 @@ func main() {
 		Commands: []*cli.Command{
 			dashboardCommand,
 			daemonCommand,
+
 			daemonStartCommand,
 			daemonRestartCommand,
 			daemonStopCommand,
+
 			daemonStatusCommand,
-			daemonJoinCommand,
+			joinCommand,
 			daemonSetupServerCommand,
+
 			dashboardLoginCommand,
+
 			{
 				Name:  "version",
 				Usage: "print the version of the CLI and also of the daemon, if available",

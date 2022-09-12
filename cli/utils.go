@@ -57,6 +57,7 @@ func onWindows() bool {
 	return runtime.GOOS == "windows"
 }
 
+// re run the whole CLI invocation with sudo
 func rerunWithSudo() {
 	if !askForConfirmation(runSelfWithSudoQuestion) {
 		dieEmpty()
@@ -73,6 +74,8 @@ func rerunWithSudo() {
 	}
 }
 
+// run a given command as a subprocess
+// will ask user for confirmation if `confirmation` is `true`
 func runSubcommand(confirm bool, command string, args ...string) {
 	logCommandString := command + " " + strings.Join(args, " ")
 	if confirm {
@@ -100,6 +103,8 @@ func runSubcommand(confirm bool, command string, args ...string) {
 	}
 }
 
+// trims newline characters from the end of the string
+// if the string is multiline only the last line will have it's newline stripped
 func trimNewlines(input string) string {
 	input = strings.TrimSuffix(input, "\r\n")
 	input = strings.TrimSuffix(input, "\n")
@@ -107,6 +112,8 @@ func trimNewlines(input string) string {
 	return input
 }
 
+// makes sure that given join code is in a short format
+// if it already is in a short format - it's returned with no changes
 func ShortenJoinCode(originalCode string) string {
 	splited := strings.SplitN(originalCode, "/", 2)
 
@@ -120,6 +127,26 @@ func ShortenJoinCode(originalCode string) string {
 	}
 }
 
+// roughly check whether a given string is join code-ish
+func isJoinCode(candidate string) bool {
+	if len(candidate) == 0 {
+		return false
+	}
+
+	splited := strings.SplitN(candidate, "/", 2)
+
+	if len(splited) == 2 {
+		candidate = splited[1]
+	}
+
+	if len(candidate) != 22 {
+		return false
+	}
+
+	return true
+}
+
+// parses an IP v4/v6 address and returns it as a string in a full format
 func makeCannonicalAddr(input string) string {
 	addr, err := netip.ParseAddr(input)
 	if err != nil {
