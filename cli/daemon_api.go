@@ -202,10 +202,10 @@ func callDaemonPost[ResultType any](route string, urlencodedBody url.Values) Dae
 }
 
 func getDaemonStatusRaw(retryable bool) (DaemonResponse[DaemonStatus], error) {
-	return callDaemonGetRaw[DaemonStatus](retryable, "/control/status")
+	return callDaemonGetRaw[DaemonStatus](retryable, "/api/status")
 }
 func getDaemonStatus() DaemonStatus {
-	return callDaemonGet[DaemonStatus]("/control/status").Result
+	return callDaemonGet[DaemonStatus]("/api/status").Result
 }
 
 func getDaemonRunningVersion() string {
