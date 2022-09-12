@@ -25,3 +25,5 @@ tags
 compile_commands.json
 
 cli/generated
+
+.ccls-cache

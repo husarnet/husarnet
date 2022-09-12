@@ -164,6 +164,7 @@ void ApiServer::runThread()
                 {"version", manager->getVersion()},
                 {"local_ip", manager->getSelfAddress().toString()},
                 {"local_hostname", manager->getSelfHostname()},
+                {"is_dirty", manager->isDirty()},
                 {"is_joined", manager->isJoined()},
                 {"is_ready_to_join", manager->isConnectedToBase()},
                 {"is_ready", manager->isConnectedToBase() &&

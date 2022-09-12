@@ -291,6 +291,7 @@ var daemonStatusCommand = &cli.Command{
 
 		statusItems := []pterm.BulletListItem{
 			makeBullet(0, "Version", versionStyle),
+			makeBullet(0, fmt.Sprintf("Dirty? %v", status.IsDirty), defaultStyle),
 			makeBullet(1, fmt.Sprintf("Daemon: %s", status.Version), versionStyle),
 			makeBullet(1, fmt.Sprintf("CLI:    %s", version), versionStyle),
 			makeBullet(0, "Dashboard", dashboardStyle),

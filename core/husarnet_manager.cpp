@@ -125,6 +125,16 @@ bool HusarnetManager::isConnectedToWebsetup()
   return websetup->getLastContact() != 0;
 }
 
+bool HusarnetManager::isDirty()
+{
+  return dirty;
+}
+
+void HusarnetManager::setDirty()
+{
+  dirty = true;
+}
+
 std::string HusarnetManager::getWebsetupSecret()
 {
   return configStorage->getInternalSetting(InternalSetting::websetupSecret);
@@ -173,6 +183,7 @@ bool HusarnetManager::isJoined()
 void HusarnetManager::changeServer(std::string domain)
 {
   configStorage->setUserSetting(UserSetting::dashboardFqdn, domain);
+  setDirty();
   LOG("Dashboard URL has been changed to %s.", domain.c_str());
   LOG("DAEMON WILL CONTINUE TO USE THE OLD ONE UNTIL YOU RESTART IT");
 }
@@ -443,12 +454,6 @@ void HusarnetManager::stage3()
   startNetworkingStack();
   startWebsetup();
   startHTTPServer();
-
-  if(configStorage->isUserSettingOverriden(UserSetting::dashboardFqdn) &&
-     configStorage->getPersistentUserSetting(UserSetting::dashboardFqdn) !=
-         configStorage->getUserSetting(UserSetting::dashboardFqdn)) {
-    changeServer(configStorage->getUserSetting(UserSetting::dashboardFqdn));
-  }
 
   if(configStorage->isUserSettingOverriden(UserSetting::joinCode)) {
     joinNetwork(configStorage->getUserSetting(UserSetting::joinCode));
