@@ -356,7 +356,7 @@ var daemonJoinCommand = &cli.Command{
 			hostname = ctx.Args().Get(1)
 		}
 
-		callDaemonPost[EmptyResult]("/control/join", url.Values{
+		callDaemonPost[EmptyResult]("/api/join", url.Values{
 			"code":     {joincode},
 			"hostname": {hostname},
 		})
@@ -379,7 +379,7 @@ var daemonSetupServerCommand = &cli.Command{
 
 		domain := ctx.Args().Get(0)
 
-		callDaemonPost[EmptyResult]("/control/change-server", url.Values{
+		callDaemonPost[EmptyResult]("/api/change-server", url.Values{
 			"domain": {domain},
 		})
 
@@ -402,7 +402,7 @@ var daemonWhitelistCommand = &cli.Command{
 			Usage:     "enable whitelist",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
-				callDaemonPost[EmptyResult]("/control/whitelist/enable", url.Values{})
+				callDaemonPost[EmptyResult]("/api/whitelist/enable", url.Values{})
 				printSuccess("Enabled the whitelist")
 
 				return nil
@@ -414,7 +414,7 @@ var daemonWhitelistCommand = &cli.Command{
 			Usage:     "disable whitelist",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
-				callDaemonPost[EmptyResult]("/control/whitelist/whitelist", url.Values{})
+				callDaemonPost[EmptyResult]("/api/whitelist/whitelist", url.Values{})
 				printSuccess("Disabled the whitelist")
 
 				return nil
@@ -441,7 +441,7 @@ var daemonWhitelistCommand = &cli.Command{
 
 				addr := makeCannonicalAddr(ctx.Args().Get(0))
 
-				callDaemonPost[EmptyResult]("/control/whitelist/add", url.Values{
+				callDaemonPost[EmptyResult]("/api/whitelist/add", url.Values{
 					"address": {addr},
 				})
 				printSuccess(fmt.Sprintf("Added %s to whitelist", addr))
@@ -458,7 +458,7 @@ var daemonWhitelistCommand = &cli.Command{
 
 				addr := makeCannonicalAddr(ctx.Args().Get(0))
 
-				callDaemonPost[EmptyResult]("/control/whitelist/rm", url.Values{
+				callDaemonPost[EmptyResult]("/api/whitelist/rm", url.Values{
 					"address": {addr},
 				})
 				printSuccess(fmt.Sprintf("Removed %s from whitelist", addr))

@@ -123,7 +123,7 @@ void ApiServer::runThread()
   });
 
   svr.Get(
-      "/control/status",
+      "/api/status",
       [&](const httplib::Request& req, httplib::Response& res) {
         auto hostTable = manager->getConfigStorage().getHostTable();
         std::map<std::string, std::string> hostTableStringified;
@@ -188,7 +188,7 @@ void ApiServer::runThread()
       });
 
   svr.Post(
-      "/control/join",
+      "/api/join",
       [&](const httplib::Request& req, httplib::Response& res) {
         if(!validateSecret(req, res)) {
           return;
@@ -207,7 +207,7 @@ void ApiServer::runThread()
       });
 
   svr.Post(
-      "/control/change-server",
+      "/api/change-server",
       [&](const httplib::Request& req, httplib::Response& res) {
         if(!validateSecret(req, res)) {
           return;
@@ -222,7 +222,7 @@ void ApiServer::runThread()
       });
 
   svr.Post(
-      "/control/host/add",
+      "/api/host/add",
       [&](const httplib::Request& req, httplib::Response& res) {
         if(!validateSecret(req, res)) {
           return;
@@ -239,7 +239,7 @@ void ApiServer::runThread()
       });
 
   svr.Post(
-      "/control/host/rm",
+      "/api/host/rm",
       [&](const httplib::Request& req, httplib::Response& res) {
         if(!validateSecret(req, res)) {
           return;
@@ -254,7 +254,7 @@ void ApiServer::runThread()
       });
 
   svr.Get(
-      "/control/whitelist/ls",
+      "/api/whitelist/ls",
       [&](const httplib::Request& req, httplib::Response& res) {
         std::vector<std::string> list;
         for(auto addr : manager->getWhitelist()) {
@@ -264,7 +264,7 @@ void ApiServer::runThread()
       });
 
   svr.Post(
-      "/control/whitelist/add",
+      "/api/whitelist/add",
       [&](const httplib::Request& req, httplib::Response& res) {
         if(!validateSecret(req, res)) {
           return;
@@ -279,7 +279,7 @@ void ApiServer::runThread()
       });
 
   svr.Post(
-      "/control/whitelist/rm",
+      "/api/whitelist/rm",
       [&](const httplib::Request& req, httplib::Response& res) {
         if(!validateSecret(req, res)) {
           return;
@@ -294,7 +294,7 @@ void ApiServer::runThread()
       });
 
   svr.Post(
-      "/control/whitelist/enable",
+      "/api/whitelist/enable",
       [&](const httplib::Request& req, httplib::Response& res) {
         if(!validateSecret(req, res)) {
           return;
@@ -305,7 +305,7 @@ void ApiServer::runThread()
       });
 
   svr.Post(
-      "/control/whitelist/disable",
+      "/api/whitelist/disable",
       [&](const httplib::Request& req, httplib::Response& res) {
         if(!validateSecret(req, res)) {
           return;
@@ -316,7 +316,7 @@ void ApiServer::runThread()
       });
 
   svr.Get(
-      "/control/logs/get",
+      "/api/logs/get",
       [&](const httplib::Request& req, httplib::Response& res) {
         returnSuccess(req, res, manager->getLogManager().getLogs());
       });
@@ -324,7 +324,7 @@ void ApiServer::runThread()
   // TODO this one makes a GET request require auth token in some cases - change
   // this so all write operations are under POST endpoint
   svr.Get(
-      "/control/logs/settings",
+      "/api/logs/settings",
       [&](const httplib::Request& req, httplib::Response& res) {
         auto logManager = manager->getLogManager();
 

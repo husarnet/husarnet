@@ -93,9 +93,9 @@ func getDaemonApiUrl() string {
 func getDaemonApiSecretPath() string {
 	if onWindows() {
 		sep := string(os.PathSeparator)
-		return os.ExpandEnv("${programdata}") + sep + "Husarnet" + sep + "api_secret"
+		return os.ExpandEnv("${programdata}") + sep + "Husarnet" + sep + "daemon_api_token"
 	}
-	return "/var/lib/husarnet/api_secret"
+	return "/var/lib/husarnet/daemon_api_token"
 }
 
 func addDaemonApiSecret(params *url.Values) {
@@ -202,10 +202,10 @@ func callDaemonPost[ResultType any](route string, urlencodedBody url.Values) Dae
 }
 
 func getDaemonStatusRaw(retryable bool) (DaemonResponse[DaemonStatus], error) {
-	return callDaemonGetRaw[DaemonStatus](retryable, "/control/status")
+	return callDaemonGetRaw[DaemonStatus](retryable, "/api/status")
 }
 func getDaemonStatus() DaemonStatus {
-	return callDaemonGet[DaemonStatus]("/control/status").Result
+	return callDaemonGet[DaemonStatus]("/api/status").Result
 }
 
 func getDaemonRunningVersion() string {
