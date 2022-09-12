@@ -3,7 +3,12 @@
 // License: specified in project_root/LICENSE.txt
 package main
 
-import "github.com/pterm/pterm"
+import (
+	"strings"
+
+	"github.com/mattn/go-runewidth"
+	"github.com/pterm/pterm"
+)
 
 type Table struct {
 	title  string
@@ -36,9 +41,29 @@ func (t *Table) Println() {
 		data = append([][]string{t.header}, data...)
 	}
 
-	if t.title != "" {
-		pterm.Println(t.title)
+	tableStr, err := pTable.WithData(data).Srender()
+	if err != nil {
+		dieE(err)
 	}
 
-	pTable.WithData(data).Render()
+	tableLines := strings.Split(tableStr, "\n")
+	maxLineLen := 0
+
+	for _, line := range tableLines {
+		lineLen := runewidth.StringWidth(pterm.RemoveColorFromString(line))
+
+		if lineLen > maxLineLen {
+			maxLineLen = lineLen
+		}
+	}
+
+	title := ""
+	if t.title != "" {
+		title = " " + t.title + " "
+	}
+
+	gray := pterm.NewStyle(pterm.FgGray)
+	pterm.Println(gray.Sprint("⎯⎯⎯") + title + gray.Sprint(strings.Repeat("⎯", maxLineLen-len(title)-3)))
+	pterm.Println(tableStr)
+	pterm.Println(gray.Sprint(strings.Repeat("⎯", maxLineLen)))
 }

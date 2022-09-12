@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"net/netip"
 	"os"
 	"os/exec"
 	"runtime"
@@ -117,4 +118,13 @@ func ShortenJoinCode(originalCode string) string {
 		die("Unknown join code format")
 		return "" // hopefully won't happen… :P
 	}
+}
+
+func makeCannonicalAddr(input string) string {
+	addr, err := netip.ParseAddr(input)
+	if err != nil {
+		dieE(err)
+	}
+
+	return addr.StringExpanded()
 }

@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"net/netip"
 	"net/url"
 	"sort"
 	"strings"
@@ -16,8 +17,31 @@ import (
 	"golang.org/x/text/language"
 )
 
-func waitAction(message string, lambda func(*DaemonStatus) bool) error {
+type dumbObserver[T comparable] struct {
+	lastValue  T
+	changeHook func(oldValue, NewValue T)
+}
+
+func NewDumbObserver[T comparable](changeHook func(oldValue, NewValue T)) *dumbObserver[T] {
+	observer := dumbObserver[T]{
+		changeHook: changeHook,
+	}
+
+	return &observer
+}
+
+func (o *dumbObserver[T]) Update(newValue T) {
+	if newValue != o.lastValue {
+		o.changeHook(o.lastValue, newValue)
+		o.lastValue = newValue
+	}
+}
+
+func waitAction(message string, lambda func(*DaemonStatus) (bool, string)) error {
 	spinner, _ := pterm.DefaultSpinner.Start(message)
+	observer := NewDumbObserver(func(old, new string) {
+		spinner.UpdateText(new)
+	})
 
 	failedCounter := 0
 	for {
@@ -34,41 +58,159 @@ func waitAction(message string, lambda func(*DaemonStatus) bool) error {
 			continue
 		}
 
-		success := lambda(&response.Result)
+		success, temporaryMessage := lambda(&response.Result)
 		if success {
+			observer.Update(message)
 			spinner.Success()
 			return nil
 		}
+
+		observer.Update(message + " " + temporaryMessage)
 
 		time.Sleep(time.Second)
 	}
 }
 
 func waitDaemon() error {
-	return waitAction("Waiting until we can communicate with husarnet daemon…", func(status *DaemonStatus) bool { return true })
+	return waitAction("Waiting until we can communicate with husarnet daemon…", func(status *DaemonStatus) (bool, string) { return true, "" })
 }
 
 func waitBaseANY() error {
-	return waitAction("Waiting for Base server connection (any protocol)…", func(status *DaemonStatus) bool {
-		return status.BaseConnection.Type == "TCP" || status.BaseConnection.Type == "UDP"
+	return waitAction("Waiting for Base server connection (any protocol)…", func(status *DaemonStatus) (bool, string) {
+		return status.BaseConnection.Type == "TCP" || status.BaseConnection.Type == "UDP", ""
 	})
 }
 
 func waitBaseUDP() error {
-	return waitAction("Waiting for Base server connection (UDP)…", func(status *DaemonStatus) bool { return status.BaseConnection.Type == "UDP" })
+	return waitAction("Waiting for Base server connection (UDP)…", func(status *DaemonStatus) (bool, string) { return status.BaseConnection.Type == "UDP", "" })
 }
 
 func waitWebsetup() error {
-	return waitAction("Waiting for websetup connection…", func(status *DaemonStatus) bool { return status.ConnectionStatus["websetup"] })
+	return waitAction("Waiting for websetup connection…", func(status *DaemonStatus) (bool, string) { return status.ConnectionStatus["websetup"], "" })
 }
 
 func waitJoined() error {
-	return waitAction("Waiting until the device is joined…", func(status *DaemonStatus) bool { return status.IsJoined })
+	return waitAction("Waiting until the device is joined…", func(status *DaemonStatus) (bool, string) { return status.IsJoined, "" })
+}
+
+func waitHost(hostnameOrIp string) error {
+	hostname := ""
+	addr, err := netip.ParseAddr(hostnameOrIp)
+	if err != nil {
+		hostname = hostnameOrIp
+	}
+
+	printInfo("Remember that in order to consider a connection established there need to be at least 1 attempt of connection using the regular networking stack - i.e. a single ping to a given host")
+
+	return waitAction(pterm.Sprintf("Waiting until there's a connection to %s…", hostnameOrIp), func(status *DaemonStatus) (bool, string) {
+		if len(status.HostTable) < 2 {
+			return false, "not enough hosts in the host table yet" // there are no hosts on the list or there's only websetup so we need to wait until we can reason about the others
+		}
+
+		hostIp, present := status.HostTable[hostname]
+		if hostname != "" && present {
+			addr = hostIp
+		}
+
+		if !addr.IsValid() {
+			return false, "peer addr is not known yet" // Multiple paths - invalid addr + host not present in host table is the most important one
+		}
+
+		peer := status.getPeerByAddr(addr)
+
+		if peer == nil {
+			return false, "unable to find peer in the peer list" // Unable to find peer
+		}
+
+		if !peer.IsActive {
+			return false, "peer is not active yet" // Theres is no connection established yet (remember to try connecting to it though)
+		}
+
+		if !peer.IsSecure {
+			return false, "secure connection has not yet been established"
+		}
+
+		return true, ""
+	})
+}
+
+func makeBullet(level int, text string, textStyle *pterm.Style) pterm.BulletListItem {
+	return pterm.BulletListItem{
+		Level:       level * 4,
+		Bullet:      "»",
+		BulletStyle: defaultStyle,
+		Text:        text,
+		TextStyle:   textStyle,
+	}
+}
+
+func getWhitelistBullets(status DaemonStatus) []pterm.BulletListItem {
+	statusItems := []pterm.BulletListItem{}
+
+	sort.Slice(status.Whitelist, func(i, j int) bool { return status.Whitelist[i].String() < status.Whitelist[j].String() })
+
+	for _, address := range status.Whitelist {
+		statusItems = append(statusItems, makeBullet(1, address.StringExpanded(), flashyStyle))
+
+		var peerHostnames []string
+
+		for hostname, HTaddress := range status.HostTable {
+			if address == HTaddress {
+				peerHostnames = append(peerHostnames, hostname)
+			}
+		}
+
+		if len(peerHostnames) > 0 {
+			sort.Strings(peerHostnames)
+			statusItems = append(statusItems, makeBullet(2, fmt.Sprintf("Hostnames: %s", pterm.Bold.Sprintf(strings.Join(peerHostnames, ", "))), defaultStyle))
+		}
+
+		if address == status.WebsetupAddress {
+			statusItems = append(statusItems, makeBullet(2, pterm.Bold.Sprint("Role: websetup"), defaultStyle))
+		}
+
+		for _, peer := range status.Peers {
+			if peer.HusarnetAddress != address {
+				continue
+			}
+
+			tags := []string{}
+
+			if peer.IsActive {
+				tags = append(tags, "active")
+			}
+			if peer.IsTunelled {
+				tags = append(tags, "tunelled")
+			}
+			if peer.IsSecure {
+				tags = append(tags, "secure")
+			}
+
+			statusItems = append(statusItems, makeBullet(2, fmt.Sprintf("Tags: %v", strings.Join(tags, ", ")), defaultStyle))
+
+			// TODO reenable this after latency support is readded
+			// if peer.LatencyMs != -1 {
+			// 	statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Latency (ms): %v", peer.LatencyMs)})
+			// }
+
+			if !peer.UsedTargetAddress.Addr().IsUnspecified() {
+				statusItems = append(statusItems, makeBullet(2, fmt.Sprintf("Used regular network address: %v", peer.UsedTargetAddress), defaultStyle))
+			}
+
+			if verboseLogs {
+				statusItems = append(statusItems, makeBullet(2, fmt.Sprintf("Advertised network addresses: %v", peer.TargetAddresses), defaultStyle))
+			}
+
+		}
+	}
+
+	return statusItems
 }
 
 var daemonStartCommand = &cli.Command{
-	Name:  "start",
-	Usage: "start husarnet daemon",
+	Name:      "start",
+	Usage:     "start husarnet daemon",
+	ArgsUsage: " ", // No arguments needed
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:        "wait",
@@ -90,8 +232,9 @@ var daemonStartCommand = &cli.Command{
 }
 
 var daemonRestartCommand = &cli.Command{
-	Name:  "restart",
-	Usage: "restart husarnet daemon",
+	Name:      "restart",
+	Usage:     "restart husarnet daemon",
+	ArgsUsage: " ", // No arguments needed
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:        "wait",
@@ -113,8 +256,9 @@ var daemonRestartCommand = &cli.Command{
 }
 
 var daemonStopCommand = &cli.Command{
-	Name:  "stop",
-	Usage: "stop husarnet daemon",
+	Name:      "stop",
+	Usage:     "stop husarnet daemon",
+	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx *cli.Context) error {
 		runSubcommand(false, "sudo", "systemctl", "stop", "husarnet")
 		printSuccess("Stopped husarnet-daemon")
@@ -123,22 +267,15 @@ var daemonStopCommand = &cli.Command{
 }
 
 var daemonStatusCommand = &cli.Command{
-	Name:  "status",
-	Usage: "Display current connectivity status",
+	Name:      "status",
+	Usage:     "Display current connectivity status",
+	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx *cli.Context) error {
 		status := getDaemonStatus()
 
-		errorStyle := pterm.NewStyle(pterm.FgWhite, pterm.BgRed)
-		warningStyle := pterm.NewStyle(pterm.FgBlack, pterm.BgYellow)
-
-		casualStyle := pterm.NewStyle()
-
-		flashyStyle := pterm.NewStyle(pterm.Bold)
-		greenStyle := pterm.NewStyle(pterm.Bold, pterm.BgGreen, pterm.FgWhite)
-
 		versionStyle := casualStyle
 		dashboardStyle := casualStyle
-		baseConnectionStyle := casualStyle
+		var baseConnectionStyle *pterm.Style
 
 		if version != status.Version {
 			versionStyle = errorStyle
@@ -153,76 +290,21 @@ var daemonStatusCommand = &cli.Command{
 		}
 
 		statusItems := []pterm.BulletListItem{
-			{Level: 0, Text: "Version", TextStyle: versionStyle},
-			{Level: 1, Text: fmt.Sprintf("Daemon: %s", status.Version), TextStyle: versionStyle},
-			{Level: 1, Text: fmt.Sprintf("CLI:    %s", version), TextStyle: versionStyle},
-			{Level: 0, Text: "Dashboard", TextStyle: dashboardStyle},
-			{Level: 1, Text: fmt.Sprintf("Daemon: %s", status.DashboardFQDN), TextStyle: dashboardStyle},
-			{Level: 1, Text: fmt.Sprintf("CLI:    %s", husarnetDashboardFQDN), TextStyle: dashboardStyle},
-			{Level: 0, Text: "Husarnet address"},
-			{Level: 1, Text: status.LocalIP.String(), Bullet: " ", TextStyle: greenStyle}, // This is on a separate line and without a bullet so it can be easily copied with a triple click
-			{Level: 0, Text: fmt.Sprintf("Local hostname: %s", status.LocalHostname)},
-			{Level: 0, Text: "Whitelist"},
+			makeBullet(0, "Version", versionStyle),
+			makeBullet(1, fmt.Sprintf("Daemon: %s", status.Version), versionStyle),
+			makeBullet(1, fmt.Sprintf("CLI:    %s", version), versionStyle),
+			makeBullet(0, "Dashboard", dashboardStyle),
+			makeBullet(1, fmt.Sprintf("Daemon: %s", status.DashboardFQDN), dashboardStyle),
+			makeBullet(1, fmt.Sprintf("CLI:    %s", husarnetDashboardFQDN), dashboardStyle),
+			makeBullet(0, "Husarnet address", defaultStyle),
+			makeBullet(1, status.LocalIP.String(), greenStyle), // This is on a separate line and without a bullet so it can be easily copied with a triple cli)k
+			makeBullet(0, fmt.Sprintf("Local hostname: %s", status.LocalHostname), defaultStyle),
+			makeBullet(0, "Whitelist", defaultStyle),
 		}
 
-		sort.Slice(status.Whitelist, func(i, j int) bool { return status.Whitelist[i].String() < status.Whitelist[j].String() })
+		statusItems = append(statusItems, getWhitelistBullets(status)...)
 
-		for _, address := range status.Whitelist {
-			statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: address.String(), TextStyle: flashyStyle})
-
-			var peerHostnames []string
-
-			for hostname, HTaddress := range status.HostTable {
-				if address == HTaddress {
-					peerHostnames = append(peerHostnames, hostname)
-				}
-			}
-
-			if len(peerHostnames) > 0 {
-				sort.Strings(peerHostnames)
-				statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Hostnames: %s", pterm.Bold.Sprintf(strings.Join(peerHostnames, ", ")))})
-			}
-
-			if address == status.WebsetupAddress {
-				statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: pterm.Bold.Sprint("Role: websetup")})
-			}
-
-			for _, peer := range status.Peers {
-				if peer.HusarnetAddress != address {
-					continue
-				}
-
-				tags := []string{}
-
-				if peer.IsActive {
-					tags = append(tags, "active")
-				}
-				if peer.IsTunelled {
-					tags = append(tags, "tunelled")
-				}
-				if peer.IsSecure {
-					tags = append(tags, "secure")
-				}
-
-				statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Tags: %v", strings.Join(tags, ", "))})
-
-				// TODO reenable this after latency support is readded
-				// if peer.LatencyMs != -1 {
-				// 	statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Latency (ms): %v", peer.LatencyMs)})
-				// }
-
-				if !peer.UsedTargetAddress.Addr().IsUnspecified() {
-					statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Used regular network address: %v", peer.UsedTargetAddress)})
-				}
-
-				if verboseLogs {
-					statusItems = append(statusItems, pterm.BulletListItem{Level: 2, Text: fmt.Sprintf("Advertised network addresses: %v", peer.TargetAddresses)})
-				}
-
-			}
-		}
-
-		statusItems = append(statusItems, pterm.BulletListItem{Level: 0, Text: "Connection status"})
+		statusItems = append(statusItems, makeBullet(0, "Connection status", defaultStyle))
 
 		// As UDP is the desired one - warn wbout everything that's not it
 		if status.BaseConnection.Type == "UDP" {
@@ -232,26 +314,26 @@ var daemonStatusCommand = &cli.Command{
 		} else {
 			baseConnectionStyle = errorStyle
 		}
-		statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("Base server: %s:%v (%s)", status.BaseConnection.Address, status.BaseConnection.Port, status.BaseConnection.Type), TextStyle: baseConnectionStyle})
+		statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Base server: %s:%v (%s)", status.BaseConnection.Address, status.BaseConnection.Port, status.BaseConnection.Type), baseConnectionStyle))
 
 		if verboseLogs {
 			for element, connectionStatus := range status.ConnectionStatus {
-				statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("%s: %t", cases.Title(language.English).String(element), connectionStatus)})
+				statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("%s: %t", cases.Title(language.English).String(element), connectionStatus), defaultStyle))
 			}
 		}
 
-		statusItems = append(statusItems, pterm.BulletListItem{Level: 0, Text: "Readiness"})
-		statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("Is ready to handle data: %v", status.IsReady)})
+		statusItems = append(statusItems, makeBullet(0, "Readiness", defaultStyle))
+		statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Is ready to handle data: %v", status.IsReady), defaultStyle))
 		if status.IsJoined {
-			statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("Is joined/adopted: %v", status.IsJoined)})
+			statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Is joined/adopted: %v", status.IsJoined), defaultStyle))
 		} else {
-			statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("Is ready to be joined/adopted: %v", status.IsReadyToJoin)})
+			statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Is ready to be joined/adopted: %v", status.IsReadyToJoin), defaultStyle))
 		}
 
 		if verboseLogs {
-			statusItems = append(statusItems, pterm.BulletListItem{Level: 0, Text: "User settings"})
+			statusItems = append(statusItems, makeBullet(0, "User settings", defaultStyle))
 			for settingName, settingValue := range status.UserSettings {
-				statusItems = append(statusItems, pterm.BulletListItem{Level: 1, Text: fmt.Sprintf("%s: %v", settingName, settingValue)})
+				statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("%s: %v", settingName, settingValue), defaultStyle))
 			}
 		}
 
@@ -262,13 +344,11 @@ var daemonStatusCommand = &cli.Command{
 }
 
 var daemonJoinCommand = &cli.Command{
-	Name:  "join",
-	Usage: "Connect to Husarnet group with given join code and with specified hostname",
+	Name:      "join",
+	Usage:     "Connect to Husarnet group with given join code and with specified hostname",
+	ArgsUsage: "[join code] [device name]",
 	Action: func(ctx *cli.Context) error {
-		// up to two params
-		if ctx.Args().Len() < 1 {
-			die("you need to provide joincode")
-		}
+		requiredArgumentsRange(ctx, 1, 2)
 		joincode := ctx.Args().Get(0)
 		hostname := ""
 
@@ -276,38 +356,38 @@ var daemonJoinCommand = &cli.Command{
 			hostname = ctx.Args().Get(1)
 		}
 
-		params := url.Values{
+		callDaemonPost[EmptyResult]("/control/join", url.Values{
 			"code":     {joincode},
 			"hostname": {hostname},
-		}
-		callDaemonPost[EmptyResult]("/control/join", params)
+		})
+
 		printSuccess("Successfully registered a join request")
 		waitBaseANY()
 		waitWebsetup()
 		waitJoined()
+
 		return nil
 	},
 }
 
 var daemonSetupServerCommand = &cli.Command{
-	Name:  "setup-server",
-	Usage: "Connect your Husarnet device to different Husarnet infrastructure",
+	Name:      "setup-server",
+	Usage:     "Connect your Husarnet device to different Husarnet infrastructure",
+	ArgsUsage: "[dashboard fqdn]",
 	Action: func(ctx *cli.Context) error {
-		if ctx.Args().Len() < 1 {
-			fmt.Println("you need to provide address of the dashboard")
-			return nil
-		}
+		requiredArgumentsNumber(ctx, 1)
 
 		domain := ctx.Args().Get(0)
 
-		params := url.Values{
+		callDaemonPost[EmptyResult]("/control/change-server", url.Values{
 			"domain": {domain},
-		}
-		callDaemonPost[EmptyResult]("/control/change-server", params)
+		})
+
 		printSuccess(fmt.Sprintf("Successfully requested a change to %s server", domain))
 		printInfo("This action requires you to restart the daemon in order to use the new value")
 		runSubcommand(true, "sudo", "systemctl", "restart", "husarnet")
 		waitDaemon()
+
 		return nil
 	},
 }
@@ -317,67 +397,72 @@ var daemonWhitelistCommand = &cli.Command{
 	Usage: "Manage whitelist on the device.",
 	Subcommands: []*cli.Command{
 		{
-			Name:    "enable",
-			Aliases: []string{"on"},
-			Usage:   "enable whitelist",
+			Name:      "enable",
+			Aliases:   []string{"on"},
+			Usage:     "enable whitelist",
+			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				callDaemonPost[EmptyResult]("/control/whitelist/enable", url.Values{})
 				printSuccess("Enabled the whitelist")
+
 				return nil
 			},
 		},
 		{
-			Name:    "disable",
-			Aliases: []string{"off"},
-			Usage:   "disable whitelist",
+			Name:      "disable",
+			Aliases:   []string{"off"},
+			Usage:     "disable whitelist",
+			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				callDaemonPost[EmptyResult]("/control/whitelist/whitelist", url.Values{})
 				printSuccess("Disabled the whitelist")
-				return nil
-			},
-		},
-		{
-			Name:    "ls",
-			Aliases: []string{"show", "dir"},
-			Usage:   "list entries on the whitelist",
-			Action: func(ctx *cli.Context) error {
-				// callDaemonGet("/control/whitelist/ls") TODO
-				return nil
-			},
-		},
-		{
-			Name:  "add",
-			Usage: "Add a device to your whitelist by Husarnet address",
-			Action: func(ctx *cli.Context) error {
-				if ctx.Args().Len() < 1 {
-					fmt.Println("you need to provide Husarnet address of the device")
-					return nil
-				}
-				addr := ctx.Args().Get(0)
 
-				params := url.Values{
+				return nil
+			},
+		},
+		{
+			Name:      "ls",
+			Aliases:   []string{"show", "dir"},
+			Usage:     "list entries on the whitelist",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				status := getDaemonStatus()
+				pterm.DefaultBulletList.WithItems(getWhitelistBullets(status)).Render()
+
+				return nil
+			},
+		},
+		{
+			Name:      "add",
+			Usage:     "Add a device to your whitelist by Husarnet address",
+			ArgsUsage: "[device's ip address]",
+			Action: func(ctx *cli.Context) error {
+				requiredArgumentsNumber(ctx, 1)
+
+				addr := makeCannonicalAddr(ctx.Args().Get(0))
+
+				callDaemonPost[EmptyResult]("/control/whitelist/add", url.Values{
 					"address": {addr},
-				}
-				callDaemonPost[EmptyResult]("/control/whitelist/add", params)
+				})
 				printSuccess(fmt.Sprintf("Added %s to whitelist", addr))
+
 				return nil
 			},
 		},
 		{
-			Name:  "rm",
-			Usage: "Remove device from the whitelist",
+			Name:      "rm",
+			Usage:     "Remove device from the whitelist",
+			ArgsUsage: "[device's ip address]",
 			Action: func(ctx *cli.Context) error {
-				if ctx.Args().Len() < 1 {
-					fmt.Println("you need to provide Husarnet address of the device")
-					return nil
-				}
-				addr := ctx.Args().Get(0)
+				requiredArgumentsNumber(ctx, 1)
 
-				params := url.Values{
+				addr := makeCannonicalAddr(ctx.Args().Get(0))
+
+				callDaemonPost[EmptyResult]("/control/whitelist/rm", url.Values{
 					"address": {addr},
-				}
-				callDaemonPost[EmptyResult]("/control/whitelist/rm", params)
+				})
 				printSuccess(fmt.Sprintf("Removed %s from whitelist", addr))
+
 				return nil
 			},
 		},
@@ -392,45 +477,66 @@ var daemonWaitCommand = &cli.Command{
 		waitBaseANY()
 		waitBaseUDP()
 		waitWebsetup()
+
 		return nil
 	},
 	Subcommands: []*cli.Command{
 		{
-			Name:  "base",
-			Usage: "Wait until there is a base-server connection established (via any protocol)",
+			Name:      "base",
+			Usage:     "Wait until there is a base-server connection established (via any protocol)",
+			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				ignoreExtraArguments(ctx)
 				waitBaseANY()
+
 				return nil
 			},
 			Subcommands: []*cli.Command{
 				{
-					Name:  "udp",
-					Usage: "Wait until there is a base-server connection established via UDP. This is the best case scenario. Husarnet will work even without it.",
+					Name:      "udp",
+					Usage:     "Wait until there is a base-server connection established via UDP. This is the best case scenario. Husarnet will work even without it.",
+					ArgsUsage: " ", // No arguments needed
 					Action: func(ctx *cli.Context) error {
 						ignoreExtraArguments(ctx)
 						waitBaseUDP()
+
 						return nil
 					},
 				},
 			},
 		},
 		{
-			Name:  "joinable",
-			Usage: "Wait until there is enough connectivity to join a network/adopt a device",
+			Name:      "joinable",
+			Usage:     "Wait until there is enough connectivity to join a network/adopt a device",
+			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				ignoreExtraArguments(ctx)
 				waitBaseANY()
 				waitWebsetup()
+
 				return nil
 			},
 		},
 		{
-			Name:  "joined",
-			Usage: "Wait until there is enough connectivity to join a network/adopt a device",
+			Name:      "joined",
+			Usage:     "Wait until there is enough connectivity to join a network/adopt a device",
+			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				ignoreExtraArguments(ctx)
 				waitJoined()
+
+				return nil
+			},
+		},
+		{
+			Name:      "host",
+			Usage:     "Wait until there is an established connection to a given host",
+			ArgsUsage: "[device name or ip]",
+			Action: func(ctx *cli.Context) error {
+				requiredArgumentsNumber(ctx, 1)
+
+				waitHost(ctx.Args().First())
+
 				return nil
 			},
 		},
