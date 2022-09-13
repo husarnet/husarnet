@@ -14,7 +14,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func interactiveGetGroupIdByName() string {
+func interactiveGetGroupByName() generated.GetGroupsGroupsGroupType {
 	response := callDashboardAPI(func(client graphql.Client) (*generated.GetGroupsResponse, error) {
 		return generated.GetGroups(client)
 	})
@@ -29,10 +29,10 @@ func interactiveGetGroupIdByName() string {
 		dieE(err)
 	}
 
-	return group.Id
+	return group
 }
 
-func getGroupIdByName(name string) string {
+func getGroupByName(name string) generated.GetGroupsGroupsGroupType {
 	response := callDashboardAPI(func(client graphql.Client) (*generated.GetGroupsResponse, error) {
 		return generated.GetGroups(client)
 	})
@@ -42,16 +42,16 @@ func getGroupIdByName(name string) string {
 		dieE(err)
 	}
 
-	return group.Id
+	return group
 }
 
-func getGroupByNameOrId(candidate string) string {
+func getGroupIdByNameOrId(candidate string) string {
 	_, err := strconv.Atoi(candidate)
 	if err == nil {
 		return candidate
 	}
 
-	return getGroupIdByName(candidate)
+	return getGroupByName(candidate).Id
 }
 
 var dashboardGroupCommand = &cli.Command{
@@ -95,9 +95,9 @@ var dashboardGroupCommand = &cli.Command{
 				var groupId string // This is a stringified int
 
 				if ctx.Args().Len() < 1 {
-					groupId = interactiveGetGroupIdByName()
+					groupId = interactiveGetGroupByName().Id
 				} else {
-					groupId = getGroupByNameOrId(ctx.Args().First())
+					groupId = getGroupIdByNameOrId(ctx.Args().First())
 				}
 
 				response := callDashboardAPI(func(client graphql.Client) (*generated.ShowGroupResponse, error) {
@@ -113,23 +113,6 @@ var dashboardGroupCommand = &cli.Command{
 				}
 
 				table.Println()
-
-				return nil
-			},
-		},
-		{
-			Name:      "unjoin",
-			Usage:     "remove given device from the given group. First arg is group ID and second is the fragment of device IPv6",
-			ArgsUsage: "[group id] [device ip]",
-			Action: func(ctx *cli.Context) error {
-				// TODO make it accept/ask for a group name
-				requiredArgumentsNumber(ctx, 2)
-
-				callDashboardAPI(func(client graphql.Client) (*generated.KickDeviceResponse, error) {
-					return generated.KickDevice(client, ctx.Args().Get(0), ctx.Args().Get(1))
-				})
-
-				printSuccess("Device was successfully removed from the group.")
 
 				return nil
 			},
@@ -169,9 +152,9 @@ var dashboardGroupCommand = &cli.Command{
 				var groupId string // This is a stringified int
 
 				if ctx.Args().Len() < 1 {
-					groupId = interactiveGetGroupIdByName()
+					groupId = interactiveGetGroupByName().Id
 				} else {
-					groupId = getGroupByNameOrId(ctx.Args().First())
+					groupId = getGroupIdByNameOrId(ctx.Args().First())
 				}
 
 				var newName string
@@ -203,9 +186,9 @@ var dashboardGroupCommand = &cli.Command{
 				var groupId string // This is a stringified int
 
 				if ctx.Args().Len() == 0 {
-					groupId = interactiveGetGroupIdByName()
+					groupId = interactiveGetGroupByName().Id
 				} else {
-					groupId = getGroupByNameOrId(ctx.Args().First())
+					groupId = getGroupIdByNameOrId(ctx.Args().First())
 				}
 
 				askForConfirmation("Are you sure you want to delete this group? All the devices inside the group will be deleted as well.")

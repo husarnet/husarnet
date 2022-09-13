@@ -351,33 +351,6 @@ var daemonStatusCommand = &cli.Command{
 	},
 }
 
-var daemonJoinCommand = &cli.Command{
-	Name:      "join",
-	Usage:     "Connect to Husarnet group with given join code and with specified hostname",
-	ArgsUsage: "[join code] [device name]",
-	Action: func(ctx *cli.Context) error {
-		requiredArgumentsRange(ctx, 1, 2)
-		joincode := ctx.Args().Get(0)
-		hostname := ""
-
-		if ctx.Args().Len() == 2 {
-			hostname = ctx.Args().Get(1)
-		}
-
-		callDaemonPost[EmptyResult]("/api/join", url.Values{
-			"code":     {joincode},
-			"hostname": {hostname},
-		})
-
-		printSuccess("Successfully registered a join request")
-		waitBaseANY()
-		waitWebsetup()
-		waitJoined()
-
-		return nil
-	},
-}
-
 var daemonSetupServerCommand = &cli.Command{
 	Name:      "setup-server",
 	Usage:     "Connect your Husarnet device to different Husarnet infrastructure",
@@ -556,7 +529,7 @@ var daemonCommand = &cli.Command{
 	Usage: "Control the local daemon",
 	Subcommands: []*cli.Command{
 		daemonStatusCommand,
-		daemonJoinCommand,
+		joinCommand,
 		daemonSetupServerCommand,
 		daemonStartCommand,
 		daemonRestartCommand,

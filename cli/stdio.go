@@ -60,7 +60,7 @@ func logV(args ...interface{}) {
 
 // Print not implemented yet warning
 func notImplementedYet() {
-	fmt.Println("Not implemented yet")
+	printError("Not implemented yet")
 }
 
 // Print a success message
