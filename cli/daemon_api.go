@@ -54,6 +54,7 @@ type PeerStatus struct {
 type DaemonStatus struct {
 	Version       string
 	DashboardFQDN string `json:"dashboard_fqdn"`
+	IsDirty       bool   `json:"is_dirty"`
 
 	WebsetupAddress netip.Addr           `json:"websetup_address"`
 	BaseConnection  BaseConnectionStatus `json:"base_connection"`

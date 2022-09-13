@@ -274,19 +274,24 @@ var daemonStatusCommand = &cli.Command{
 		status := getDaemonStatus()
 
 		versionStyle := casualStyle
-		dashboardStyle := casualStyle
-		var baseConnectionStyle *pterm.Style
-
 		if version != status.Version {
 			versionStyle = errorStyle
 		}
 
+		dashboardStyle := casualStyle
 		if husarnetDashboardFQDN != defaultDashboard {
 			dashboardStyle = warningStyle
 		}
 
 		if husarnetDashboardFQDN != status.DashboardFQDN {
 			dashboardStyle = errorStyle
+		}
+
+		dirtyStyle := defaultStyle
+		dirtySuffix := ""
+		if status.IsDirty {
+			dirtyStyle = errorStyle
+			dirtySuffix = "husarnet-daemon needs reload!"
 		}
 
 		statusItems := []pterm.BulletListItem{
@@ -296,6 +301,7 @@ var daemonStatusCommand = &cli.Command{
 			makeBullet(0, "Dashboard", dashboardStyle),
 			makeBullet(1, fmt.Sprintf("Daemon: %s", status.DashboardFQDN), dashboardStyle),
 			makeBullet(1, fmt.Sprintf("CLI:    %s", husarnetDashboardFQDN), dashboardStyle),
+			makeBullet(0, fmt.Sprintf("Dirty? %v %s", status.IsDirty, dirtySuffix), dirtyStyle),
 			makeBullet(0, "Husarnet address", defaultStyle),
 			makeBullet(1, status.LocalIP.String(), greenStyle), // This is on a separate line and without a bullet so it can be easily copied with a triple cli)k
 			makeBullet(0, fmt.Sprintf("Local hostname: %s", status.LocalHostname), defaultStyle),
@@ -307,6 +313,8 @@ var daemonStatusCommand = &cli.Command{
 		statusItems = append(statusItems, makeBullet(0, "Connection status", defaultStyle))
 
 		// As UDP is the desired one - warn wbout everything that's not it
+		var baseConnectionStyle *pterm.Style
+
 		if status.BaseConnection.Type == "UDP" {
 			baseConnectionStyle = casualStyle
 		} else if status.BaseConnection.Type == "TCP" {

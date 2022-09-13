@@ -51,6 +51,7 @@ class HusarnetManager {
   bool stage1Started = false;
   bool stage2Started = false;
   bool stage3Started = false;
+  bool dirty = false;
 
   void getLicenseStage();
   void getIdentityStage();
@@ -87,6 +88,11 @@ class HusarnetManager {
 
   bool isConnectedToBase();
   bool isConnectedToWebsetup();
+
+  // Husarnet daemon is "dirty" when a restart-requiring change in the
+  // configuration was made, but the restart was not yet performed.
+  bool isDirty();
+  void setDirty();
 
   std::string getWebsetupSecret();
   std::string setWebsetupSecret(std::string newSecret);
