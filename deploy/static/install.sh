@@ -9,14 +9,21 @@ echo "========================================"
 install_yum() {
     yum install -y curl
     rpm --import https://install.husarnet.com/repo.key
-    curl https://install.husarnet.com/husarnet.repo > /etc/yum.repos.d/husarnet.repo
+    curl https://install.husarnet.com/husarnet_rpm.repo > /etc/yum.repos.d/husarnet.repo
     yum install -y husarnet
 }
 
 install_deb() {
     apt-get install -y curl apt-transport-https ca-certificates
+
+    # This is the old method
     curl https://install.husarnet.com/repo.key | apt-key add -
-    echo 'deb https://install.husarnet.com/deb/ all husarnet' > /etc/apt/sources.list.d/husarnet.list
+
+    # This is the new method
+    curl https://install.husarnet.com/repo.gpg > /usr/share/keyrings/husarnet.gpg
+
+    curl https://install.husarnet.com/husarnet_deb.repo > /etc/apt/sources.list.d/husarnet.list
+
     apt-get update || true
     apt-get install -y husarnet
 }
