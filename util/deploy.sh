@@ -63,7 +63,7 @@ cp -R ${golden_tar_path}/.  ${working_path}/tgz/
 cp -R ${golden_rpm_path}/.  ${working_path}/yum/
 cp -R ${golden_rpm_path}/.  ${working_path}/rpm/
 cp -R $HOME/.aptly/public/. ${working_path}/deb/
-cp -R ${base_dir}/deploy/static/. ${working_path}/
+cp -R ${base_dir}/deploy/. ${working_path}/
 
 # expose also windows installer exe
 cp husarnet-setup.exe ${working_path}/husarnet-${package_version}-setup.exe
