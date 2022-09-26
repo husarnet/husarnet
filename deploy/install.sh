@@ -14,7 +14,7 @@ install_yum() {
 }
 
 install_deb() {
-    apt-get install -y curl apt-transport-https ca-certificates
+    apt-get install -y curl apt-transport-https ca-certificates gnupg
 
     # This is the old method
     curl https://install.husarnet.com/repo.key | apt-key add -
