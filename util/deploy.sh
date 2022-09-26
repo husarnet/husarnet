@@ -59,10 +59,12 @@ echo "[==] Building new repo"
 rm -rf ${working_path}/* || true
 mkdir -p ${working_path}/tgz
 mkdir -p ${working_path}/yum
+mkdir -p ${working_path}/rpm
 mkdir -p ${working_path}/deb
 
 cp -R ${golden_tar_path}/.  ${working_path}/tgz/
 cp -R ${golden_rpm_path}/.  ${working_path}/yum/
+cp -R ${golden_rpm_path}/.  ${working_path}/rpm/
 cp -R $HOME/.aptly/public/. ${working_path}/deb/
 cp -R ${base_dir}/deploy/. ${working_path}/
 
@@ -70,9 +72,11 @@ cp -R ${base_dir}/deploy/. ${working_path}/
 if [ "${deploy_target}" == "nightly" ]; then
   echo "[==] Make some extra files for the nightly repository."
   sed "s=install.husarnet=nightly.husarnet=" ${working_path}/install.sh > ${working_path}/install-nightly.sh
-  sed "s=husarnet.com/husarnet.repo=husarnet.com/husarnet-nightly.repo=" -i ${working_path}/install-nightly.sh
 
-  sed "s=install.husarnet=nightly.husarnet=" ${working_path}/husarnet.repo > ${working_path}/husarnet-nightly.repo
+  sed "s=install.husarnet=nightly.husarnet=" ${working_path}/husarnet_rpm.repo > ${working_path}/husarnet-nightly_rpm.repo
+  sed "s=install.husarnet=nightly.husarnet=" ${working_path}/husarnet_deb.repo > ${working_path}/husarnet-nightly_deb.repo
+  sed "s=husarnet.com/husarnet_rpm.repo=husarnet.com/husarnet-nightly_rpm.repo=" -i ${working_path}/install-nightly.sh
+  sed "s=husarnet.com/husarnet_deb.repo=husarnet.com/husarnet-nightly_deb.repo=" -i ${working_path}/install-nightly.sh
 fi
 
 echo "[==] Copy also windows installer exe"
