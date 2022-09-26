@@ -33,7 +33,7 @@ enable_service() {
         echo "========================================"
         echo "You are not running systemd, we will not automatically add a service."
         echo ""
-        echo "Please make sure 'husarnet daemon' (or husarnet-docker) is executed at system startup."
+        echo "Please make sure 'husarnet-daemon' (or husarnet-docker) is executed at system startup."
         echo "========================================"
     else
         systemctl daemon-reload
