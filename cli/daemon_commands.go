@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/pterm/pterm"
+	u "github.com/rjNemo/underscore"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -144,7 +145,7 @@ func makeBullet(level int, text string, textStyle *pterm.Style) pterm.BulletList
 	}
 }
 
-func getWhitelistBullets(status DaemonStatus) []pterm.BulletListItem {
+func getWhitelistBullets(status DaemonStatus, verbose bool) []pterm.BulletListItem {
 	statusItems := []pterm.BulletListItem{}
 
 	sort.Slice(status.Whitelist, func(i, j int) bool { return status.Whitelist[i].String() < status.Whitelist[j].String() })
@@ -197,8 +198,8 @@ func getWhitelistBullets(status DaemonStatus) []pterm.BulletListItem {
 				statusItems = append(statusItems, makeBullet(2, fmt.Sprintf("Used regular network address: %v", peer.UsedTargetAddress), defaultStyle))
 			}
 
-			if verboseLogs {
-				statusItems = append(statusItems, makeBullet(2, fmt.Sprintf("Advertised network addresses: %v", peer.TargetAddresses), defaultStyle))
+			if verbose && len(peer.TargetAddresses) > 0 {
+				statusItems = append(statusItems, makeBullet(2, fmt.Sprintf("Advertised network addresses: %s", strings.Join(u.Map(peer.TargetAddresses, func(it netip.AddrPort) string { return it.String() }), " ")), defaultStyle))
 			}
 
 		}
@@ -267,10 +268,19 @@ var daemonStopCommand = &cli.Command{
 }
 
 var daemonStatusCommand = &cli.Command{
-	Name:      "status",
-	Usage:     "Display current connectivity status",
+	Name:  "status",
+	Usage: "Display current connectivity status",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:    "verbose",
+			Aliases: []string{"v"},
+			Usage:   "show more information",
+		},
+	},
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx *cli.Context) error {
+		verbose := verboseLogs || ctx.Bool("verbose")
+
 		status := getDaemonStatus()
 
 		versionStyle := casualStyle
@@ -287,13 +297,6 @@ var daemonStatusCommand = &cli.Command{
 			dashboardStyle = errorStyle
 		}
 
-		dirtyStyle := defaultStyle
-		dirtySuffix := ""
-		if status.IsDirty {
-			dirtyStyle = errorStyle
-			dirtySuffix = "husarnet-daemon needs reload!"
-		}
-
 		statusItems := []pterm.BulletListItem{
 			makeBullet(0, "Version", versionStyle),
 			makeBullet(1, fmt.Sprintf("Daemon: %s", status.Version), versionStyle),
@@ -301,14 +304,22 @@ var daemonStatusCommand = &cli.Command{
 			makeBullet(0, "Dashboard", dashboardStyle),
 			makeBullet(1, fmt.Sprintf("Daemon: %s", status.DashboardFQDN), dashboardStyle),
 			makeBullet(1, fmt.Sprintf("CLI:    %s", husarnetDashboardFQDN), dashboardStyle),
-			makeBullet(0, fmt.Sprintf("Dirty? %v %s", status.IsDirty, dirtySuffix), dirtyStyle),
+		}
+
+		if status.IsDirty {
+			statusItems = append(statusItems, makeBullet(0, "Daemon dirty flag is set. You need to restart husarnet-daemon in order to reflect the current settings", errorStyle))
+		} else {
+			statusItems = append(statusItems, makeBullet(0, "Daemon is not dirty", defaultStyle))
+		}
+
+		statusItems = append(statusItems,
 			makeBullet(0, "Husarnet address", defaultStyle),
 			makeBullet(1, status.LocalIP.String(), greenStyle), // This is on a separate line and without a bullet so it can be easily copied with a triple cli)k
 			makeBullet(0, fmt.Sprintf("Local hostname: %s", status.LocalHostname), defaultStyle),
 			makeBullet(0, "Whitelist", defaultStyle),
-		}
+		)
 
-		statusItems = append(statusItems, getWhitelistBullets(status)...)
+		statusItems = append(statusItems, getWhitelistBullets(status, verbose)...)
 
 		statusItems = append(statusItems, makeBullet(0, "Connection status", defaultStyle))
 
@@ -324,7 +335,7 @@ var daemonStatusCommand = &cli.Command{
 		}
 		statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Base server: %s:%v (%s)", status.BaseConnection.Address, status.BaseConnection.Port, status.BaseConnection.Type), baseConnectionStyle))
 
-		if verboseLogs {
+		if verbose {
 			for element, connectionStatus := range status.ConnectionStatus {
 				statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("%s: %t", cases.Title(language.English).String(element), connectionStatus), defaultStyle))
 			}
@@ -338,7 +349,7 @@ var daemonStatusCommand = &cli.Command{
 			statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Is ready to be joined/adopted: %v", status.IsReadyToJoin), defaultStyle))
 		}
 
-		if verboseLogs {
+		if verbose {
 			statusItems = append(statusItems, makeBullet(0, "User settings", defaultStyle))
 			for settingName, settingValue := range status.UserSettings {
 				statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("%s: %v", settingName, settingValue), defaultStyle))
@@ -408,7 +419,7 @@ var daemonWhitelistCommand = &cli.Command{
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				status := getDaemonStatus()
-				pterm.DefaultBulletList.WithItems(getWhitelistBullets(status)).Render()
+				pterm.DefaultBulletList.WithItems(getWhitelistBullets(status, false)).Render()
 
 				return nil
 			},
