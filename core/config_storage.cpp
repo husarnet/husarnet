@@ -11,6 +11,7 @@
 
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/util.h"
 
 #define HOST_TABLE_KEY "host-table"
 #define WHITELIST_KEY "whitelist"
@@ -73,6 +74,7 @@ void ConfigStorage::save()
     return;
   }
 
+  LOG("saving settings");
   writeFunc(serialize());
   updateHostsInSystem();
 }
@@ -298,11 +300,15 @@ void ConfigStorage::clearUserSetting(UserSetting setting)
 
 bool ConfigStorage::isUserSettingOverriden(UserSetting setting)
 {
-  if(userOverrides.contains(setting)) {
-    return true;
+  if(!userOverrides.contains(setting)) {
+    return false;
   }
 
-  return false;
+  if(getPersistentUserSetting(setting) == getUserSetting(setting)) {
+    return false;
+  }
+
+  return true;
 }
 
 std::string ConfigStorage::getPersistentUserSetting(UserSetting setting)
@@ -316,6 +322,17 @@ std::string ConfigStorage::getPersistentUserSetting(UserSetting setting)
   }
 
   return "";
+}
+
+void ConfigStorage::persistUserSettingOverride(UserSetting setting)
+{
+  if(!isUserSettingOverriden(setting)) {
+    return;
+  }
+
+  // This only looks like a no-op. In practice it reads the temporarily
+  // overriden setting and persistently stores it's value
+  setUserSetting(setting, getUserSetting(setting));
 }
 
 std::string ConfigStorage::getUserSetting(UserSetting setting)

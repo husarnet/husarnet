@@ -112,6 +112,7 @@ class ConfigStorage {
 
   bool isUserSettingOverriden(UserSetting setting);
   std::string getPersistentUserSetting(UserSetting setting);
+  void persistUserSettingOverride(UserSetting setting);
 
   std::string getUserSetting(UserSetting setting);
   bool getUserSettingBool(UserSetting setting);

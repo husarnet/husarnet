@@ -428,6 +428,13 @@ void HusarnetManager::stage1()
 
   readLegacyConfig();
 
+  // This checks whether the dashboard URL was recently changed using an
+  // environment variable and makes sure it's saved to a persistent storage (as
+  // other values like websetup secret) depend on it.
+  if(configStorage->isUserSettingOverriden(UserSetting::dashboardFqdn)) {
+    configStorage->persistUserSettingOverride(UserSetting::dashboardFqdn);
+  }
+
   selfFlags = new PeerFlags();
 
   stage1Started = true;
