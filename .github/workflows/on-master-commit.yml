@@ -15,7 +15,8 @@ jobs:
       commit_ref: ${{ steps.autocommit.outputs.commit_hash }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
       - uses: actions/setup-python@v2
         with:
@@ -39,7 +40,8 @@ jobs:
         arch: [amd64, i386, arm64, armhf, riscv64]
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
@@ -85,7 +87,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
@@ -116,7 +119,8 @@ jobs:
     runs-on: windows-2019
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
@@ -149,7 +153,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
@@ -169,7 +174,8 @@ jobs:
     runs-on: [self-hosted, linux, nightly]
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
@@ -187,7 +193,7 @@ jobs:
         run: ./util/deploy.sh nightly
 
   build_docker:
-    needs: bump_version
+    needs: [bump_version, build_unix]
 
     runs-on: ubuntu-latest
 
@@ -202,7 +208,8 @@ jobs:
             arch_alias: armhf
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
@@ -221,6 +228,17 @@ jobs:
           username: ${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}
           password: ${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}
 
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages
+
+      - name: Move build artifacts in an expected place
+        run: cp husarnet* build/release/
+
+      - name: Prepare build artifact aliases
+        run: ./util/docker-prepare-paths.sh ${{matrix.arch_alias}}
+
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
@@ -236,7 +254,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 

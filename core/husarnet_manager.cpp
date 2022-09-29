@@ -456,7 +456,13 @@ void HusarnetManager::stage3()
   startHTTPServer();
 
   if(configStorage->isUserSettingOverriden(UserSetting::joinCode)) {
-    joinNetwork(configStorage->getUserSetting(UserSetting::joinCode));
+    if(configStorage->isUserSettingOverriden(UserSetting::hostname)) {
+      joinNetwork(
+          configStorage->getUserSetting(UserSetting::joinCode),
+          configStorage->getUserSetting(UserSetting::hostname));
+    } else {
+      joinNetwork(configStorage->getUserSetting(UserSetting::joinCode));
+    }
   }
 
   stage3Started = true;

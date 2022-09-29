@@ -50,6 +50,15 @@ func ignoreExtraArguments(ctx *cli.Context) {
 	}
 }
 
+// Throw an error, show help and die if less than `lower` arguments are provided
+func minimumArguments(ctx *cli.Context, lower int) {
+	if ctx.Args().Len() < lower {
+		printError("Not enough arguments provided!")
+		cli.ShowSubcommandHelp(ctx)
+		dieEmpty()
+	}
+}
+
 // If verbose logs are enabled, pass the arguments to fmt.Println(). Otherwise do nothing
 func logV(args ...interface{}) {
 	if verboseLogs {

@@ -37,6 +37,7 @@ const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::overrideSourcePort, ""},
     {UserSetting::extraAdvertisedAddress, ""},
     {UserSetting::joinCode, ""},
+    {UserSetting::hostname, ""},
 };
 
 const std::map<InternalSetting, std::string> internalDefaults = {{}};

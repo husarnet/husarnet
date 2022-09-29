@@ -48,8 +48,8 @@ func waitAction(message string, lambda func(*DaemonStatus) (bool, string)) error
 	for {
 		failedCounter++
 		if failedCounter > 60 {
-			spinner.Fail()
-			return fmt.Errorf("timeout while waiting for a given service")
+			spinner.Fail("timeout")
+			return fmt.Errorf("timeout")
 		}
 
 		response, err := getDaemonStatusRaw(false)
@@ -104,10 +104,6 @@ func waitHost(hostnameOrIp string) error {
 	printInfo("Remember that in order to consider a connection established there need to be at least 1 attempt of connection using the regular networking stack - i.e. a single ping to a given host")
 
 	return waitAction(pterm.Sprintf("Waiting until there's a connection to %s…", hostnameOrIp), func(status *DaemonStatus) (bool, string) {
-		if len(status.HostTable) < 2 {
-			return false, "not enough hosts in the host table yet" // there are no hosts on the list or there's only websetup so we need to wait until we can reason about the others
-		}
-
 		hostIp, present := status.HostTable[hostname]
 		if hostname != "" && present {
 			addr = hostIp
@@ -129,6 +125,19 @@ func waitHost(hostnameOrIp string) error {
 
 		if !peer.IsSecure {
 			return false, "secure connection has not yet been established"
+		}
+
+		return true, ""
+	})
+}
+
+func waitHostnames(hostnames []string) error {
+	return waitAction(pterm.Sprintf("Waiting until the following hostnames are known to: %s…", strings.Join(hostnames, ", ")), func(status *DaemonStatus) (bool, string) {
+		for _, hostname := range hostnames {
+			_, present := status.HostTable[hostname]
+			if !present {
+				return false, pterm.Sprintf("%s is unavailable", hostname)
+			}
 		}
 
 		return true, ""
@@ -167,7 +176,7 @@ func getWhitelistBullets(status DaemonStatus, verbose bool) []pterm.BulletListIt
 		}
 
 		if address == status.WebsetupAddress {
-			statusItems = append(statusItems, makeBullet(2, pterm.Bold.Sprint("Role: websetup"), defaultStyle))
+			statusItems = append(statusItems, makeBullet(2, "Role: websetup", defaultStyle))
 		}
 
 		for _, peer := range status.Peers {
@@ -466,22 +475,36 @@ var daemonWaitCommand = &cli.Command{
 	Usage: "Wait until certain events occur. If no events provided will wait for as many elements as it can (the best case scenario). Husarnet will continue working even if some of those elements are unreachable, so consider narrowing your search down a bit.",
 	Action: func(ctx *cli.Context) error {
 		ignoreExtraArguments(ctx)
-		waitBaseANY()
-		waitBaseUDP()
-		waitWebsetup()
+		err := waitBaseANY()
+		if err != nil {
+			return err
+		}
 
-		return nil
+		err = waitBaseUDP()
+		if err != nil {
+			return err
+		}
+
+		return waitWebsetup()
 	},
 	Subcommands: []*cli.Command{
+		{
+			Name:      "daemon",
+			Aliases:   []string{"ready"},
+			Usage:     "Wait until the deamon is able to return it's own status",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				ignoreExtraArguments(ctx)
+				return waitDaemon()
+			},
+		},
 		{
 			Name:      "base",
 			Usage:     "Wait until there is a base-server connection established (via any protocol)",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				ignoreExtraArguments(ctx)
-				waitBaseANY()
-
-				return nil
+				return waitBaseANY()
 			},
 			Subcommands: []*cli.Command{
 				{
@@ -490,9 +513,7 @@ var daemonWaitCommand = &cli.Command{
 					ArgsUsage: " ", // No arguments needed
 					Action: func(ctx *cli.Context) error {
 						ignoreExtraArguments(ctx)
-						waitBaseUDP()
-
-						return nil
+						return waitBaseUDP()
 					},
 				},
 			},
@@ -503,10 +524,13 @@ var daemonWaitCommand = &cli.Command{
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				ignoreExtraArguments(ctx)
-				waitBaseANY()
-				waitWebsetup()
 
-				return nil
+				err := waitBaseANY()
+				if err != nil {
+					return err
+				}
+
+				return waitWebsetup()
 			},
 		},
 		{
@@ -515,9 +539,7 @@ var daemonWaitCommand = &cli.Command{
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				ignoreExtraArguments(ctx)
-				waitJoined()
-
-				return nil
+				return waitJoined()
 			},
 		},
 		{
@@ -526,10 +548,16 @@ var daemonWaitCommand = &cli.Command{
 			ArgsUsage: "[device name or ip]",
 			Action: func(ctx *cli.Context) error {
 				requiredArgumentsNumber(ctx, 1)
-
-				waitHost(ctx.Args().First())
-
-				return nil
+				return waitHost(ctx.Args().First())
+			},
+		},
+		{
+			Name:      "hostnames",
+			Usage:     "Wait until given hosts are known to the system",
+			ArgsUsage: "[device name] […]",
+			Action: func(ctx *cli.Context) error {
+				minimumArguments(ctx, 1)
+				return waitHostnames(ctx.Args().Slice())
 			},
 		},
 	},

@@ -62,10 +62,8 @@ if [ ${platform} == "unix" ]; then
   mkdir -p ${output_dir}/out/usr/bin
   cp ${go_output} ${output_dir}/out/usr/bin/husarnet
   cp ${go_output} ${release_base}/husarnet-${platform}-${arch}
-  cp ${go_output} ${release_base}/husarnet
 elif [ ${platform} == "windows" ]; then
   cp ${go_output} ${release_base}/husarnet-${platform}-${arch}.exe
-  cp ${go_output} ${release_base}/husarnet.exe
 fi
 
 popd

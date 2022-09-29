@@ -14,7 +14,8 @@ jobs:
         arch: [amd64, i386, arm64, armhf, riscv64]
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
       - name: Prepare build
         run: ./util/build-prepare.sh
@@ -50,7 +51,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
       - name: Prepare build
         run: ./util/build-prepare.sh
@@ -79,7 +81,8 @@ jobs:
     runs-on: windows-2019
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
       - name: Fetch artifacts
         uses: actions/download-artifact@v3
@@ -108,7 +111,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
       - uses: actions/setup-python@v2
         with:
@@ -171,6 +175,8 @@ jobs:
         run: ./util/deploy.sh main
 
   build_docker:
+    needs: build_unix
+
     runs-on: ubuntu-latest
 
     strategy:
@@ -201,6 +207,17 @@ jobs:
           registry: docker.io
           username: ${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}
           password: ${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}
+
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages
+
+      - name: Move build artifacts in an expected place
+        run: cp husarnet* build/release/
+
+      - name: Prepare build artifact aliases
+        run: ./util/docker-prepare-paths.sh ${{matrix.arch_alias}}
 
       - name: Build and push
         uses: docker/build-push-action@v2

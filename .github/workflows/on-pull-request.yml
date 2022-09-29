@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
       - name: Prepare formatting tools
         run: ./util/format-prepare.sh
@@ -26,7 +27,8 @@ jobs:
         arch: [amd64, i386, arm64, armhf, riscv64]
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
       - name: Prepare build
         run: ./util/build-prepare.sh
@@ -62,7 +64,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
       - name: Prepare build
         run: ./util/build-prepare.sh
@@ -91,7 +94,8 @@ jobs:
     runs-on: windows-2019
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
       - name: Fetch artifacts
         uses: actions/download-artifact@v3
@@ -117,11 +121,19 @@ jobs:
           path: platforms\windows\Output\husarnet-setup.exe
 
   build_docker:
+    needs: [build_unix]
+
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        arch: [linux/amd64] # This is limited due to performance reasons. Remember to enable them on production/release builds
+        include:
+          - arch: linux/amd64
+            arch_alias: amd64
+          - arch: linux/arm64/v8
+            arch_alias: arm64
+          - arch: linux/arm/v7
+            arch_alias: armhf
 
     steps:
       - name: Check out the repo
@@ -135,19 +147,30 @@ jobs:
         with:
           version: latest
 
-      - name: Build docker images
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages
+
+      - name: Move build artifacts in an expected place
+        run: cp husarnet* build/release/
+
+      - name: Prepare build artifact aliases
+        run: ./util/docker-prepare-paths.sh ${{matrix.arch_alias}}
+
+      - name: Build and push
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./platforms/docker/Dockerfile
           platforms: ${{matrix.arch}}
-          push: false
 
   run_tests:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
       - name: Prepare tests
         run: ./util/test-prepare.sh

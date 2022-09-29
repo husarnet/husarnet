@@ -1,30 +1,13 @@
 #!/bin/bash
 source $(dirname "$0")/bash-base.sh
 
-if [ "$#" -eq 0 ] || [ "$#" -gt 2 ]; then
+if [ ! "$#" -eq 2 ]; then
     echo "Usage: $0 <architecture> <platform>"
     exit 1
 fi
 
-# linux/arm64/v8, linux/amd64, linux/arm/v7
-# buildx convert
-if [ "$#" -eq 1 ]; then
-    if [ "$1" = "linux/amd64" ]; then
-      arch=amd64
-      platform=unix
-    elif [ "$1" = "linux/arm/v7" ]; then
-      arch=armhf
-      platform=unix
-    elif [ "$1" = "linux/arm64" ]; then
-      arch=arm64
-      platform=unix
-    fi
-fi
-
-if [ "$#" -eq 2 ]; then
-    arch=$1
-    platform=$2
-fi
+arch=$1
+platform=$2
 
 echo "[HUSARNET BS] Building ${platform} ${arch} daemon"
 
@@ -54,10 +37,8 @@ cmake --build ${build_dir} --target install
 
 if [ ${platform} == "unix" ]; then
   cp ${build_dir}/husarnet-daemon ${release_base}/husarnet-daemon-${platform}-${arch}
-  cp ${build_dir}/husarnet-daemon ${release_base}/husarnet-daemon
 elif [ ${platform} == "windows" ]; then
   cp ${build_dir}/husarnet-daemon.exe ${release_base}/husarnet-daemon-${platform}-${arch}.exe
-  cp ${build_dir}/husarnet-daemon.exe ${release_base}/husarnet-daemon.exe
 fi
 
 popd

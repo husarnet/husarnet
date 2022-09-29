@@ -224,19 +224,39 @@ namespace Port {
     return buffer.str();
   }
 
-  bool writeFile(std::string path, std::string data)
+  static bool writeFileDirect(std::string path, std::string data)
   {
-    FILE* f = fopen((path + ".tmp").c_str(), "wb");
+    FILE* f = fopen(path.c_str(), "wb");
     int ret = fwrite(data.data(), data.size(), 1, f);
-    if(ret != 1) {
-      LOG("could not write to %s (failed to write to temporary file)",
-          path.c_str());
-      return false;
-    }
     fsync(fileno(f));
     fclose(f);
 
-    return renameFile(path + ".tmp", path);
+    if(ret != 1) {
+      LOG("could not write to %s", path.c_str());
+      return false;
+    }
+
+    return true;
+  }
+
+  bool writeFile(std::string path, std::string data)
+  {
+    std::string tmpPath = path + ".tmp";
+
+    bool success = writeFileDirect(tmpPath, data);
+    if(!success) {
+      LOG("trying to write to %s directly", path.c_str());
+      return writeFileDirect(path, data);
+    }
+
+    success = renameFile(tmpPath, path);
+    if(!success) {
+      removeFile(tmpPath);
+      LOG("trying to write to %s directly", path.c_str());
+      return writeFileDirect(path, data);
+    }
+
+    return true;
   }
 
   bool isFile(std::string path)
@@ -251,6 +271,15 @@ namespace Port {
       LOG("failed to rename %s to %s", src.c_str(), dst.c_str());
     }
     return success;
+  }
+
+  bool removeFile(std::string path)
+  {
+    if(remove(path.c_str()) != 0) {
+      LOG("unable to remove file %s", path.c_str());
+      return false;
+    }
+    return true;
   }
 
   void notifyReady()

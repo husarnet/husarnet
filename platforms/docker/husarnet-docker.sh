@@ -8,20 +8,20 @@ catch() {
 }
 trap 'catch $? $LINENO' EXIT
 
-# Rewrite old name to new one
+# Rewrite old names to new ones
 if [ ! -z "${JOINCODE:-}" ]; then
-    HUSARNET_JOIN_CODE="${JOINCODE}"
+    export HUSARNET_JOIN_CODE="${JOINCODE}"
 fi
-
-# Check whether join code is set
-if [ -z "${HUSARNET_JOIN_CODE:-}" ]; then
-    echo "You have to set HUSARNET_JOIN_CODE environment variable in order for this container to work"
-    exit 1
+if [ ! -z "${HUSARNET_JOINCODE:-}" ]; then
+    export HUSARNET_JOIN_CODE="${HUSARNET_JOINCODE}"
+fi
+if [ ! -z "${HOSTNAME:-}" ]; then
+    export HUSARNET_HOSTNAME="${HOSTNAME}"
 fi
 
 # Start daemon
 if [ -z "${HUSARNET_DEBUG:-}" ]; then
-    HUSARNET_JOIN_CODE="${HUSARNET_JOIN_CODE}" husarnet-daemon >/dev/null 2>&1
+    husarnet-daemon >/dev/null 2>&1
 else
-    HUSARNET_JOIN_CODE="${HUSARNET_JOIN_CODE}" husarnet-daemon
+    husarnet-daemon
 fi

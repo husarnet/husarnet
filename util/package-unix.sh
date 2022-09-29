@@ -28,4 +28,3 @@ fpm \
     --chdir ${output_dir}
 
 cp ${build_dir}/husarnet-${arch}.${package} ${release_base}/husarnet-${package_version}-${arch}.${package}
-cp ${build_dir}/husarnet-${arch}.${package} ${release_base}/husarnet.${package}
