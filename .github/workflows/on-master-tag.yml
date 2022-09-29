@@ -217,6 +217,7 @@ jobs:
         run: |
           mkdir -p build/release
           cp husarnet* build/release/
+          chmod +x build/release/husarnet*
 
       - name: Prepare build artifact aliases
         run: ./util/docker-prepare-paths.sh ${{matrix.arch_alias}}
