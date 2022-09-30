@@ -40,4 +40,6 @@ const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::hostname, ""},
 };
 
-const std::map<InternalSetting, std::string> internalDefaults = {{}};
+const std::map<InternalSetting, std::string> internalDefaults = {
+    {InternalSetting::websetupSecret, ""},
+};

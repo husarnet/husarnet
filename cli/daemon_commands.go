@@ -179,6 +179,10 @@ func getWhitelistBullets(status DaemonStatus, verbose bool) []pterm.BulletListIt
 			statusItems = append(statusItems, makeBullet(2, "Role: websetup", defaultStyle))
 		}
 
+		if address == status.LocalIP {
+			statusItems = append(statusItems, makeBullet(2, "Role: this device", defaultStyle))
+		}
+
 		for _, peer := range status.Peers {
 			if peer.HusarnetAddress != address {
 				continue
@@ -353,9 +357,9 @@ var daemonStatusCommand = &cli.Command{
 		statusItems = append(statusItems, makeBullet(0, "Readiness", defaultStyle))
 		statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Is ready to handle data: %v", status.IsReady), defaultStyle))
 		if status.IsJoined {
-			statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Is joined/adopted: %v", status.IsJoined), defaultStyle))
+			statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Is joined: %v", status.IsJoined), defaultStyle))
 		} else {
-			statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Is ready to be joined/adopted: %v", status.IsReadyToJoin), defaultStyle))
+			statusItems = append(statusItems, makeBullet(1, fmt.Sprintf("Is ready to be joined: %v", status.IsReadyToJoin), defaultStyle))
 		}
 
 		if verbose {
@@ -373,6 +377,7 @@ var daemonStatusCommand = &cli.Command{
 
 var daemonSetupServerCommand = &cli.Command{
 	Name:      "setup-server",
+	Aliases:   []string{"change-server"},
 	Usage:     "Connect your Husarnet device to different Husarnet infrastructure",
 	ArgsUsage: "[dashboard fqdn]",
 	Action: func(ctx *cli.Context) error {
@@ -520,7 +525,7 @@ var daemonWaitCommand = &cli.Command{
 		},
 		{
 			Name:      "joinable",
-			Usage:     "Wait until there is enough connectivity to join a network/adopt a device",
+			Usage:     "Wait until there is enough connectivity to join to a network",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				ignoreExtraArguments(ctx)
@@ -535,7 +540,7 @@ var daemonWaitCommand = &cli.Command{
 		},
 		{
 			Name:      "joined",
-			Usage:     "Wait until there is enough connectivity to join a network/adopt a device",
+			Usage:     "Wait until there the daemon has joined the network",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				ignoreExtraArguments(ctx)

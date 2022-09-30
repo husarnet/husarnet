@@ -176,8 +176,7 @@ bool HusarnetManager::isJoined()
   // TODO long-term - add a periodic latency check for websetup
   // auto websetupId = deviceIdFromIpAddress(getWebsetupAddress());
   // getLatency(websetupId) >= 0
-  return !configStorage->isInternalSettingEmpty(
-      InternalSetting::websetupSecret);
+  return configStorage->isOnWhitelist(getWebsetupAddress());
 }
 
 void HusarnetManager::changeServer(std::string domain)

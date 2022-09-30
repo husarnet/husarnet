@@ -18,7 +18,11 @@ using namespace nlohmann;  // json
 // Remember to add sane defaults in husarnet_config.h
 // Keep the naming consistent, i.e use only enable* format, and *not* *enable or
 // disable*
-BETTER_ENUM(InternalSetting, int, websetupSecret = 1)
+BETTER_ENUM(
+    InternalSetting,
+    int,
+    websetupSecret = 1  // string
+)
 BETTER_ENUM(
     UserSetting,
     int,

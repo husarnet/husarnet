@@ -123,8 +123,7 @@ void ApiServer::runThread()
   });
 
   svr.Get(
-      "/api/status",
-      [&](const httplib::Request& req, httplib::Response& res) {
+      "/api/status", [&](const httplib::Request& req, httplib::Response& res) {
         auto hostTable = manager->getConfigStorage().getHostTable();
         std::map<std::string, std::string> hostTableStringified;
 
@@ -166,9 +165,12 @@ void ApiServer::runThread()
                 {"local_hostname", manager->getSelfHostname()},
                 {"is_dirty", manager->isDirty()},
                 {"is_joined", manager->isJoined()},
-                {"is_ready_to_join", manager->isConnectedToBase()},
-                {"is_ready", manager->isConnectedToBase() &&
-                                 manager->isConnectedToWebsetup()},
+                {"is_ready_to_join",
+                 manager
+                     ->isConnectedToBase()},  // base server connection should
+                                              // be enough to assume that we can
+                                              // try connectting to websetup
+                {"is_ready", manager->isConnectedToBase()},
                 {"connection_status",
                  {
                      {"base", manager->isConnectedToBase()},
@@ -189,8 +191,7 @@ void ApiServer::runThread()
       });
 
   svr.Post(
-      "/api/join",
-      [&](const httplib::Request& req, httplib::Response& res) {
+      "/api/join", [&](const httplib::Request& req, httplib::Response& res) {
         if(!validateSecret(req, res)) {
           return;
         }
@@ -240,8 +241,7 @@ void ApiServer::runThread()
       });
 
   svr.Post(
-      "/api/host/rm",
-      [&](const httplib::Request& req, httplib::Response& res) {
+      "/api/host/rm", [&](const httplib::Request& req, httplib::Response& res) {
         if(!validateSecret(req, res)) {
           return;
         }

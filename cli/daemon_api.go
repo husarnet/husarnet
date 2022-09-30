@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -29,7 +28,7 @@ func (response *DaemonResponse[ResultType]) IsOk() bool {
 type EmptyResult interface{}
 
 type BaseConnectionStatus struct {
-	Address net.IP
+	Address netip.Addr
 	Port    int
 	Type    string // TODO long-term - make it enum maybe
 }
@@ -59,8 +58,8 @@ type DaemonStatus struct {
 	WebsetupAddress netip.Addr           `json:"websetup_address"`
 	BaseConnection  BaseConnectionStatus `json:"base_connection"`
 
-	LocalIP       net.IP `json:"local_ip"`
-	LocalHostname string `json:"local_hostname"`
+	LocalIP       netip.Addr `json:"local_ip"`
+	LocalHostname string     `json:"local_hostname"`
 
 	IsJoined         bool            `json:"is_joined"`
 	IsReady          bool            `json:"is_ready"`
