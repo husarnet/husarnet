@@ -131,7 +131,7 @@ func printWhitelist(status DaemonStatus, verbose bool) {
 		pterm.Print("  ") // Spacing
 
 		if peerData.IsSecure {
-			pterm.Printf("%s secure        ", greenDot)
+			pterm.Printf("%s secure       ", greenDot)
 		} else {
 			pterm.Printf("%s no data flow ", neutralDot)
 		}
