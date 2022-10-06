@@ -141,7 +141,7 @@ static void getLocalIpv6Addresses(std::vector<IpAddress>& ret)
     fclose(f);
 }
 
-static std::string configDir = "/var/lib/husarnet";
+static std::string configDir = "/var/lib/husarnet/";
 
 static int privilegedProcessFd = 0;
 
@@ -263,27 +263,27 @@ namespace Privileged {
 
   std::string getConfigPath()
   {
-    return configDir + "/config.json";
+    return configDir + "config.json";
   }
 
   std::string getIdentityPath()
   {
-    return configDir + "/id";
+    return configDir + "id";
   }
 
   std::string getApiSecretPath()
   {
-    return configDir + "/daemon_api_token";
+    return configDir + "daemon_api_token";
   }
 
   std::string getLegacyConfigPath()
   {
-    return configDir + "/config.db";
+    return configDir + "config.db";
   }
 
   std::string getLicenseJsonPath()
   {
-    return configDir + "/license.json";
+    return configDir + "license.json";
   }
 
   std::string readLicenseJson()

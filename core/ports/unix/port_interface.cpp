@@ -232,7 +232,28 @@ namespace Port {
     fclose(f);
 
     if(ret != 1) {
-      LOG("could not write to %s", path.c_str());
+      return false;
+    }
+
+    return true;
+  }
+
+  static bool removeFile(std::string path)
+  {
+    if(remove(path.c_str()) != 0) {
+      return false;
+    }
+
+    return true;
+  }
+
+  static bool renameFileReal(std::string src, std::string dst, bool quiet)
+  {
+    bool success = rename(src.c_str(), dst.c_str()) == 0;
+    if(!success) {
+      if(!quiet) {
+        LOGV("failed to rename %s to %s", src.c_str(), dst.c_str());
+      }
       return false;
     }
 
@@ -245,15 +266,35 @@ namespace Port {
 
     bool success = writeFileDirect(tmpPath, data);
     if(!success) {
-      LOGV("trying to write to %s directly", path.c_str());
-      return writeFileDirect(path, data);
+      LOGV(
+          "unable to write to a temporary file %s, writing to %s directly",
+          tmpPath.c_str(), path.c_str());
+      success = writeFileDirect(path, data);
+      if(!success) {
+        LOGV("unable to write to %s directly", path.c_str());
+        return false;
+      }
+      return true;
     }
 
-    success = renameFile(tmpPath, path);
+    success = renameFileReal(tmpPath, path, true);
+    if(success) {
+      return true;
+    }
+
+    LOGV(
+        "unable to rename %s to %s, writing to %s directly", tmpPath.c_str(),
+        path.c_str(), path.c_str());
+
+    success = removeFile(tmpPath);
     if(!success) {
-      removeFile(tmpPath);
-      LOGV("trying to write to %s directly", path.c_str());
-      return writeFileDirect(path, data);
+      LOGV("unable to remove temporary file %s", tmpPath.c_str());
+    }
+
+    success = writeFileDirect(path, data);
+    if(!success) {
+      LOGV("unable to write directly to %s", path.c_str());
+      return false;
     }
 
     return true;
@@ -266,20 +307,7 @@ namespace Port {
 
   bool renameFile(std::string src, std::string dst)
   {
-    bool success = rename(src.c_str(), dst.c_str()) == 0;
-    if(!success) {
-      LOGV("failed to rename %s to %s", src.c_str(), dst.c_str());
-    }
-    return success;
-  }
-
-  bool removeFile(std::string path)
-  {
-    if(remove(path.c_str()) != 0) {
-      LOGV("unable to remove file %s", path.c_str());
-      return false;
-    }
-    return true;
+    return renameFileReal(src, dst, false);
   }
 
   void notifyReady()
