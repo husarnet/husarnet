@@ -4,6 +4,7 @@ cmake_policy(SET CMP0048 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
 file(READ ../../version.txt husarnet_version)
+string(STRIP ${husarnet_version} husarnet_version)
 project(husarnet VERSION ${husarnet_version})
 
 include(../../core/husarnet.cmake)

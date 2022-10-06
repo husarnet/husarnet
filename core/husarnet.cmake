@@ -69,8 +69,6 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/ports)
 file(GLOB husarnet_ports_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_ports_SRC})
 
-add_compile_definitions(PORT_ARCH="${CMAKE_SYSTEM_PROCESSOR}")
-
 include_directories(${CMAKE_CURRENT_LIST_DIR}/privileged)
 file(GLOB husarnet_privileged_SRC "${CMAKE_CURRENT_LIST_DIR}/privileged/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_privileged_SRC})
@@ -99,6 +97,7 @@ file(COPY ../../core/ DESTINATION ${TEMP_INCLUDE_DIR}/husarnet/ FILES_MATCHING
 # Join all of the above
 add_library(husarnet_core STATIC ${husarnet_core_SRC})
 target_include_directories(husarnet_core PUBLIC ${TEMP_INCLUDE_DIR})
+target_compile_definitions(husarnet_core PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PROCESSOR}")
 
 # Configure dependencies
 include(FetchContent)
