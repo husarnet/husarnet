@@ -13,6 +13,8 @@ import (
 	"net/url"
 	"os"
 	"syscall"
+
+	"github.com/pterm/pterm"
 )
 
 type DaemonResponse[ResultType any] struct {
@@ -115,7 +117,7 @@ func getApiErrorString[ResultType any](response DaemonResponse[ResultType]) stri
 		return "status ok/no error"
 	}
 
-	return fmt.Sprintf("response status: %s, error: %s", response.Status, response.Error)
+	return pterm.Sprintf("response status: %s, error: %s", response.Status, response.Error)
 }
 
 func handlePotentialDaemonApiRequestError[ResultType any](response DaemonResponse[ResultType], err error) {
@@ -135,9 +137,7 @@ func readResponse[ResultType any](resp *http.Response) DaemonResponse[ResultType
 		dieE(err)
 	}
 
-	if verboseLogs {
-		fmt.Println(string(body))
-	}
+	printDebug(string(body))
 
 	var response DaemonResponse[ResultType]
 	err = json.Unmarshal([]byte(body), &response)
@@ -151,7 +151,7 @@ func readResponse[ResultType any](resp *http.Response) DaemonResponse[ResultType
 func callDaemonRetryable[ResultType any](retryable bool, route string, urlencodedBody url.Values, lambda func(route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error)) (DaemonResponse[ResultType], error) {
 	response, err := lambda(route, urlencodedBody)
 	if err != nil {
-		printErrorE(err)
+		printDebug("%v", err)
 
 		if !onWindows() && retryable && errors.Is(err, syscall.ECONNREFUSED) {
 			printInfo("Daemon does not seem to be running")
@@ -211,10 +211,10 @@ func getDaemonStatus() DaemonStatus {
 func getDaemonRunningVersion() string {
 	response, err := getDaemonStatusRaw(true)
 	if err != nil {
-		return fmt.Sprintf("Unknown (%s)", err)
+		return pterm.Sprintf("Unknown (%s)", err)
 	}
 	if !response.IsOk() {
-		return fmt.Sprintf("Unknown (%s)", getApiErrorString(response))
+		return pterm.Sprintf("Unknown (%s)", getApiErrorString(response))
 	}
 
 	return response.Result.Version

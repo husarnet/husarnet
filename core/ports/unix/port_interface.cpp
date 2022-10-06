@@ -245,14 +245,14 @@ namespace Port {
 
     bool success = writeFileDirect(tmpPath, data);
     if(!success) {
-      LOG("trying to write to %s directly", path.c_str());
+      LOGV("trying to write to %s directly", path.c_str());
       return writeFileDirect(path, data);
     }
 
     success = renameFile(tmpPath, path);
     if(!success) {
       removeFile(tmpPath);
-      LOG("trying to write to %s directly", path.c_str());
+      LOGV("trying to write to %s directly", path.c_str());
       return writeFileDirect(path, data);
     }
 
@@ -268,7 +268,7 @@ namespace Port {
   {
     bool success = rename(src.c_str(), dst.c_str()) == 0;
     if(!success) {
-      LOG("failed to rename %s to %s", src.c_str(), dst.c_str());
+      LOGV("failed to rename %s to %s", src.c_str(), dst.c_str());
     }
     return success;
   }
@@ -276,7 +276,7 @@ namespace Port {
   bool removeFile(std::string path)
   {
     if(remove(path.c_str()) != 0) {
-      LOG("unable to remove file %s", path.c_str());
+      LOGV("unable to remove file %s", path.c_str());
       return false;
     }
     return true;

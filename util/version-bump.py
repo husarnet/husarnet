@@ -55,7 +55,7 @@ def get_new_version_string_for_cpp_and_iss(new_ver):
     return '#define HUSARNET_VERSION "' + new_ver + '"'
 
 def get_new_version_string_for_go(new_ver):
-    return 'const version string = "' + new_ver + '"'
+    return 'const cliVersion string = "' + new_ver + '"'
 
 def replace_in_file(new_ver_string, searched_string, filepath, eol_char):
     config = []
@@ -85,7 +85,7 @@ def main():
     )
     replace_in_file(
         get_new_version_string_for_go(new_ver),
-        "const version string =",
+        "const cliVersion string =",
         cli_messages_path,
         "\n"
     )

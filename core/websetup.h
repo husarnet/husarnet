@@ -45,4 +45,5 @@ class WebsetupConnection {
 
   void join(std::string joinCode, std::string reportedHostname);
   Time getLastContact();
+  Time getLastInitReply();
 };

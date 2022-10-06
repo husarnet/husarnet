@@ -4,7 +4,6 @@
 package main
 
 import (
-	"fmt"
 	"hdm/generated"
 	"net/http"
 	"os"
@@ -12,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/pterm/pterm"
 )
 
 type authedTransport struct {
@@ -47,10 +45,10 @@ func saveAuthTokenToFile(authToken string) {
 	writeFileErr := os.WriteFile(getTokenFilePath(), []byte(authToken), 0600)
 
 	if writeFileErr != nil {
-		fmt.Println("Error: could not save the auth token. " + writeFileErr.Error())
+		printError("Error: could not save the auth token. " + writeFileErr.Error())
 	}
 
-	logV("Saving token", authToken)
+	printDebug("Saving token")
 }
 
 func loginAndSaveAuthToken() string {
@@ -69,7 +67,7 @@ func loginAndSaveAuthToken() string {
 func getAuthToken() string {
 	tokenFromFile, err := os.ReadFile(getTokenFilePath())
 	if err == nil {
-		logV("Found token in file!")
+		printDebug("Found token in file!")
 		return string(tokenFromFile)
 	}
 	newToken := loginAndSaveAuthToken()
@@ -87,7 +85,7 @@ func getRefreshedToken(authToken string) string {
 }
 
 func refreshToken(authToken string) {
-	spinner, _ := pterm.DefaultSpinner.Start("Refreshing token…")
+	spinner := getSpinner("Refreshing token…", false)
 	refreshedToken := getRefreshedToken(authToken)
 	saveAuthTokenToFile(refreshedToken)
 	spinner.Success()
@@ -99,11 +97,11 @@ func isSignatureExpiredOrInvalid(err error) bool {
 	}
 	message := err.Error()
 	if strings.Contains(message, "Signature has expired") {
-		logV("Signature has expired, user will need to provide credentials")
+		printDebug("Signature has expired, user will need to provide credentials")
 		return true
 	}
 	if strings.Contains(message, "Error decoding signature") {
-		logV("JWT Token signature is invalid. This may happen when user changed the endpoint URL in the meantime.")
+		printDebug("JWT Token signature is invalid. This may happen when user changed the endpoint URL in the meantime.")
 		return true
 	}
 	die("Fatal: unknown error from the server: " + message)

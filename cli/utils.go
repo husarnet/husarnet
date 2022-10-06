@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strings"
 	"syscall"
+
+	"github.com/pterm/pterm"
 )
 
 // returns true if first slice has equal len() and exactly the same elements as the other one
@@ -79,16 +81,16 @@ func rerunWithSudo() {
 func runSubcommand(confirm bool, command string, args ...string) {
 	logCommandString := command + " " + strings.Join(args, " ")
 	if confirm {
-		if !askForConfirmation(fmt.Sprintf("Do you want to run: %s?", logCommandString)) {
+		if !askForConfirmation(pterm.Sprintf("Do you want to run: %s?", logCommandString)) {
 			dieEmpty()
 		}
 	} else {
-		printInfo(fmt.Sprintf("Running: %s", logCommandString))
+		printInfo(pterm.Sprintf("Running: %s", logCommandString))
 	}
 
 	commandPath, err := exec.LookPath(command)
 	if err != nil {
-		printError(fmt.Sprintf("%s does not appear to be in PATH. Are you sure it is installed?", command))
+		printError(pterm.Sprintf("%s does not appear to be in PATH. Are you sure it is installed?", command))
 		commandPath = fmt.Sprintf("/usr/bin/%s", command)
 	}
 
@@ -154,4 +156,20 @@ func makeCannonicalAddr(input string) string {
 	}
 
 	return addr.StringExpanded()
+}
+
+// remove duplicates from a given slice
+func removeDuplicates[T string](input []T) []T {
+	set := make(map[T]struct{})
+
+	for _, it := range input {
+		set[it] = struct{}{}
+	}
+
+	keys := make([]T, 0, len(set))
+	for k := range set {
+		keys = append(keys, k)
+	}
+
+	return keys
 }

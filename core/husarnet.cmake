@@ -69,6 +69,8 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/ports)
 file(GLOB husarnet_ports_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_ports_SRC})
 
+add_compile_definitions(PORT_ARCH="${CMAKE_SYSTEM_PROCESSOR}")
+
 include_directories(${CMAKE_CURRENT_LIST_DIR}/privileged)
 file(GLOB husarnet_privileged_SRC "${CMAKE_CURRENT_LIST_DIR}/privileged/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_privileged_SRC})
@@ -80,7 +82,6 @@ if(${BUILD_HTTP_CONTROL_API})
 endif()
 
 # Top level project files
-
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 file(GLOB core_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
@@ -97,7 +98,6 @@ file(COPY ../../core/ DESTINATION ${TEMP_INCLUDE_DIR}/husarnet/ FILES_MATCHING
 
 # Join all of the above
 add_library(husarnet_core STATIC ${husarnet_core_SRC})
-
 target_include_directories(husarnet_core PUBLIC ${TEMP_INCLUDE_DIR})
 
 # Configure dependencies
@@ -149,7 +149,7 @@ target_include_directories(husarnet_core PUBLIC ${better_enums_SOURCE_DIR})
 
 FetchContent_Declare(
   sqlite3
-  URL  https://sqlite.org/2022/sqlite-amalgamation-3390200.zip
+  URL https://sqlite.org/2022/sqlite-amalgamation-3390200.zip
 )
 FetchContent_MakeAvailable(sqlite3)
 include_directories(${sqlite3_SOURCE_DIR})
@@ -212,4 +212,3 @@ if(${BUILD_HTTP_CONTROL_API})
     set_property(DIRECTORY ${httplib_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
   endif()
 endif()
-

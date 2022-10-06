@@ -4,7 +4,6 @@
 package main
 
 import (
-	"fmt"
 	"hdm/generated"
 	"strconv"
 
@@ -21,8 +20,7 @@ func interactiveGetGroupByName() generated.GetGroupsGroupsGroupType {
 
 	groupNames := u.Map(response.Groups, func(g generated.GetGroupsGroupsGroupType) string { return g.Name })
 
-	selectedGroup, _ := pterm.DefaultInteractiveSelect.WithDefaultText("Select group").WithOptions(groupNames).Show()
-	pterm.Info.Printfln("Selected group: %s", pterm.Green(selectedGroup))
+	selectedGroup := interactiveChooseFrom("Select group", groupNames)
 
 	group, err := u.Find(response.Groups, func(g generated.GetGroupsGroupsGroupType) bool { return g.Name == selectedGroup })
 	if err != nil {
@@ -77,7 +75,7 @@ var dashboardGroupCommand = &cli.Command{
 				table.SetHeader("ID", "Name", "DeviceCount", "JoinCode")
 
 				for _, group := range response.Groups {
-					table.AddRow(group.Id, group.Name, fmt.Sprintf("%d", group.DeviceCount), ShortenJoinCode(group.JoinCode))
+					table.AddRow(group.Id, group.Name, pterm.Sprintf("%d", group.DeviceCount), ShortenJoinCode(group.JoinCode))
 				}
 
 				table.Println()
@@ -109,7 +107,7 @@ var dashboardGroupCommand = &cli.Command{
 				table.SetHeader("ID(ipv6)", "Name", "Version", "UserAgent")
 
 				for _, member := range response.GroupMembersById {
-					table.AddRow(member.DeviceId, member.Name, member.Version, member.UserAgent)
+					table.AddRow(makeCannonicalAddr(member.DeviceId), member.Name, member.Version, member.UserAgent)
 				}
 
 				table.Println()
@@ -128,7 +126,7 @@ var dashboardGroupCommand = &cli.Command{
 				var groupName string
 
 				if ctx.Args().Len() == 0 {
-					groupName, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("Group name").Show()
+					groupName = interactiveTextInput("Group name")
 				} else {
 					groupName = ctx.Args().First()
 				}
@@ -137,7 +135,7 @@ var dashboardGroupCommand = &cli.Command{
 					return generated.CreateGroup(client, groupName)
 				})
 
-				printSuccess(pterm.Sprintf("Group created. New group information:\n\tID: %s\n\tName: %s\n", response.CreateGroup.Group.Id, response.CreateGroup.Group.Name))
+				printSuccess(pterm.Sprintf("Group created. New group information:\nID: %s\nName: %s\n", response.CreateGroup.Group.Id, response.CreateGroup.Group.Name))
 
 				return nil
 			},
@@ -160,7 +158,7 @@ var dashboardGroupCommand = &cli.Command{
 				var newName string
 
 				if ctx.Args().Len() < 2 {
-					newName, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("New group name").Show()
+					newName = interactiveTextInput("New group name")
 				} else {
 					newName = ctx.Args().Get(1)
 				}
@@ -191,7 +189,7 @@ var dashboardGroupCommand = &cli.Command{
 					groupId = getGroupIdByNameOrId(ctx.Args().First())
 				}
 
-				askForConfirmation("Are you sure you want to delete this group? All the devices inside the group will be deleted as well.")
+				askForConfirmation("Are you sure you want to delete this group?")
 
 				callDashboardAPI(func(client graphql.Client) (*generated.RemoveGroupResponse, error) {
 					return generated.RemoveGroup(client, groupId)

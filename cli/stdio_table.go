@@ -6,7 +6,6 @@ package main
 import (
 	"strings"
 
-	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
 )
 
@@ -33,12 +32,20 @@ func (t *Table) AddRow(fields ...string) *Table {
 
 func (t *Table) Println() {
 	pTable := pterm.DefaultTable
+	// pTable.HeaderStyle = secondaryStyle
 
 	data := t.rows
 
 	if t.header != nil {
 		pTable = *pTable.WithHasHeader()
+		pTable = *pTable.WithHeaderRowSeparator("⎯")
 		data = append([][]string{t.header}, data...)
+	}
+
+	for i, row := range data {
+		for j, cell := range row {
+			data[i][j] = trimNewlines(cell)
+		}
 	}
 
 	tableStr, err := pTable.WithData(data).Srender()
@@ -50,7 +57,7 @@ func (t *Table) Println() {
 	maxLineLen := 0
 
 	for _, line := range tableLines {
-		lineLen := runewidth.StringWidth(pterm.RemoveColorFromString(line))
+		lineLen := runeLength(line)
 
 		if lineLen > maxLineLen {
 			maxLineLen = lineLen
@@ -62,8 +69,8 @@ func (t *Table) Println() {
 		title = " " + t.title + " "
 	}
 
-	gray := pterm.NewStyle(pterm.FgGray)
-	pterm.Println(gray.Sprint("⎯⎯⎯") + title + gray.Sprint(strings.Repeat("⎯", maxLineLen-len(title)-3)))
+	borderStyle := pterm.ThemeDefault.TableSeparatorStyle
+	pterm.Println(borderStyle.Sprint("⎯⎯⎯") + pterm.ThemeDefault.PrimaryStyle.Sprint(title) + borderStyle.Sprint(strings.Repeat("⎯", maxLineLen-runeLength(title)-3)))
 	pterm.Println(tableStr)
-	pterm.Println(gray.Sprint(strings.Repeat("⎯", maxLineLen)))
+	pterm.Println(borderStyle.Sprint(strings.Repeat("⎯", maxLineLen)))
 }

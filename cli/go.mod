@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/Khan/genqlient v0.5.0
+	github.com/gobeam/stringy v0.0.5
 	github.com/pterm/pterm v0.12.45
 	github.com/rjNemo/underscore v0.4.0
 	github.com/urfave/cli/v2 v2.11.2

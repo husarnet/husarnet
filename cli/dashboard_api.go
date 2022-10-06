@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/pterm/pterm"
 )
 
 func getDashboardUrl() string {
@@ -18,7 +17,7 @@ func callDashboardAPI[responseType any](executeRequest func(client graphql.Clien
 	token := getAuthToken()
 
 	const spinnerMessage = "Executing an API call…"
-	spinner, _ := pterm.DefaultSpinner.Start(spinnerMessage)
+	spinner := getSpinner(spinnerMessage, false)
 
 	client := makeAuthenticatedClient(token)
 	response, err := executeRequest(client)
@@ -27,7 +26,7 @@ func callDashboardAPI[responseType any](executeRequest func(client graphql.Clien
 		spinner.Fail("Invalid/expired token")
 		token = loginAndSaveAuthToken()
 
-		spinner, _ = pterm.DefaultSpinner.Start(spinnerMessage)
+		spinner = getSpinner(spinnerMessage, false)
 		client := makeAuthenticatedClient(token)
 		response, err = executeRequest(client)
 	}

@@ -55,7 +55,8 @@ std::string HusarnetManager::getVersion()
 
 std::string HusarnetManager::getUserAgent()
 {
-  return std::string("Husarnet,") + PORT_NAME + "," + HUSARNET_VERSION;
+  return std::string("Husarnet,") + strToLower(PORT_NAME) + "," +
+         strToLower(PORT_ARCH) + "," + HUSARNET_VERSION;
 }
 
 Identity* HusarnetManager::getIdentity()
@@ -122,7 +123,13 @@ bool HusarnetManager::isConnectedToBase()
 
 bool HusarnetManager::isConnectedToWebsetup()
 {
-  return websetup->getLastContact() != 0;
+  auto websetupPeer =
+      peerContainer->getPeer(deviceIdFromIpAddress(getWebsetupAddress()));
+  if(websetupPeer == NULL) {
+    return false;
+  }
+
+  return websetupPeer->isSecure();
 }
 
 bool HusarnetManager::isDirty()
@@ -176,7 +183,8 @@ bool HusarnetManager::isJoined()
   // TODO long-term - add a periodic latency check for websetup
   // auto websetupId = deviceIdFromIpAddress(getWebsetupAddress());
   // getLatency(websetupId) >= 0
-  return configStorage->isOnWhitelist(getWebsetupAddress());
+  return configStorage->isOnWhitelist(getWebsetupAddress()) &&
+         websetup->getLastInitReply() > 0;
 }
 
 void HusarnetManager::changeServer(std::string domain)

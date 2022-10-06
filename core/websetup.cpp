@@ -123,6 +123,11 @@ Time WebsetupConnection::getLastContact()
   return lastContact;
 }
 
+Time WebsetupConnection::getLastInitReply()
+{
+  return lastInitReply;
+}
+
 void WebsetupConnection::periodicThread()
 {
   while(true) {

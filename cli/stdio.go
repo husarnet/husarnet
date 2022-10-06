@@ -7,21 +7,97 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+	"time"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/term"
 )
 
-var defaultStyle = pterm.DefaultBasicText.Style
+var redFormatter = pterm.Red
+var yellowFormatter = pterm.Yellow
+var greenFormatter = pterm.Green
+var neutralFormatter = pterm.Sprint
 
-var errorStyle = pterm.NewStyle(pterm.FgWhite, pterm.BgRed)
-var warningStyle = pterm.NewStyle(pterm.FgBlack, pterm.BgYellow)
+var redDot = redFormatter("🔴")
+var yellowDot = yellowFormatter("🟡")
+var greenDot = greenFormatter("🟢")
+var neutralDot = neutralFormatter("⚪")
 
-var casualStyle = pterm.NewStyle()
+var redStyle = pterm.NewStyle(pterm.FgRed)
+var yellowStyle = pterm.NewStyle(pterm.FgLightYellow)
+var greenStyle = pterm.NewStyle(pterm.FgLightGreen)
+var neutralStyle = pterm.NewStyle()
 
-var flashyStyle = pterm.NewStyle(pterm.Bold)
-var greenStyle = pterm.NewStyle(pterm.Bold, pterm.BgGreen, pterm.FgWhite)
+// Given the coloured dot, return a matching formatter
+func extractFormatter(dot string) func(...interface{}) string {
+	var formatter func(...interface{}) string
+
+	if dot == redDot {
+		formatter = redFormatter
+	} else if dot == yellowDot {
+		formatter = yellowFormatter
+	} else if dot == greenDot {
+		formatter = greenFormatter
+	} else {
+		formatter = neutralFormatter
+	}
+
+	return formatter
+}
+
+// Change the required default for pterm and other libraries
+func initTheme() {
+	if verboseLogs {
+		pterm.EnableDebugMessages()
+	}
+
+	theme := &pterm.ThemeDefault
+	theme.PrimaryStyle = *pterm.NewStyle(pterm.FgLightRed)
+	theme.SecondaryStyle = *pterm.NewStyle(pterm.FgRed)
+
+	theme.DescriptionMessageStyle = theme.DefaultText
+	theme.DescriptionPrefixStyle = *neutralStyle
+	pterm.Description.Prefix.Text = pterm.Sprintf("%s DESCRIPTION  %s", neutralDot, neutralDot)
+
+	theme.DebugMessageStyle = theme.DefaultText
+	theme.DebugPrefixStyle = *neutralStyle
+	pterm.Debug.Prefix.Text = pterm.Sprintf("%s    DEBUG     %s", neutralDot, neutralDot)
+
+	theme.SuccessMessageStyle = theme.DefaultText
+	theme.SuccessPrefixStyle = *greenStyle
+	pterm.Success.Prefix.Text = pterm.Sprintf("%s   SUCCESS    %s", greenDot, greenDot)
+
+	theme.InfoMessageStyle = theme.DefaultText
+	theme.InfoPrefixStyle = *neutralStyle
+	pterm.Info.Prefix.Text = pterm.Sprintf("%s     INFO     %s", neutralDot, neutralDot)
+
+	theme.WarningMessageStyle = theme.DefaultText
+	theme.WarningPrefixStyle = *yellowStyle
+	pterm.Warning.Prefix.Text = pterm.Sprintf("%s   WARNING    %s", yellowDot, yellowDot)
+
+	theme.ErrorMessageStyle = theme.DefaultText
+	theme.ErrorPrefixStyle = *redStyle
+	pterm.Error.Prefix.Text = pterm.Sprintf("%s    ERROR     %s", redDot, redDot)
+
+	theme.FatalMessageStyle = theme.DefaultText
+	theme.FatalPrefixStyle = *redStyle
+	pterm.Fatal.Prefix.Text = pterm.Sprintf("%s    FATAL     %s", redDot, redDot)
+
+	theme.TableSeparatorStyle = *pterm.NewStyle(pterm.FgDarkGray)
+	theme.TableHeaderStyle = theme.PrimaryStyle
+
+	spinner := &pterm.DefaultSpinner
+	spinner.TimerRoundingFactor = time.Millisecond
+	spinner.RemoveWhenDone = false
+
+	confirmStyle := &pterm.DefaultInteractiveConfirm
+	confirmStyle.TextStyle = &theme.DefaultText
+	confirmStyle.SuffixStyle = &theme.PrimaryStyle
+	confirmStyle.ConfirmStyle = greenStyle
+	confirmStyle.RejectStyle = redStyle
+}
 
 // Throw an error, show help and die if a different number of arguments than specified is provided
 func requiredArgumentsNumber(ctx *cli.Context, number int) {
@@ -59,50 +135,51 @@ func minimumArguments(ctx *cli.Context, lower int) {
 	}
 }
 
-// If verbose logs are enabled, pass the arguments to fmt.Println(). Otherwise do nothing
-func logV(args ...interface{}) {
-	if verboseLogs {
-		fmt.Print("[verbose log] ")
-		fmt.Println(args...)
-	}
-}
-
 // Print not implemented yet warning
 func notImplementedYet() {
 	printError("Not implemented yet")
 }
 
 // Print a success message
-func printSuccess(text string) {
-	pterm.Success.Println(text)
+func printSuccess(format string, args ...interface{}) {
+	pterm.Success.Printfln(format, args...)
 }
 
 // Print an error message (text version)
-func printError(text string) {
-	pterm.Error.Println(text)
+func printError(format string, args ...interface{}) {
+	pterm.Error.Printfln(format, args...)
 }
 
 // Print an error message (error type version)
 func printErrorE(err error) {
-	pterm.Error.Println(err.Error())
+	printError(err.Error())
+}
+
+// Print an warning-level message
+func printWarning(format string, args ...interface{}) {
+	pterm.Warning.Printfln(format, args...)
 }
 
 // Print an info-level message
-func printInfo(text string) {
-	pterm.Info.WithPrefix(pterm.Prefix{
-		Style: &pterm.ThemeDefault.InfoPrefixStyle,
-		Text:  " INFO  ",
-	}).Println(text)
+func printInfo(format string, args ...interface{}) {
+	pterm.Info.Printfln(format, args...)
+}
+
+// Print an debug-level message
+func printDebug(format string, args ...interface{}) {
+	if verboseLogs {
+		pterm.Debug.Printfln(format, args...)
+	}
 }
 
 // Print a paragraph
-func printParagraph(text string) {
-	pterm.DefaultParagraph.Println(text)
+func printParagraph(format string, args ...interface{}) {
+	pterm.Description.Printfln(format, args...)
 }
 
 // Exit the program with the given message and status code 1
-func die(message string) {
-	printError(message)
+func die(format string, args ...interface{}) {
+	printError(format, args...)
 	dieEmpty()
 }
 
@@ -119,7 +196,10 @@ func dieEmpty() {
 // Prompts user for username and password and returns them. Password is not visible while typing
 func getUserCredentialsFromStandardInput() (string, string) {
 	printParagraph(credentialsPrompt)
-	username, err := pterm.DefaultInteractiveTextInput.WithMultiLine(false).Show("Username")
+	input := pterm.DefaultInteractiveTextInput
+
+	pterm.Println()
+	username, err := input.WithMultiLine(false).Show("Username")
 	if err != nil {
 		dieE(err)
 	}
@@ -138,10 +218,57 @@ func getUserCredentialsFromStandardInput() (string, string) {
 
 // Prompts user for confirmation and exits the whole program if user does not confirm
 func askForConfirmation(question string) bool {
+	pterm.Println()
+	// pterm.Printf(" %s   QUESTION   %s  ", neutralDot, neutralDot)
 	result, err := pterm.DefaultInteractiveConfirm.Show(question)
 	if err != nil {
 		dieE(err)
 	}
+	pterm.Println()
 
 	return result
+}
+
+// Gives your an options to interactively choose from
+func interactiveChooseFrom(title string, options []string) string {
+	widget := pterm.DefaultInteractiveSelect.WithDefaultText(title)
+
+	pterm.Println()
+	selected, err := widget.WithOptions(options).Show()
+	if err != nil {
+		dieE(err)
+	}
+
+	return selected
+}
+
+// Asks user for a text input
+func interactiveTextInput(title string) string {
+	pterm.Println()
+	response, err := pterm.DefaultInteractiveTextInput.WithDefaultText(title).Show()
+	if err != nil {
+		dieE(err)
+	}
+	pterm.Println()
+	pterm.Println()
+
+	return response
+}
+
+// Return a string length igoring all utf-8 quirks and terminal formatting
+func runeLength(s string) int {
+	return runewidth.StringWidth(pterm.RemoveColorFromString(s))
+}
+
+func getSpinner(title string, verbose bool) *pterm.SpinnerPrinter {
+	spinner, err := pterm.DefaultSpinner.Start(title)
+	if err != nil {
+		dieE(err)
+	}
+
+	if !verboseLogs && !verbose {
+		spinner.RemoveWhenDone = true
+	}
+
+	return spinner
 }

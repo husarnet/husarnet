@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/pterm/pterm"
 	u "github.com/rjNemo/underscore"
 	"github.com/urfave/cli/v2"
 )
@@ -21,8 +20,7 @@ func interactiveGetDeviceIpByName() string {
 
 	deviceNames := u.Map(response.Devices, func(d generated.GetDevicesDevicesDeviceType) string { return d.Name })
 
-	selectedDevice, _ := pterm.DefaultInteractiveSelect.WithDefaultText("Select device").WithOptions(deviceNames).Show()
-	pterm.Info.Printfln("Selected device: %s", pterm.Green(selectedDevice))
+	selectedDevice := interactiveChooseFrom("Select device", deviceNames)
 
 	device, err := u.Find(response.Devices, func(d generated.GetDevicesDevicesDeviceType) bool { return d.Name == selectedDevice })
 	if err != nil {
@@ -105,7 +103,7 @@ var dashboardDeviceCommand = &cli.Command{
 				var newName string
 
 				if ctx.Args().Len() < 2 {
-					newName, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("New device name").Show()
+					newName = interactiveTextInput("New device name")
 				} else {
 					newName = ctx.Args().Get(1)
 				}
