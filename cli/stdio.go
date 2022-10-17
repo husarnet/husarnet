@@ -59,31 +59,31 @@ func initTheme() {
 
 	theme.DescriptionMessageStyle = theme.DefaultText
 	theme.DescriptionPrefixStyle = *neutralStyle
-	pterm.Description.Prefix.Text = pterm.Sprintf("%s DESCRIPTION  %s", neutralDot, neutralDot)
+	pterm.Description.Prefix.Text = "DESCRIPTION:"
 
 	theme.DebugMessageStyle = theme.DefaultText
 	theme.DebugPrefixStyle = *neutralStyle
-	pterm.Debug.Prefix.Text = pterm.Sprintf("%s    DEBUG     %s", neutralDot, neutralDot)
+	pterm.Debug.Prefix.Text = "DEBUG:"
 
 	theme.SuccessMessageStyle = theme.DefaultText
 	theme.SuccessPrefixStyle = *greenStyle
-	pterm.Success.Prefix.Text = pterm.Sprintf("%s   SUCCESS    %s", greenDot, greenDot)
+	pterm.Success.Prefix.Text = "SUCCESS:"
 
 	theme.InfoMessageStyle = theme.DefaultText
 	theme.InfoPrefixStyle = *neutralStyle
-	pterm.Info.Prefix.Text = pterm.Sprintf("%s     INFO     %s", neutralDot, neutralDot)
+	pterm.Info.Prefix.Text = "INFO:"
 
 	theme.WarningMessageStyle = theme.DefaultText
 	theme.WarningPrefixStyle = *yellowStyle
-	pterm.Warning.Prefix.Text = pterm.Sprintf("%s   WARNING    %s", yellowDot, yellowDot)
+	pterm.Warning.Prefix.Text = "WARNING:"
 
 	theme.ErrorMessageStyle = theme.DefaultText
 	theme.ErrorPrefixStyle = *redStyle
-	pterm.Error.Prefix.Text = pterm.Sprintf("%s    ERROR     %s", redDot, redDot)
+	pterm.Error.Prefix.Text = "ERROR:"
 
 	theme.FatalMessageStyle = theme.DefaultText
 	theme.FatalPrefixStyle = *redStyle
-	pterm.Fatal.Prefix.Text = pterm.Sprintf("%s    FATAL     %s", redDot, redDot)
+	pterm.Fatal.Prefix.Text = "FATAL:"
 
 	theme.TableSeparatorStyle = *pterm.NewStyle(pterm.FgDarkGray)
 	theme.TableHeaderStyle = theme.PrimaryStyle

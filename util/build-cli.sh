@@ -58,6 +58,8 @@ echo "[HUSARNET BS] Building ${platform} ${arch} CLI"
 go generate
 env ${go_variables} go build -o ${go_output} .
 
+mkdir -p ${release_base}
+
 if [ ${platform} == "unix" ]; then
   mkdir -p ${output_dir}/out/usr/bin
   cp ${go_output} ${output_dir}/out/usr/bin/husarnet
