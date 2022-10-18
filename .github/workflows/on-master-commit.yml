@@ -53,7 +53,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
-        run: docker compose -f builder/compose.yml up unix_${{matrix.arch}}
+        run: |
+          ./builder/prepare-gh.sh
+          docker compose -f builder/compose.yml up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}
 
       - name: Save artifacts
         uses: actions/upload-artifact@v3
@@ -81,7 +83,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
-        run: docker compose -f builder/compose.yml up windows_win64
+        run: |
+          ./builder/prepare-gh.sh
+          docker compose -f builder/compose.yml up --exit-code-from windows_win64 windows_win64
 
       - name: Save artifacts
         uses: actions/upload-artifact@v3
@@ -142,11 +146,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare GH environment
+        run: |
+          ./builder/prepare-gh.sh
+
       - name: Run autoformatters
-        run: docker compose -f builder/compose.yml up format
+        run: docker compose -f builder/compose.yml up --exit-code-from format format
 
       - name: Run tests
-        run: docker compose -f builder/compose.yml up test
+        run: docker compose -f builder/compose.yml up --exit-code-from test test
 
   release_nightly:
     needs: [bump_version, run_tests, build_unix, build_windows_installer]
