@@ -32,7 +32,12 @@ func printStatusLine(dot, name, value string) {
 		fill = strings.Repeat(" ", desiredLength-nameLength)
 	}
 
-	pterm.Printfln("%s %s:%s %s", dot, name, fill, formatter(value))
+	merger := ":"
+	if len(name) > 0 && strings.HasSuffix(name, "?") {
+		merger = " "
+	}
+
+	pterm.Printfln("%s %s%s%s %s", dot, name, merger, fill, formatter(value))
 }
 
 func printStatusHelp(dot, help string) {

@@ -150,11 +150,6 @@ func printError(format string, args ...interface{}) {
 	pterm.Error.Printfln(format, args...)
 }
 
-// Print an error message (error type version)
-func printErrorE(err error) {
-	printError(err.Error())
-}
-
 // Print an warning-level message
 func printWarning(format string, args ...interface{}) {
 	pterm.Warning.Printfln(format, args...)

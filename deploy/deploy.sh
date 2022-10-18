@@ -28,7 +28,7 @@ golden_tar_path="${golden_path}/tgz"
 golden_rpm_path="${golden_path}/rpm"
 working_path="/var/www/install"
 
-unix_archs=amd64 i386 arm64 armhf riscv64
+unix_archs="amd64 i386 arm64 armhf riscv64"
 
 echo "[==] Adding versioned filenames"
 for arch in ${unix_archs}; do
