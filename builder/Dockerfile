@@ -42,12 +42,11 @@ RUN wget -O zig.tar.xz "https://ziglang.org/download/0.9.1/zig-linux-x86_64-0.9.
 ENV PATH="${PATH}:/zig/zig-linux-x86_64-0.9.1"
 
 RUN groupadd builder && useradd -m -u 1000 -g 1000 builder
-USER 1000:1000
-
-USER 0
 RUN echo "builder   ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
-USER 1000
+
 WORKDIR /app
 
 ENV CGO_ENABLED=0
 ENV GOCACHE=/app/build/gocache
+
+ENTRYPOINT ["/app/builder/entrypoint.sh"]

@@ -53,9 +53,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
-        run: |
-          ./builder/prepare-gh.sh
-          docker compose -f builder/compose.yml up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}
+        run: docker compose -f builder/compose.yml up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}
 
       - name: Save artifacts
         uses: actions/upload-artifact@v3
@@ -83,9 +81,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
-        run: |
-          ./builder/prepare-gh.sh
-          docker compose -f builder/compose.yml up --exit-code-from windows_win64 windows_win64
+        run: docker compose -f builder/compose.yml up --exit-code-from windows_win64 windows_win64
 
       - name: Save artifacts
         uses: actions/upload-artifact@v3
@@ -145,10 +141,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Prepare GH environment
-        run: |
-          ./builder/prepare-gh.sh
 
       - name: Run autoformatters
         run: docker compose -f builder/compose.yml up --exit-code-from format format

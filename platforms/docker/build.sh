@@ -21,7 +21,7 @@ base_platform=unix
 
 if [ ${in_ci} == false ]; then
     pushd ${base_dir}
-    docker compose -f builder/compose.yml up unix_amd64
+    docker compose -f builder/compose.yml up --exit-code-from unix_amd64 unix_amd64
     popd
 fi
 
