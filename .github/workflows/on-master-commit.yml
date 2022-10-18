@@ -170,7 +170,7 @@ jobs:
           name: windows_installer
 
       - name: Deploy to Husarnet nightly repository
-        run: ./util/deploy.sh nightly
+        run: ./deploy/deploy.sh nightly
 
   build_docker:
     needs: [bump_version, build_unix]

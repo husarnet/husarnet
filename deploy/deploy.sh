@@ -26,7 +26,6 @@ esac
 golden_path="$HOME/golden"
 golden_tar_path="${golden_path}/tgz"
 golden_rpm_path="${golden_path}/rpm"
-aptly_config_path="${base_dir}/deploy/aptly.conf"
 working_path="/var/www/install"
 
 unix_archs=amd64 i386 arm64 armhf riscv64
@@ -75,7 +74,7 @@ cp -R ${golden_tar_path}/.  ${working_path}/tgz/
 cp -R ${golden_rpm_path}/.  ${working_path}/yum/
 cp -R ${golden_rpm_path}/.  ${working_path}/rpm/
 cp -R $HOME/.aptly/public/. ${working_path}/deb/
-cp -R ${base_dir}/deploy/. ${working_path}/
+cp -R ${base_dir}/deploy/static/. ${working_path}/
 
 
 if [ "${deploy_target}" == "nightly" ]; then
