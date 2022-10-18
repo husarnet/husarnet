@@ -2,18 +2,21 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include <chrono>
+#include <condition_variable>
 #include <fstream>
+#include <mutex>
+#include <thread>
 #include <vector>
 
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
-#include "husarnet/ports/threads_port.h"
 #include "husarnet/ports/windows/tun.h"
 
 #include "husarnet/gil.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/util.h"
 
+#include "process.h"
 #include "shlwapi.h"
 
 // Based on code from libtuntap (https://github.com/LaKabane/libtuntap, ISC

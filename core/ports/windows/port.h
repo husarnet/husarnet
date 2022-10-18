@@ -27,8 +27,7 @@ inline void sleep(int sec)
 inline long random()
 {
   unsigned int res = 0;
-  auto ok = rand_s(&res);
-  assert(ok == 0);
+  rand_s(&res);
   return res;
 }
 

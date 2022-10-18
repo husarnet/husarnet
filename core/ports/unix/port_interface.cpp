@@ -3,9 +3,12 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ports/port_interface.h"
 
+#include <condition_variable>
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <mutex>
+#include <thread>
 
 #include <ares.h>
 #include <assert.h>
@@ -20,7 +23,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "husarnet/ports/threads_port.h"
 #include "husarnet/ports/unix/tun.h"
 
 #include "husarnet/config_storage.h"

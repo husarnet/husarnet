@@ -117,8 +117,7 @@ std::string HusarnetManager::getCurrentBaseProtocol()
 
 bool HusarnetManager::isConnectedToBase()
 {
-  return ngsocket->getCurrentBaseConnectionType() !=
-         better_enums_data_BaseConnectionType::NONE;
+  return ngsocket->getCurrentBaseConnectionType() == +BaseConnectionType::NONE;
 }
 
 bool HusarnetManager::isConnectedToWebsetup()

@@ -3,9 +3,12 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/gil.h"
 
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
-#include "husarnet/ports/threads_port.h"
 
 #include "husarnet/util.h"
 

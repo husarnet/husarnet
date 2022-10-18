@@ -16,19 +16,19 @@ popd () {
     builtin popd "$@" > /dev/null
 }
 
-base_dir="$(realpath $(dirname "$0")/..)"
-util_base="$(realpath $(dirname "$0"))"
-tests_base="$(realpath $(dirname "$0")/../tests)"
-build_base="$(realpath $(dirname "$0")/../build)"
+util_base="$(realpath $(dirname "$BASH_SOURCE[0]"))"
+base_dir="${util_base}/.."
+tests_base="${base_dir}/tests"
+build_base="${base_dir}/build"
 release_base="${build_base}/release"
-build_tests_base="${build_base}/tests"
-deploy_base="$(realpath $(dirname "$0")/../deploy)"
+deploy_base="${base_dir}/deploy"
 
+# Version checking
+# This is done this way so we can update it mid-script and change globally
 function update_version {
   package_version="$(cat ${base_dir}/version.txt)"
 }
 
 update_version
 
-unix_archs="amd64 i386 arm64 armhf riscv64"
-unix_packages="tar deb rpm"
+in_ci=${CI:-false}

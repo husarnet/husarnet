@@ -45,34 +45,8 @@ jobs:
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
-      - name: Use the value
-        id: step_two
-        run: |
-          echo "${{ env.commit_ref }}" # This will output 'yellow'
-
-      - name: Prepare build
-        run: ./util/build-prepare.sh
-
-      - name: Setup Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.18"
-
-      - name: Build C++
-        run: |
-          ./util/build-cmake.sh ${{matrix.arch}} unix
-
-      - name: Build CLI
-        run: ./util/build-cli.sh ${{matrix.arch}} unix
-
-      - name: Build tar
-        run: ./util/package-unix.sh ${{matrix.arch}} tar
-
-      - name: Build deb
-        run: ./util/package-unix.sh ${{matrix.arch}} deb
-
-      - name: Build rpm
-        run: ./util/package-unix.sh ${{matrix.arch}} rpm
+      - name: Build
+        run: docker compose -f builder/compose.yml up unix_${{matrix.arch}}
 
       - name: Save artifacts
         uses: actions/upload-artifact@v3
@@ -92,19 +66,8 @@ jobs:
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
-      - name: Prepare build
-        run: ./util/build-prepare.sh
-
-      - name: Setup Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.18"
-
-      - name: Build C++
-        run: ./util/build-cmake.sh win64 windows
-
-      - name: Build CLI
-        run: ./util/build-cli.sh win64 windows
+      - name: Build
+        run: docker compose -f builder/compose.yml up windows_win64
 
       - name: Save artifacts
         uses: actions/upload-artifact@v3
@@ -158,15 +121,11 @@ jobs:
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
-      - uses: actions/setup-python@v2
-        with:
-          python-version: "3.x"
+      - name: Run autoformatters
+        run: docker compose -f builder/compose.yml up format
 
-      - name: Prepare tests
-        run: ./util/test-prepare.sh
-
-      - name: Run all tests
-        run: ./util/test-all.sh
+      - name: Run tests
+        run: docker compose -f builder/compose.yml up test
 
   release_nightly:
     needs: [bump_version, run_tests, build_unix, build_windows_installer]
@@ -213,6 +172,12 @@ jobs:
         with:
           ref: ${{ needs.bump_version.outputs.commit_ref }}
 
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages
+          path: ./build/release/
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
@@ -228,19 +193,8 @@ jobs:
           username: ${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}
           password: ${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}
 
-      - name: Fetch artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages
-
-      - name: Copy build artifacts to an expected place
-        run: |
-          mkdir -p build/release
-          cp husarnet* build/release/
-          chmod +x build/release/husarnet*
-
-      - name: Prepare build artifact aliases
-        run: ./util/docker-prepare-paths.sh ${{matrix.arch_alias}}
+      - name: Prepare build
+        run: ./platforms/docker/build.sh
 
       - name: Build and push
         uses: docker/build-push-action@v2

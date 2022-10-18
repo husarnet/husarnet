@@ -2,13 +2,14 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
+#include <condition_variable>
 #include <functional>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
-#include "husarnet/ports/threads_port.h"
 
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"

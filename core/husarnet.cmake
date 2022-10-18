@@ -19,9 +19,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Android)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
-  set(COMMONFLAGS "${COMMONFLAGS} -mconsole -mthreads -DWindows")
+  set(COMMONFLAGS "${COMMONFLAGS} -DWindows")
   set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ -lwsock32 -lws2_32 ${CMAKE_CXX_STANDARD_LIBRARIES}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror=return-type -Wno-sign-compare ${COMMONFLAGS}")
@@ -89,10 +88,7 @@ list(APPEND husarnet_core_SRC ${core_SRC})
 # So includes like "husarnet/something.h" do work too
 set(TEMP_INCLUDE_DIR ${CMAKE_BINARY_DIR}/tempIncludes)
 file(MAKE_DIRECTORY ${TEMP_INCLUDE_DIR})
-file(COPY ../../core/ DESTINATION ${TEMP_INCLUDE_DIR}/husarnet/ FILES_MATCHING
-  PATTERN "*.h"
-  PATTERN "*.hpp"
-)
+file(CREATE_LINK ${CMAKE_CURRENT_LIST_DIR}/ ${TEMP_INCLUDE_DIR}/husarnet SYMBOLIC)
 
 # Join all of the above
 add_library(husarnet_core STATIC ${husarnet_core_SRC})
@@ -172,18 +168,6 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   add_compile_definitions(CARES_STATICLIB)
   FetchContent_MakeAvailable(c-ares)
   target_link_libraries(husarnet_core c-ares)
-endif()
-
-# Include windows port libraries
-if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
-  FetchContent_Declare(
-    mingw-std-threads
-    GIT_REPOSITORY https://github.com/meganz/mingw-std-threads.git
-    GIT_TAG f73afbe664bf3beb93a01274246de80d543adf6e
-  )
-  set(MINGW_STDTHREADS_GENERATE_STDHEADERS ON)
-  FetchContent_MakeAvailable(mingw-std-threads)
-  target_link_libraries(husarnet_core mingw_stdthreads)
 endif()
 
 # Enable HTTP control API

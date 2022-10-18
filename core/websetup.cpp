@@ -40,12 +40,11 @@ void WebsetupConnection::bind()
   addr.sin6_family = AF_INET6;
   addr.sin6_port = htons(WEBSETUP_SERVER_PORT);
 
-  int ret = SOCKFUNC(bind)(websetupFd, (sockaddr*)&addr, sizeof(addr));
+  SOCKFUNC(bind)(websetupFd, (sockaddr*)&addr, sizeof(addr));
   // TODO: we could probably handle the error and display some helpful info for
   // user e.g. EADRRINUSE -> you probably have Husarnet running... etc.
-  assert(ret == 0);
-  // this timeout is needed, so we can check initResponseReceived
 
+  // this timeout is needed, so we can check initResponseReceived
 #ifdef _WIN32
   int timeout = 2000;
 #else

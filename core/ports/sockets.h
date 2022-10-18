@@ -20,7 +20,9 @@
 #include <ws2tcpip.h>
 #endif
 
-#include "husarnet/ports/threads_port.h"
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 #include "husarnet/ipaddress.h"
 #include "husarnet/string_view.h"
