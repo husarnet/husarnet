@@ -3,7 +3,7 @@ source $(dirname "$0")/../util/bash-base.sh
 
 format() {
     suffix=$1
-    echo "[HUSARNET BS] Formatting ${suffix}"
+    echo "[HUSARNET BS] clang-formatting ${suffix}"
     pushd ${base_dir}/$suffix
     find . -regextype posix-egrep -regex ".*\.(cpp|hpp|h|c)" -exec clang-format -style=file -i {} \;
     popd

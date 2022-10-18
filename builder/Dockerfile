@@ -47,8 +47,9 @@ RUN groupadd builder \
     && useradd -m -u 1000 -g 1000 builder \
     && echo "builder ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-ENV CGO_ENABLED=0
-ENV GOCACHE=/app/build/gocache
+ENV CGO_ENABLED="0"
+ENV GOCACHE="/app/build/gocache"
+ENV GOFLAGS="-buildvcs=false"
 
 WORKDIR /app
 ENTRYPOINT ["/app/builder/entrypoint.sh"]
