@@ -64,7 +64,7 @@ func printConnectionStatus(status bool, name string) {
 }
 
 func printReadinessStatus(status bool, name string) {
-	printBoolStatus(status, name, "ready", "not ready")
+	printBoolStatus(status, name, "yes", "no")
 }
 
 func printVersion(daemonVersion string) {

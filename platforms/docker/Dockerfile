@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update -y && apt-get install -y iptables procps iproute2 libubsan1
+RUN apt-get update -y && apt-get install -y iptables procps iproute2 libubsan1 sudo
 RUN update-alternatives --set ip6tables /usr/sbin/ip6tables-nft
 
 COPY ./platforms/docker/husarnet-docker.sh /usr/bin/husarnet-docker

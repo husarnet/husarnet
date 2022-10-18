@@ -19,6 +19,8 @@ fi
 
 base_platform=unix
 
+echo "[HUSARNET BS] Building docker image for ${arch}"
+
 if [ ${in_ci} == false ]; then
     pushd ${base_dir}
     docker compose -f builder/compose.yml up --exit-code-from unix_amd64 unix_amd64
@@ -27,6 +29,10 @@ fi
 
 cp ${release_base}/husarnet-daemon-${base_platform}-${arch} ${release_base}/husarnet-daemon
 cp ${release_base}/husarnet-${base_platform}-${arch} ${release_base}/husarnet
+
+# GH artifacts do not have proper flags
+chmod +x ${release_base}/husarnet-daemon
+chmod +x ${release_base}/husarnet
 
 if [ ${in_ci} == false ]; then
     pushd ${base_dir}

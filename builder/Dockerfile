@@ -3,34 +3,24 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBCONF_NONINTERACTIVE_SEEN=true
 
 RUN apt-get update \
-    && apt-get install -y \
+    && apt-get install --no-install-recommends --yes \
     bind9-host \
-    build-essential \
-    bzip2 \
-    ca-certificates \
+    binutils \
     clang-format \
     cmake \
     cppcheck \
-    diffutils \
     file \
-    g++ \
-    gcc \
     git \
     golang \
-    linux-headers-generic \
-    make \
     mc \
     ninja-build \
     patch \
     python3 \
     rpm \
-    rsync \
     ruby \
-    ruby-dev \
     rubygems \
     sudo \
-    texinfo \
-    unzip \
+    tar \
     wget \
     xz-utils \
     && rm -rf /var/lib/apt/lists/*
