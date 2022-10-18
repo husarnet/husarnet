@@ -1,8 +1,13 @@
 #!/bin/bash
 source $(dirname "$0")/../util/bash-base.sh
 
-mkdir -p ${build_base}
-chown 1000:1000 ${build_base}
-chmod 777 ${build_base}
+fix_perms () {
+    mkdir -p $1
+    chown 1000:1000 $1
+    chmod 777 $1
+}
+
+fix_perms ${build_base}
+fix_perms ${base_dir}/cli/generated
 
 su - builder bash -c "$*"

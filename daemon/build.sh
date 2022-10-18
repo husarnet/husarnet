@@ -23,9 +23,8 @@ mkdir -p ${release_base}
 # Actually build the thing
 pushd ${build_dir}
 
-cmake -G "Ninja" \
+CMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake cmake -G "Ninja" \
       -DCMAKE_INSTALL_PREFIX=${output_dir} \
-      -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
       -DBUILD_SHARED_LIBS=false \
       ${source_dir}
 

@@ -1,7 +1,7 @@
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR ARMHF)
 
-set(triple arm-linux-musl)
+set(triple arm-linux-musleabihf)
 
 set(CMAKE_C_COMPILER "zig" cc -target ${triple})
 set(CMAKE_CXX_COMPILER "zig" c++ -target ${triple})

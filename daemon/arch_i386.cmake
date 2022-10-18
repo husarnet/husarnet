@@ -1,7 +1,7 @@
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR i386)
 
-set(triple x86-linux-musl)
+set(triple i386-linux-musl)
 
 set(CMAKE_C_COMPILER "zig" cc -target ${triple})
 set(CMAKE_CXX_COMPILER "zig" c++ -target ${triple})
