@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
-ENV DEBCONF_NONINTERACTIVE_SEEN true
+ARG DEBCONF_NONINTERACTIVE_SEEN=true
 
 RUN apt-get update
 
@@ -35,18 +35,17 @@ RUN apt-get install -y \
     wget \
     xz-utils
 
-RUN sudo gem install --no-document fpm
+RUN gem install --no-document fpm
 
 WORKDIR /zig
 RUN wget -O zig.tar.xz "https://ziglang.org/download/0.9.1/zig-linux-x86_64-0.9.1.tar.xz" && tar -xf zig.tar.xz
-ENV PATH="${PATH}:/zig/zig-linux-x86_64-0.9.1"
+RUN ln -s /zig/zig-linux-x86_64-0.9.1/zig /usr/bin/zig
 
 RUN groupadd builder && useradd -m -u 1000 -g 1000 builder
 RUN echo "builder   ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-WORKDIR /app
-
 ENV CGO_ENABLED=0
 ENV GOCACHE=/app/build/gocache
 
+WORKDIR /app
 ENTRYPOINT ["/app/builder/entrypoint.sh"]
