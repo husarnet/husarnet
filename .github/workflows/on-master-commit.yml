@@ -222,7 +222,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare build
-        run: ./platforms/docker/build.sh
+        run: ./platforms/docker/build.sh ${{matrix.arch_alias}}
 
       - name: Build and push
         uses: docker/build-push-action@v2
