@@ -225,7 +225,7 @@ jobs:
         run: ./platforms/docker/build.sh ${{matrix.arch_alias}}
 
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           file: ./platforms/docker/Dockerfile
