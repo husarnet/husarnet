@@ -25,8 +25,8 @@ mkdir -p ${package_tmp}/usr/share/bash-completion/completions
 cp ${platform_base}/packaging/autocomplete ${package_tmp}/usr/share/bash-completion/completions/
 
 mkdir -p ${package_tmp}/usr/bin
-cp ${release_base}/husarnet-daemon-${platform}-${arch} ${package_tmp}/usr/bin/
-cp ${release_base}/husarnet-${platform}-${arch} ${package_tmp}/usr/bin/
+cp ${release_base}/husarnet-daemon-${platform}-${arch} ${package_tmp}/usr/bin/husarnet-daemon
+cp ${release_base}/husarnet-${platform}-${arch} ${package_tmp}/usr/bin/husarnet
 
 for package_type in tar deb rpm; do
     echo "[HUSARNET BS] Building ${platform} ${arch} ${package_type} package"
