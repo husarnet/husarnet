@@ -1,5 +1,5 @@
 #!/bin/bash
-source $(dirname "$0")/bash-base.sh
+source $(dirname "$0")/../util/bash-base.sh
 
 if [ "$#" -ne 1 ]; then
     echo "Usage: ${0} <deploy-target>"
