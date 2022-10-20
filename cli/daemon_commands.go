@@ -24,7 +24,11 @@ var daemonStartCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		runSubcommand(false, "sudo", "systemctl", "start", "husarnet")
+		if onWindows() {
+			runSubcommand(false, "nssm", "start", "husarnet")
+		} else {
+			runSubcommand(false, "sudo", "systemctl", "start", "husarnet")
+		}
 		printSuccess("Started husarnet-daemon")
 
 		if wait {
@@ -49,7 +53,11 @@ var daemonRestartCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		runSubcommand(false, "sudo", "systemctl", "restart", "husarnet")
+		if onWindows() {
+			runSubcommand(false, "nssm", "restart", "husarnet")
+		} else {
+			runSubcommand(false, "sudo", "systemctl", "restart", "husarnet")
+		}
 		printSuccess("Restarted husarnet-daemon")
 
 		if wait {
@@ -65,7 +73,11 @@ var daemonStopCommand = &cli.Command{
 	Usage:     "stop husarnet daemon",
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx *cli.Context) error {
-		runSubcommand(false, "sudo", "systemctl", "stop", "husarnet")
+		if onWindows() {
+			runSubcommand(false, "nssm", "stop", "husarnet")
+		} else {
+			runSubcommand(false, "sudo", "systemctl", "stop", "husarnet")
+		}
 		printSuccess("Stopped husarnet-daemon")
 		return nil
 	},
@@ -105,7 +117,13 @@ var daemonSetupServerCommand = &cli.Command{
 
 		printSuccess("Successfully requested a change to %s server", pterm.Bold.Sprint(domain))
 		printWarning("This action requires you to restart the daemon in order to use the new value")
-		runSubcommand(true, "sudo", "systemctl", "restart", "husarnet")
+
+		if onWindows() {
+			runSubcommand(true, "nssm", "restart", "husarnet")
+		} else {
+			runSubcommand(true, "sudo", "systemctl", "restart", "husarnet")
+		}
+
 		waitDaemon()
 
 		return nil

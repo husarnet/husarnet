@@ -7,7 +7,6 @@ import (
 	"hdm/generated"
 	"net/http"
 	"os"
-	"runtime"
 	"strings"
 
 	"github.com/Khan/genqlient/graphql"
@@ -24,7 +23,7 @@ func (t *authedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func getTokenFilePath() string {
-	if runtime.GOOS == "windows" {
+	if onWindows() {
 		sep := string(os.PathSeparator)
 		return os.ExpandEnv("${%localappdata%}") + sep + "Temp" + sep + "hsrnet-webtoken"
 	}

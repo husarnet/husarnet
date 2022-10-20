@@ -91,7 +91,7 @@ procedure BeforeReplaceService();
 var
   ResultCode: Integer;
 begin
-  if Exec(ExpandConstant('{app}\nssm.exe'), 'stop husarnet', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+  if Exec(ExpandConstant('{app}\bin\nssm.exe'), 'stop husarnet', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
   begin
     Log('service stop ok');
   end
@@ -118,7 +118,7 @@ Source: "husarnet-daemon.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Befor
 Source: "husarnet.exe"; DestDir: "{app}\bin"; Flags: ignoreversion;
 Source: "addtap.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "tap-windows.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "nssm.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "installservice.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "uninstallservice.bat"; DestDir: "{app}"; Flags: ignoreversion
 

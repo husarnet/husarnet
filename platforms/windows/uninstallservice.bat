@@ -1,2 +1,2 @@
-nssm stop husarnet
-nssm remove husarnet
+bin\nssm stop husarnet
+bin\nssm remove husarnet
