@@ -70,6 +70,7 @@ var daemonRestartCommand = &cli.Command{
 
 var daemonStopCommand = &cli.Command{
 	Name:      "stop",
+	Aliases:   []string{"down"},
 	Usage:     "stop husarnet daemon",
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx *cli.Context) error {
