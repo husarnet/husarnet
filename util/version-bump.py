@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import subprocess
 import os.path
 
 version_file_path = os.path.realpath(
@@ -25,20 +24,18 @@ cli_messages_path = os.path.realpath(
     )
 )
 
-def get_new_version(old, today=None):
-    if not today:
-        today = subprocess.check_output(["date", "+%Y.%m.%d"]).strip().decode()
-
+def get_new_version(old):
     parts = old.split(".")
-    existing_date = ".".join(parts[0:3])
-    existing_version = int(parts[3])
-
-    if existing_date == today:
-        new_version = existing_version + 1
+    last_part = parts[-1]
+    
+    if last_part == "#":
+        last_part=0
     else:
-        new_version = 1
+        last_part = int(last_part) + 1
 
-    return today + "." + str(new_version)
+    parts[-1] = str(last_part)
+
+    return ".".join(parts)
 
 def get_current_version_from_file():
     f = open(version_file_path, "r")

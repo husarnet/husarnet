@@ -2,10 +2,10 @@
 # https://github.com/Khan/genqlient/blob/main/docs/genqlient.yaml
 schema: schema.graphql
 operations:
-- genqlient.graphql
+  - genqlient.graphql
 generated: generated/genqlient.go
 package: generated
 context_type: "-"
 bindings:
   GenericScalar:
-    type: hdm/types.JWTPayload
+    type: github.com/husarnet/husarnet/cli/v1/types.JWTPayload

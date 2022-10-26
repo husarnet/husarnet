@@ -4,9 +4,10 @@
 package main
 
 import (
-	"hdm/generated"
 	"net/netip"
 	"strings"
+
+	"github.com/husarnet/husarnet/cli/v1/generated"
 
 	"github.com/Khan/genqlient/graphql"
 	u "github.com/rjNemo/underscore"

@@ -36,6 +36,7 @@ for package_type in tar deb rpm; do
         --output-type ${package_type} \
         --name husarnet \
         --version ${package_version} \
+        --epoch 1 \
         --architecture ${arch} \
         --maintainer "Husarnet <support@husarnet.com>" \
         --vendor Husarnet \

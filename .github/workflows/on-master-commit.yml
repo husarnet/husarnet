@@ -25,10 +25,14 @@ jobs:
       - name: Bump version
         run: python ./util/version-bump.py
 
+      - name: Read new version
+        run: |
+          echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
+
       - uses: stefanzweifel/git-auto-commit-action@v4
         id: autocommit
         with:
-          commit_message: Automatic version bump
+          commit_message: Build version ${{ env.VERSION }}
 
   build_unix:
     needs: bump_version

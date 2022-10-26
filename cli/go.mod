@@ -1,4 +1,4 @@
-module hdm
+module github.com/husarnet/husarnet/cli/v1
 
 go 1.18
 
