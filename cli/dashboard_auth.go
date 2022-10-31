@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/husarnet/husarnet/cli/v1/generated"
+	"github.com/husarnet/husarnet/cli/v2/generated"
 
 	"github.com/Khan/genqlient/graphql"
 )

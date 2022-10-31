@@ -1,4 +1,4 @@
-module github.com/husarnet/husarnet/cli/v1
+module github.com/husarnet/husarnet/cli/v2
 
 go 1.18
 

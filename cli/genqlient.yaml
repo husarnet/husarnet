@@ -8,4 +8,4 @@ package: generated
 context_type: "-"
 bindings:
   GenericScalar:
-    type: github.com/husarnet/husarnet/cli/v1/types.JWTPayload
+    type: github.com/husarnet/husarnet/cli/v2/types.JWTPayload
