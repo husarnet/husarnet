@@ -27,12 +27,10 @@ if [ ${in_ci} == false ]; then
     popd
 fi
 
-cp ${release_base}/husarnet-daemon-${base_platform}-${arch} ${release_base}/husarnet-daemon
-cp ${release_base}/husarnet-${base_platform}-${arch} ${release_base}/husarnet
+cp ${release_base}/husarnet-${base_platform}-${arch}.deb ${release_base}/husarnet-${base_platform}.deb
 
 # GH artifacts do not have proper flags
-chmod +x ${release_base}/husarnet-daemon
-chmod +x ${release_base}/husarnet
+chmod +x ${release_base}/husarnet-${base_platform}.deb
 
 if [ ${in_ci} == false ]; then
     pushd ${base_dir}
