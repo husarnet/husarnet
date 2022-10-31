@@ -29,12 +29,12 @@
       },
     },
 
-    push_artifacts:: function() {
+    push_artifacts:: function(expression) {
       name: 'Push artifacts',
       uses: 'actions/upload-artifact@v3',
       with: {
         name: 'packages',
-        path: './build/release/',
+        path: './build/release/' + expression,
         'if-no-files-found': 'error',
       },
     },
@@ -112,7 +112,7 @@
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.builder('unix_${{matrix.arch}}'),
-        $.steps.push_artifacts(),
+        $.steps.push_artifacts('*${{matrix.arch}}*'),
       ],
     },
 
@@ -125,7 +125,7 @@
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.builder('windows_win64'),
-        $.steps.push_artifacts(),
+        $.steps.push_artifacts('*win64*'),
       ],
     },
 
@@ -154,7 +154,7 @@
             copy platforms\windows\Output\husarnet-setup.exe build\release\husarnet-setup.exe
           |||,
         },
-        $.steps.push_artifacts(),
+        $.steps.push_artifacts('*setup*'),
       ],
     },
 

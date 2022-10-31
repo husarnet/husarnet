@@ -71,7 +71,7 @@
       "with":
         "if-no-files-found": "error"
         "name": "packages"
-        "path": "./build/release/"
+        "path": "./build/release/*${{matrix.arch}}*"
     "strategy":
       "matrix":
         "arch":
@@ -101,7 +101,7 @@
       "with":
         "if-no-files-found": "error"
         "name": "packages"
-        "path": "./build/release/"
+        "path": "./build/release/*win64*"
   "build_windows_installer":
     "needs":
     - "build_windows"
@@ -132,7 +132,7 @@
       "with":
         "if-no-files-found": "error"
         "name": "packages"
-        "path": "./build/release/"
+        "path": "./build/release/*setup*"
   "run_tests":
     "needs": []
     "runs-on": "ubuntu-latest"

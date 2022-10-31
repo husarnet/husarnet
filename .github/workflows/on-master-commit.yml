@@ -73,7 +73,7 @@
       "with":
         "if-no-files-found": "error"
         "name": "packages"
-        "path": "./build/release/"
+        "path": "./build/release/*${{matrix.arch}}*"
     "strategy":
       "matrix":
         "arch":
@@ -104,7 +104,7 @@
       "with":
         "if-no-files-found": "error"
         "name": "packages"
-        "path": "./build/release/"
+        "path": "./build/release/*win64*"
   "build_windows_installer":
     "needs":
     - "build_windows"
@@ -136,7 +136,7 @@
       "with":
         "if-no-files-found": "error"
         "name": "packages"
-        "path": "./build/release/"
+        "path": "./build/release/*setup*"
   "bump_version":
     "needs": []
     "outputs":
@@ -177,14 +177,14 @@
         "username": "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
     - "name": "create manifest"
       "run": |
-        docker manifest create husarnet/husarnet-nightly:latest \\
-        --amend husarnet/husarnet-nightly:amd64 \\
-        --amend husarnet/husarnet-nightly:arm64 \\
+        docker manifest create husarnet/husarnet-nightly:latest \
+        --amend husarnet/husarnet-nightly:amd64 \
+        --amend husarnet/husarnet-nightly:arm64 \
         --amend husarnet/husarnet-nightly:armhf
         
-        docker manifest create husarnet/husarnet-nightly:$(cat version.txt) \\
-        --amend husarnet/husarnet-nightly:amd64 \\
-        --amend husarnet/husarnet-nightly:arm64 \\
+        docker manifest create husarnet/husarnet-nightly:$(cat version.txt) \
+        --amend husarnet/husarnet-nightly:amd64 \
+        --amend husarnet/husarnet-nightly:arm64 \
         --amend husarnet/husarnet-nightly:armhf
     - "name": "push manifest"
       "run": |
