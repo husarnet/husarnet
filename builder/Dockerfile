@@ -33,6 +33,13 @@ RUN wget -O zig.tar.xz "https://ziglang.org/download/0.9.1/zig-linux-x86_64-0.9.
     && rm -f zig.tar.xz \
     && ln -s /zig/zig-linux-x86_64-0.9.1/zig /usr/bin/zig
 
+WORKDIR /jsonnet
+RUN wget -O jsonnet.tar.gz "https://github.com/google/go-jsonnet/releases/download/v0.19.1/go-jsonnet_0.19.1_Linux_x86_64.tar.gz" \
+    && tar -xf jsonnet.tar.gz \
+    && rm -f jsonnet.tar.gz \
+    && ln -s /jsonnet/jsonnet /usr/bin/ \
+    && ln -s /jsonnet/jsonnetfmt /usr/bin/
+
 RUN groupadd builder \
     && useradd -m -u 1000 -g 1000 builder \
     && echo "builder ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers

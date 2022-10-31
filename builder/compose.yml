@@ -55,6 +55,12 @@ services:
       - ../:/app
     command: /app/daemon/format.sh
 
+  gh:
+    image: ghcr.io/husarnet/husarnet:builder
+    volumes:
+      - ../:/app
+    command: /app/.github/update-workflows.sh
+
   test_ubuntu_18_04:
     image: ubuntu:18.04
     privileged: true

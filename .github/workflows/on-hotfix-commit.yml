@@ -1,288 +1,236 @@
-name: Push to dockerhub only
-
-on:
-  push:
-    branches: [hotfix]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-jobs:
-  build_unix:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        arch: [amd64, i386, arm64, armhf, riscv64]
-
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-        with:
-          ref: hotfix
-
-      - name: Prepare build
-        run: ./util/build-prepare.sh
-
-      - name: Setup Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.18"
-
-      - name: Build C++
-        run: ./util/build-cmake.sh ${{matrix.arch}} unix
-
-      - name: Build CLI
-        run: ./util/build-cli.sh ${{matrix.arch}} unix
-
-      - name: Build tar
-        run: ./util/package-unix.sh ${{matrix.arch}} tar
-
-      - name: Build deb
-        run: ./util/package-unix.sh ${{matrix.arch}} deb
-
-      - name: Build rpm
-        run: ./util/package-unix.sh ${{matrix.arch}} rpm
-
-      - name: Save artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: packages
-          path: ./build/release/
-          if-no-files-found: error
-
-  build_windows:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-        with:
-          ref: hotfix
-
-      - name: Prepare build
-        run: ./util/build-prepare.sh
-
-      - name: Setup Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.18"
-
-      - name: Build C++
-        run: ./util/build-cmake.sh win64 windows
-
-      - name: Build CLI
-        run: ./util/build-cli.sh win64 windows
-
-      - name: Save artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: packages
-          path: ./build/release/
-          if-no-files-found: error
-
-  build_windows_installer:
-    needs: build_windows
-
-    runs-on: windows-2019
-
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-        with:
-          ref: hotfix
-
-      - name: Fetch artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages
-
-      - name: Copy .exe and license to installer dir
-        run: |
-          copy husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
-          copy husarnet-windows-win64.exe platforms\windows\husarnet.exe
-          copy LICENSE.txt platforms\windows
-        shell: cmd
-
-      - name: Building the installer
-        run: |
-          "%programfiles(x86)%\Inno Setup 6\iscc.exe" platforms\windows\script.iss
-        shell: cmd
-
-      - name: Upload installer
-        uses: actions/upload-artifact@v3
-        with:
-          name: windows_installer
-          path: platforms\windows\Output\husarnet-setup.exe
-
-  run_tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-        with:
-          ref: hotfix
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: "3.x"
-
-      - name: Prepare tests
-        run: ./util/test-prepare.sh
-
-      - name: Run all tests
-        run: ./util/test-all.sh
-
-  release_github:
-    needs: [run_tests, build_unix, build_windows_installer]
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Fetch linux packages
-        uses: actions/download-artifact@v3
-        with:
-          name: packages
-
-      - name: Fetch windows installer
-        uses: actions/download-artifact@v3
-        with:
-          name: windows_installer
-
-      - uses: marvinpinto/action-automatic-releases@latest
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          draft: true
-          prerelease: false
-          automatic_release_tag: ${{ github.ref_name }}
-          files: |
-            *.deb
-            *.tar
-            *.rpm
-            *.exe
-
-  release_prod:
-    needs: [run_tests, build_unix, build_windows_installer]
-
-    runs-on: [self-hosted, linux, prod]
-
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-        with:
-          ref: hotfix
-
-      - name: Fetch artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages
-
-      - name: Fetch windows installer
-        uses: actions/download-artifact@v3
-        with:
-          name: windows_installer
-
-      - name: Deploy to main Husarnet repository
-        run: ./util/deploy.sh main
-
-  build_docker:
-    needs: build_unix
-
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        include:
-          - arch: linux/amd64
-            arch_alias: amd64
-          - arch: linux/arm64/v8
-            arch_alias: arm64
-          - arch: linux/arm/v7
-            arch_alias: armhf
-
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-        with:
-          ref: hotfix
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-        with:
-          version: latest
-
-      - name: Login to Docker Registry
-        uses: docker/login-action@v1
-        with:
-          registry: docker.io
-          username: ${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}
-          password: ${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}
-
-      - name: Fetch artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages
-
-      - name: Copy build artifacts to an expected place
-        run: |
-          mkdir -p build/release
-          cp husarnet* build/release/
-          chmod +x build/release/husarnet*
-
-      - name: Prepare build artifact aliases
-        run: ./util/docker-prepare-paths.sh ${{matrix.arch_alias}}
-
-      - name: Build and push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./platforms/docker/Dockerfile
-          platforms: ${{matrix.arch}}
-          push: true
-          tags: husarnet/husarnet:${{matrix.arch_alias}}
-
-  release_docker:
-    needs: [run_tests, build_docker]
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-        with:
-          ref: hotfix
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-        with:
-          version: latest
-
-      - name: Login to Docker Registry
-        uses: docker/login-action@v1
-        with:
-          registry: docker.io
-          username: ${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}
-          password: ${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}
-
-      - name: create manifest
-        run: |
-          docker manifest create husarnet/husarnet:latest \
-          --amend husarnet/husarnet:amd64 \
-          --amend husarnet/husarnet:arm64 \
-          --amend husarnet/husarnet:armhf
-          docker manifest create husarnet/husarnet:$(cat version.txt) \
-          --amend husarnet/husarnet:amd64 \
-          --amend husarnet/husarnet:arm64 \
-          --amend husarnet/husarnet:armhf
-
-      - name: push manifest
-        run: |
-          docker manifest push husarnet/husarnet:latest
-          docker manifest push husarnet/husarnet:$(cat version.txt)
+"jobs":
+  "build_docker":
+    "needs":
+    - "build_unix"
+    "runs-on": "ubuntu-latest"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "hotfix"
+    - "name": "Fetch artifacts"
+      "uses": "actions/download-artifact@v3"
+      "with":
+        "name": "packages"
+        "path": "./build/release/"
+    - "name": "Set up QEMU"
+      "uses": "docker/setup-qemu-action@v2"
+    - "name": "Set up Docker Buildx"
+      "uses": "docker/setup-buildx-action@v2"
+      "with":
+        "version": "latest"
+    - "name": "Login to Docker Registry"
+      "uses": "docker/login-action@v2"
+      "with":
+        "password": "${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}"
+        "registry": "docker.io"
+        "username": "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
+    - "name": "Login to GHCR"
+      "uses": "docker/login-action@v2"
+      "with":
+        "password": "${{ secrets.GITHUB_TOKEN }}"
+        "registry": "ghcr.io"
+        "username": "${{ github.actor }}"
+    - "name": "Prepare build"
+      "run": "./platforms/docker/build.sh ${{matrix.arch_alias}}"
+    - "name": "Build and push"
+      "uses": "docker/build-push-action@v3"
+      "with":
+        "context": "."
+        "file": "./platforms/docker/Dockerfile"
+        "platforms": "${{matrix.arch}}"
+        "push": true
+        "tags": "husarnet/husarnet:${{matrix.arch_alias}}"
+    "strategy":
+      "matrix":
+        "include":
+        - "arch": "linux/amd64"
+          "arch_alias": "amd64"
+        - "arch": "linux/arm64/v8"
+          "arch_alias": "arm64"
+        - "arch": "linux/arm/v7"
+          "arch_alias": "armhf"
+  "build_unix":
+    "needs": []
+    "runs-on": "ubuntu-latest"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "hotfix"
+    - "name": "Login to GHCR"
+      "uses": "docker/login-action@v2"
+      "with":
+        "password": "${{ secrets.GITHUB_TOKEN }}"
+        "registry": "ghcr.io"
+        "username": "${{ github.actor }}"
+    - "name": "Build"
+      "run": "docker compose -f builder/compose.yml up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}"
+    - "name": "Save artifacts"
+      "uses": "actions/upload-artifact@v3"
+      "with":
+        "if-no-files-found": "error"
+        "name": "packages"
+        "path": "./build/release/"
+    "strategy":
+      "matrix":
+        "arch":
+        - "amd64"
+        - "i386"
+        - "arm64"
+        - "armhf"
+        - "riscv64"
+  "build_windows":
+    "needs": []
+    "runs-on": "ubuntu-latest"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "hotfix"
+    - "name": "Login to GHCR"
+      "uses": "docker/login-action@v2"
+      "with":
+        "password": "${{ secrets.GITHUB_TOKEN }}"
+        "registry": "ghcr.io"
+        "username": "${{ github.actor }}"
+    - "name": "Build"
+      "run": "docker compose -f builder/compose.yml up --exit-code-from windows_win64 windows_win64"
+    - "name": "Save artifacts"
+      "uses": "actions/upload-artifact@v3"
+      "with":
+        "if-no-files-found": "error"
+        "name": "packages"
+        "path": "./build/release/"
+  "build_windows_installer":
+    "needs":
+    - "build_windows"
+    "runs-on": "windows-2019"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "hotfix"
+    - "name": "Fetch artifacts"
+      "uses": "actions/download-artifact@v3"
+      "with":
+        "name": "packages"
+    - "name": "Copy .exe and license to installer dir"
+      "run": |
+        copy husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
+        copy husarnet-windows-win64.exe platforms\windows\husarnet.exe
+        copy LICENSE.txt platforms\windows
+      "shell": "cmd"
+    - "name": "Building the installer"
+      "run": |
+        "%programfiles(x86)%\Inno Setup 6\iscc.exe" platforms\windows\script.iss
+      "shell": "cmd"
+    - "name": "Upload installer"
+      "uses": "actions/upload-artifact@v3"
+      "with":
+        "name": "windows_installer"
+        "path": "platforms\\windows\\Output\\husarnet-setup.exe"
+  "release_docker":
+    "needs":
+    - "run_tests"
+    - "build_docker"
+    "runs-on": "ubuntu-latest"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "hotfix"
+    - "name": "Login to Docker Registry"
+      "uses": "docker/login-action@v2"
+      "with":
+        "password": "${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}"
+        "registry": "docker.io"
+        "username": "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
+    - "name": "create manifest"
+      "run": |
+        docker manifest create husarnet/husarnet%(suffix):latest \\
+        --amend husarnet/husarnet%(suffix):amd64 \\
+        --amend husarnet/husarnet%(suffix):arm64 \\
+        --amend husarnet/husarnet%(suffix):armhf
+        
+        docker manifest create husarnet/husarnet%(suffix):$(cat version.txt) \\
+        --amend husarnet/husarnet%(suffix):amd64 \\
+        --amend husarnet/husarnet%(suffix):arm64 \\
+        --amend husarnet/husarnet%(suffix):armhf
+    - "name": "push manifest"
+      "run": |
+        docker manifest push husarnet/husarnet%(suffix):latest
+        docker manifest push husarnet/husarnet%(suffix):$(cat version.txt)
+  "release_github":
+    "needs":
+    - "run_tests"
+    - "build_unix"
+    - "build_windows_installer"
+    "runs-on": "ubuntu-latest"
+    "steps":
+    - "name": "Fetch linux packages"
+      "uses": "actions/download-artifact@v3"
+      "with":
+        "name": "packages"
+    - "name": "Fetch windows installer"
+      "uses": "actions/download-artifact@v3"
+      "with":
+        "name": "windows_installer"
+    - "uses": "marvinpinto/action-automatic-releases@latest"
+      "with":
+        "automatic_release_tag": "${{ github.ref_name }}"
+        "draft": true
+        "files": |
+          *.deb
+          *.tar
+          *.rpm
+          *.exe
+        "prerelease": false
+        "repo_token": "${{ secrets.GITHUB_TOKEN }}"
+  "release_nightly":
+    "needs":
+    - "run_tests"
+    - "build_unix"
+    - "build_windows_installer"
+    "runs-on":
+    - "self-hosted"
+    - "linux"
+    - "nightly"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "hotfix"
+    - "name": "Fetch artifacts"
+      "uses": "actions/download-artifact@v3"
+      "with":
+        "name": "packages"
+    - "name": "Fetch Windows installer"
+      "uses": "actions/download-artifact@v3"
+      "with":
+        "name": "windows_installer"
+    - "name": "Deploy to Husarnet main repository"
+      "run": "./deploy/deploy.sh main"
+  "run_tests":
+    "needs": []
+    "runs-on": "ubuntu-latest"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "hotfix"
+    - "name": "Login to GHCR"
+      "uses": "docker/login-action@v2"
+      "with":
+        "password": "${{ secrets.GITHUB_TOKEN }}"
+        "registry": "ghcr.io"
+        "username": "${{ github.actor }}"
+    - "name": "Run autoformatters"
+      "run": "docker compose -f builder/compose.yml up --exit-code-from format format"
+    - "name": "Run tests"
+      "run": "docker compose -f builder/compose.yml up --exit-code-from test test"
+"name": "Release hotfix"
+"on":
+  "push":
+    "branches":
+    - "hotfix"
