@@ -97,6 +97,20 @@ func runSubcommand(confirm bool, command string, args ...string) {
 	cmd := exec.Command(commandPath, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
+		// TODO long-term/research: figure out how to mimic "sudo" on Windows,
+		// so the user does not need to have elevated command prompt for these commands
+		// and also we get rid of this awkward error handling
+		errorStringAtNoAdministratorPrivileges := "status 3"
+		errorStringAtServiceAlreadyRunning := "status 1"
+
+		if strings.Contains(err.Error(), errorStringAtNoAdministratorPrivileges) {
+			printError("Unable to manage the service - are you Administrator?")
+		}
+
+		if strings.Contains(err.Error(), errorStringAtServiceAlreadyRunning) {
+			printError("Can't start the service - service already running!")
+		}
+
 		dieE(err)
 	}
 
