@@ -12,7 +12,7 @@ Key features:
 - **Lightweight** - it works not only on popular OSes (currently only Linux version is released, Windows, MacOS, Android coming soon) but even on ESP32 microcontrollers. That means you can P2P access your things without IoT server at all!
 - **Secure & Private** - packets never leave connected devices unencrypted, Perfect Forward Secrecy (PFC) enabled by default.
 
-Husarnet, in it's core, is **one big, automatically routed, IPv6 network**. Running Husarnet daemon creates a virtual network interface (`hnet0`) with an unique Husarnet IPv6 address and associated `fc94::/16` route. If you choose to disable the permission system, any node can reach your node using IPv6 `fc94:...` address, but if you choose to leave it enabled, we've prepared an extensive permissions system for you. You can have multiple virtual islands/groups, your devices can access multiple groups or you can even share access to those groups with other users!
+Husarnet, in it's core, is **one big, automatically routed, IPv6 network**. Running Husarnet daemon creates a virtual network interface (by default named `hnet0`) with an unique Husarnet IPv6 address and associated `fc94::/16` route. If you choose to disable the permission system, any node can reach your node using IPv6 `fc94:...` address, but if you choose to leave it enabled, we've prepared an extensive permissions system for you. You can have multiple virtual islands/groups, your devices can access multiple groups or you can even share access to those groups with other users!
 
 The nodes are identified by their 112-bit **IPv6 addresses, that are based on the public keys of the node**. All connections are also authenticated by the IPv6 address. This property makes it possible to establish connection authenticity without any trusted third party, basing only on the IPv6 address! The connections are also always encrypted.
 
@@ -20,7 +20,14 @@ The nodes are identified by their 112-bit **IPv6 addresses, that are based on th
 
 **Runtime safety:** Husarnet is written in C++ using modern memory-safe constructs. Linux version drops all capabilities after initialization. It only retains access to `/etc/hosts` and `/etc/hostname` via a helper process.
 
-If Husarnet instance is not connected to the Husarnet Dashboard, the whitelist (think of it as a crude firewall) and hostname table can only be changed by a local `root` user. All the other **configuration can be changed using the Husarnet Dashboard** after you `join` your device to a group there.
+If Husarnet instance is not connected to the Husarnet Dashboard, the whitelist (think of it as a crude firewall) and hostname table can only be changed by a local `root` user. All the other configuration can be changed after you `join` your device to a group. Further configuration can be done using one of two ways:
+
+***Husarnet Dashboard:*** Husarnet Dashboard is a web application that allows users to fully configure how they use Husarnet, including adding and removing networks, adding and removing devices, associationg devices with networks and more. 
+
+***Husarnet CLI:*** Husarnet CLI is a new (added as of Husarnet 2.0) and powerful tool which aims to allow user to manage the local Husarnet daemon while also
+providing users with a simple way to manage all of their Husarnet devices and networks via intuitive and simple to use Dashboard API. For more information about the new CLI capabilities visit [CLI docs](https://husarnet.com/docs/manual-cli/).
+
+
 
 -------------
 
@@ -50,29 +57,32 @@ Husarnet Client is split in two separate binaries - `husarnet`, which is CLI wri
 
 ### Building
 
-First run `./util/build-prepare.sh` which will install all required toolchains, etc - tested on Ubuntu 20.04. 
+In order to provide you with the most seamless and convenient way to build Husarnet Daemon and Husarnet CLI, a dedicated docker image
+called husarnet:builder was created and published on the Github Container Registry. Dockerfile and compose for the mentioned image can be found in the `./builder` directory. Build scripts provided in this repository utilize this image and as such in order to use them you need to either authenticate to the Github Container Registry (visit [here](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)) or 
+build the image locally using: `docker compose -f builder/compose.yml build builder`
+
 
 Then, if you want to build:
-- CLI only: `./util/build-cli.sh`
-- CLI and Daemon, all platforms: `./util/build-all.sh`
-- Daemon only, specific platform: `./util/build-cmake.sh <architecture> <platform>`
-    - example: `./util/build-cmake.sh amd64 unix`
+- all platforms: `./util/build.sh`
+- specific platform: `docker compose -f builder/compose.yml up --exit-code-from  <platform_architecture> <platform_architecture>`
+    - example: `docker compose -f builder/compose.yml up --exit-code-from  unix_amd64 unix_amd64`
 
 Created binaries will be available in `build/` folder.
 
 ### Running tests
- - `./util/test-prepare.sh` - will install required tools
- - `./util/test-all.sh` - will run *ALL* tests
- - `./util/test-cppcheck.sh` - will run cppcheck
- - `./util/test-unit.sh` - will build and run unit tests. Assumes host machine is x86 and runs some form of Unix
+Please note that tests also utilize the builder image and thus it needs to be accessible for tests to run.
+Tests can be run by using:
+`./util/test.sh`
+or
+`docker compose -f builder/compose.yml up --exit-code-from  test test`
 
 ### Creating a pull request
 
 If you wish to submit a PR with a fix or enhancement, feel free to do so. Before submitting make sure that:
 
 ```
-./util/build-all.sh
-./util/test-all.sh
+./util/build.sh
+./util/test.sh
 ```
 
 are passing without errors. Also make sure to describe your changes and the motivation in the PR description. After you submit the PR, wait for the review and feedback from the maintainers. Good idea is to examine [on-pull-request workflow](https://github.com/husarnet/husarnet/blob/master/.github/workflows/on-pull-request.yml) to see what steps will the CI perform in order to check compatibility of the changes.
