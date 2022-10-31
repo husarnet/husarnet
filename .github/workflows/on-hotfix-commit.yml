@@ -8,7 +8,7 @@
       "uses": "actions/checkout@v3"
       "with":
         "ref": "hotfix"
-    - "name": "Fetch artifacts"
+    - "name": "Pull artifacts"
       "uses": "actions/download-artifact@v3"
       "with":
         "name": "packages"
@@ -64,9 +64,9 @@
         "password": "${{ secrets.GITHUB_TOKEN }}"
         "registry": "ghcr.io"
         "username": "${{ github.actor }}"
-    - "name": "Build"
+    - "name": "Builder run unix_${{matrix.arch}}"
       "run": "docker compose -f builder/compose.yml up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}"
-    - "name": "Save artifacts"
+    - "name": "Push artifacts"
       "uses": "actions/upload-artifact@v3"
       "with":
         "if-no-files-found": "error"
@@ -94,9 +94,9 @@
         "password": "${{ secrets.GITHUB_TOKEN }}"
         "registry": "ghcr.io"
         "username": "${{ github.actor }}"
-    - "name": "Build"
+    - "name": "Builder run windows_win64"
       "run": "docker compose -f builder/compose.yml up --exit-code-from windows_win64 windows_win64"
-    - "name": "Save artifacts"
+    - "name": "Push artifacts"
       "uses": "actions/upload-artifact@v3"
       "with":
         "if-no-files-found": "error"
@@ -111,25 +111,49 @@
       "uses": "actions/checkout@v3"
       "with":
         "ref": "hotfix"
-    - "name": "Fetch artifacts"
+    - "name": "Pull artifacts"
       "uses": "actions/download-artifact@v3"
       "with":
         "name": "packages"
+        "path": "./build/release/"
     - "name": "Copy .exe and license to installer dir"
       "run": |
-        copy husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
-        copy husarnet-windows-win64.exe platforms\windows\husarnet.exe
+        copy build\release\husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
+        copy build\release\husarnet-windows-win64.exe platforms\windows\husarnet.exe
         copy LICENSE.txt platforms\windows
       "shell": "cmd"
     - "name": "Building the installer"
       "run": |
         "%programfiles(x86)%\Inno Setup 6\iscc.exe" platforms\windows\script.iss
+        copy platforms\windows\Output\husarnet-setup.exe build\release\husarnet-setup.exe
       "shell": "cmd"
-    - "name": "Upload installer"
+    - "name": "Push artifacts"
       "uses": "actions/upload-artifact@v3"
       "with":
-        "name": "windows_installer"
-        "path": "platforms\\windows\\Output\\husarnet-setup.exe"
+        "if-no-files-found": "error"
+        "name": "packages"
+        "path": "./build/release/"
+  "release":
+    "needs":
+    - "run_tests"
+    - "build_unix"
+    - "build_windows_installer"
+    "runs-on":
+    - "self-hosted"
+    - "linux"
+    - "prod"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "hotfix"
+    - "name": "Pull artifacts"
+      "uses": "actions/download-artifact@v3"
+      "with":
+        "name": "packages"
+        "path": "./build/release/"
+    - "name": "Deploy to Husarnet prod repository"
+      "run": "./deploy/deploy.sh prod"
   "release_docker":
     "needs":
     - "run_tests"
@@ -148,19 +172,19 @@
         "username": "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
     - "name": "create manifest"
       "run": |
-        docker manifest create husarnet/husarnet%(suffix):latest \\
-        --amend husarnet/husarnet%(suffix):amd64 \\
-        --amend husarnet/husarnet%(suffix):arm64 \\
-        --amend husarnet/husarnet%(suffix):armhf
+        docker manifest create husarnet/husarnet:latest \\
+        --amend husarnet/husarnet:amd64 \\
+        --amend husarnet/husarnet:arm64 \\
+        --amend husarnet/husarnet:armhf
         
-        docker manifest create husarnet/husarnet%(suffix):$(cat version.txt) \\
-        --amend husarnet/husarnet%(suffix):amd64 \\
-        --amend husarnet/husarnet%(suffix):arm64 \\
-        --amend husarnet/husarnet%(suffix):armhf
+        docker manifest create husarnet/husarnet:$(cat version.txt) \\
+        --amend husarnet/husarnet:amd64 \\
+        --amend husarnet/husarnet:arm64 \\
+        --amend husarnet/husarnet:armhf
     - "name": "push manifest"
       "run": |
-        docker manifest push husarnet/husarnet%(suffix):latest
-        docker manifest push husarnet/husarnet%(suffix):$(cat version.txt)
+        docker manifest push husarnet/husarnet:latest
+        docker manifest push husarnet/husarnet:$(cat version.txt)
   "release_github":
     "needs":
     - "run_tests"
@@ -168,49 +192,22 @@
     - "build_windows_installer"
     "runs-on": "ubuntu-latest"
     "steps":
-    - "name": "Fetch linux packages"
+    - "name": "Pull artifacts"
       "uses": "actions/download-artifact@v3"
       "with":
         "name": "packages"
-    - "name": "Fetch windows installer"
-      "uses": "actions/download-artifact@v3"
-      "with":
-        "name": "windows_installer"
+        "path": "./build/release/"
     - "uses": "marvinpinto/action-automatic-releases@latest"
       "with":
         "automatic_release_tag": "${{ github.ref_name }}"
         "draft": true
         "files": |
-          *.deb
-          *.tar
-          *.rpm
-          *.exe
+          ./build/release/*.deb
+          ./build/release/*.tar
+          ./build/release/*.rpm
+          ./build/release/*setup.exe
         "prerelease": false
         "repo_token": "${{ secrets.GITHUB_TOKEN }}"
-  "release_nightly":
-    "needs":
-    - "run_tests"
-    - "build_unix"
-    - "build_windows_installer"
-    "runs-on":
-    - "self-hosted"
-    - "linux"
-    - "nightly"
-    "steps":
-    - "name": "Check out the repo"
-      "uses": "actions/checkout@v3"
-      "with":
-        "ref": "hotfix"
-    - "name": "Fetch artifacts"
-      "uses": "actions/download-artifact@v3"
-      "with":
-        "name": "packages"
-    - "name": "Fetch Windows installer"
-      "uses": "actions/download-artifact@v3"
-      "with":
-        "name": "windows_installer"
-    - "name": "Deploy to Husarnet main repository"
-      "run": "./deploy/deploy.sh main"
   "run_tests":
     "needs": []
     "runs-on": "ubuntu-latest"
@@ -225,9 +222,9 @@
         "password": "${{ secrets.GITHUB_TOKEN }}"
         "registry": "ghcr.io"
         "username": "${{ github.actor }}"
-    - "name": "Run autoformatters"
+    - "name": "Builder run format"
       "run": "docker compose -f builder/compose.yml up --exit-code-from format format"
-    - "name": "Run tests"
+    - "name": "Builder run test"
       "run": "docker compose -f builder/compose.yml up --exit-code-from test test"
 "name": "Release hotfix"
 "on":

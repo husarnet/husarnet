@@ -8,7 +8,7 @@
       "uses": "actions/checkout@v3"
       "with":
         "ref": "${{ github.ref }}"
-    - "name": "Fetch artifacts"
+    - "name": "Pull artifacts"
       "uses": "actions/download-artifact@v3"
       "with":
         "name": "packages"
@@ -39,7 +39,7 @@
         "context": "."
         "file": "./platforms/docker/Dockerfile"
         "platforms": "${{matrix.arch}}"
-        "push": true
+        "push": false
         "tags": "husarnet/husarnet-nightly:${{matrix.arch_alias}}"
     "strategy":
       "matrix":
@@ -64,9 +64,9 @@
         "password": "${{ secrets.GITHUB_TOKEN }}"
         "registry": "ghcr.io"
         "username": "${{ github.actor }}"
-    - "name": "Build"
+    - "name": "Builder run unix_${{matrix.arch}}"
       "run": "docker compose -f builder/compose.yml up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}"
-    - "name": "Save artifacts"
+    - "name": "Push artifacts"
       "uses": "actions/upload-artifact@v3"
       "with":
         "if-no-files-found": "error"
@@ -94,9 +94,9 @@
         "password": "${{ secrets.GITHUB_TOKEN }}"
         "registry": "ghcr.io"
         "username": "${{ github.actor }}"
-    - "name": "Build"
+    - "name": "Builder run windows_win64"
       "run": "docker compose -f builder/compose.yml up --exit-code-from windows_win64 windows_win64"
-    - "name": "Save artifacts"
+    - "name": "Push artifacts"
       "uses": "actions/upload-artifact@v3"
       "with":
         "if-no-files-found": "error"
@@ -111,25 +111,28 @@
       "uses": "actions/checkout@v3"
       "with":
         "ref": "${{ github.ref }}"
-    - "name": "Fetch artifacts"
+    - "name": "Pull artifacts"
       "uses": "actions/download-artifact@v3"
       "with":
         "name": "packages"
+        "path": "./build/release/"
     - "name": "Copy .exe and license to installer dir"
       "run": |
-        copy husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
-        copy husarnet-windows-win64.exe platforms\windows\husarnet.exe
+        copy build\release\husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
+        copy build\release\husarnet-windows-win64.exe platforms\windows\husarnet.exe
         copy LICENSE.txt platforms\windows
       "shell": "cmd"
     - "name": "Building the installer"
       "run": |
         "%programfiles(x86)%\Inno Setup 6\iscc.exe" platforms\windows\script.iss
+        copy platforms\windows\Output\husarnet-setup.exe build\release\husarnet-setup.exe
       "shell": "cmd"
-    - "name": "Upload installer"
+    - "name": "Push artifacts"
       "uses": "actions/upload-artifact@v3"
       "with":
-        "name": "windows_installer"
-        "path": "platforms\\windows\\Output\\husarnet-setup.exe"
+        "if-no-files-found": "error"
+        "name": "packages"
+        "path": "./build/release/"
   "run_tests":
     "needs": []
     "runs-on": "ubuntu-latest"
@@ -144,9 +147,9 @@
         "password": "${{ secrets.GITHUB_TOKEN }}"
         "registry": "ghcr.io"
         "username": "${{ github.actor }}"
-    - "name": "Run autoformatters"
+    - "name": "Builder run format"
       "run": "docker compose -f builder/compose.yml up --exit-code-from format format"
-    - "name": "Run tests"
+    - "name": "Builder run test"
       "run": "docker compose -f builder/compose.yml up --exit-code-from test test"
 "name": "Pull request workflow"
 "on":

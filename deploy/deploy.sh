@@ -13,8 +13,8 @@ case ${deploy_target} in
     echo "Deploying to nightly repo"
     ;;
 
-  main)
-    echo "Deploying to main repo"
+  prod)
+    echo "Deploying to prod repo"
     ;;
 
   *)
@@ -22,6 +22,8 @@ case ${deploy_target} in
     exit 2
     ;;
 esac
+
+pushd ${release_base}
 
 golden_path="$HOME/golden"
 golden_tar_path="${golden_path}/tgz"
@@ -93,3 +95,5 @@ cp husarnet-setup.exe ${working_path}/husarnet2alpha-unstable-${package_version}
 ln -fs ${working_path}/husarnet2alpha-unstable-${package_version}-setup.exe ${working_path}/husarnet2alpha-unstable-latest-setup.exe
 
 echo "[==] Done, and should work."
+
+popd

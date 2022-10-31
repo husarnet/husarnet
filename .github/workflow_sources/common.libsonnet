@@ -7,7 +7,54 @@
         ref: ref,
       },
     },
+
+    docker_login:: function() {
+      name: 'Login to Docker Registry',
+      uses: 'docker/login-action@v2',
+      with: {
+        registry: 'docker.io',
+        username: '${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}',
+        password: '${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}',
+      },
+
+    },
+
+    ghcr_login:: function() {
+      name: 'Login to GHCR',
+      uses: 'docker/login-action@v2',
+      with: {
+        registry: 'ghcr.io',
+        username: '${{ github.actor }}',
+        password: '${{ secrets.GITHUB_TOKEN }}',
+      },
+    },
+
+    push_artifacts:: function() {
+      name: 'Push artifacts',
+      uses: 'actions/upload-artifact@v3',
+      with: {
+        name: 'packages',
+        path: './build/release/',
+        'if-no-files-found': 'error',
+      },
+    },
+
+    pull_artifacts:: function() {
+      name: 'Pull artifacts',
+      uses: 'actions/download-artifact@v3',
+      with: {
+        name: 'packages',
+        path: './build/release/',
+      },
+    },
+
+    builder:: function(container) {
+      name: 'Builder run ' + container,
+      run: 'docker compose -f builder/compose.yml up --exit-code-from ' + container + ' ' + container,
+    },
+
   },
+
   jobs: {
     bump_version:: function(ref) {
       needs: [],
@@ -17,6 +64,7 @@
       outputs: {
         commit_ref: '${{ steps.autocommit.outputs.commit_hash }}',
       },
+
       steps: [
         $.steps.checkout(ref),
         {
@@ -31,7 +79,7 @@
         },
         {
           name: 'Read new version',
-          run: 'echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV\n',
+          run: 'echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV',
         },
         {
           uses: 'stefanzweifel/git-auto-commit-action@v4',
@@ -42,6 +90,7 @@
         },
       ],
     },
+
     build_unix:: function(ref) {
       needs: [],
 
@@ -58,32 +107,15 @@
           ],
         },
       },
+
       steps: [
         $.steps.checkout(ref),
-        {
-          name: 'Login to GHCR',
-          uses: 'docker/login-action@v2',
-          with: {
-            registry: 'ghcr.io',
-            username: '${{ github.actor }}',
-            password: '${{ secrets.GITHUB_TOKEN }}',
-          },
-        },
-        {
-          name: 'Build',
-          run: 'docker compose -f builder/compose.yml up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}',
-        },
-        {
-          name: 'Save artifacts',
-          uses: 'actions/upload-artifact@v3',
-          with: {
-            name: 'packages',
-            path: './build/release/',
-            'if-no-files-found': 'error',
-          },
-        },
+        $.steps.ghcr_login(),
+        $.steps.builder('unix_${{matrix.arch}}'),
+        $.steps.push_artifacts(),
       ],
     },
+
     build_windows:: function(ref) {
       needs: [],
 
@@ -91,93 +123,55 @@
 
       steps: [
         $.steps.checkout(ref),
-        {
-          name: 'Login to GHCR',
-          uses: 'docker/login-action@v2',
-          with: {
-            registry: 'ghcr.io',
-            username: '${{ github.actor }}',
-            password: '${{ secrets.GITHUB_TOKEN }}',
-          },
-        },
-        {
-          name: 'Build',
-          run: 'docker compose -f builder/compose.yml up --exit-code-from windows_win64 windows_win64',
-        },
-        {
-          name: 'Save artifacts',
-          uses: 'actions/upload-artifact@v3',
-          with: {
-            name: 'packages',
-            path: './build/release/',
-            'if-no-files-found': 'error',
-          },
-        },
+        $.steps.ghcr_login(),
+        $.steps.builder('windows_win64'),
+        $.steps.push_artifacts(),
       ],
     },
+
     build_windows_installer:: function(ref) {
       needs: ['build_windows'],
 
       'runs-on': 'windows-2019',
+
       steps: [
         $.steps.checkout(ref),
-        {
-          name: 'Fetch artifacts',
-          uses: 'actions/download-artifact@v3',
-          with: {
-            name: 'packages',
-          },
-        },
+        $.steps.pull_artifacts(),
         {
           name: 'Copy .exe and license to installer dir',
-          run: 'copy husarnet-daemon-windows-win64.exe platforms\\windows\\husarnet-daemon.exe\ncopy husarnet-windows-win64.exe platforms\\windows\\husarnet.exe\ncopy LICENSE.txt platforms\\windows\n',
           shell: 'cmd',
+          run: |||
+            copy build\release\husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
+            copy build\release\husarnet-windows-win64.exe platforms\windows\husarnet.exe
+            copy LICENSE.txt platforms\windows
+          |||,
         },
         {
           name: 'Building the installer',
-          run: '"%programfiles(x86)%\\Inno Setup 6\\iscc.exe" platforms\\windows\\script.iss\n',
           shell: 'cmd',
+          run: |||
+            "%programfiles(x86)%\Inno Setup 6\iscc.exe" platforms\windows\script.iss
+            copy platforms\windows\Output\husarnet-setup.exe build\release\husarnet-setup.exe
+          |||,
         },
-        {
-          name: 'Upload installer',
-          uses: 'actions/upload-artifact@v3',
-          with: {
-            name: 'windows_installer',
-            path: 'platforms\\windows\\Output\\husarnet-setup.exe',
-          },
-        },
+        $.steps.push_artifacts(),
       ],
     },
 
-
     run_tests:: function(ref) {
-      needs+: [],
+      needs: [],
 
       'runs-on': 'ubuntu-latest',
+
       steps: [
         $.steps.checkout(ref),
-        {
-          name: 'Login to GHCR',
-          uses: 'docker/login-action@v2',
-          with: {
-            registry: 'ghcr.io',
-            username: '${{ github.actor }}',
-            password: '${{ secrets.GITHUB_TOKEN }}',
-          },
-        },
-        {
-          name: 'Run autoformatters',
-          run: 'docker compose -f builder/compose.yml up --exit-code-from format format',
-        },
-        {
-          name: 'Run tests',
-          run: 'docker compose -f builder/compose.yml up --exit-code-from test test',
-        },
+        $.steps.ghcr_login(),
+        $.steps.builder('format'),
+        $.steps.builder('test'),
       ],
     },
 
     release:: function(target, ref) {
-
       needs: [
         'run_tests',
         'build_unix',
@@ -187,25 +181,12 @@
       'runs-on': [
         'self-hosted',
         'linux',
-        'nightly',
+        target,
       ],
 
       steps: [
         $.steps.checkout(ref),
-        {
-          name: 'Fetch artifacts',
-          uses: 'actions/download-artifact@v3',
-          with: {
-            name: 'packages',
-          },
-        },
-        {
-          name: 'Fetch Windows installer',
-          uses: 'actions/download-artifact@v3',
-          with: {
-            name: 'windows_installer',
-          },
-        },
+        $.steps.pull_artifacts(),
         {
           name: 'Deploy to Husarnet ' + target + ' repository',
           run: './deploy/deploy.sh ' + target,
@@ -213,7 +194,36 @@
       ],
     },
 
-    build_docker:: function(suffix, ref) {
+    release_github:: function() {
+      needs: [
+        'run_tests',
+        'build_unix',
+        'build_windows_installer',
+      ],
+
+      'runs-on': 'ubuntu-latest',
+
+      steps: [
+        $.steps.pull_artifacts(),
+        {
+          uses: 'marvinpinto/action-automatic-releases@latest',
+          with: {
+            repo_token: '${{ secrets.GITHUB_TOKEN }}',
+            draft: true,
+            prerelease: false,
+            automatic_release_tag: '${{ github.ref_name }}',
+            files: |||
+              ./build/release/*.deb
+              ./build/release/*.tar
+              ./build/release/*.rpm
+              ./build/release/*setup.exe
+            |||,
+          },
+        },
+      ],
+    },
+
+    build_docker:: function(namespace, push, ref) {
       needs: [
         'build_unix',
       ],
@@ -238,16 +248,10 @@
           ],
         },
       },
+
       steps: [
         $.steps.checkout(ref),
-        {
-          name: 'Fetch artifacts',
-          uses: 'actions/download-artifact@v3',
-          with: {
-            name: 'packages',
-            path: './build/release/',
-          },
-        },
+        $.steps.pull_artifacts(),
         {
           name: 'Set up QEMU',
           uses: 'docker/setup-qemu-action@v2',
@@ -259,24 +263,8 @@
             version: 'latest',
           },
         },
-        {
-          name: 'Login to Docker Registry',
-          uses: 'docker/login-action@v2',
-          with: {
-            registry: 'docker.io',
-            username: '${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}',
-            password: '${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}',
-          },
-        },
-        {
-          name: 'Login to GHCR',
-          uses: 'docker/login-action@v2',
-          with: {
-            registry: 'ghcr.io',
-            username: '${{ github.actor }}',
-            password: '${{ secrets.GITHUB_TOKEN }}',
-          },
-        },
+        $.steps.docker_login(),
+        $.steps.ghcr_login(),
         {
           name: 'Prepare build',
           run: './platforms/docker/build.sh ${{matrix.arch_alias}}',
@@ -288,14 +276,14 @@
             context: '.',
             file: './platforms/docker/Dockerfile',
             platforms: '${{matrix.arch}}',
-            push: true,
-            tags: 'husarnet/husarnet' + suffix + ':${{matrix.arch_alias}}',
+            push: push,
+            tags: namespace + ':${{matrix.arch_alias}}',
           },
         },
       ],
     },
 
-    release_docker:: function(suffix, ref) {
+    release_docker:: function(namespace, ref) {
       needs: [
         'run_tests',
         'build_docker',
@@ -305,76 +293,34 @@
 
       steps: [
         $.steps.checkout(ref),
-        {
-          name: 'Login to Docker Registry',
-          uses: 'docker/login-action@v2',
-          with: {
-            registry: 'docker.io',
-            username: '${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}',
-            password: '${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}',
-          },
-        },
+        $.steps.docker_login(),
         {
           name: 'create manifest',
           run: |||
-            docker manifest create husarnet/husarnet%(suffix):latest \\
-            --amend husarnet/husarnet%(suffix):amd64 \\
-            --amend husarnet/husarnet%(suffix):arm64 \\
-            --amend husarnet/husarnet%(suffix):armhf
+            docker manifest create %(namespace)s:latest \\
+            --amend %(namespace)s:amd64 \\
+            --amend %(namespace)s:arm64 \\
+            --amend %(namespace)s:armhf
 
-            docker manifest create husarnet/husarnet%(suffix):$(cat version.txt) \\
-            --amend husarnet/husarnet%(suffix):amd64 \\
-            --amend husarnet/husarnet%(suffix):arm64 \\
-            --amend husarnet/husarnet%(suffix):armhf
-          |||,
+            docker manifest create %(namespace)s:$(cat version.txt) \\
+            --amend %(namespace)s:amd64 \\
+            --amend %(namespace)s:arm64 \\
+            --amend %(namespace)s:armhf
+          ||| % {
+            namespace: namespace,
+          },
         },
         {
           name: 'push manifest',
           run: |||
-            docker manifest push husarnet/husarnet%(suffix):latest
-            docker manifest push husarnet/husarnet%(suffix):$(cat version.txt)
-          |||,
-        },
-      ],
-    },
-
-    release_github:: function() {
-      needs: [
-        'run_tests',
-        'build_unix',
-        'build_windows_installer',
-      ],
-
-      'runs-on': 'ubuntu-latest',
-
-      steps: [
-        {
-          name: 'Fetch linux packages',
-          uses: 'actions/download-artifact@v3',
-          with: {
-            name: 'packages',
-          },
-        },
-        {
-          name: 'Fetch windows installer',
-          uses: 'actions/download-artifact@v3',
-          with: {
-            name: 'windows_installer',
-          },
-        },
-        {
-          uses: 'marvinpinto/action-automatic-releases@latest',
-          with: {
-            repo_token: '${{ secrets.GITHUB_TOKEN }}',
-            draft: true,
-            prerelease: false,
-            automatic_release_tag: '${{ github.ref_name }}',
-            files: '*.deb\n*.tar\n*.rpm\n*.exe\n',
+            docker manifest push %(namespace)s:latest
+            docker manifest push %(namespace)s:$(cat version.txt)
+          ||| % {
+            namespace: namespace,
           },
         },
       ],
     },
-
 
   },
 }

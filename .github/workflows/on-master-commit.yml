@@ -9,7 +9,7 @@
       "uses": "actions/checkout@v3"
       "with":
         "ref": "${{ needs.bump_version.outputs.commit_ref }}"
-    - "name": "Fetch artifacts"
+    - "name": "Pull artifacts"
       "uses": "actions/download-artifact@v3"
       "with":
         "name": "packages"
@@ -66,9 +66,9 @@
         "password": "${{ secrets.GITHUB_TOKEN }}"
         "registry": "ghcr.io"
         "username": "${{ github.actor }}"
-    - "name": "Build"
+    - "name": "Builder run unix_${{matrix.arch}}"
       "run": "docker compose -f builder/compose.yml up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}"
-    - "name": "Save artifacts"
+    - "name": "Push artifacts"
       "uses": "actions/upload-artifact@v3"
       "with":
         "if-no-files-found": "error"
@@ -97,9 +97,9 @@
         "password": "${{ secrets.GITHUB_TOKEN }}"
         "registry": "ghcr.io"
         "username": "${{ github.actor }}"
-    - "name": "Build"
+    - "name": "Builder run windows_win64"
       "run": "docker compose -f builder/compose.yml up --exit-code-from windows_win64 windows_win64"
-    - "name": "Save artifacts"
+    - "name": "Push artifacts"
       "uses": "actions/upload-artifact@v3"
       "with":
         "if-no-files-found": "error"
@@ -115,25 +115,28 @@
       "uses": "actions/checkout@v3"
       "with":
         "ref": "${{ needs.bump_version.outputs.commit_ref }}"
-    - "name": "Fetch artifacts"
+    - "name": "Pull artifacts"
       "uses": "actions/download-artifact@v3"
       "with":
         "name": "packages"
+        "path": "./build/release/"
     - "name": "Copy .exe and license to installer dir"
       "run": |
-        copy husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
-        copy husarnet-windows-win64.exe platforms\windows\husarnet.exe
+        copy build\release\husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe
+        copy build\release\husarnet-windows-win64.exe platforms\windows\husarnet.exe
         copy LICENSE.txt platforms\windows
       "shell": "cmd"
     - "name": "Building the installer"
       "run": |
         "%programfiles(x86)%\Inno Setup 6\iscc.exe" platforms\windows\script.iss
+        copy platforms\windows\Output\husarnet-setup.exe build\release\husarnet-setup.exe
       "shell": "cmd"
-    - "name": "Upload installer"
+    - "name": "Push artifacts"
       "uses": "actions/upload-artifact@v3"
       "with":
-        "name": "windows_installer"
-        "path": "platforms\\windows\\Output\\husarnet-setup.exe"
+        "if-no-files-found": "error"
+        "name": "packages"
+        "path": "./build/release/"
   "bump_version":
     "needs": []
     "outputs":
@@ -150,12 +153,33 @@
     - "name": "Bump version"
       "run": "python ./util/version-bump.py"
     - "name": "Read new version"
-      "run": |
-        echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
+      "run": "echo \"VERSION=$(cat version.txt)\" >> $GITHUB_ENV"
     - "id": "autocommit"
       "uses": "stefanzweifel/git-auto-commit-action@v4"
       "with":
         "commit_message": "Build version ${{ env.VERSION }}"
+  "release":
+    "needs":
+    - "run_tests"
+    - "build_unix"
+    - "build_windows_installer"
+    - "bump_version"
+    "runs-on":
+    - "self-hosted"
+    - "linux"
+    - "nightly"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "${{ needs.bump_version.outputs.commit_ref }}"
+    - "name": "Pull artifacts"
+      "uses": "actions/download-artifact@v3"
+      "with":
+        "name": "packages"
+        "path": "./build/release/"
+    - "name": "Deploy to Husarnet nightly repository"
+      "run": "./deploy/deploy.sh nightly"
   "release_docker":
     "needs":
     - "run_tests"
@@ -175,44 +199,19 @@
         "username": "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
     - "name": "create manifest"
       "run": |
-        docker manifest create husarnet/husarnet%(suffix):latest \\
-        --amend husarnet/husarnet%(suffix):amd64 \\
-        --amend husarnet/husarnet%(suffix):arm64 \\
-        --amend husarnet/husarnet%(suffix):armhf
+        docker manifest create husarnet/husarnet-nightly:latest \\
+        --amend husarnet/husarnet-nightly:amd64 \\
+        --amend husarnet/husarnet-nightly:arm64 \\
+        --amend husarnet/husarnet-nightly:armhf
         
-        docker manifest create husarnet/husarnet%(suffix):$(cat version.txt) \\
-        --amend husarnet/husarnet%(suffix):amd64 \\
-        --amend husarnet/husarnet%(suffix):arm64 \\
-        --amend husarnet/husarnet%(suffix):armhf
+        docker manifest create husarnet/husarnet-nightly:$(cat version.txt) \\
+        --amend husarnet/husarnet-nightly:amd64 \\
+        --amend husarnet/husarnet-nightly:arm64 \\
+        --amend husarnet/husarnet-nightly:armhf
     - "name": "push manifest"
       "run": |
-        docker manifest push husarnet/husarnet%(suffix):latest
-        docker manifest push husarnet/husarnet%(suffix):$(cat version.txt)
-  "release_nightly":
-    "needs":
-    - "run_tests"
-    - "build_unix"
-    - "build_windows_installer"
-    - "bump_version"
-    "runs-on":
-    - "self-hosted"
-    - "linux"
-    - "nightly"
-    "steps":
-    - "name": "Check out the repo"
-      "uses": "actions/checkout@v3"
-      "with":
-        "ref": "${{ needs.bump_version.outputs.commit_ref }}"
-    - "name": "Fetch artifacts"
-      "uses": "actions/download-artifact@v3"
-      "with":
-        "name": "packages"
-    - "name": "Fetch Windows installer"
-      "uses": "actions/download-artifact@v3"
-      "with":
-        "name": "windows_installer"
-    - "name": "Deploy to Husarnet nightly repository"
-      "run": "./deploy/deploy.sh nightly"
+        docker manifest push husarnet/husarnet-nightly:latest
+        docker manifest push husarnet/husarnet-nightly:$(cat version.txt)
   "run_tests":
     "needs":
     - "bump_version"
@@ -228,9 +227,9 @@
         "password": "${{ secrets.GITHUB_TOKEN }}"
         "registry": "ghcr.io"
         "username": "${{ github.actor }}"
-    - "name": "Run autoformatters"
+    - "name": "Builder run format"
       "run": "docker compose -f builder/compose.yml up --exit-code-from format format"
-    - "name": "Run tests"
+    - "name": "Builder run test"
       "run": "docker compose -f builder/compose.yml up --exit-code-from test test"
 "name": "Release nightly"
 "on":
