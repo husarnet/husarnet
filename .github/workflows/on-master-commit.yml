@@ -1,5 +1,5 @@
 "jobs":
-  "build_docker_nightly":
+  "build_docker":
     "needs":
     - "build_unix"
     - "bump_version"

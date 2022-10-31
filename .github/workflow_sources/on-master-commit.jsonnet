@@ -24,7 +24,7 @@ std.manifestYamlDoc(
       run_tests: common.jobs.run_tests(self.ref) + self.base,
 
       release_nightly: common.jobs.release('nightly', self.ref) + self.base,
-      build_docker_nightly: common.jobs.build_docker(self.docker_project, true, self.ref) + self.base,
+      build_docker: common.jobs.build_docker(self.docker_project, true, self.ref) + self.base,
       release_docker_nightly: common.jobs.release_docker(self.docker_project, self.ref) + self.base,
     },
   }
