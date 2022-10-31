@@ -1,5 +1,5 @@
 "jobs":
-  "build_docker":
+  "build_docker_nightly":
     "needs":
     - "build_unix"
     - "bump_version"
@@ -158,29 +158,7 @@
       "uses": "stefanzweifel/git-auto-commit-action@v4"
       "with":
         "commit_message": "Build version ${{ env.VERSION }}"
-  "release":
-    "needs":
-    - "run_tests"
-    - "build_unix"
-    - "build_windows_installer"
-    - "bump_version"
-    "runs-on":
-    - "self-hosted"
-    - "linux"
-    - "nightly"
-    "steps":
-    - "name": "Check out the repo"
-      "uses": "actions/checkout@v3"
-      "with":
-        "ref": "${{ needs.bump_version.outputs.commit_ref }}"
-    - "name": "Pull artifacts"
-      "uses": "actions/download-artifact@v3"
-      "with":
-        "name": "packages"
-        "path": "./build/release/"
-    - "name": "Deploy to Husarnet nightly repository"
-      "run": "./deploy/deploy.sh nightly"
-  "release_docker":
+  "release_docker_nightly":
     "needs":
     - "run_tests"
     - "build_docker"
@@ -212,6 +190,28 @@
       "run": |
         docker manifest push husarnet/husarnet-nightly:latest
         docker manifest push husarnet/husarnet-nightly:$(cat version.txt)
+  "release_nightly":
+    "needs":
+    - "run_tests"
+    - "build_unix"
+    - "build_windows_installer"
+    - "bump_version"
+    "runs-on":
+    - "self-hosted"
+    - "linux"
+    - "nightly"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "${{ needs.bump_version.outputs.commit_ref }}"
+    - "name": "Pull artifacts"
+      "uses": "actions/download-artifact@v3"
+      "with":
+        "name": "packages"
+        "path": "./build/release/"
+    - "name": "Deploy to Husarnet nightly repository"
+      "run": "./deploy/deploy.sh nightly"
   "run_tests":
     "needs":
     - "bump_version"

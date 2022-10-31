@@ -3,7 +3,7 @@ source $(dirname "$0")/../util/bash-base.sh
 
 fix_perms () {
     mkdir -p $1
-    chown 1000:1000 $1
+    chown -R 1000:1000 $1
     chmod 777 $1
 }
 
