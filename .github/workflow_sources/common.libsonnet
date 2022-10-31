@@ -297,14 +297,14 @@
         {
           name: 'create manifest',
           run: |||
-            docker manifest create %(namespace)s:latest \\
-            --amend %(namespace)s:amd64 \\
-            --amend %(namespace)s:arm64 \\
+            docker manifest create %(namespace)s:latest \
+            --amend %(namespace)s:amd64 \
+            --amend %(namespace)s:arm64 \
             --amend %(namespace)s:armhf
 
-            docker manifest create %(namespace)s:$(cat version.txt) \\
-            --amend %(namespace)s:amd64 \\
-            --amend %(namespace)s:arm64 \\
+            docker manifest create %(namespace)s:$(cat version.txt) \
+            --amend %(namespace)s:amd64 \
+            --amend %(namespace)s:arm64 \
             --amend %(namespace)s:armhf
           ||| % {
             namespace: namespace,
