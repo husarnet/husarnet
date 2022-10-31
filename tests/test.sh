@@ -7,4 +7,6 @@ ${tests_base}/copyright-checker.py
 ${tests_base}/cppcheck.sh
 ${tests_base}/unit.sh
 
+# This file is meant to be run from inside docker so no integration tests from here
+
 popd

@@ -42,9 +42,7 @@ for package_type in tar deb rpm; do
         --vendor Husarnet \
         --description "Global LAN network" \
         --url "https://husarnet.com" \
-        --depends iptables \
         --depends $(if [ "${package_type}" == "deb" ]; then echo "iproute2"; else echo "iproute"; fi) \
-        --conflicts "husarnet-ros = 1.0.0" \
         --after-install ${platform_base}/packaging/post-install-script.sh \
         --after-remove ${platform_base}/packaging/post-remove-script.sh \
         --package ${release_base}/husarnet-${platform}-${arch}.${package_type} \

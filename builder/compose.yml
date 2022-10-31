@@ -66,15 +66,18 @@ services:
     privileged: true
     volumes:
       - ../:/app
+    command: /app/tests/integration/install.sh
 
   test_ubuntu_20_04:
     image: ubuntu:20.04
     privileged: true
     volumes:
       - ../:/app
+    command: /app/tests/integration/install.sh
 
   test_ubuntu_22_04:
     image: ubuntu:22.04
     privileged: true
     volumes:
       - ../:/app
+    command: /app/tests/integration/install.sh
