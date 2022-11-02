@@ -141,6 +141,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(better_enums)
 target_include_directories(husarnet_core PUBLIC ${better_enums_SOURCE_DIR})
+target_compile_options(husarnet_core PUBLIC -DBETTER_ENUMS_STRICT_CONVERSION=1)
 
 FetchContent_Declare(
   sqlite3

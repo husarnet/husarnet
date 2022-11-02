@@ -99,16 +99,16 @@ void PrivilegedProcess::run()
     json response;
 
     switch(endpoint) {
-      case PrivilegedMethod::updateHostsFile:
+      case +PrivilegedMethod::updateHostsFile:
         response = handleUpdateHostsFile(data);
         break;
-      case PrivilegedMethod::getSelfHostname:
+      case +PrivilegedMethod::getSelfHostname:
         response = handleGetSelfHostname(data);
         break;
-      case PrivilegedMethod::setSelfHostname:
+      case +PrivilegedMethod::setSelfHostname:
         response = handleSetSelfHostname(data);
         break;
-      case PrivilegedMethod::notifyReady:
+      case +PrivilegedMethod::notifyReady:
         response = handleNotifyReady(data);
         break;
     }

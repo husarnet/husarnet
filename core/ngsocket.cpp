@@ -269,13 +269,13 @@ void NgSocket::peerMessageReceived(
     const PeerToPeerMessage& msg)
 {
   switch(msg.kind) {
-    case PeerToPeerMessageKind::DATA:
+    case +PeerToPeerMessageKind::DATA:
       peerDataPacketReceived(source, msg.data);
       break;
-    case PeerToPeerMessageKind::HELLO:
+    case +PeerToPeerMessageKind::HELLO:
       helloReceived(source, msg);
       break;
-    case PeerToPeerMessageKind::HELLO_REPLY:
+    case +PeerToPeerMessageKind::HELLO_REPLY:
       helloReplyReceived(source, msg);
       break;
     default:
@@ -360,10 +360,10 @@ void NgSocket::peerDataPacketReceived(InetAddress source, string_view data)
 void NgSocket::baseMessageReceivedUdp(const BaseToPeerMessage& msg)
 {
   switch(msg.kind) {
-    case BaseToPeerMessageKind::DATA:
+    case +BaseToPeerMessageKind::DATA:
       sendToUpperLayer(msg.source, msg.data);
       break;
-    case BaseToPeerMessageKind::NAT_OK: {
+    case +BaseToPeerMessageKind::NAT_OK: {
       if(lastNatInitConfirmation == 0) {
         LOG("UDP connection to base server established");
       }
@@ -386,10 +386,10 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
   baseConnectRetries = 0;
 
   switch(msg.kind) {
-    case BaseToPeerMessageKind::DATA:
+    case +BaseToPeerMessageKind::DATA:
       sendToUpperLayer(msg.source, msg.data);
       break;
-    case BaseToPeerMessageKind::HELLO:
+    case +BaseToPeerMessageKind::HELLO:
       LOG("TCP connection to base server established");
       LOGV("received hello cookie %s", encodeHex(msg.cookie).c_str());
       cookie = msg.cookie;
@@ -397,14 +397,14 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
       sendLocalAddressesToBase();
       requestRefresh();
       break;
-    case BaseToPeerMessageKind::DEVICE_ADDRESSES:
+    case +BaseToPeerMessageKind::DEVICE_ADDRESSES:
       if(configStorage.getUserSettingBool(UserSetting::enableUdp)) {
         Peer* peer = peerContainer->getPeer(msg.deviceId);
         if(peer != nullptr)
           changePeerTargetAddresses(peer, msg.addresses);
       }
       break;
-    case BaseToPeerMessageKind::STATE:
+    case +BaseToPeerMessageKind::STATE:
       if(configStorage.getUserSettingBool(UserSetting::enableUdp)) {
         allBaseUdpAddresses = msg.udpAddress;
         baseUdpAddress = msg.udpAddress[0];
@@ -422,7 +422,7 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
         }
       }
       break;
-    case BaseToPeerMessageKind::REDIRECT:
+    case +BaseToPeerMessageKind::REDIRECT:
       baseAddress = msg.newBaseAddress;
       LOG("redirected to new base server: %s", baseAddress.str().c_str());
       connectToBase();
@@ -781,18 +781,18 @@ std::string NgSocket::serializePeerToPeerMessage(const PeerToPeerMessage& msg)
   std::string data;
 
   switch(msg.kind) {
-    case PeerToPeerMessageKind::HELLO:
-    case PeerToPeerMessageKind::HELLO_REPLY:
+    case +PeerToPeerMessageKind::HELLO:
+    case +PeerToPeerMessageKind::HELLO_REPLY:
       assert(
           deviceId.size() == 16 && msg.yourId.size() == 16 &&
           msg.helloCookie.size() == 16 && pubkey.size() == 32);
-      data = pack((uint8_t)msg.kind) + deviceId + pubkey + msg.yourId +
+      data = pack((uint8_t)msg.kind._value) + deviceId + pubkey + msg.yourId +
              msg.helloCookie;
       data += GIL::unlocked<std::string>(
           [&]() { return sign(data, "ng-p2p-msg"); });
       break;
-    case PeerToPeerMessageKind::DATA:
-      data = pack((uint8_t)msg.kind) + msg.data.str();
+    case +PeerToPeerMessageKind::DATA:
+      data = pack((uint8_t)msg.kind._value) + msg.data.str();
       break;
     default:
       abort();
@@ -804,30 +804,30 @@ std::string NgSocket::serializePeerToPeerMessage(const PeerToPeerMessage& msg)
 std::string NgSocket::serializePeerToBaseMessage(const PeerToBaseMessage& msg)
 {
   assert(deviceId.size() == 16 && cookie.size() == 16 && pubkey.size() == 32);
-  std::string data =
-      pack((uint8_t)msg.kind) + this->deviceId + this->pubkey + this->cookie;
+  std::string data = pack((uint8_t)msg.kind._value) + this->deviceId +
+                     this->pubkey + this->cookie;
 
   switch(msg.kind) {
-    case PeerToBaseMessageKind::REQUEST_INFO:
+    case +PeerToBaseMessageKind::REQUEST_INFO:
       data += fstring<16>(msg.deviceId);
       break;
-    case PeerToBaseMessageKind::DATA:
-      data = pack((uint8_t)msg.kind) + this->deviceId;
+    case +PeerToBaseMessageKind::DATA:
+      data = pack((uint8_t)msg.kind._value) + this->deviceId;
       data += fstring<16>(msg.target);
       data += msg.data;
       break;
-    case PeerToBaseMessageKind::USER_AGENT:
-      return pack((uint8_t)msg.kind) + msg.userAgent;
+    case +PeerToBaseMessageKind::USER_AGENT:
+      return pack((uint8_t)msg.kind._value) + msg.userAgent;
       break;
-    case PeerToBaseMessageKind::INFO:
+    case +PeerToBaseMessageKind::INFO:
       for(InetAddress address : localAddresses) {
         data += address.ip.toBinary() + pack((uint16_t)address.port);
       }
       break;
-    case PeerToBaseMessageKind::NAT_INIT:
+    case +PeerToBaseMessageKind::NAT_INIT:
       data += pack((uint64_t)natInitCounter);
       break;
-    case PeerToBaseMessageKind::NAT_OK_CONFIRM:
+    case +PeerToBaseMessageKind::NAT_OK_CONFIRM:
       data += pack((uint64_t)natInitCounter);
       break;
     default:
@@ -921,9 +921,9 @@ void NgSocket::sendToBaseUdp(const PeerToBaseMessage& msg)
     return;
   std::string serialized = serializePeerToBaseMessage(msg);
   switch(msg.kind) {
-    case PeerToBaseMessageKind::NAT_INIT:
-    case PeerToBaseMessageKind::NAT_OK_CONFIRM:
-    case PeerToBaseMessageKind::NAT_INIT_TRANSIENT:
+    case +PeerToBaseMessageKind::NAT_INIT:
+    case +PeerToBaseMessageKind::NAT_OK_CONFIRM:
+    case +PeerToBaseMessageKind::NAT_INIT_TRANSIENT:
       for(InetAddress address : allBaseUdpAddresses) {
         if(msg.kind == +PeerToBaseMessageKind::NAT_INIT_TRANSIENT) {
           address.port = baseTransientPort;
