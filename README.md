@@ -25,7 +25,7 @@ If Husarnet instance is not connected to the Husarnet Dashboard, the whitelist (
 ***Husarnet Dashboard:*** Husarnet Dashboard is a web application that allows users to fully configure how they use Husarnet, including adding and removing networks, adding and removing devices, associationg devices with networks and more. 
 
 ***Husarnet CLI:*** Husarnet CLI is a new (added as of Husarnet 2.0) and powerful tool which aims to allow user to manage the local Husarnet daemon while also
-providing users with a simple way to manage all of their Husarnet devices and networks via intuitive and simple to use Dashboard API. For more information about the new CLI capabilities visit [CLI docs](https://husarnet.com/docs/manual-cli/).
+providing users with a simple way to manage all of their Husarnet devices and networks via intuitive and simple to use Dashboard API. For more information about the new CLI capabilities visit [CLI docs](https://husarnet.com/docs/manual-client/).
 
 
 
