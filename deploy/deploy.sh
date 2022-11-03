@@ -91,8 +91,8 @@ fi
 
 echo "[==] Copy also windows installer exe"
 
-cp husarnet-setup.exe ${working_path}/husarnet2alpha-unstable-${package_version}-setup.exe
-ln -fs ${working_path}/husarnet2alpha-unstable-${package_version}-setup.exe ${working_path}/husarnet2alpha-unstable-latest-setup.exe
+cp husarnet-setup.exe ${working_path}/husarnet-${package_version}-setup.exe
+ln -fs ${working_path}/husarnet-${package_version}-setup.exe ${working_path}/husarnet-latest-setup.exe
 
 echo "[==] Done, and should work."
 
