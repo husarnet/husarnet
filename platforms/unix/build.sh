@@ -22,7 +22,7 @@ mkdir -p ${package_tmp}/lib/systemd/system
 cp ${platform_base}/packaging/husarnet.service ${package_tmp}/lib/systemd/system/
 
 mkdir -p ${package_tmp}/usr/share/bash-completion/completions
-cp ${platform_base}/packaging/autocomplete ${package_tmp}/usr/share/bash-completion/completions/
+cp ${platform_base}/packaging/autocomplete ${package_tmp}/usr/share/bash-completion/completions/husarnet
 
 mkdir -p ${package_tmp}/usr/bin
 cp ${release_base}/husarnet-daemon-${platform}-${arch} ${package_tmp}/usr/bin/husarnet-daemon
