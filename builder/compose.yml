@@ -61,6 +61,13 @@ services:
       - ../:/app
     command: /app/.github/update-workflows.sh
 
+  test_docker:
+    image: husarnet:dev
+    privileged: true
+    volumes:
+      - ../:/app
+    command: /app/tests/integration/docker.sh
+
   test_ubuntu_18_04:
     image: ubuntu:18.04
     privileged: true
@@ -82,9 +89,30 @@ services:
       - ../:/app
     command: /app/tests/integration/ubuntu.sh
 
-  test_docker:
-    image: husarnet:dev
+  test_fedora_35:
+    image: fedora:35
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/functional-basic.sh
+    command: /app/tests/integration/fedora.sh
+
+  test_fedora_36:
+    image: fedora:36
+    privileged: true
+    volumes:
+      - ../:/app
+    command: /app/tests/integration/fedora.sh
+
+  test_fedora_37:
+    image: fedora:37
+    privileged: true
+    volumes:
+      - ../:/app
+    command: /app/tests/integration/fedora.sh
+
+  test_fedora_38:
+    image: fedora:38
+    privileged: true
+    volumes:
+      - ../:/app
+    command: /app/tests/integration/fedora.sh

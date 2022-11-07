@@ -42,8 +42,8 @@ for package_type in tar deb rpm; do
         --vendor Husarnet \
         --description "Global LAN network" \
         --url "https://husarnet.com" \
-        --depends $(if [ "${package_type}" == "deb" ]; then echo "iproute2"; else echo "iproute"; fi) \
-        $(if [ "${package_type}" == "deb" ]; then echo "--deb-recommends sudo --deb-recommends systemd --deb-recommends fonts-noto-color-emoji"; fi) \
+        $(if [ "${package_type}" == "deb" ]; then echo "--depends iproute2 --deb-recommends sudo --deb-recommends systemd --deb-recommends fonts-noto-color-emoji"; fi) \
+        $(if [ "${package_type}" == "rpm" ]; then echo "--depends iproute --depends procps-ng"; fi) \
         --replaces "husarnet-ros" \
         --after-install ${platform_base}/packaging/post-install-script.sh \
         --after-remove ${platform_base}/packaging/post-remove-script.sh \
