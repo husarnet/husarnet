@@ -18,12 +18,12 @@ import (
 var redFormatter = pterm.Red
 var yellowFormatter = pterm.Yellow
 var greenFormatter = pterm.Green
-var neutralFormatter = pterm.Sprint
+var neutralFormatter = pterm.Normal
 
-var redDot = redFormatter("🔴")
-var yellowDot = yellowFormatter("🟡")
-var greenDot = greenFormatter("🟢")
-var neutralDot = neutralFormatter("⚪")
+var redDot = redFormatter("●")
+var yellowDot = yellowFormatter("●")
+var greenDot = greenFormatter("●")
+var neutralDot = neutralFormatter("●")
 
 var redStyle = pterm.NewStyle(pterm.FgRed)
 var yellowStyle = pterm.NewStyle(pterm.FgLightYellow)
