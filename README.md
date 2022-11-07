@@ -1,6 +1,6 @@
-![Husarnet logo](docs/logo.svg)
-
 # Husarnet Client
+
+![Husarnet logo](docs/logo.svg)
 
 Husarnet is a Peer-to-Peer VPN to connect your laptops, servers and microcontrollers over the Internet with zero configuration.
 
@@ -22,12 +22,10 @@ The nodes are identified by their 112-bit **IPv6 addresses, that are based on th
 
 If Husarnet instance is not connected to the Husarnet Dashboard, the whitelist (think of it as a crude firewall) and hostname table can only be changed by a local `root` user. All the other configuration can be changed after you `join` your device to a group. Further configuration can be done using one of two ways:
 
-***Husarnet Dashboard:*** Husarnet Dashboard is a web application that allows users to fully configure how they use Husarnet, including adding and removing networks, adding and removing devices, associationg devices with networks and more. 
+***Husarnet Dashboard:*** Husarnet Dashboard is a web application that allows users to fully configure how they use Husarnet, including adding and removing networks, adding and removing devices, associationg devices with networks and more.
 
 ***Husarnet CLI:*** Husarnet CLI is a new (added as of Husarnet 2.0) and powerful tool which aims to allow user to manage the local Husarnet daemon while also
 providing users with a simple way to manage all of their Husarnet devices and networks via intuitive and simple to use Dashboard API. For more information about the new CLI capabilities visit [CLI docs](https://husarnet.com/docs/manual-client/).
-
-
 
 -------------
 
@@ -39,7 +37,7 @@ Typical issues preventing Peer-to-Peer connection (thus enjoing a low-latency) a
 
 If you need help and/or have questions regarding Husarnet, feel welcome to post on [Husarnet Community Forums](https://community.husarnet.com). Please, do not use GitHub Issues in this repository for reporting general usage problems and requests. Use the Issues only for technical questions and concerns regarding Husarnet Client building and development.
 
-Following sections are targeted only for developers interested in forking, contributing to Husarnet, or simply wanting to understand the codebase. 
+Following sections are targeted only for developers interested in forking, contributing to Husarnet, or simply wanting to understand the codebase.
 
 ## Code
 
@@ -47,49 +45,38 @@ Husarnet Client is split in two separate binaries - `husarnet`, which is CLI wri
 
 ### How is the repository organized
 
- - `cli` contains Go code for `husarnet` binary.
- - `core` contains the majority of C++ code for `husarnet-daemon`.
- - `daemon` contains entry points and build definitions for various platforms Husarnet can run on.
- - `deploy` contains files needed for our DEB and RPM repositories
- - `platforms` contains auxiliary files needed for packaging and publishing Husarnet for different platforms.
- - `tests` contains unit (and other) tests (unit tests will run on x86_64 unix platform)
- - `util` contains all the scripts and utilities used for building, testing and deploying. Used by CI and in developers' daily work.
+- `cli` contains Go code for `husarnet` binary.
+- `core` contains the majority of C++ code for `husarnet-daemon`
+- `daemon` contains entry points and build definitions for various platforms Husarnet can run on
+- `deploy` contains files needed for our DEB and RPM repositories
+- `platforms` contains auxiliary files needed for packaging and publishing Husarnet for different platforms
+- `tests` contains unit (and other) tests (unit tests will run on x86_64 unix platform)
+- `builder` contains all the files required for building the build environment ( ;) ) for other packages
+- `util` contains all the scripts and utilities used for building, testing and deploying. Used by CI and in developers' daily work
+- `docs` contains only a handful of files used in the markdown files in the repository. Actual documentation is [here](https://husarnet.com/docs)
 
 ### Building
 
 In order to provide you with the most seamless and convenient way to build Husarnet Daemon and Husarnet CLI, a dedicated docker image
-called husarnet:builder was created and published on the Github Container Registry. Dockerfile and compose for the mentioned image can be found in the `./builder` directory. Build scripts provided in this repository utilize this image and as such in order to use them you need to either authenticate to the Github Container Registry (visit [here](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)) or 
-build the image locally using: `docker compose -f builder/compose.yml build builder`
+called `husarnet:builder` was created. Dockerfile and compose for the mentioned image can be found in the `./builder` directory. Build scripts provided in this repository utilize this image and as such in order to use them you need to build the image locally using: `./builder/build.sh`
 
+Then, if you want to build read the `./util/build.sh` file and select desired platforms.
 
-Then, if you want to build:
-- all platforms: `./util/build.sh`
-- specific platform: `docker compose -f builder/compose.yml up --exit-code-from  <platform_architecture> <platform_architecture>`
-    - example: `docker compose -f builder/compose.yml up --exit-code-from  unix_amd64 unix_amd64`
-
-Created binaries will be available in `build/` folder.
+Created binaries will be available in `./build/release` folder.
 
 ### Running tests
+
 Please note that tests also utilize the builder image and thus it needs to be accessible for tests to run.
-Tests can be run by using:
-`./util/test.sh`
-or
-`docker compose -f builder/compose.yml up --exit-code-from  test test`
+Tests can be run by running `./util/test.sh`.
 
 ### Creating a pull request
 
-If you wish to submit a PR with a fix or enhancement, feel free to do so. Before submitting make sure that:
-
-```
-./util/build.sh
-./util/test.sh
-```
-
-are passing without errors. Also make sure to describe your changes and the motivation in the PR description. After you submit the PR, wait for the review and feedback from the maintainers. Good idea is to examine [on-pull-request workflow](https://github.com/husarnet/husarnet/blob/master/.github/workflows/on-pull-request.yml) to see what steps will the CI perform in order to check compatibility of the changes.
+If you wish to submit a PR with a fix or enhancement, feel free to do so. Before submitting make sure that `./util/local-ci.sh` is passing without errors. Also describe your changes and the motivation in the PR description. After you submit the PR, wait for the review and feedback from the maintainers. Good idea is to examine [on-pull-request workflow](https://github.com/husarnet/husarnet/blob/master/.github/workflows/on-pull-request.yml) to see what steps will the CI perform in order to check compatibility of the changes.
 
 ## Contributors
 
 This project was possible thanks to:
+
 - [@zielmicha](https://github.com/zielmicha)
 - [@m4tx](https://github.com/m4tx)
 - [@andrzejwl](https://github.com/andrzejwl)
@@ -100,6 +87,7 @@ This project was possible thanks to:
 ## License
 
 Husarnet is dual-licensed:
+
 - **GNU Public License** - for derivative projects - eg. exposing a generic VPN functionality.
 - **Mozilla Public License** - for projects where you link Husarnet Client code with different project type than mentioned above - eg. using Husarnet Client SDK in ESP32 IoT project.
 
