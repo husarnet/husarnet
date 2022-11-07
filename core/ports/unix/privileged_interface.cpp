@@ -291,7 +291,7 @@ namespace Privileged {
     auto licenseJsonPath = getLicenseJsonPath();
 
     if(!Port::isFile(licenseJsonPath)) {
-      return "";
+      return "{}";
     }
 
     return Port::readFile(licenseJsonPath);

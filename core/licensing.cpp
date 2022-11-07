@@ -113,7 +113,7 @@ License::License(std::string dashboardHostname)
     licenseJson = retrieveCachedLicenseJson();
 
     if(licenseJson.empty()) {
-      LOG("No license!");
+      LOG("No license! Husarnet Daemon can't start without license.json. License not found on local disk and download was not possible. Exiting.");
       abort();
     }
 
