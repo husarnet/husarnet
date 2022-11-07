@@ -2,7 +2,7 @@
   <style>
     @media (prefers-color-scheme: dark) {
         .text {
-            fill: FFFFFF;
+            fill: #FFFFFF;
         }
     }
   </style>
