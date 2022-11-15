@@ -43,6 +43,12 @@ services:
       - ../:/app
     command: /app/platforms/windows/build.sh
 
+  macos_arm64:
+    image: ghcr.io/husarnet/husarnet:builder
+    volumes:
+      - ../:/app
+    command: /app/platforms/unix/build.sh macos_arm64
+
   test:
     image: ghcr.io/husarnet/husarnet:builder
     volumes:
