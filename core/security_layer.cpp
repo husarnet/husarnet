@@ -111,7 +111,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 
   if(!peer->negotiated) {
     sendHelloPacket(peer);
-    LOGV("received data packet before hello");
+    LOG_DEBUG("received data packet before hello");
     return;
   }
 
@@ -162,7 +162,7 @@ void SecurityLayer::handleHelloPacket(
   constexpr int dataLen = 65 + 16 + 16;
   if(data.size() < dataLen + 64)
     return;
-  LOGV("hello %d from %s", helloNum, encodeHex(target).c_str());
+  LOG_INFO("hello %d from %s", helloNum, encodeHex(target).c_str());
 
   Peer* peer = peerContainer->getOrCreatePeer(target);
   if(peer == nullptr)
@@ -178,7 +178,7 @@ void SecurityLayer::handleHelloPacket(
   if(data.size() >= 64 + 65 + 32 + 8) {
     flags_bin = unpack<uint64_t>(substr<65 + 32, 8>(data));
   }
-  LOGV("peer flags: %llx", (unsigned long long)flags_bin);
+  LOG_DEBUG("peer flags: %llx", (unsigned long long)flags_bin);
 
   if(targetId != manager->getIdentity()->getDeviceId()) {
     LOG("misdirected hello packet");
@@ -205,7 +205,7 @@ void SecurityLayer::handleHelloPacket(
   if(myHelloseq != this->helloseq) {  // prevents replay DoS
     // this will occur under normal operation, if both sides attempt to
     // initialize at once or two handshakes are interleaved
-    LOGV("invalid helloseq");
+    LOG_DEBUG("invalid helloseq");
     return;
   }
 
@@ -233,7 +233,7 @@ void SecurityLayer::handleHelloPacket(
   }
 
   if(r == 0) {
-    LOGV(
+    LOG_DEBUG(
         "negotiated session keys %s %s",
         encodeHex(peer->rxKey.substr(0, 6)).c_str(),
         encodeHex(peer->txKey.substr(0, 6)).c_str());

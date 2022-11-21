@@ -31,6 +31,7 @@ static inline void log(
     LogLevel level,
     const std::string& filename,
     int lineno,
+    const std::string& extra,
     const char* format,
     ...)
 {
@@ -41,7 +42,12 @@ static inline void log(
   vsnprintf(buffer, buffer_len, format, args);
   va_end(args);
 
-  auto userMessage = pad(80, buffer);
+  auto userMessage = std::string(buffer);
+  if(extra.length() > 0) {
+    userMessage += " " + extra;
+  }
+
+  userMessage = pad(80, userMessage);
   auto levelName = pad(8, level._to_string());
 
   snprintf(
@@ -51,25 +57,21 @@ static inline void log(
   auto message = std::string(buffer);
 
   Port::log(message);
-  getGlobalLogManager()->insert(message);
+  // TODO reenable this after adding some synchronization primitvies to it
+  // getGlobalLogManager()->insert(message);
 }
 
-// Legacy compatibility aliases
-#define LOG(fmt, x...)                                    \
-  {                                                       \
-    log(LogLevel::WARNING, __FILE__, __LINE__, fmt, ##x); \
-  }
-
-#define LOGV(fmt, x...)                                \
-  {                                                    \
-    log(LogLevel::INFO, __FILE__, __LINE__, fmt, ##x); \
+// Legacy compatibility alias
+#define LOG(fmt, x...)                                        \
+  {                                                           \
+    log(LogLevel::WARNING, __FILE__, __LINE__, "", fmt, ##x); \
   }
 
 // New log level aliases
 #ifdef DEBUG_BUILD
-#define LOG_DEBUG(fmt, x...)                            \
-  {                                                     \
-    log(LogLevel::DEBUG, __FILE__, __LINE__, fmt, ##x); \
+#define LOG_DEBUG(fmt, x...)                                \
+  {                                                         \
+    log(LogLevel::DEBUG, __FILE__, __LINE__, "", fmt, ##x); \
   }
 #else
 #define LOG_DEBUG(fmt, x...) \
@@ -77,22 +79,27 @@ static inline void log(
   }
 #endif
 
-#define LOG_INFO(fmt, x...)                            \
-  {                                                    \
-    log(LogLevel::INFO, __FILE__, __LINE__, fmt, ##x); \
-  }
-
-#define LOG_WARNING(fmt, x...)                            \
-  {                                                       \
-    log(LogLevel::WARNING, __FILE__, __LINE__, fmt, ##x); \
-  }
-
-#define LOG_ERROR(fmt, x...)                            \
-  {                                                     \
-    log(LogLevel::ERROR, __FILE__, __LINE__, fmt, ##x); \
-  }
-
-#define LOG_CRITICAL(fmt, x...)                            \
+#define LOG_INFO(fmt, x...)                                \
   {                                                        \
-    log(LogLevel::CRITICAL, __FILE__, __LINE__, fmt, ##x); \
+    log(LogLevel::INFO, __FILE__, __LINE__, "", fmt, ##x); \
+  }
+
+#define LOG_WARNING(fmt, x...)                                \
+  {                                                           \
+    log(LogLevel::WARNING, __FILE__, __LINE__, "", fmt, ##x); \
+  }
+
+#define LOG_ERROR(fmt, x...)                                \
+  {                                                         \
+    log(LogLevel::ERROR, __FILE__, __LINE__, "", fmt, ##x); \
+  }
+
+#define LOG_CRITICAL(fmt, x...)                                \
+  {                                                            \
+    log(LogLevel::CRITICAL, __FILE__, __LINE__, "", fmt, ##x); \
+  }
+
+#define LOG_SOCKETERR(fmt, x...)                                         \
+  {                                                                      \
+    log(LogLevel::ERROR, __FILE__, __LINE__, strerror(errno), fmt, ##x); \
   }

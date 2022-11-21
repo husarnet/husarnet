@@ -113,8 +113,17 @@ namespace Port {
       int stack,
       int priority)
   {
-    std::thread t(func);
-    t.detach();
+    new std::thread([name, func]() {
+      try {
+        func();
+      } catch(const std::exception& exc) {
+        LOG_CRITICAL("unhandled exception in thread %s: %s", name, exc.what());
+      } catch(const std::string& exc) {
+        LOG_CRITICAL("unhandled exception in thread %s: %s", name, exc.c_str());
+      } catch(...) {
+        LOG_CRITICAL("unknown and unhandled exception in thread %s", name);
+      }
+    });
   }
 
   IpAddress resolveToIp(const std::string& hostname)
@@ -261,7 +270,7 @@ namespace Port {
     bool success = rename(src.c_str(), dst.c_str()) == 0;
     if(!success) {
       if(!quiet) {
-        LOGV("failed to rename %s to %s", src.c_str(), dst.c_str());
+        LOG_WARNING("failed to rename %s to %s", src.c_str(), dst.c_str());
       }
       return false;
     }
@@ -275,12 +284,12 @@ namespace Port {
 
     bool success = writeFileDirect(tmpPath, data);
     if(!success) {
-      LOGV(
+      LOG_INFO(
           "unable to write to a temporary file %s, writing to %s directly",
           tmpPath.c_str(), path.c_str());
       success = writeFileDirect(path, data);
       if(!success) {
-        LOGV("unable to write to %s directly", path.c_str());
+        LOG_WARNING("unable to write to %s directly", path.c_str());
         return false;
       }
       return true;
@@ -291,18 +300,18 @@ namespace Port {
       return true;
     }
 
-    LOGV(
+    LOG_DEBUG(
         "unable to rename %s to %s, writing to %s directly", tmpPath.c_str(),
         path.c_str(), path.c_str());
 
     success = removeFile(tmpPath);
     if(!success) {
-      LOGV("unable to remove temporary file %s", tmpPath.c_str());
+      LOG_INFO("unable to remove temporary file %s", tmpPath.c_str());
     }
 
     success = writeFileDirect(path, data);
     if(!success) {
-      LOGV("unable to write directly to %s", path.c_str());
+      LOG_WARNING("unable to write directly to %s", path.c_str());
       return false;
     }
 

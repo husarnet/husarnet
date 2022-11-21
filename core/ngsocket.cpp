@@ -227,7 +227,7 @@ void NgSocket::attemptReestablish(Peer* peer)
   peer->reestablishing = true;
   peer->helloCookie = generateRandomString(16);
 
-  LOGV(
+  LOG_INFO(
       "reestablish connection to [%s]",
       IpAddress::fromBinary(peer->id).str().c_str());
 
@@ -262,7 +262,7 @@ void NgSocket::attemptReestablish(Peer* peer)
       // send the heartbeat twice to the active address
       sendToPeer(address, response);
   }
-  LOGV("addresses: %s", msg.c_str());
+  LOG_DEBUG("addresses: %s", msg.c_str());
 }
 
 void NgSocket::peerMessageReceived(
@@ -292,12 +292,12 @@ void NgSocket::helloReceived(InetAddress source, const PeerToPeerMessage& msg)
   Peer* peer = peerContainer->getOrCreatePeer(msg.myId);
   if(peer == nullptr)
     return;
-  LOGV(
+  LOG_DEBUG(
       "HELLO from %s (id: %s, active: %s)", source.str().c_str(),
       IDSTR(msg.myId), peer->isActive() ? "YES" : "NO");
 
   if(!manager->isRealAddressAllowed(source)) {
-    LOGV("rejected due to real world addresses blacklist");
+    LOG_INFO("rejected due to real world addresses blacklist");
     return;
   }
   addSourceAddress(peer, source);
@@ -323,7 +323,7 @@ void NgSocket::helloReplyReceived(
   if(msg.yourId != deviceId)
     return;
 
-  LOGV(
+  LOG_DEBUG(
       "HELLO-REPLY from %s (%s)", source.str().c_str(),
       encodeHex(msg.myId).c_str());
   Peer* peer = peerContainer->getPeer(msg.myId);
@@ -335,12 +335,13 @@ void NgSocket::helloReplyReceived(
     return;
 
   if(!manager->isRealAddressAllowed(source)) {
-    LOGV("rejected due to real world addresses blacklist");
+    LOG_INFO("rejected due to real world addresses blacklist");
     return;
   }
 
   int latency = Port::getCurrentTime() - peer->lastReestablish;
-  LOGV(" - using this address as target (reply received after %d ms)", latency);
+  LOG_DEBUG(
+      " - using this address as target (reply received after %d ms)", latency);
   peer->targetAddress = source;
   peer->connected = true;
   peer->failedEstablishments = 0;
@@ -392,7 +393,7 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
       break;
     case +BaseToPeerMessageKind::HELLO:
       LOG("TCP connection to base server established");
-      LOGV("received hello cookie %s", encodeHex(msg.cookie).c_str());
+      LOG_DEBUG("received hello cookie %s", encodeHex(msg.cookie).c_str());
       cookie = msg.cookie;
       resendInfoRequests();
       sendLocalAddressesToBase();
@@ -409,11 +410,12 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
       if(configStorage.getUserSettingBool(UserSetting::enableUdp)) {
         allBaseUdpAddresses = msg.udpAddress;
         baseUdpAddress = msg.udpAddress[0];
-        LOGV("received base UDP address: %s", baseUdpAddress.str().c_str());
+        LOG_DEBUG(
+            "received base UDP address: %s", baseUdpAddress.str().c_str());
 
         if(msg.natTransientRange.first != 0 &&
            msg.natTransientRange.second >= msg.natTransientRange.first) {
-          LOGV(
+          LOG_DEBUG(
               "received base transient range: %d %d",
               msg.natTransientRange.first, msg.natTransientRange.second);
           baseTransientRange = msg.natTransientRange;
@@ -529,7 +531,7 @@ void NgSocket::multicastPacketReceived(
 
   Peer* peer = peerContainer->getPeer(devId);
 
-  LOGV(
+  LOG_DEBUG(
       "multicast received from %s, id %s, port %d, interesting: %s",
       address.str().c_str(), IDSTR(devId), port, peer == NULL ? "NO" : "YES");
 
@@ -588,7 +590,7 @@ void NgSocket::resendInfoRequests()
 
 void NgSocket::sendInfoRequestToBase(DeviceId id)
 {
-  LOGV("info request %s", IDSTR(id));
+  LOG_DEBUG("info request %s", IDSTR(id));
   PeerToBaseMessage msg = {
       .kind = PeerToBaseMessageKind::REQUEST_INFO,
       .deviceId = id,
@@ -886,7 +888,7 @@ void NgSocket::connectToBase()
     return;
   }
 
-  LOGV("establishing connection to base %s", baseAddress.str().c_str());
+  LOG_INFO("establishing connection to base %s", baseAddress.str().c_str());
 
   auto dataCallback = [this](string_view data) {
     lastBaseTcpMessage = Port::getCurrentTime();

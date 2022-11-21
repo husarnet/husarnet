@@ -23,12 +23,12 @@ class WebsetupConnection {
   std::string joinCode;
   std::string reportedHostname;
 
-  void bind();
   void send(
       InetAddress replyAddress,
       std::string command,
       std::list<std::string> arguments);
   void send(std::string command, std::list<std::string> arguments);
+
   void handleWebsetupPacket(InetAddress replyAddress, std::string data);
   std::list<std::string> handleWebsetupCommand(
       std::string command,
