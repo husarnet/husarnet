@@ -10,6 +10,7 @@
 #include "husarnet/ports/port.h"
 
 #include "husarnet/identity.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 std::string WindowsNetworking::getNetshNameForGuid(std::string guid) const

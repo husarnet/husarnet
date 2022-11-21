@@ -11,6 +11,7 @@
 #include "husarnet/ports/port_interface.h"
 
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #ifdef _WIN32

@@ -2,6 +2,7 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/layer_interfaces.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 ForUpperProducer::ForUpperProducer()

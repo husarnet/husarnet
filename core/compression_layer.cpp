@@ -5,10 +5,12 @@
 
 #include "husarnet/config_storage.h"
 #include "husarnet/husarnet_manager.h"
+#include "husarnet/logging.h"
 #include "husarnet/peer.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/peer_flags.h"
 #include "husarnet/util.h"
+
 #ifdef WITH_ZSTD
 #include "zstd.h"
 #endif

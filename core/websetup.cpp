@@ -22,6 +22,7 @@
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
 

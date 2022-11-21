@@ -18,6 +18,7 @@
 #include "husarnet/ports/windows/networking.h"
 
 #include "husarnet/gil.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 // From OpenVPN tap driver, common.h

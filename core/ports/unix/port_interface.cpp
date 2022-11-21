@@ -31,6 +31,7 @@
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #include "enum.h"
@@ -350,5 +351,11 @@ namespace Port {
 
       LOG("Systemd notification end");
     }
+  }
+
+  void log(const std::string& message)
+  {
+    fprintf(stderr, "%s\n", message.c_str());
+    fflush(stderr);
   }
 }  // namespace Port

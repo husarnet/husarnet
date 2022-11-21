@@ -4,6 +4,7 @@
 #include "husarnet/ngsocket_crypto.h"
 
 #include "husarnet/identity.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #include "sodium.h"

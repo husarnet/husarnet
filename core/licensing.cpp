@@ -13,6 +13,7 @@
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/husarnet_config.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #include "ports/port.h"

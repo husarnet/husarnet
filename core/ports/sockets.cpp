@@ -7,6 +7,7 @@
 #include "husarnet/ports/port_interface.h"
 
 #include "husarnet/gil.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 namespace OsSocket {

@@ -95,6 +95,10 @@ add_library(husarnet_core STATIC ${husarnet_core_SRC})
 target_include_directories(husarnet_core PUBLIC ${TEMP_INCLUDE_DIR})
 target_compile_definitions(husarnet_core PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PROCESSOR}")
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  target_compile_definitions(husarnet_core PRIVATE DEBUG=1)
+endif()
+
 # Configure dependencies
 include(FetchContent)
 

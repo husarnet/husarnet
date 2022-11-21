@@ -11,6 +11,7 @@
 #include "husarnet/fstring.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 MulticastLayer::MulticastLayer(HusarnetManager* manager) : manager(manager)

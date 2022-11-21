@@ -10,6 +10,7 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
 
+#include "husarnet/logging.h"
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
 

@@ -17,6 +17,7 @@
 #include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
 
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 const static std::string hostnamePath = "/etc/hostname";

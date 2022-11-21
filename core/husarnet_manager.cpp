@@ -20,7 +20,7 @@
 #include "husarnet/layer_interfaces.h"
 #include "husarnet/legacy_config.h"
 #include "husarnet/licensing.h"
-#include "husarnet/logmanager.h"
+#include "husarnet/logging.h"
 #include "husarnet/multicast_layer.h"
 #include "husarnet/ngsocket.h"
 #include "husarnet/peer_container.h"
@@ -32,11 +32,6 @@
 #ifdef HTTP_CONTROL_API
 #include "husarnet/api_server/server.h"
 #endif
-
-LogManager& HusarnetManager::getLogManager()
-{
-  return *logManager;
-}
 
 ConfigStorage& HusarnetManager::getConfigStorage()
 {
@@ -424,9 +419,6 @@ void HusarnetManager::stage1()
 
   GIL::init();
   Privileged::start();
-
-  logManager = new LogManager(100);
-  globalLogManager = logManager;
 
   configStorage = new ConfigStorage(
       this, Privileged::readConfig, Privileged::writeConfig, userDefaults,

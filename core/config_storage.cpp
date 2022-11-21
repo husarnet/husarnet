@@ -11,6 +11,7 @@
 
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #define HOST_TABLE_KEY "host-table"

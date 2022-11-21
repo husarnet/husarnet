@@ -28,6 +28,7 @@
 
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #include "nlohmann/json.hpp"

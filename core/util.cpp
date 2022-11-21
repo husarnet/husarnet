@@ -9,8 +9,6 @@
 
 #include <time.h>
 
-LogManager* globalLogManager = nullptr;
-
 std::vector<std::string> splitWhitespace(std::string s)
 {
   std::vector<std::string> res;

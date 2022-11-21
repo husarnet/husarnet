@@ -11,6 +11,7 @@
 #include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
 #include "husarnet/ports/sockets.h"
 
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #include "shlwapi.h"

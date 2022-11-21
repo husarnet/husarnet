@@ -5,6 +5,7 @@
 
 #include <sstream>
 
+#include "husarnet/logging.h"
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
 

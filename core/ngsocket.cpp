@@ -23,6 +23,7 @@
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/ngsocket_messages.h"
 #include "husarnet/peer.h"
