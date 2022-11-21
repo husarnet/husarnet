@@ -11,34 +11,34 @@ static ConfigStorage* makeTestStorage()
 {
   HusarnetManager* manager = new HusarnetManager();
   auto cs = new ConfigStorage(
-      manager, []() { return ""; }, [&](std::string s) {}, {}, {}, {});
+      manager, []() { return ""; }, [&](const std::string& s) {}, {}, {}, {});
 
   manager->setConfigStorage(cs);
   return cs;
 }
 
-TEST_CASE("Group changes")
-{
-  int writes = 0;
-  auto cs = new ConfigStorage(
-      new HusarnetManager(), []() { return ""; },
-      [&](std::string s) { writes++; }, {}, {}, {});
+// TODO long term - re add this
+// TEST_CASE("Group changes")
+// {
+//   int writes = 0;
+//   auto cs = new ConfigStorage(
+//       new HusarnetManager(), []() { return ""; },
+//       [&](const std::string& s) { writes++; }, {}, {}, {});
 
-  // TODO long term - re add this
-  // cs->hostTableAdd("foo", IpAddress::parse("dead:beef::1"));
-  // cs->hostTableAdd("bar", IpAddress::parse("dead:beef::2"));
-  // cs->hostTableAdd("baz", IpAddress::parse("dead:beef::3"));
+//   cs->hostTableAdd("foo", IpAddress::parse("dead:beef::1"));
+//   cs->hostTableAdd("bar", IpAddress::parse("dead:beef::2"));
+//   cs->hostTableAdd("baz", IpAddress::parse("dead:beef::3"));
 
-  // REQUIRE(writes == 3);
+//   REQUIRE(writes == 3);
 
-  // cs->groupChanges([&]() {
-  //   cs->hostTableRm("foo");
-  //   cs->hostTableRm("bar");
-  //   cs->hostTableRm("baz");
-  // });
+//   cs->groupChanges([&]() {
+//     cs->hostTableRm("foo");
+//     cs->hostTableRm("bar");
+//     cs->hostTableRm("baz");
+//   });
 
-  // REQUIRE(writes == 4);
-}
+//   REQUIRE(writes == 4);
+// }
 
 TEST_CASE("ConfigStorage initialization")
 {
@@ -114,7 +114,7 @@ TEST_CASE("Internal settings")
 
   HusarnetManager* manager = new HusarnetManager();
   cs = new ConfigStorage(
-      manager, []() { return ""; }, [&](std::string s) {}, {}, {},
+      manager, []() { return ""; }, [&](const std::string& s) {}, {}, {},
       {{InternalSetting::websetupSecret, "foo"}});
   manager->setConfigStorage(cs);
 
@@ -148,7 +148,7 @@ TEST_CASE("User settings")
 
   HusarnetManager* manager = new HusarnetManager();
   cs = new ConfigStorage(
-      manager, []() { return ""; }, [&](std::string s) {},
+      manager, []() { return ""; }, [&](const std::string& s) {},
       {{UserSetting::dashboardFqdn, "foo"}}, {}, {});
   manager->setConfigStorage(cs);
 
@@ -164,7 +164,7 @@ TEST_CASE("User settings")
   }
 
   cs = new ConfigStorage(
-      manager, []() { return ""; }, [&](std::string s) {},
+      manager, []() { return ""; }, [&](const std::string& s) {},
       {{UserSetting::dashboardFqdn, "foo"}},
       {{UserSetting::dashboardFqdn, "bar"}}, {});
   manager->setConfigStorage(cs);

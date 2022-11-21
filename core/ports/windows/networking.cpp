@@ -26,7 +26,7 @@ std::string WindowsNetworking::getNetshNameForGuid(std::string guid) const
   RegOpenKey(HKEY_LOCAL_MACHINE, path.c_str(), &hKey);
   RegQueryValueEx(hKey, "name", NULL, &dwType, (LPBYTE)&value, &value_length);
 
-  return value;
+  return std::string(value, value_length);
 }
 
 int WindowsNetworking::callWindowsCmd(std::string cmd) const

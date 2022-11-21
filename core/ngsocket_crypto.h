@@ -22,5 +22,5 @@ namespace NgSocketCrypto {
       const fstring<32>& pubkey,
       const fstring<64>& sig);
 
-  bool safeEquals(std::string a, std::string b);
+  bool safeEquals(const std::string& a, const std::string& b);
 }  // namespace NgSocketCrypto

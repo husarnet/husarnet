@@ -9,6 +9,7 @@ RUN apt-get update \
     clang-format \
     cmake \
     cppcheck \
+    cpplint \
     file \
     git \
     golang \

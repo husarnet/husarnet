@@ -37,7 +37,7 @@
 static const std::string peerMacAddr = decodeHex("525400fc944d");
 static const std::string defaultSelfMacAddr = decodeHex("525400fc944c");
 
-static HANDLE openTun(std::string name)
+static HANDLE openTun(const std::string& name)
 {
   HANDLE tun_fd;
 
@@ -112,7 +112,7 @@ TunTap::TunTap(std::string name, bool isTap)
 string_view TunTap::read(std::string& buffer)
 {
   return GIL::unlocked<string_view>([&] {
-    OVERLAPPED overlapped = {0, 0, 0};
+    OVERLAPPED overlapped = {0, 0, {{0}}, 0};
     overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     if(ReadFile(tap_fd, &buffer[0], (DWORD)buffer.size(), NULL, &overlapped) ==
@@ -134,7 +134,7 @@ string_view TunTap::read(std::string& buffer)
 void TunTap::write(string_view data)
 {
   GIL::unlocked<void>([&] {
-    OVERLAPPED overlapped = {0, 0, 0};
+    OVERLAPPED overlapped = {0, 0, {{0}}, 0};
     overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     if(WriteFile(tap_fd, data.data(), (DWORD)data.size(), NULL, &overlapped)) {
       auto error = GetLastError();

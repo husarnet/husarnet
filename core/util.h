@@ -25,15 +25,7 @@
 #define LOGV(msg, x...) LOG(msg, ##x)
 
 #else
-#ifdef _WIN32
-#define LOG(msg, x...)                                                         \
-  do {                                                                         \
-    fprintf(                                                                   \
-        stderr, "[%lld] %s: " msg "\n", (long long int)Port::getCurrentTime(), \
-        Port::getThreadName(), ##x);                                           \
-    fflush(stderr);                                                            \
-  } while(0)
-#else
+
 #define LOG(msg, x...)                                                     \
   do {                                                                     \
     fprintf(                                                               \
@@ -49,9 +41,7 @@
     }                                                                      \
   } while(0)
 #endif
-// globalLogManager->insert("["+std::to_string((long long
-// int)Port::getCurrentTime())+"]
-// "+msg);
+
 #define LOGV1(msg, x...)                          \
   do {                                            \
     if(globalLogManager != nullptr) {             \
@@ -82,24 +72,8 @@
       LOG(msg, ##x);                              \
     }                                             \
   } while(0)
-#endif
 
 #define LOG_DEBUG(msg, x...)  // LOG(msg, ##x)
-
-#ifdef ESP_PLATFORM
-inline const char*
-memmem(const char* stack, int slen, const char* needle, int nlen)
-{
-  if(nlen > slen)
-    return nullptr;
-
-  for(int i = 0; i <= slen - nlen; i++) {
-    if(memcmp(stack + i, needle, nlen) == 0)
-      return stack + i;
-  }
-  return nullptr;
-}
-#endif
 
 template <typename Vec, typename T>
 bool insertIfNotPresent(Vec& v, const T& t)
@@ -188,8 +162,6 @@ inline bool endswith(std::string s, std::string with)
 
 std::vector<std::string> splitWhitespace(std::string s);
 std::vector<std::string> split(std::string s, char byChar, int maxSplit);
-
-std::pair<bool, int> parse_integer(std::string s);
 
 template <typename A, typename B>
 struct pair_hash {

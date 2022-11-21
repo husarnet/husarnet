@@ -34,10 +34,9 @@ fstring<64> Identity::sign(const std::string& msg)
 {
   fstring<64> sig;
   unsigned long long siglen = 64;
-  int ret = crypto_sign_ed25519_detached(
+  crypto_sign_ed25519_detached(
       (unsigned char*)&sig[0], &siglen, (const unsigned char*)msg.data(),
       msg.size(), (const unsigned char*)privkey.data());
-  assert(ret == 0 && siglen == 64);
   return sig;
 }
 

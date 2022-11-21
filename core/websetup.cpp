@@ -95,28 +95,6 @@ void WebsetupConnection::send(
   }
 }
 
-void WebsetupConnection::sendJoinRequest()
-{
-  if(joinCode.empty()) {
-    return;
-  }
-
-  if(reportedHostname.empty()) {
-    return;
-  }
-
-  LOGV("Sending join request to websetup");
-  send(
-      "init-request-join-code",
-      {joinCode, manager->getWebsetupSecret(), reportedHostname});
-}
-
-void WebsetupConnection::sendInit()
-{
-  LOGV("Sending init-request to websetup");
-  send("init-request", {});
-}
-
 Time WebsetupConnection::getLastContact()
 {
   return lastContact;
@@ -131,10 +109,14 @@ void WebsetupConnection::periodicThread()
 {
   while(true) {
     if(lastInitReply < (Port::getCurrentTime() - WEBSETUP_CONTACT_TIMEOUT_MS)) {
-      if(joinCode.empty()) {
-        sendInit();
+      if(joinCode.empty() || reportedHostname.empty()) {
+        LOGV("Sending  update request to websetup");
+        send("init-request", {});
       } else {
-        sendJoinRequest();
+        LOGV("Sending join request to websetup");
+        send(
+            "init-request-join-code",
+            {joinCode, manager->getWebsetupSecret(), reportedHostname});
       }
     }
 

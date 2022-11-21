@@ -23,16 +23,13 @@ using Time = int64_t;
 namespace Port {
   void init();  // Should be called as early as possible
 
-  // TODO ympek: getThreadName() exists only in Windows port
-  // good idea would be to unify this
-  const char* getThreadName();
   void startThread(
       std::function<void()> func,
       const char* name,
       int stack = -1,
       int priority = 2);
 
-  IpAddress resolveToIp(std::string hostname);
+  IpAddress resolveToIp(const std::string& hostname);
 
   Time getCurrentTime();  // some monotonic time in ms
 
@@ -40,10 +37,10 @@ namespace Port {
 
   std::map<UserSetting, std::string> getEnvironmentOverrides();
 
-  std::string readFile(std::string path);
-  bool writeFile(std::string path, std::string content);
-  bool isFile(std::string path);
-  bool renameFile(std::string src, std::string dst);
+  std::string readFile(const std::string& path);
+  bool writeFile(const std::string& path, const std::string& content);
+  bool isFile(const std::string& path);
+  bool renameFile(const std::string& src, const std::string& dst);
 
   void notifyReady();
 }  // namespace Port

@@ -106,9 +106,9 @@ std::list<std::string> stringifyInetAddressList(
     const std::list<InetAddress>& source)
 {
   std::list<std::string> stringified;
-  for(auto& element : source) {
-    stringified.push_back(element.str());
-  }
+  std::transform(
+      source.cbegin(), source.cend(), stringified.begin(),
+      [](const InetAddress element) { return element.str(); });
 
   return stringified;
 }

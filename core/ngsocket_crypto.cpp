@@ -46,7 +46,7 @@ namespace NgSocketCrypto {
     return ret == 0;
   }
 
-  bool safeEquals(std::string a, std::string b)
+  bool safeEquals(const std::string& a, const std::string& b)
   {
     if(a.size() != b.size())
       return false;

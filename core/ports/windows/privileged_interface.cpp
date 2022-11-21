@@ -143,11 +143,12 @@ namespace Privileged {
     // this takes 18 ms on a test system
     std::vector<IpAddress> result;
 
-    int ret;
     PIP_ADAPTER_ADDRESSES buffer;
     unsigned long buffer_size = 20000;
 
     while(true) {
+      int ret;
+
       buffer = (PIP_ADAPTER_ADDRESSES) new char[buffer_size];
 
       ret = GetAdaptersAddresses(
@@ -197,7 +198,7 @@ namespace Privileged {
     return s;
   }
 
-  bool setSelfHostname(std::string newHostname)
+  bool setSelfHostname(const std::string& newHostname)
   {
     // Not implemented in Windows port.
     // This can be done through SetComputerNameEx()
@@ -207,7 +208,7 @@ namespace Privileged {
     return true;
   }
 
-  void updateHostsFile(std::map<std::string, IpAddress> data)
+  void updateHostsFile(const std::map<std::string, IpAddress>& data)
   {
     updateHostsFileInternal(data);
   }

@@ -138,11 +138,6 @@ namespace Port {
     WSAStartup(0x202, &wsaData);
   }
 
-  const char* getThreadName()
-  {
-    return threadName ? threadName : "main";
-  }
-
   void startThread(
       std::function<void()> func,
       const char* name,
@@ -154,7 +149,7 @@ namespace Port {
     _beginthread(runThread, 0, f);
   }
 
-  IpAddress resolveToIp(std::string hostname)
+  IpAddress resolveToIp(const std::string& hostname)
   {
     // we are using raw getaddrinfo, not ares
     // this might be not cool
@@ -235,7 +230,7 @@ namespace Port {
     return result;
   }
 
-  std::string readFile(std::string path)
+  std::string readFile(const std::string& path)
   {
     // TODO: identical as in unix port - merge candidate
     std::ifstream f(path);
@@ -250,7 +245,7 @@ namespace Port {
     return buffer.str();
   }
 
-  bool writeFile(std::string path, std::string content)
+  bool writeFile(const std::string& path, const std::string& content)
   {
     std::ofstream f(path, std::ofstream::out);
     if(!f.good()) {
@@ -263,12 +258,12 @@ namespace Port {
     return true;
   }
 
-  bool isFile(std::string path)
+  bool isFile(const std::string& path)
   {
     return PathFileExists(path.c_str());
   }
 
-  bool renameFile(std::string src, std::string dst)
+  bool renameFile(const std::string& src, const std::string& dst)
   {
     bool success =
         MoveFileEx(src.c_str(), dst.c_str(), MOVEFILE_REPLACE_EXISTING);

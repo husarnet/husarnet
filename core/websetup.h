@@ -28,14 +28,12 @@ class WebsetupConnection {
       InetAddress replyAddress,
       std::string command,
       std::list<std::string> arguments);
-  void sendJoinRequest();
   void send(std::string command, std::list<std::string> arguments);
   void handleWebsetupPacket(InetAddress replyAddress, std::string data);
   std::list<std::string> handleWebsetupCommand(
       std::string command,
       std::string payload);
 
-  void sendInit();
   void periodicThread();
   void handleConnectionThread();
 

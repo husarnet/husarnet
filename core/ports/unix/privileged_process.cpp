@@ -34,7 +34,7 @@ json PrivilegedProcess::handleUpdateHostsFile(json data)
 {
   std::map<std::string, IpAddress> dataMap;
 
-  for(auto& [hostname, address] : std::map<std::string, std::string>(data)) {
+  for(auto [hostname, address] : std::map<std::string, std::string>(data)) {
     dataMap[hostname] = IpAddress::parse(address);
   }
 
