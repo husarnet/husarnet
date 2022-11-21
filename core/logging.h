@@ -66,7 +66,7 @@ static inline void log(
   }
 
 // New log level aliases
-#ifdef DEBUG
+#ifdef DEBUG_BUILD
 #define LOG_DEBUG(fmt, x...)                            \
   {                                                     \
     log(LogLevel::DEBUG, __FILE__, __LINE__, fmt, ##x); \
