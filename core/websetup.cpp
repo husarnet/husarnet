@@ -113,27 +113,47 @@ void WebsetupConnection::send(
 
 Time WebsetupConnection::getLastContact()
 {
-  return lastContact;
+  threadMutex.lock();
+  auto tmp = lastContact;
+  threadMutex.unlock();
+  return tmp;
 }
 
 Time WebsetupConnection::getLastInitReply()
 {
-  return lastInitReply;
+  threadMutex.lock();
+  auto tmp = lastInitReply;
+  threadMutex.unlock();
+  return tmp;
 }
 
 void WebsetupConnection::periodicThread()
 {
   while(true) {
-    if(lastInitReply < (Port::getCurrentTime() - WEBSETUP_CONTACT_TIMEOUT_MS)) {
-      if(joinCode.empty() || reportedHostname.empty()) {
-        LOG_INFO("Sending update request to websetup");
-        send("init-request", {});
-      } else {
-        LOG_WARNING("Sending join request to websetup");
-        send(
-            "init-request-join-code",
-            {joinCode, manager->getWebsetupSecret(), reportedHostname});
-      }
+    threadMutex.lock();
+    bool sendJoin = false, sendPeriodic = false;
+
+    if(!joinCode.empty() && !reportedHostname.empty()) {
+      sendJoin = true;
+    }
+
+    if(!sendJoin &&
+       Port::getCurrentTime() - lastInitReply > WEBSETUP_CONTACT_TIMEOUT_MS) {
+      sendPeriodic = true;
+    }
+
+    auto joinTmp = joinCode;
+    auto hostnameTmp = reportedHostname;
+    threadMutex.unlock();
+
+    if(sendJoin) {
+      LOG_WARNING("Sending join request to websetup");
+      send(
+          "init-request-join-code",
+          {joinTmp, manager->getWebsetupSecret(), hostnameTmp});
+    } else if(sendPeriodic) {
+      LOG_INFO("Sending update request to websetup");
+      send("init-request", {});
     }
 
     sleep(5);  // Remember that websetup has it's throttling mechanism
@@ -219,7 +239,9 @@ void WebsetupConnection::handleWebsetupPacket(
         "remote command: %s, arguments: %s", command.c_str(), payload.c_str());
   }
 
+  threadMutex.lock();
   lastContact = Port::getCurrentTime();
+  threadMutex.unlock();
 
   auto response = handleWebsetupCommand(command, payload);
 
@@ -241,8 +263,10 @@ std::list<std::string> WebsetupConnection::handleWebsetupCommand(
   if(command == "ping") {
     return {"pong"};
   } else if(command == "init-response") {
+    threadMutex.lock();
     lastInitReply = Port::getCurrentTime();
     joinCode = "";  // mark that we've already joined
+    threadMutex.unlock();
     return {"ok"};
   } else if(command == "whitelist-add") {
     manager->whitelistAdd(IpAddress::fromBinary(decodeHex(payload)));
@@ -296,10 +320,10 @@ void WebsetupConnection::join(
     std::string joinCode,
     std::string reportedHostname)
 {
+  threadMutex.lock();
   manager->setWebsetupSecret(encodeHex(generateRandomString(12)));
 
   this->joinCode = joinCode;
   this->reportedHostname = reportedHostname;
-
-  lastInitReply = 0;  // initiate immediate join action
+  threadMutex.unlock();
 }

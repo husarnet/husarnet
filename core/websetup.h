@@ -3,6 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <list>
+#include <mutex>
 #include <string>
 
 #include "husarnet/ports/port.h"
@@ -14,6 +15,8 @@ struct InetAddress;
 
 class WebsetupConnection {
   HusarnetManager* manager;
+
+  std::mutex threadMutex;
 
   Time lastContact = 0;
   Time lastInitReply = 0;
