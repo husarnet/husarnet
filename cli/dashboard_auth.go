@@ -51,8 +51,7 @@ func saveAuthTokenToFile(authToken string) {
 	printDebug("Saving token")
 }
 
-func loginAndSaveAuthToken() string {
-	username, password := getUserCredentialsFromStandardInput()
+func loginAndSaveAuthToken(username string, password string) string {
 	authClient := graphql.NewClient(getDashboardUrl(), http.DefaultClient)
 	tokenResp, tokenErr := generated.ObtainToken(authClient, username, password)
 	if tokenErr != nil {
@@ -70,7 +69,8 @@ func getAuthToken() string {
 		printDebug("Found token in file!")
 		return string(tokenFromFile)
 	}
-	newToken := loginAndSaveAuthToken()
+	username, password := getUserCredentialsFromStandardInput()
+	newToken := loginAndSaveAuthToken(username, password)
 	return newToken
 }
 

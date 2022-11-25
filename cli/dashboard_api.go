@@ -24,7 +24,8 @@ func callDashboardAPI[responseType any](executeRequest func(client graphql.Clien
 
 	if isSignatureExpiredOrInvalid(err) {
 		spinner.Fail("Invalid/expired token")
-		token = loginAndSaveAuthToken()
+		username, password := getUserCredentialsFromStandardInput()
+		token = loginAndSaveAuthToken(username, password)
 
 		spinner = getSpinner(spinnerMessage, false)
 		client := makeAuthenticatedClient(token)
