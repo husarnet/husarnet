@@ -15,7 +15,7 @@ fi
 if [ ! -z "${HUSARNET_JOINCODE:-}" ]; then
     export HUSARNET_JOIN_CODE="${HUSARNET_JOINCODE}"
 fi
-if [ ! -z "${HOSTNAME:-}" ]; then
+if [ "${HOSTNAME:-}" != $(hostname) ]; then
     export HUSARNET_HOSTNAME="${HOSTNAME}"
 fi
 
