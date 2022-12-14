@@ -116,7 +116,7 @@ endif()
 FetchContent_Declare(
   libsodium
   GIT_REPOSITORY https://github.com/jedisct1/libsodium.git
-  GIT_TAG 1.0.14
+  GIT_TAG 1.0.18
 )
 FetchContent_MakeAvailable(libsodium)
 include_directories(${libsodium_SOURCE_DIR}/src/libsodium/include)
