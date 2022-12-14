@@ -161,7 +161,7 @@ add_library(sqlite3 STATIC ${sqlite3_SOURCE_DIR}/sqlite3.c)
 target_link_libraries(husarnet_core sqlite3 ${CMAKE_DL_LIBS})
 
 # Include unix port libraries
-if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   FetchContent_Declare(
     c-ares
     GIT_REPOSITORY https://github.com/c-ares/c-ares.git

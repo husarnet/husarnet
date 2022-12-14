@@ -8,8 +8,8 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/if_tun.h>
 #include <net/if.h>
+#include <net/if_utun.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +20,58 @@
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/util.h"
+
+inline int utun_open(std::string& name, const int unit)
+{
+  struct sockaddr_ctl sc;
+  struct ctl_info ctlInfo;
+
+  memset(&ctlInfo, 0, sizeof(ctlInfo));
+  if (strlcpy(ctlInfo.ctl_name, UTUN_CONTROL_NAME, sizeof(ctlInfo.ctl_name))
+      >= sizeof(ctlInfo.ctl_name))
+    LOG("UTUN_CONTROL_NAME too long");
+
+  ScopedFD fd(socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL));
+  if (!fd.defined())
+    LOG("socket(SYSPROTO_CONTROL)");
+
+  if (ioctl(fd(), CTLIOCGINFO, &ctlInfo) == -1)
+    LOG("ioctl(CTLIOCGINFO)");
+
+  sc.sc_id = ctlInfo.ctl_id;
+  sc.sc_len = sizeof(sc);
+  sc.sc_family = AF_SYSTEM;
+  sc.ss_sysaddr = AF_SYS_CONTROL;
+  sc.sc_unit = unit + 1;
+  std::memset(sc.sc_reserved, 0, sizeof(sc.sc_reserved));
+
+  // If the connect is successful, a utunX device will be created, where X
+  // is our unit number - 1.
+  if (connect(fd(), (struct sockaddr *)&sc, sizeof(sc)) == -1)
+    return -1;
+
+  // Get iface name of newly created utun dev.
+  char utunname[20];
+  socklen_t utunname_len = sizeof(utunname);
+  if (getsockopt(fd(), SYSPROTO_CONTROL, UTUN_OPT_IFNAME, utunname, &utunname_len))
+    LOG("getsockopt(SYSPROTO_CONTROL)");
+  name = utunname;
+
+  return fd.release();
+}
+
+// Try to open an available utun device unit.
+// Return the iface name in name.
+inline int utun_open(std::string& name)
+{
+  for (int unit = 0; unit < 256; ++unit)
+  {
+    const int fd = utun_open(name, unit);
+    if (fd >= 0)
+      return fd;
+  }
+  LOG("cannot open available utun device");
+}
 
 static int openTun(std::string name, bool isTap)
 {

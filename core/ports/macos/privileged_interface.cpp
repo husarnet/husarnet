@@ -9,18 +9,15 @@
 
 #include <assert.h>
 #include <fcntl.h>
-#include <linux/capability.h>
-#include <linux/securebits.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <sys/prctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/syscall.h>
+// #include <sys/syscall.h>
 #include <unistd.h>
 
 #include "husarnet/ports/port_interface.h"
@@ -35,28 +32,7 @@
 
 using namespace nlohmann;  // json
 
-// This file needs some explanation (specific to the Unix/Linux implementation)
-// First of all the code in the main thread is expected to drop as much
-// capabilities as possible, including chrooting itself to /var/lib/husarnet.
-// This has a couple of implications, like - we no longer have access to /proc,
-// /dev, /etc and other important directories. On order to continue to be able
-// to do some things in those spaces, we fork before we drop capabilities and
-// are letting the child to retain those "superpowers". That process is,
-// unsurprisingly, called `privileged_process` and all of it's code is in a
-// separate file. Communication with it is limited to a single, unnamed unix
-// socket and encapsulated using JSON. JSON is definitely like using a
-// sledgehammer to crack a nut, but 1) we're already using it in another part of
-// the codebase 2) it's easy 3) this interface is super low QPS one so let it
-// slide.
-// As per the implementation details - due to the fact that we chroot after we
-// drop capabilities are paths in the main process are skewed, thus `configDir`
-// variable is introduced and it's content will change during the lifetime of
-// the process. Also - because of that we are still able to manipulate files in
-// the /var/lib/husarnet directory from the main process, but 1) not any other
-// directories 2) as I written before - they're under `/` path and not
-// `/var/lib/husarnet`.
-
-static FILE* if_inet6;
+// MacOS doesn't have capabilities...
 
 static bool isInterfaceBlacklisted(std::string name)
 {
@@ -108,37 +84,37 @@ error:
 
 static void getLocalIpv6Addresses(std::vector<IpAddress>& ret)
 {
-  bool fileOpenedManually = if_inet6 == nullptr;
-  FILE* f =
-      fileOpenedManually ? fopen("/proc/self/net/if_inet6", "r") : if_inet6;
-  if(f == nullptr) {
-    LOG("failed to open if_inet6 file");
-    return;
-  }
-  fseek(f, 0, SEEK_SET);
-  while(true) {
-    char buf[100];
-    if(fgets(buf, sizeof(buf), f) == nullptr)
-      break;
-    std::string line = buf;
-    if(line.size() < 32)
-      continue;
-    auto ip = IpAddress::fromBinary(decodeHex(line.substr(0, 32)));
-    if(ip.isLinkLocal())
-      continue;
-    if(ip == IpAddress::fromBinary("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1"))
-      continue;
+  // bool fileOpenedManually = if_inet6 == nullptr;
+  // FILE* f =
+  //     fileOpenedManually ? fopen("/proc/self/net/if_inet6", "r") : if_inet6;
+  // if(f == nullptr) {
+  //   LOG("failed to open if_inet6 file");
+  //   return;
+  // }
+  // fseek(f, 0, SEEK_SET);
+  // while(true) {
+  //   char buf[100];
+  //   if(fgets(buf, sizeof(buf), f) == nullptr)
+  //     break;
+  //   std::string line = buf;
+  //   if(line.size() < 32)
+  //     continue;
+  //   auto ip = IpAddress::fromBinary(decodeHex(line.substr(0, 32)));
+  //   if(ip.isLinkLocal())
+  //     continue;
+  //   if(ip == IpAddress::fromBinary("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1"))
+  //     continue;
 
-    std::string ifname = line.substr(44);
-    while(ifname.size() && ifname[0] == ' ')
-      ifname = ifname.substr(1);
-    if(isInterfaceBlacklisted(ifname))
-      continue;
+  //   std::string ifname = line.substr(44);
+  //   while(ifname.size() && ifname[0] == ' ')
+  //     ifname = ifname.substr(1);
+  //   if(isInterfaceBlacklisted(ifname))
+  //     continue;
 
-    ret.push_back(ip);
-  }
-  if(fileOpenedManually)
-    fclose(f);
+  //   ret.push_back(ip);
+  // }
+  // if(fileOpenedManually)
+  //   fclose(f);
 }
 
 static std::string configDir = "/var/lib/husarnet/";
@@ -181,84 +157,22 @@ static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
 }
 #endif
 
-struct cap_header_struct {
-  __u32 version;
-  int pid;
-};
-
-struct cap_data_struct {
-  __u32 effective;
-  __u32 permitted;
-  __u32 inheritable;
-};
-
-static int set_cap(int flags)
-{
-  cap_header_struct capheader = {_LINUX_CAPABILITY_VERSION_1, 0};
-  cap_data_struct capdata;
-  capdata.inheritable = capdata.permitted = capdata.effective = flags;
-  return (int)syscall(SYS_capset, &capheader, &capdata);
-}
-
 namespace Privileged {
   void init()
   {
-    if_inet6 = fopen("/proc/self/net/if_inet6", "r");
-    mkdir(configDir.c_str(), 0700);
-    chmod(configDir.c_str(), 0700);
+    // if_inet6 = fopen("/proc/self/net/if_inet6", "r");
+    // mkdir(configDir.c_str(), 0700);
+    // chmod(configDir.c_str(), 0700);
   }
 
   void start()
   {
-    int fds[2];  // end for parent, end for privileged subprocess
-    if(socketpair(AF_UNIX, SOCK_SEQPACKET, 0, fds) < 0) {
-      perror("socketpair");
-      exit(1);
-    }
-
-    if(fork() == 0) {
-      // Privileged
-      close(fds[0]);
-
-      auto privilegedProcess = new PrivilegedProcess();
-      privilegedProcess->init(fds[1]);
-      privilegedProcess->run();
-      _exit(1);
-    } else {
-      // Parent
-      close(fds[1]);
-      privilegedProcessFd = fds[0];
-
-      // Technically this call should be done here but it makes more sense to do
-      // so after interfaces are configured, so it's exposed to upper layers.
-
-      // dropCapabilities();
-    }
+    // there is no separate privileged thread on MacOS (rn)
   }
 
   void dropCapabilities()
   {
-    if(chroot(configDir.c_str()) < 0) {
-      perror("chroot");
-      exit(1);
-    }
-
-    if(chdir("/") < 0) {
-      perror("chdir");
-      exit(1);
-    }
-
-    configDir = "/";  // this is true only after we do the chroot
-
-    if(prctl(PR_SET_SECUREBITS, SECBIT_KEEP_CAPS | SECBIT_NOROOT) < 0) {
-      perror("prctl");
-      exit(1);
-    }
-
-    if(set_cap(0) < 0) {
-      perror("set_cap");
-      exit(1);
-    }
+    // no cap dropping on MacOS
   }
 
   std::string getConfigPath()
