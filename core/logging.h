@@ -74,8 +74,13 @@ static inline void log(
     log(LogLevel::DEBUG, __FILE__, __LINE__, "", fmt, ##x); \
   }
 #else
-#define LOG_DEBUG(fmt, x...) \
-  {                          \
+// This is a hacky solution but should still emit optimized code and suppress
+// the unused variable warnings for production builds
+#define LOG_DEBUG(fmt, x...)                                  \
+  {                                                           \
+    if(false) {                                               \
+      log(LogLevel::DEBUG, __FILE__, __LINE__, "", fmt, ##x); \
+    }                                                         \
   }
 #endif
 
