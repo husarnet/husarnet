@@ -155,7 +155,7 @@ func callDaemonRetryable[ResultType any](retryable bool, route string, urlencode
 
 		if !onWindows() && retryable && errors.Is(err, syscall.ECONNREFUSED) {
 			printInfo("Daemon does not seem to be running")
-			runSubcommand(true, "sudo", "systemctl", "restart", "husarnet")
+			promptDaemonRestart()
 			waitDaemon()
 			return lambda(route, urlencodedBody)
 		}

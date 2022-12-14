@@ -17,6 +17,10 @@ func getDaemonBinaryPath() string {
 	return "/usr/bin/husarnet-daemon"
 }
 
+func promptDaemonRestart() {
+	runSubcommand(true, "sudo", "systemctl", "restart", "husarnet")
+}
+
 func getDaemonBinaryVersion() string {
 	cmd := exec.Command(getDaemonBinaryPath(), "--version")
 
@@ -27,4 +31,15 @@ func getDaemonBinaryVersion() string {
 	}
 
 	return strings.TrimSpace(string(output))
+}
+
+func getDaemonGenId() string {
+	cmd := exec.Command(getDaemonBinaryPath(), "--genid")
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		die("Error while generating new id: %v\n", err)
+	}
+
+	return string(output)
 }

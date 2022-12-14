@@ -187,3 +187,15 @@ func removeDuplicates[T string](input []T) []T {
 
 	return keys
 }
+
+// checks whether a given string contains only [0-9a-f]
+// won't check the length for full bytes though
+func isHexString(s string) bool {
+	for _, c := range s {
+		if !(('a' <= c && c <= 'f') || ('0' <= c && c <= '9')) {
+			return false
+		}
+	}
+
+	return true
+}

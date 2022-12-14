@@ -5,6 +5,10 @@ package main
 
 import (
 	"net/url"
+	"os"
+	"runtime"
+	"strings"
+	"sync"
 
 	"github.com/pterm/pterm"
 	"github.com/urfave/cli/v2"
@@ -301,6 +305,125 @@ var daemonWaitCommand = &cli.Command{
 	},
 }
 
+func genId(needle string, stripHaystack bool) (string, bool) {
+	result := getDaemonGenId()
+
+	var haystack = strings.SplitN(result, " ", 2)[0]
+	if stripHaystack {
+		haystack = strings.ReplaceAll(haystack, ":", "")
+	}
+
+	printInfo("Trying %s...", haystack)
+
+	if strings.Contains(haystack, needle) {
+		return result, true
+	}
+
+	return "", false
+}
+
+func genParallel(needle string, stripHaystack bool) string {
+	var wg sync.WaitGroup
+	semaphore := make(chan struct{}, runtime.NumCPU())
+
+	var done bool
+	var result string
+	var lock sync.Mutex
+
+	for {
+		semaphore <- struct{}{}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			resultTmp, success := genId(needle, stripHaystack)
+
+			if success {
+				lock.Lock()
+				done = true
+				result = resultTmp
+				lock.Unlock()
+			}
+
+			<-semaphore
+		}()
+
+		lock.Lock()
+		if done {
+			break
+		}
+		lock.Unlock()
+	}
+
+	wg.Wait()
+	return result
+}
+
+var daemonGenIdCommand = &cli.Command{
+	Name:      "genid",
+	Aliases:   []string{"genID", "genId", "gen-id"},
+	Usage:     "Generate a valid identity file",
+	ArgsUsage: " ", // No arguments needed
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "silent",
+			Usage: "Suppress all help messages so it can be directly piped into /var/lib/husarnet/id",
+		},
+		&cli.StringFlag{
+			Name:  "include",
+			Usage: "Generate identities until you find one that contains a given hex sequence. There are two basic formatting options. Either your string has to be a [a-f0-9]+ sequence (and colons will be added automatically), or, if it contains at least one colon it needs to be a valid fragment of a fully expanded IPv6 addres (i.e. :cafe:1234, ca:fe, cafe:0001).",
+		},
+		&cli.BoolFlag{
+			Name:  "save",
+			Usage: "Save the result in /var/lib/husarnet/id",
+		},
+	},
+	Action: func(ctx *cli.Context) error {
+		ignoreExtraArguments(ctx)
+
+		var newId string
+
+		if ctx.String("include") != "" {
+			needle := ctx.String("include")
+			stripHaystack := false
+
+			if strings.Contains(needle, ":") {
+				if !isHexString(strings.ReplaceAll(needle, ":", "")) {
+					die("Your pattern is not a valid part of an IPv6 address")
+				}
+			} else {
+				if !isHexString(needle) {
+					die("Your pattern contains some characters that are not hexadecimal")
+				}
+				stripHaystack = true
+			}
+
+			newId = genParallel(needle, stripHaystack)
+		} else {
+			newId = getDaemonGenId()
+		}
+
+		if ctx.Bool("save") {
+			err := os.WriteFile("/var/lib/husarnet/id", []byte(newId), 0600)
+			if err != nil {
+				die("Error: could not save new ID: %s", err)
+			}
+
+			printInfo("Saved! In order to apply it you need to restart husarnet-daemon!")
+			promptDaemonRestart()
+		} else {
+			pterm.Printf(newId)
+
+			if !ctx.Bool("silent") {
+				printInfo("In order to use it save the line above as /var/lib/husarnet/id")
+			}
+		}
+
+		return nil
+	},
+}
+
 var daemonCommand = &cli.Command{
 	Name:  "daemon",
 	Usage: "Control the local daemon",
@@ -313,5 +436,6 @@ var daemonCommand = &cli.Command{
 		daemonStopCommand,
 		daemonWhitelistCommand,
 		daemonWaitCommand,
+		daemonGenIdCommand,
 	},
 }
