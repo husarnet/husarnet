@@ -16,5 +16,6 @@ git tag v${repo_version}
 # This one will make CLI importable as a Go library
 git tag cli/v${repo_version}
 
-echo "If you want to publish your tags:"
-echo "git push origin --tags"
+git push origin --tags
+
+echo "Release has started. Remember to fill in and publish the draft on Github!"
