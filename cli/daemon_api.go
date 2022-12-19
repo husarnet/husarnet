@@ -103,10 +103,8 @@ func getDaemonApiSecretPath() string {
 func addDaemonApiSecret(params *url.Values) {
 	apiSecret, err := os.ReadFile(getDaemonApiSecretPath())
 	if err != nil {
-		if onWindows() {
-			die("Error reading secret file, are you root/administrator? " + err.Error())
-		}
-		rerunWithSudo()
+		printError("Error reading secret file, are you root/administrator? " + err.Error())
+		rerunWithSudoOrDie()
 	}
 
 	params.Add("secret", string(apiSecret))

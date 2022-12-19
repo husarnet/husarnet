@@ -407,7 +407,13 @@ var daemonGenIdCommand = &cli.Command{
 		if ctx.Bool("save") {
 			err := os.WriteFile(getDaemonIdPath(), []byte(newId), 0600)
 			if err != nil {
-				die("Error: could not save new ID: %s", err)
+				printError("Error: could not save new ID: %s", err)
+
+				if os.IsPermission(err) {
+					rerunWithSudoOrDie()
+				} else {
+					dieEmpty()
+				}
 			}
 
 			printInfo("Saved! In order to apply it you need to restart husarnet-daemon!")

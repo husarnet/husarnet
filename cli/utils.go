@@ -60,7 +60,12 @@ func onWindows() bool {
 }
 
 // re run the whole CLI invocation with sudo
-func rerunWithSudo() {
+// note that this function replaces current process with a sudoed one so it won't return to your program in any casse
+func rerunWithSudoOrDie() {
+	if onWindows() {
+		dieEmpty()
+	}
+
 	if !askForConfirmation(runSelfWithSudoQuestion) {
 		dieEmpty()
 	}
