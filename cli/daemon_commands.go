@@ -306,7 +306,7 @@ var daemonWaitCommand = &cli.Command{
 }
 
 func genId(needle string, stripHaystack bool) (string, bool) {
-	result := getDaemonGenId()
+	result := getDaemonBinaryGenIdOutput()
 
 	var haystack = strings.SplitN(result, " ", 2)[0]
 	if stripHaystack {
@@ -401,7 +401,7 @@ var daemonGenIdCommand = &cli.Command{
 
 			newId = genParallel(needle, stripHaystack)
 		} else {
-			newId = getDaemonGenId()
+			newId = getDaemonBinaryGenIdOutput()
 		}
 
 		if ctx.Bool("save") {

@@ -9,7 +9,8 @@
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/util.h"
 
-void printUsage() {
+void printUsage()
+{
   std::cout << "Usage: husarnet-daemon (--version|--genid)" << std::endl;
 }
 

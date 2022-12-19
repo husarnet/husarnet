@@ -33,7 +33,7 @@ func getDaemonBinaryVersion() string {
 	return strings.TrimSpace(string(output))
 }
 
-func getDaemonGenId() string {
+func getDaemonBinaryGenIdOutput() string {
 	cmd := exec.Command(getDaemonBinaryPath(), "--genid")
 
 	output, err := cmd.CombinedOutput()
