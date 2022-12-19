@@ -368,7 +368,7 @@ var daemonGenIdCommand = &cli.Command{
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:  "silent",
-			Usage: "Suppress all help messages so it can be directly piped into /var/lib/husarnet/id",
+			Usage: "Suppress all help messages so it can be directly piped into " + getDaemonIdPath(),
 		},
 		&cli.StringFlag{
 			Name:  "include",
@@ -376,7 +376,7 @@ var daemonGenIdCommand = &cli.Command{
 		},
 		&cli.BoolFlag{
 			Name:  "save",
-			Usage: "Save the result in /var/lib/husarnet/id",
+			Usage: "Save the result in " + getDaemonIdPath(),
 		},
 	},
 	Action: func(ctx *cli.Context) error {
@@ -405,7 +405,7 @@ var daemonGenIdCommand = &cli.Command{
 		}
 
 		if ctx.Bool("save") {
-			err := os.WriteFile("/var/lib/husarnet/id", []byte(newId), 0600)
+			err := os.WriteFile(getDaemonIdPath(), []byte(newId), 0600)
 			if err != nil {
 				die("Error: could not save new ID: %s", err)
 			}
@@ -416,7 +416,7 @@ var daemonGenIdCommand = &cli.Command{
 			pterm.Printf(newId)
 
 			if !ctx.Bool("silent") {
-				printInfo("In order to use it save the line above as /var/lib/husarnet/id")
+				printInfo("In order to use it save the line above as " + getDaemonIdPath())
 			}
 		}
 

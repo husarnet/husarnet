@@ -95,7 +95,7 @@ func getDaemonApiUrl() string {
 func getDaemonApiSecretPath() string {
 	if onWindows() {
 		sep := string(os.PathSeparator)
-		return os.ExpandEnv("${programdata}") + sep + "Husarnet" + sep + "daemon_api_token"
+		return os.ExpandEnv("${programdata}") + sep + "husarnet" + sep + "daemon_api_token"
 	}
 	return "/var/lib/husarnet/daemon_api_token"
 }
@@ -110,6 +110,14 @@ func addDaemonApiSecret(params *url.Values) {
 	}
 
 	params.Add("secret", string(apiSecret))
+}
+
+func getDaemonIdPath() string {
+	if onWindows() {
+		sep := string(os.PathSeparator)
+		return os.ExpandEnv("${programdata}") + sep + "husarnet" + sep + "id"
+	}
+	return "/var/lib/husarnet/id"
 }
 
 func getApiErrorString[ResultType any](response DaemonResponse[ResultType]) string {
