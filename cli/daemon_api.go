@@ -159,9 +159,9 @@ func callDaemonRetryable[ResultType any](retryable bool, route string, urlencode
 	if err != nil {
 		printDebug("%v", err)
 
-		if !onWindows() && retryable && errors.Is(err, syscall.ECONNREFUSED) {
+		if retryable && errors.Is(err, syscall.ECONNREFUSED) {
 			printInfo("Daemon does not seem to be running")
-			promptDaemonRestart()
+			daemonRestart(true)
 			waitDaemon()
 			return lambda(route, urlencodedBody)
 		}

@@ -105,11 +105,13 @@ func runSubcommand(confirm bool, command string, args ...string) {
 		// TODO long-term/research: figure out how to mimic "sudo" on Windows,
 		// so the user does not need to have elevated command prompt for these commands
 		// and also we get rid of this awkward error handling
+		// NOTE (from pidpawel) I'm using `gsudo` on Windows but AFAIR it's not a standard tool
 		errorStringAtNoAdministratorPrivileges := "status 3"
 		errorStringAtServiceAlreadyRunning := "status 1"
 
 		if strings.Contains(err.Error(), errorStringAtNoAdministratorPrivileges) {
 			printError("Unable to manage the service - are you Administrator?")
+			rerunWithSudoOrDie() // At the moment this will be a no-op on Windows
 		}
 
 		if strings.Contains(err.Error(), errorStringAtServiceAlreadyRunning) {

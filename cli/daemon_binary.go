@@ -17,8 +17,12 @@ func getDaemonBinaryPath() string {
 	return "/usr/bin/husarnet-daemon"
 }
 
-func promptDaemonRestart() {
-	runSubcommand(true, "sudo", "systemctl", "restart", "husarnet")
+func daemonRestart(prompt bool) {
+	if onWindows() {
+		runSubcommand(prompt, "nssm", "restart", "husarnet")
+	} else {
+		runSubcommand(prompt, "sudo", "systemctl", "restart", "husarnet")
+	}
 }
 
 func getDaemonBinaryVersion() string {

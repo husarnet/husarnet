@@ -57,11 +57,7 @@ var daemonRestartCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		if onWindows() {
-			runSubcommand(false, "nssm", "restart", "husarnet")
-		} else {
-			runSubcommand(false, "sudo", "systemctl", "restart", "husarnet")
-		}
+		daemonRestart(false)
 		printSuccess("Restarted husarnet-daemon")
 
 		if wait {
@@ -416,8 +412,8 @@ var daemonGenIdCommand = &cli.Command{
 				}
 			}
 
-			printInfo("Saved! In order to apply it you need to restart husarnet-daemon!")
-			promptDaemonRestart()
+			printInfo("Saved! In order to apply it you need to restart Husarnet Daemon!")
+			daemonRestart(true)
 		} else {
 			pterm.Printf(newId)
 
