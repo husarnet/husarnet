@@ -7,6 +7,7 @@ import (
 	"net/netip"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gobeam/stringy"
 	"github.com/mattn/go-runewidth"
@@ -169,10 +170,8 @@ func printWhitelist(status DaemonStatus, verbose bool) {
 	}
 }
 
-func printStatus(ctx *cli.Context) {
+func printStatus(ctx *cli.Context,status DaemonStatus) {
 	verbose := verboseLogs || ctx.Bool("verbose")
-
-	status := getDaemonStatus()
 
 	printStatusHeader("Version")
 	printVersion(status.Version)
@@ -268,4 +267,178 @@ func printStatus(ctx *cli.Context) {
 	printStatusHeader("Whitelist")
 	printWhitelist(status, verbose)
 
+}
+
+func printStatusFollow(ctx *cli.Context) {
+
+	currStatus := getDaemonStatus()
+	prevStatus := getDaemonStatus()
+	prevStatus.Version="temporary change to enable print"
+	for true{
+		if ! areStatusesEquall(prevStatus,currStatus) {
+			printStatus(ctx,currStatus)
+			prevStatus = currStatus
+		}
+		currStatus = getDaemonStatus()
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func areStatusesEquall(prevStatus, currStatus DaemonStatus) bool {
+	if prevStatus.Version != currStatus.Version {
+		return false
+	}
+	if prevStatus.DashboardFQDN != currStatus.DashboardFQDN {
+		return false
+	}
+	if prevStatus.IsDirty != currStatus.IsDirty {
+		return false
+	}
+	if prevStatus.WebsetupAddress.Compare(currStatus.WebsetupAddress) != 0 {
+		return false
+	}
+	if prevStatus.BaseConnection.Address.Compare(currStatus.BaseConnection.Address) != 0 {
+		return false
+	}
+	if prevStatus.BaseConnection.Port != currStatus.BaseConnection.Port {
+		return false
+	}
+	if prevStatus.BaseConnection.Type != currStatus.BaseConnection.Type {
+		return false
+	}
+	if prevStatus.LocalIP.Compare(currStatus.LocalIP) != 0 {
+		return false
+	}
+	if prevStatus.LocalHostname != currStatus.LocalHostname {
+		return false
+	}
+	if prevStatus.IsJoined != currStatus.IsJoined {
+		return false
+	}
+	if prevStatus.IsReady != currStatus.IsReady {
+		return false
+	}
+	if prevStatus.IsReadyToJoin != currStatus.IsReadyToJoin {
+		return false
+	}
+	if ! CompareConnectionStatus(prevStatus.ConnectionStatus, currStatus.ConnectionStatus) {
+		return false
+	}
+	if ! CompareAddressLists(prevStatus.Whitelist, currStatus.Whitelist) {
+		return false
+	}
+	if ! CompareUserSettings(prevStatus.UserSettings, currStatus.UserSettings) {
+		return false
+	}
+	if ! CompareHostTables(prevStatus.HostTable, currStatus.HostTable) {
+		return false
+	}
+	if ! ComparePeers(prevStatus.Peers, currStatus.Peers) {
+		return false
+	}
+	return true
+
+}
+
+func CompareConnectionStatus(a, b map[string]bool) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for key, value := range a {
+		if value != b[key] {
+			return false
+		}
+	}
+	return true
+}
+
+func CompareAddressLists(a, b []netip.Addr) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i].Compare(b[i]) !=0 {
+			return false
+		}
+	}
+	return true
+}
+
+func ComparePortAddressLists(a, b []netip.AddrPort) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if (a[i].Addr().Compare(b[i].Addr()) !=0) || (a[i].Port()!= b[i].Port())  {
+			return false
+		}
+	}
+	return true
+}
+
+func CompareUserSettings(a, b map[string]string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for key, value := range a {
+		if value != b[key] {
+			return false
+		}
+	}
+	return true
+}
+
+func CompareHostTables(a, b map[string]netip.Addr) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for key, value := range a {
+		if value.Compare(b[key]) !=0 {
+			return false
+		}
+	}
+	return true
+}
+
+func ComparePeerStatus(a, b PeerStatus) bool {
+	if (a.HusarnetAddress.Compare(b.HusarnetAddress) !=0){
+		return false
+	}
+	if (a.LinkLocalAddress.Addr().Compare(b.LinkLocalAddress.Addr()) !=0) || (a.LinkLocalAddress.Port()!= b.LinkLocalAddress.Port()) {
+		return false
+	}
+	if a.IsActive != b.IsActive {
+		return false
+	}
+	if a.IsReestablishing != b.IsReestablishing {
+		return false
+	}
+	if a.IsSecure != b.IsSecure {
+		return false
+	}
+	if a.IsTunelled != b.IsTunelled {
+		return false
+	}
+	if ! ComparePortAddressLists(a.SourceAddresses, b.SourceAddresses) {
+		return false
+	}
+	if ! ComparePortAddressLists(a.TargetAddresses, b.TargetAddresses) {
+		return false
+	}
+	if ((a.UsedTargetAddress.Addr().Compare(b.UsedTargetAddress.Addr()) !=0) || (a.UsedTargetAddress.Port()!= b.UsedTargetAddress.Port())) {
+		return false
+	}
+	return true
+}
+
+func ComparePeers(a,b []PeerStatus) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if ! ComparePeerStatus(a[i], b[i]) {
+			return false
+		}
+	}
+	return true
 }
