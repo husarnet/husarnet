@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-<!-- If you have issues with dashboard, logging in, and similar issues please don't create issue here. Instead contact us via [community forum](https://community.husarnet.com).-->
+<!-- If you have issues with dashboard, logging in, and similar issues please don't create issue here. Instead contact us via e-mail: support@husarnet.com.-->
 
 **Describe the bug**
 A clear and concise description of what the bug is.
