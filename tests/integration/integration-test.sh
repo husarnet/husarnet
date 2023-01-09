@@ -12,7 +12,7 @@ husarnet daemon wait daemon
 husarnet daemon wait base
 husarnet join ${JOIN_CODE} $(cat /etc/hostname)
 TESTJOIN=$(husarnet status | grep -c 'Is joined?                 yes')
-if [ $TESTJOIN -eq 0 ]; then
+if [ $TESTJOIN -ne 0 ]; then
    echo 'Husarnet failed to join network'
    exit 1
 else
