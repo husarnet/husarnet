@@ -3,11 +3,11 @@
 #Script is intended to be run from Superuser account.
 #Usage: ./integration-test.sh [JOIN_CODE] [Husarnet Dashboard User Name] [Husarnet Dashboard Password] [Husarnet Network Name]
 curl -s https://install.husarnet.com/install.sh | sudo bash
-CLEANUP=$(husarnet dashboard login ${@2} ${@3} && husarnet dashboard rm $(cat /etc/hostname) ${@4})
+CLEANUP=$(husarnet dashboard login ${2} ${3} && husarnet dashboard rm $(cat /etc/hostname) ${4})
 husarnet-daemon &
 husarnet daemon wait daemon
 husarnet daemon wait base
-husarnet join ${@1} $(cat /etc/hostname)
+husarnet join ${1} $(cat /etc/hostname)
 husarnet status | grep -c 'Is joined?                 yes'
 if [ ${?} -ne 0 ]; then
    echo 'Husarnet failed to join network'
