@@ -1,25 +1,22 @@
 #!/bin/bash
 #Integration test #2
 #Script is intended to be run from Superuser account.
-#Before using this script set these values
-#USERNAME - Your Husarnet dashboard username.
-#PASSWORD - Your Husarnet dashboard password.
-#NETWORK - Husarnet network name.
-#JOIN_CODE - Husarnet join code.
-CLEANUP=$(husarnet dashboard login ${USERNAME} ${PASSWORD} && husarnet dashboard rm $(cat /etc/hostname) ${NETWORK})
+#Usage: ./integration-test.sh [JOIN_CODE] [Husarnet Dashboard User Name] [Husarnet Dashboard Password] [Husarnet Network Name]
+curl -s https://install.husarnet.com/install.sh | sudo bash
+CLEANUP=$(husarnet dashboard login ${@2} ${@3} && husarnet dashboard rm $(cat /etc/hostname) ${@4})
 husarnet-daemon &
 husarnet daemon wait daemon
 husarnet daemon wait base
-husarnet join ${JOIN_CODE} $(cat /etc/hostname)
-TESTJOIN=$(husarnet status | grep -c 'Is joined?                 yes')
-if [ $TESTJOIN -ne 0 ]; then
+husarnet join ${@1} $(cat /etc/hostname)
+husarnet status | grep -c 'Is joined?                 yes'
+if [ ${?} -ne 0 ]; then
    echo 'Husarnet failed to join network'
    exit 1
 else
    echo 'Network OK'
 fi
-TESTHOSTS=$(cat /etc/hosts | grep -c '# managed by Husarnet')
-if [ $TESTHOSTS -ne 0 ]; then
+cat /etc/hosts | grep -c '# managed by Husarnet'
+if [ ${?} -ne 0 ]; then
    echo 'Husarnet failed saving hostnames to /etc/hosts file, cleaning up and exiting...'
    ${CLEANUP}
    exit 1
