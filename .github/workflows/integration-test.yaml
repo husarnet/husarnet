@@ -1,0 +1,19 @@
+name: Perform basic integration test
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  integrationtest:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      
+      - name: Install Husarnet Nightly
+        run: curl -s hrrps://nightly.husarnet.com/install-nightly.sh | sudo bash
+      
+      - name: Run Integration Test
+        run: cd ./tests/integration && chmod +x ./integration-test.sh && ./integration-test.sh ${{ secrets.JOIN_CODE }} ${{ secrets.DASHBOARD_USERNAME }} ${{ secrets.DASHBOARD_PASSWORD }} {{ secrets.NETWORK_NAME}}
