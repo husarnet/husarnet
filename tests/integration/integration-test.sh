@@ -19,7 +19,7 @@ else
    echo 'Network OK'
 fi
 TESTHOSTS=$(cat /etc/hosts | grep -c '# managed by Husarnet')
-if [ $TESTHOSTS -eq 0 ]; then
+if [ $TESTHOSTS -ne 0 ]; then
    echo 'Husarnet failed saving hostnames to /etc/hosts file, cleaning up and exiting...'
    ${CLEANUP}
    exit 1
