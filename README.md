@@ -7,7 +7,7 @@ Husarnet is a Peer-to-Peer VPN to connect your laptops, servers and microcontrol
 Key features:
 
 - **Low Latency** - thanks to Peer-to-Peer connection between devices. After establishing a connection, Husarnet infrastructure (Husarnet Base Servers) is used only as a failover proxy if P2P connection is not possible.
-- **Zero Configuration** - after installing Husarnet Client, you can add new devices to a group with a single command `husarnet join <YOUR_JOINCODE> mydevname` (on Linux. See [the docs](https://husarnet.com/docs) for other platforms).
+- **Zero Configuration** - after installing Husarnet Client, you can add new devices to a group with a single command `husarnet join <YOUR_JOINCODE> mydevname` on Linux. See [the docs](https://husarnet.com/docs) for other platforms.
 - **Low Reconfiguration Time** - in case of a network topology change (eg. transition between two Wi-Fi hotspots), Husarnet needs usually 1 - 3 seconds to reestablish Peer-to-Peer connection.
 - **Lightweight** - it works not only on popular OSes (currently only Windows and Linux version is released, MacOS, Android coming soon) but even on ESP32 microcontrollers. That means you can P2P access your things without IoT server at all!
 - **Secure & Private** - packets never leave connected devices unencrypted, Perfect Forward Secrecy (PFC) enabled by default.
@@ -33,7 +33,7 @@ This is the main development repository for all of the Husarnet Client apps.
 
 For more generic information please have a look at the [Husarnet Docs](https://husarnet.com/docs/).
 
-Typical issues preventing Peer-to-Peer connection (thus enjoing a low-latency) and their workarounds are described in the [Troubleshooting Guide](https://husarnet.com/docs/tutorial-troubleshooting).
+Typical issues preventing Peer-to-Peer connection (thus enjoing a low-latency) and their workarounds are described in the [Troubleshooting Guide](https://husarnet.com/docs/troubleshooting-guide/).
 
 If you need help and/or have questions regarding Husarnet, feel welcome to post on [Husarnet Community Forums](https://community.husarnet.com). Please, do not use GitHub Issues in this repository for reporting general usage problems and requests. Use the Issues only for technical questions and concerns regarding Husarnet Client building and development.
 
