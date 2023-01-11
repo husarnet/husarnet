@@ -6,7 +6,7 @@ curl -s https://install.husarnet.com/install.sh | sudo bash
 function CLEANUP {
 husarnet dashboard login "${2}" "${3}" && husarnet dashboard rm $(cat /etc/hostname) "${4}"
 }
-husarnet-daemon &
+sudo husarnet-daemon &
 husarnet daemon wait daemon
 husarnet daemon wait base
 husarnet join ${1} $(cat /etc/hostname)
