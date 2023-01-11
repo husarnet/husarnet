@@ -136,6 +136,7 @@
   "release":
     "needs":
     - "run_tests"
+    - "run_integration_tests"
     - "build_unix"
     - "build_windows_installer"
     "runs-on":
@@ -157,6 +158,7 @@
   "release_docker":
     "needs":
     - "run_tests"
+    - "run_integration_tests"
     - "build_docker"
     "runs-on": "ubuntu-latest"
     "steps":
@@ -188,6 +190,7 @@
   "release_github":
     "needs":
     - "run_tests"
+    - "run_integration_tests"
     - "build_unix"
     - "build_windows_installer"
     "runs-on": "ubuntu-latest"
@@ -208,6 +211,34 @@
           ./build/release/*setup.exe
         "prerelease": false
         "repo_token": "${{ secrets.GITHUB_TOKEN }}"
+  "run_integration_tests":
+    "needs": []
+    "runs-on": "ubuntu-latest"
+    "steps":
+    - "name": "Check out the repo"
+      "uses": "actions/checkout@v3"
+      "with":
+        "ref": "hotfix"
+    - "name": "Login to GHCR"
+      "uses": "docker/login-action@v2"
+      "with":
+        "password": "${{ secrets.GITHUB_TOKEN }}"
+        "registry": "ghcr.io"
+        "username": "${{ github.actor }}"
+    - "name": "Builder run ${{matrix.arch_alias}}"
+      "run": "docker compose -f builder/compose.yml up --exit-code-from ${{matrix.arch_alias}} ${{matrix.arch_alias}}"
+    "strategy":
+      "matrix":
+        "include":
+        - "platform_name": "test_docker"
+        - "platform_name": "test_ubuntu_18_04"
+        - "platform_name": "test_ubuntu_20_04"
+        - "platform_name": "test_ubuntu_22_04"
+        - "platform_name": "test_debian_oldstable"
+        - "platform_name": "test_debian_stable"
+        - "platform_name": "test_debian_testing"
+        - "platform_name": "test_fedora_37"
+        - "platform_name": "test_fedora_38"
   "run_tests":
     "needs": []
     "runs-on": "ubuntu-latest"

@@ -171,9 +171,38 @@
       ],
     },
 
+    run_integration_tests:: function(ref) {
+      needs: [],
+
+      'runs-on': 'ubuntu-latest',
+
+      strategy: {
+        matrix: {
+          include: [
+            { platform_name: 'test_docker' },
+            { platform_name: 'test_ubuntu_18_04' },
+            { platform_name: 'test_ubuntu_20_04' },
+            { platform_name: 'test_ubuntu_22_04' },
+            { platform_name: 'test_debian_oldstable' },
+            { platform_name: 'test_debian_stable' },
+            { platform_name: 'test_debian_testing' },
+            { platform_name: 'test_fedora_37' },
+            { platform_name: 'test_fedora_38' },
+          ],
+        },
+      },
+
+      steps: [
+        $.steps.checkout(ref),
+        $.steps.ghcr_login(),
+        $.steps.builder('${{matrix.arch_alias}}'),
+      ],
+    },
+
     release:: function(target, ref) {
       needs: [
         'run_tests',
+        'run_integration_tests',
         'build_unix',
         'build_windows_installer',
       ],
@@ -197,6 +226,7 @@
     release_github:: function() {
       needs: [
         'run_tests',
+        'run_integration_tests',
         'build_unix',
         'build_windows_installer',
       ],
@@ -286,6 +316,7 @@
     release_docker:: function(namespace, ref) {
       needs: [
         'run_tests',
+        'run_integration_tests',
         'build_docker',
       ],
 
