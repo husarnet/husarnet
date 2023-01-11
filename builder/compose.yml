@@ -73,35 +73,42 @@ services:
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/platforms/ubuntu.sh
+    command: /app/tests/integration/platforms/ubuntu_debian.sh
 
   test_ubuntu_20_04:
     image: ubuntu:20.04
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/platforms/ubuntu.sh
+    command: /app/tests/integration/platforms/ubuntu_debian.sh
 
   test_ubuntu_22_04:
     image: ubuntu:22.04
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/platforms/ubuntu.sh
+    command: /app/tests/integration/platforms/ubuntu_debian.sh
 
-  test_fedora_35:
-    image: fedora:35
+  test_debian_oldstable:
+    image: debian:oldstable
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/platforms/fedora.sh
+    command: /app/tests/integration/platforms/ubuntu_debian.sh
 
-  test_fedora_36:
-    image: fedora:36
+  test_debian_stable:
+    image: debian:stable
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/platforms/fedora.sh
+    command: /app/tests/integration/platforms/ubuntu_debian.sh
+
+  test_debian_testing:
+    image: debian:testing
+    privileged: true
+    volumes:
+      - ../:/app
+    command: /app/tests/integration/platforms/ubuntu_debian.sh
 
   test_fedora_37:
     image: fedora:37
