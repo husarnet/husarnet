@@ -1,4 +1,7 @@
 {
+  manifestYamlDoc:: function(v)
+    std.manifestYamlDoc(v, indent_array_in_object=true, quote_keys=false),
+
   steps: {
     checkout:: function(ref) {
       name: 'Check out the repo',

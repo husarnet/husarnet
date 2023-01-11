@@ -1,6 +1,6 @@
 local common = import 'common.libsonnet';
 
-std.manifestYamlDoc(
+common.manifestYamlDoc(
   {
     name: 'Release nightly',
     on: {
