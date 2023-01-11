@@ -12,6 +12,7 @@
 class TunTap : public UpperLayer {
  private:
   int fd;
+  std::string name;
   std::string tunBuffer;
 
   void close();
@@ -21,7 +22,9 @@ class TunTap : public UpperLayer {
   void onTunTapData();
 
  public:
-  TunTap(std::string name, bool isTap = false);
+  TunTap();
+  // name getter because the name will be utun%d and we must find out which slot is available...
+  std::string getName();
 
   void onLowerLayerData(DeviceId source, string_view data) override;
 };

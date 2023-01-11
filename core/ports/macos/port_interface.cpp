@@ -23,7 +23,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "husarnet/ports/unix/tun.h"
+#include "husarnet/ports/macos/tun.h"
 
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
@@ -144,21 +144,14 @@ namespace Port {
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000 / 1000;
   }
 
-  // TODO long term - this whole method should be rewritten *not* to utilize
-  // inline bash(?!) and *to* utilize netlink interface
   UpperLayer* startTunTap(HusarnetManager* manager)
   {
-    if(system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c "
-              "10 200)") != 0) {
-      LOG("failed to create TUN device");
-    }
-
     std::string myIp =
         deviceIdToIpAddress(manager->getIdentity()->getDeviceId()).str();
 
-    auto interfaceName = manager->getInterfaceName();
-
-    auto tunTap = new TunTap(interfaceName);
+    auto tunTap = new TunTap();
+    auto interfaceName = tunTap->getName();
+    LOG("our utun interface name is %s", interfaceName.c_str());
 
     if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||
        system(("sysctl net.ipv6.conf." + interfaceName + ".disable_ipv6=0")
@@ -166,22 +159,9 @@ namespace Port {
       LOG("failed to enable IPv6 (may be harmless)");
     }
 
-    if(system(("ip link set dev " + interfaceName + " mtu 1350").c_str()) !=
-           0 ||
-       system(
-           ("ip addr add dev " + interfaceName + " " + myIp + "/16").c_str()) !=
-           0 ||
-       system(("ip link set dev " + interfaceName + " up").c_str()) != 0) {
-      LOG("failed to setup IP address");
-      exit(1);
-    }
-
-    // Multicast
-    if(system(("ip -6 route add " + multicastDestination + "/48 dev " +
-               interfaceName + " table local")
-                  .c_str()) != 0) {
-      LOG("failed to setup multicast route");
-    }
+    system(("ifconfig " + interfaceName + " inet6 " + myIp).c_str());
+    system(("route -nv add -inet6 fc94::/16 -interface " + interfaceName).c_str());
+    // TODO multicast, right?
 
     return tunTap;
   }

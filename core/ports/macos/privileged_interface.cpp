@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include "husarnet/ports/port_interface.h"
+#include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
 #include "husarnet/ports/unix/privileged_process.h"
 
 #include "husarnet/identity.h"
@@ -84,85 +85,17 @@ error:
 
 static void getLocalIpv6Addresses(std::vector<IpAddress>& ret)
 {
-  // bool fileOpenedManually = if_inet6 == nullptr;
-  // FILE* f =
-  //     fileOpenedManually ? fopen("/proc/self/net/if_inet6", "r") : if_inet6;
-  // if(f == nullptr) {
-  //   LOG("failed to open if_inet6 file");
-  //   return;
-  // }
-  // fseek(f, 0, SEEK_SET);
-  // while(true) {
-  //   char buf[100];
-  //   if(fgets(buf, sizeof(buf), f) == nullptr)
-  //     break;
-  //   std::string line = buf;
-  //   if(line.size() < 32)
-  //     continue;
-  //   auto ip = IpAddress::fromBinary(decodeHex(line.substr(0, 32)));
-  //   if(ip.isLinkLocal())
-  //     continue;
-  //   if(ip == IpAddress::fromBinary("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1"))
-  //     continue;
-
-  //   std::string ifname = line.substr(44);
-  //   while(ifname.size() && ifname[0] == ' ')
-  //     ifname = ifname.substr(1);
-  //   if(isInterfaceBlacklisted(ifname))
-  //     continue;
-
-  //   ret.push_back(ip);
-  // }
-  // if(fileOpenedManually)
-  //   fclose(f);
+  // on MacOS there is no /proc, so we can't use /proc/self/net/if_inet6
+  // like in linux port; need to figure out different way
 }
 
 static std::string configDir = "/var/lib/husarnet/";
 
-static int privilegedProcessFd = 0;
-
-#ifdef UT
-static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
-{
-  // disable privileged process while unit testing core
-  (void)endpoint;
-  (void)data;
-  return json::parse("{}");
-}
-#else
-static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
-{
-  assert(privilegedProcessFd != 0);
-
-  json frame = {
-      {"endpoint", endpoint._to_string()},
-      {"data", data},
-  };
-
-  auto frameStr = frame.dump(0);
-  if(send(privilegedProcessFd, frameStr.data(), frameStr.size() + 1, 0) < 0) {
-    perror("send");
-    exit(1);
-  }
-
-  char recvBuffer[40000];
-
-  if(recv(privilegedProcessFd, recvBuffer, sizeof(recvBuffer), 0) < 0) {
-    perror("recv");
-    exit(1);
-  }
-
-  auto response = json::parse(recvBuffer);
-  return response;
-}
-#endif
-
 namespace Privileged {
   void init()
   {
-    // if_inet6 = fopen("/proc/self/net/if_inet6", "r");
-    // mkdir(configDir.c_str(), 0700);
-    // chmod(configDir.c_str(), 0700);
+    mkdir(configDir.c_str(), 0700);
+    chmod(configDir.c_str(), 0700);
   }
 
   void start()
@@ -285,29 +218,24 @@ namespace Privileged {
 
   std::string getSelfHostname()
   {
-    return callPrivilegedProcess(PrivilegedMethod::getSelfHostname, {});
+    // TODO: implement
+    return "macos-device";
   }
 
   // TODO long term - prevent websetup from renaming this host for no reason
   bool setSelfHostname(std::string newHostname)
   {
-    return callPrivilegedProcess(
-        PrivilegedMethod::setSelfHostname, newHostname);
+    // TODO: implement
+    return true;
   }
 
   void updateHostsFile(std::map<std::string, IpAddress> data)
   {
-    std::map<std::string, std::string> dataStringified;
-
-    for(auto& [hostname, address] : data) {
-      dataStringified.insert({hostname, address.toString()});
-    }
-
-    callPrivilegedProcess(PrivilegedMethod::updateHostsFile, dataStringified);
+    updateHostsFileInternal(data);
   }
 
   void notifyReady()
   {
-    callPrivilegedProcess(PrivilegedMethod::notifyReady, {});
+    // TODO: implement
   }
 }  // namespace Privileged

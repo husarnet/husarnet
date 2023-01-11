@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "husarnet/ports/unix/tun.h"
+#include "husarnet/ports/macos/tun.h"
 
 #include <functional>
 
@@ -9,92 +9,73 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <net/if.h>
-#include <net/if_utun.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <sys/sys_domain.h>
+#include <sys/kern_control.h>
+#include <net/if_utun.h>
 
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/util.h"
 
-inline int utun_open(std::string& name, const int unit)
+#define UTUN_CONTROL_NAME "com.apple.net.utun_control"
+
+static const std::string peerMacAddr = decodeHex("525400fc944d");
+static const std::string defaultSelfMacAddr = decodeHex("525400fc944c");
+
+static int openTun(std::string& name)
 {
-  struct sockaddr_ctl sc;
-  struct ctl_info ctlInfo;
+    struct sockaddr_ctl sc;
+    struct ctl_info ctlInfo;
+    int fd;
 
-  memset(&ctlInfo, 0, sizeof(ctlInfo));
-  if (strlcpy(ctlInfo.ctl_name, UTUN_CONTROL_NAME, sizeof(ctlInfo.ctl_name))
-      >= sizeof(ctlInfo.ctl_name))
-    LOG("UTUN_CONTROL_NAME too long");
+    memset(&ctlInfo, 0, sizeof(ctlInfo));
+    if (strlcpy(ctlInfo.ctl_name, UTUN_CONTROL_NAME, sizeof(ctlInfo.ctl_name)) >=
+        sizeof(ctlInfo.ctl_name)) {
+            fprintf(stderr,"UTUN_CONTROL_NAME too long");
+            return -1;
+    }
+    fd = socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL);
+    
+    if (fd == -1) {
+            perror ("socket(SYSPROTO_CONTROL)");
+            return -1;                
+    }                                           
+    if (ioctl(fd, CTLIOCGINFO, &ctlInfo) == -1) {
+            perror ("ioctl(CTLIOCGINFO)");
+            close(fd);
+            return -1;
+    }
 
-  ScopedFD fd(socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL));
-  if (!fd.defined())
-    LOG("socket(SYSPROTO_CONTROL)");
+    sc.sc_id = ctlInfo.ctl_id;
+    sc.sc_len = sizeof(sc);
+    sc.sc_family = AF_SYSTEM;
+    sc.ss_sysaddr = AF_SYS_CONTROL;
 
-  if (ioctl(fd(), CTLIOCGINFO, &ctlInfo) == -1)
-    LOG("ioctl(CTLIOCGINFO)");
+    // If the connect is successful, a tun%d device will be created, where "%d"
+    // is our unit number -1
+    int unitNumber = 1;
 
-  sc.sc_id = ctlInfo.ctl_id;
-  sc.sc_len = sizeof(sc);
-  sc.sc_family = AF_SYSTEM;
-  sc.ss_sysaddr = AF_SYS_CONTROL;
-  sc.sc_unit = unit + 1;
-  std::memset(sc.sc_reserved, 0, sizeof(sc.sc_reserved));
-
-  // If the connect is successful, a utunX device will be created, where X
-  // is our unit number - 1.
-  if (connect(fd(), (struct sockaddr *)&sc, sizeof(sc)) == -1)
+    // bruteforce... let's try until we hit free utun unit number:)
+    while (unitNumber < 10) {
+      sc.sc_unit = unitNumber;
+      if (connect(fd, (struct sockaddr *)&sc, sizeof(sc)) == -1) { 
+        LOG("Can't bind to utun%d", unitNumber - 1);
+        //perror ("connect(AF_SYS_CONTROL)");
+        unitNumber++;
+      } else {
+        name = "utun" + std::to_string(unitNumber - 1);
+        return fd;
+      }
+    }
+    close(fd);
     return -1;
-
-  // Get iface name of newly created utun dev.
-  char utunname[20];
-  socklen_t utunname_len = sizeof(utunname);
-  if (getsockopt(fd(), SYSPROTO_CONTROL, UTUN_OPT_IFNAME, utunname, &utunname_len))
-    LOG("getsockopt(SYSPROTO_CONTROL)");
-  name = utunname;
-
-  return fd.release();
-}
-
-// Try to open an available utun device unit.
-// Return the iface name in name.
-inline int utun_open(std::string& name)
-{
-  for (int unit = 0; unit < 256; ++unit)
-  {
-    const int fd = utun_open(name, unit);
-    if (fd >= 0)
-      return fd;
-  }
-  LOG("cannot open available utun device");
-}
-
-static int openTun(std::string name, bool isTap)
-{
-  struct ifreq ifr;
-  int fd;
-
-  if((fd = open("/dev/net/tun", O_RDWR)) < 0) {
-    perror("open /dev/net/tun");
-    exit(1);
-  }
-
-  memset(&ifr, 0, sizeof(ifr));
-  ifr.ifr_flags = (isTap ? IFF_TAP : IFF_TUN) | IFF_NO_PI;
-  assert(name.size() < IFNAMSIZ);
-  strncpy(ifr.ifr_name, name.c_str(), IFNAMSIZ - 1);
-  if(ioctl(fd, TUNSETIFF, (void*)&ifr) < 0) {
-    perror("TUNSETIFF");
-    exit(1);
-  }
-
-  LOG("allocated tun %s", ifr.ifr_name);
-
-  return fd;
 }
 
 void TunTap::close()
@@ -121,21 +102,36 @@ void TunTap::onTunTapData()
   }
 
   string_view packet = string_view(tunBuffer).substr(0, size);
-  sendToLowerLayer(BadDeviceId, packet);
+  sendToLowerLayer(BadDeviceId, packet.substr(4)); 
 }
 
-TunTap::TunTap(std::string name, bool isTap)
+TunTap::TunTap()
 {
   tunBuffer.resize(4096);
-
-  fd = openTun(name, isTap);
+  std::string tunName {};
+  fd = openTun(tunName);
+  name = tunName;
+  if (fd == -1) {
+    LOG("Can't open utun device!");
+  } else {
+    LOG("utun device opened successfully");
+  }
   OsSocket::bindCustomFd(fd, std::bind(&TunTap::onTunTapData, this));
 }
 
 void TunTap::onLowerLayerData(DeviceId source, string_view data)
 {
-  long wr = write(fd, data.data(), data.size());
-  if(wr != data.size()) {
+  std::string wrapped {};
+  // prepend bytes specific for utun/macos
+  wrapped += string_view("\x00\x00\x00\x1e", 4);
+  wrapped += data;
+
+  long wr = write(fd, wrapped.c_str(), wrapped.size());
+  if(wr != wrapped.size()) {
     LOG("short tun write");
   }
+}
+
+std::string TunTap::getName() {
+  return name;
 }

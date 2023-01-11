@@ -10,7 +10,7 @@ else()
   set(COMMONFLAGS "${COMMONFLAGS} -O3 -ffunction-sections -fdata-sections")
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   set(COMMONFLAGS "${COMMONFLAGS} -fPIC -fstack-protector-strong")
 endif()
 
@@ -27,7 +27,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror=return-type -Wno-sign-comp
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall ${COMMONFLAGS}")
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COMMONFLAGS} -lrt -lpthread")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COMMONFLAGS} -lrt")
+endif()
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COMMONFLAGS} -lpthread")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
@@ -41,7 +45,7 @@ endif()
 # Configure the build
 set(BUILD_HTTP_CONTROL_API FALSE)
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows))
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows) OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   set(BUILD_HTTP_CONTROL_API TRUE)
 endif()
 
@@ -131,6 +135,11 @@ target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/i
 target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config)
 target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config/sodium)
 target_compile_options(sodium PRIVATE -DCONFIGURED=1)
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
+  target_link_libraries(husarnet_core stdc++)
+endif()
+
 target_link_libraries(husarnet_core sodium)
 
 FetchContent_Declare(
@@ -161,7 +170,7 @@ add_library(sqlite3 STATIC ${sqlite3_SOURCE_DIR}/sqlite3.c)
 target_link_libraries(husarnet_core sqlite3 ${CMAKE_DL_LIBS})
 
 # Include unix port libraries
-if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   FetchContent_Declare(
     c-ares
     GIT_REPOSITORY https://github.com/c-ares/c-ares.git
