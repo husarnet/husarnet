@@ -66,53 +66,53 @@ services:
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/docker.sh
+    command: /app/tests/integration/platforms/docker.sh
 
   test_ubuntu_18_04:
     image: ubuntu:18.04
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/ubuntu.sh
+    command: /app/tests/integration/platforms/ubuntu.sh
 
   test_ubuntu_20_04:
     image: ubuntu:20.04
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/ubuntu.sh
+    command: /app/tests/integration/platforms/ubuntu.sh
 
   test_ubuntu_22_04:
     image: ubuntu:22.04
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/ubuntu.sh
+    command: /app/tests/integration/platforms/ubuntu.sh
 
   test_fedora_35:
     image: fedora:35
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/fedora.sh
+    command: /app/tests/integration/platforms/fedora.sh
 
   test_fedora_36:
     image: fedora:36
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/fedora.sh
+    command: /app/tests/integration/platforms/fedora.sh
 
   test_fedora_37:
     image: fedora:37
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/fedora.sh
+    command: /app/tests/integration/platforms/fedora.sh
 
   test_fedora_38:
     image: fedora:38
     privileged: true
     volumes:
       - ../:/app
-    command: /app/tests/integration/fedora.sh
+    command: /app/tests/integration/platforms/fedora.sh

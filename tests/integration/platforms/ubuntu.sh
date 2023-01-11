@@ -1,5 +1,5 @@
 #!/bin/bash
-source $(dirname "$0")/../../util/bash-base.sh
+source $(dirname "$0")/../../../util/bash-base.sh
 
 apt update
 
