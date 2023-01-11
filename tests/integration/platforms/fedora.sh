@@ -6,6 +6,6 @@ yum install -y \
 
 # Test prerequisites
 yum install -y \
-    jq curl iputils
+    jq curl iputils openssl
 
 ${tests_base}/integration/all-tests.sh

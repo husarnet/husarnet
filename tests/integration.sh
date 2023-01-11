@@ -5,6 +5,8 @@ pushd ${base_dir}
 
 ${builder_base}/down.sh
 
+${tests_base}/integration/secrets-encrypt.sh
+
 docker compose -f builder/compose.yml up --exit-code-from test_docker test_docker
 docker compose -f builder/compose.yml up --exit-code-from test_ubuntu_18_04 test_ubuntu_18_04
 docker compose -f builder/compose.yml up --exit-code-from test_ubuntu_20_04 test_ubuntu_20_04
