@@ -1,28 +1,38 @@
 #!/bin/bash
-#Integration test #2
-#Script is intended to be run from Superuser account.
-#Usage: ./integration-test.sh [JOIN_CODE] [Husarnet Dashboard User Name] [Husarnet Dashboard Password] [Husarnet Network Name]
+# Usage: ./integration-test.sh [JOIN_CODE] [Husarnet Dashboard User Name] [Husarnet Dashboard Password] [Husarnet Network Name]
+set -euxo pipefail
+
+join_code="${1}"
+dashboard_login="${2}"
+dashboard_pass="${3}"
+network_name="${4}"
+
 curl -s https://install.husarnet.com/install.sh | sudo bash
-CLEANUP=$(husarnet dashboard login ${@2} ${@3} && husarnet dashboard rm $(cat /etc/hostname) ${@4})
-husarnet-daemon &
+
+function CLEANUP {
+   echo "Cleaning up"
+   husarnet dashboard login "${dashboard_login}" "${dashboard_pass}"
+   husarnet dashboard rm $(cat /etc/hostname) "${network_name}"
+   # dodać usuwanie urządzenia całkiem
+}
+
+sudo husarnet-daemon &
+
 husarnet daemon wait daemon
 husarnet daemon wait base
-husarnet join ${@1} $(cat /etc/hostname)
-husarnet status | grep -c 'Is joined?                 yes'
-if [ ${?} -ne 0 ]; then
-   echo 'Husarnet failed to join network'
-   exit 1
-else
-   echo 'Network OK'
-fi
-cat /etc/hosts | grep -c '# managed by Husarnet'
-if [ ${?} -ne 0 ]; then
+
+sudo husarnet join "${join_code}"
+
+husarnet daemon wait joined
+
+managed_lines=$(cat /etc/hosts | grep -c '# managed by Husarnet')
+if [ ${managed_lines} -lt 1 ]; then
    echo 'Husarnet failed saving hostnames to /etc/hosts file, cleaning up and exiting...'
-   ${CLEANUP}
+   CLEANUP
    exit 1
 else
    echo '/etc/hosts file is ok'
 fi
-echo 'Basic integrity test went ok, cleaning up, and exitting...'
-${CLEANUP}
-exit 0
+
+echo 'SUCCESS: Basic integrity test went ok'
+CLEANUP
