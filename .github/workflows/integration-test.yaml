@@ -11,6 +11,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v1
-      
+
       - name: Run Integration Test
-        run: cd ./tests/integration && chmod +x ./integration-test.sh && ./integration-test.sh ${{ secrets.JOIN_CODE }} ${{ secrets.DASHBOARD_USERNAME }} ${{ secrets.DASHBOARD_PASSWORD }} {{ secrets.NETWORK_NAME }}
+        run: cd ./tests/integration && chmod +x ./integration-test.sh && ./integration-test.sh ${{ secrets.JOIN_CODE }} ${{ secrets.DASHBOARD_USERNAME }} ${{ secrets.DASHBOARD_PASSWORD }} ${{ secrets.NETWORK_NAME }}
