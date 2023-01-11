@@ -198,7 +198,7 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
-        $.steps.builder('${{matrix.arch_alias}}'),
+        $.steps.builder('${{matrix.platform_name}}'),
       ],
     },
 

@@ -225,8 +225,8 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"
           registry: "ghcr.io"
           username: "${{ github.actor }}"
-      - name: "Builder run ${{matrix.arch_alias}}"
-        run: "docker compose -f builder/compose.yml up --exit-code-from ${{matrix.arch_alias}} ${{matrix.arch_alias}}"
+      - name: "Builder run ${{matrix.platform_name}}"
+        run: "docker compose -f builder/compose.yml up --exit-code-from ${{matrix.platform_name}} ${{matrix.platform_name}}"
     strategy:
       matrix:
         include:
