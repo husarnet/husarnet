@@ -52,8 +52,10 @@
     },
 
     builder:: function(container, docker_image_override='') {
+      local prepare_env = if std.length(docker_image_override) != 0 then 'echo IMAGE_OVERRIDE=' + docker_image_override + ' >> builder/.env && ' else '',
+
       name: 'Builder run ' + container,
-      run: 'docker compose -f builder/compose.yml run -e DOCKER_IMAGE=' + docker_image_override + ' ' + container,
+      run: prepare_env + 'docker compose -f builder/compose.yml run ' + container,
     },
 
   },

@@ -62,7 +62,7 @@ services:
     command: /app/.github/update-workflows.sh
 
   test_docker:
-    image: ${DOCKER_IMAGE:-husarnet:dev}
+    image: "${IMAGE_OVERRIDE:-husarnet:dev}"
     privileged: true
     volumes:
       - ../:/app
