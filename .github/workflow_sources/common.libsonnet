@@ -305,6 +305,7 @@
           uses: 'docker/setup-buildx-action@v2',
           with: {
             version: 'latest',
+            'driver-opts': 'image=moby/buildkit:v0.10.5',
           },
         },
         $.steps.docker_login(),
