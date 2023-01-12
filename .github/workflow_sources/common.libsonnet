@@ -205,6 +205,10 @@
         $.steps.pull_artifacts(),
         $.steps.ghcr_login(),
         $.steps.docker_login(),
+        {
+          name: 'Save a password for unlocking a shared secrets repository in a known place',
+          run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/integration/secrets-password.bin",
+        },
         $.steps.builder('${{matrix.platform_name}}', "${{matrix.docker_image || ''}}"),
       ],
     },

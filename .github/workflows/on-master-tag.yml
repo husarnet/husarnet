@@ -238,6 +238,8 @@ jobs:
           password: "${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}"
           registry: "docker.io"
           username: "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
+      - name: "Save a password for unlocking a shared secrets repository in a known place"
+        run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/integration/secrets-password.bin"
       - name: "Builder run ${{matrix.platform_name}}"
         run: "echo IMAGE_OVERRIDE=${{matrix.docker_image || ''}} >> builder/.env && docker compose -f builder/compose.yml run ${{matrix.platform_name}}"
     strategy:
