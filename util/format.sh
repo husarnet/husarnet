@@ -1,4 +1,4 @@
 #!/bin/bash
 source $(dirname "$0")/bash-base.sh
 
-docker compose -f builder/compose.yml up --exit-code-from format format
+docker compose -f builder/compose.yml run format

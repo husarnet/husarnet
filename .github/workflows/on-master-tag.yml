@@ -65,7 +65,7 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Builder run unix_${{matrix.arch}}"
-        run: "docker compose -f builder/compose.yml -e DOCKER_IMAGE= up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}"
+        run: "docker compose -f builder/compose.yml run -e DOCKER_IMAGE= unix_${{matrix.arch}}"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -95,7 +95,7 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Builder run windows_win64"
-        run: "docker compose -f builder/compose.yml -e DOCKER_IMAGE= up --exit-code-from windows_win64 windows_win64"
+        run: "docker compose -f builder/compose.yml run -e DOCKER_IMAGE= windows_win64"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -233,7 +233,7 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Builder run ${{matrix.platform_name}}"
-        run: "docker compose -f builder/compose.yml -e DOCKER_IMAGE=${{matrix.docker_image || ''}} up --exit-code-from ${{matrix.platform_name}} ${{matrix.platform_name}}"
+        run: "docker compose -f builder/compose.yml run -e DOCKER_IMAGE=${{matrix.docker_image || ''}} ${{matrix.platform_name}}"
     strategy:
       matrix:
         include:
@@ -262,9 +262,9 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Builder run format"
-        run: "docker compose -f builder/compose.yml -e DOCKER_IMAGE= up --exit-code-from format format"
+        run: "docker compose -f builder/compose.yml run -e DOCKER_IMAGE= format"
       - name: "Builder run test"
-        run: "docker compose -f builder/compose.yml -e DOCKER_IMAGE= up --exit-code-from test test"
+        run: "docker compose -f builder/compose.yml run -e DOCKER_IMAGE= test"
 name: "Release production"
 "on":
   push:

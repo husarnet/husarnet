@@ -53,7 +53,7 @@
 
     builder:: function(container, docker_image_override='') {
       name: 'Builder run ' + container,
-      run: 'docker compose -f builder/compose.yml -e DOCKER_IMAGE=' + docker_image_override + ' up --exit-code-from ' + container + ' ' + container,
+      run: 'docker compose -f builder/compose.yml run -e DOCKER_IMAGE=' + docker_image_override + ' ' + container,
     },
 
   },
