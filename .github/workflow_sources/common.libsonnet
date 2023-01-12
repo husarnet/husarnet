@@ -202,6 +202,7 @@
         $.steps.checkout(ref),
         $.steps.pull_artifacts(),
         $.steps.ghcr_login(),
+        $.steps.docker_login(),
         $.steps.builder('${{matrix.platform_name}}', "${{matrix.docker_image || ''}}"),
       ],
     },
