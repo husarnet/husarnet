@@ -51,9 +51,9 @@
       },
     },
 
-    builder:: function(container) {
+    builder:: function(container, docker_image_override='') {
       name: 'Builder run ' + container,
-      run: 'docker compose -f builder/compose.yml up --exit-code-from ' + container + ' ' + container,
+      run: 'docker compose -f builder/compose.yml -e DOCKER_IMAGE=' + docker_image_override + ' up --exit-code-from ' + container + ' ' + container,
     },
 
   },
@@ -174,15 +174,18 @@
       ],
     },
 
-    run_integration_tests:: function(ref) {
-      needs: [],
+    run_integration_tests:: function(ref, docker_project) {
+      needs: [
+        'build_unix',
+        'build_docker',
+      ],
 
       'runs-on': 'ubuntu-latest',
 
       strategy: {
         matrix: {
           include: [
-            { platform_name: 'test_docker' },
+            { platform_name: 'test_docker', docker_image: docker_project + ':amd64' },
             { platform_name: 'test_ubuntu_18_04' },
             { platform_name: 'test_ubuntu_20_04' },
             { platform_name: 'test_ubuntu_22_04' },
@@ -197,8 +200,9 @@
 
       steps: [
         $.steps.checkout(ref),
+        $.steps.pull_artifacts(),
         $.steps.ghcr_login(),
-        $.steps.builder('${{matrix.platform_name}}'),
+        $.steps.builder('${{matrix.platform_name}}', "${{matrix.docker_image || ''}}"),
       ],
     },
 

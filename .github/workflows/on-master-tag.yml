@@ -65,7 +65,7 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Builder run unix_${{matrix.arch}}"
-        run: "docker compose -f builder/compose.yml up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}"
+        run: "docker compose -f builder/compose.yml -e DOCKER_IMAGE= up --exit-code-from unix_${{matrix.arch}} unix_${{matrix.arch}}"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -95,7 +95,7 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Builder run windows_win64"
-        run: "docker compose -f builder/compose.yml up --exit-code-from windows_win64 windows_win64"
+        run: "docker compose -f builder/compose.yml -e DOCKER_IMAGE= up --exit-code-from windows_win64 windows_win64"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -212,13 +212,20 @@ jobs:
           prerelease: false
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
   run_integration_tests:
-    needs: []
+    needs:
+      - "build_unix"
+      - "build_docker"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
         uses: "actions/checkout@v3"
         with:
           ref: "${{ github.ref }}"
+      - name: "Pull artifacts"
+        uses: "actions/download-artifact@v3"
+        with:
+          name: "packages"
+          path: "./build/release/"
       - name: "Login to GHCR"
         uses: "docker/login-action@v2"
         with:
@@ -226,11 +233,12 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Builder run ${{matrix.platform_name}}"
-        run: "docker compose -f builder/compose.yml up --exit-code-from ${{matrix.platform_name}} ${{matrix.platform_name}}"
+        run: "docker compose -f builder/compose.yml -e DOCKER_IMAGE=${{matrix.docker_image || ''}} up --exit-code-from ${{matrix.platform_name}} ${{matrix.platform_name}}"
     strategy:
       matrix:
         include:
-          - platform_name: "test_docker"
+          - docker_image: "husarnet/husarnet:amd64"
+            platform_name: "test_docker"
           - platform_name: "test_ubuntu_18_04"
           - platform_name: "test_ubuntu_20_04"
           - platform_name: "test_ubuntu_22_04"
@@ -254,9 +262,9 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Builder run format"
-        run: "docker compose -f builder/compose.yml up --exit-code-from format format"
+        run: "docker compose -f builder/compose.yml -e DOCKER_IMAGE= up --exit-code-from format format"
       - name: "Builder run test"
-        run: "docker compose -f builder/compose.yml up --exit-code-from test test"
+        run: "docker compose -f builder/compose.yml -e DOCKER_IMAGE= up --exit-code-from test test"
 name: "Release production"
 "on":
   push:

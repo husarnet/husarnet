@@ -62,7 +62,7 @@ services:
     command: /app/.github/update-workflows.sh
 
   test_docker:
-    image: husarnet:dev
+    image: ${DOCKER_IMAGE:-husarnet:dev}
     privileged: true
     volumes:
       - ../:/app
