@@ -23,7 +23,7 @@ echo "[HUSARNET BS] Building docker image for ${arch}"
 
 if [ ${in_ci} == false ]; then
     pushd ${base_dir}
-    docker compose -f builder/compose.yml run unix_amd64
+    docker_builder /app/platforms/unix/build.sh amd64
     popd
 fi
 

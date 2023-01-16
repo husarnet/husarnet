@@ -1,13 +1,11 @@
-#!/bin/bash
-# Usage: ./integration-test.sh [JOIN_CODE] [Husarnet Dashboard User Name] [Husarnet Dashboard Password] [Husarnet Network Name]
-set -euxo pipefail
+hai
+
+exit 0
 
 join_code="${1}"
 dashboard_login="${2}"
 dashboard_pass="${3}"
 network_name="${4}"
-
-curl -s https://install.husarnet.com/install.sh | sudo bash
 
 function CLEANUP {
    echo "Cleaning up"

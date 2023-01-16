@@ -3,18 +3,17 @@ source $(dirname "$0")/../util/bash-base.sh
 
 pushd ${base_dir}
 
-${builder_base}/down.sh
+# I'm terribly sorry for that part of code but it was a Monday morning…
 
-${tests_base}/integration/secrets-encrypt.sh
-
-docker compose -f builder/compose.yml run test_docker
-docker compose -f builder/compose.yml run test_ubuntu_18_04
-docker compose -f builder/compose.yml run test_ubuntu_20_04
-docker compose -f builder/compose.yml run test_ubuntu_22_04
-docker compose -f builder/compose.yml run test_debian_oldstable
-docker compose -f builder/compose.yml run test_debian_stable
-docker compose -f builder/compose.yml run test_debian_testing
-docker compose -f builder/compose.yml run test_fedora_37
-docker compose -f builder/compose.yml run test_fedora_38
+parallel docker run --rm --privileged --volume ${base_dir}:/app {1} /app/tests/integration/runner.sh {2} {3} \
+    ::: husarnet:dev \
+    ubuntu:18.04 ubuntu:20.04 ubuntu:22.04 \
+    debian:oldstable debian:stable debian:testing \
+    fedora:37 fedora:38 \
+    :::+ docker \
+    ubuntu_debian ubuntu_debian ubuntu_debian \
+    ubuntu_debian ubuntu_debian ubuntu_debian \
+    fedora fedora fedora \
+    ::: functional-basic join-workflow
 
 popd

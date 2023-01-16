@@ -51,13 +51,12 @@
       },
     },
 
-    builder:: function(container, docker_image_override='') {
-      local prepare_env = if std.length(docker_image_override) != 0 then 'echo IMAGE_OVERRIDE=' + docker_image_override + ' >> builder/.env && ' else '',
+    builder:: function(command) self.docker('ghcr.io/husarnet/husarnet:builder', command),
 
-      name: 'Builder run ' + container,
-      run: prepare_env + 'docker compose -f builder/compose.yml run ' + container,
+    docker:: function(container, command) {
+      name: 'Docker run ' + container,
+      run: 'docker run --rm --privileged --volume $(pwd):/app ' + container + ' ' + command,
     },
-
   },
 
   jobs: {
@@ -116,7 +115,7 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
-        $.steps.builder('unix_${{matrix.arch}}'),
+        $.steps.builder('/app/platforms/unix/build.sh ${{matrix.arch}}'),
         $.steps.push_artifacts('*${{matrix.arch}}*'),
       ],
     },
@@ -129,7 +128,7 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
-        $.steps.builder('windows_win64'),
+        $.steps.builder('/app/platforms/windows/build.sh'),
         $.steps.push_artifacts('*win64*'),
       ],
     },
@@ -171,8 +170,8 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
-        $.steps.builder('format'),
-        $.steps.builder('test'),
+        $.steps.builder('/app/daemon/format.sh'),
+        $.steps.builder('/app/tests/test.sh'),
       ],
     },
 
@@ -186,16 +185,20 @@
 
       strategy: {
         matrix: {
+          test_file: [
+            'functional-basic',
+            'join-workflow',
+          ],
           include: [
-            { platform_name: 'test_docker', docker_image: docker_project + ':amd64' },
-            { platform_name: 'test_ubuntu_18_04' },
-            { platform_name: 'test_ubuntu_20_04' },
-            { platform_name: 'test_ubuntu_22_04' },
-            { platform_name: 'test_debian_oldstable' },
-            { platform_name: 'test_debian_stable' },
-            { platform_name: 'test_debian_testing' },
-            { platform_name: 'test_fedora_37' },
-            { platform_name: 'test_fedora_38' },
+            { container_name: docker_project + ':amd64', test_platform: 'docker' },
+            { container_name: 'ubuntu:18_04', test_platform: 'debian_ubuntu' },
+            { container_name: 'ubuntu:20_04', test_platform: 'debian_ubuntu' },
+            { container_name: 'ubuntu:22_04', test_platform: 'debian_ubuntu' },
+            { container_name: 'debian:oldstable', test_platform: 'debian_ubuntu' },
+            { container_name: 'debian:stable', test_platform: 'debian_ubuntu' },
+            { container_name: 'debian:testing', test_platform: 'debian_ubuntu' },
+            { container_name: 'fedora:37', test_platform: 'fedora' },
+            { container_name: 'fedora:38', test_platform: 'fedora' },
           ],
         },
       },
@@ -209,7 +212,7 @@
           name: 'Save a password for unlocking a shared secrets repository in a known place',
           run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/integration/secrets-password.bin",
         },
-        $.steps.builder('${{matrix.platform_name}}', "${{matrix.docker_image || ''}}"),
+        $.steps.docker('${{matrix.container_name}}', '/app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}'),
       ],
     },
 

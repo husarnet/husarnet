@@ -1,4 +1,4 @@
 #!/bin/bash
 source $(dirname "$0")/bash-base.sh
 
-docker compose -f builder/compose.yml run format
+docker_builder /app/daemon/format.sh
