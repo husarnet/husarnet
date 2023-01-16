@@ -470,6 +470,8 @@ void HusarnetManager::stage3()
     }
   }
 
+  this->hostTableAdd("husarnet-local",this->getSelfAddress());
+
   stage3Started = true;
 }
 
@@ -478,7 +480,6 @@ void HusarnetManager::runHusarnet()
   stage1();
   stage2();
   stage3();
-  this->hostTableAdd("husarnet-local",this->getSelfAddress());
   Privileged::notifyReady();
 
   while(true) {
