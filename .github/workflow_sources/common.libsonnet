@@ -54,7 +54,7 @@
     builder:: function(command) self.docker('ghcr.io/husarnet/husarnet:builder', command),
 
     docker:: function(container, command) {
-      name: 'Docker run ' + container,
+      name: 'Docker run ' + container + ' ' + command,
       run: 'docker run --rm --privileged --volume $(pwd):/app ' + container + ' ' + command,
     },
   },
@@ -185,6 +185,17 @@
 
       strategy: {
         matrix: {
+          container_name: [
+            docker_project + ':amd64',
+            'ubuntu:18_04',
+            'ubuntu:20_04',
+            'ubuntu:22_04',
+            'debian:oldstable',
+            'debian:stable',
+            'debian:testing',
+            'fedora:37',
+            'fedora:38',
+          ],
           test_file: [
             'functional-basic',
             'join-workflow',
