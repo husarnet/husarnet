@@ -187,9 +187,9 @@
         matrix: {
           container_name: [
             docker_project + ':amd64',
-            'ubuntu:18_04',
-            'ubuntu:20_04',
-            'ubuntu:22_04',
+            'ubuntu:18.04',
+            'ubuntu:20.04',
+            'ubuntu:22.04',
             'debian:oldstable',
             'debian:stable',
             'debian:testing',
@@ -202,9 +202,9 @@
           ],
           include: [
             { container_name: docker_project + ':amd64', test_platform: 'docker' },
-            { container_name: 'ubuntu:18_04', test_platform: 'ubuntu_debian' },
-            { container_name: 'ubuntu:20_04', test_platform: 'ubuntu_debian' },
-            { container_name: 'ubuntu:22_04', test_platform: 'ubuntu_debian' },
+            { container_name: 'ubuntu:18.04', test_platform: 'ubuntu_debian' },
+            { container_name: 'ubuntu:20.04', test_platform: 'ubuntu_debian' },
+            { container_name: 'ubuntu:22.04', test_platform: 'ubuntu_debian' },
             { container_name: 'debian:oldstable', test_platform: 'ubuntu_debian' },
             { container_name: 'debian:stable', test_platform: 'ubuntu_debian' },
             { container_name: 'debian:testing', test_platform: 'ubuntu_debian' },
