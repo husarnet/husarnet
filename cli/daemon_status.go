@@ -270,21 +270,21 @@ func printStatus(ctx *cli.Context,status DaemonStatus) {
 }
 
 func printStatusFollow(ctx *cli.Context) {
-
+	// Obtaining status twice is simpler than deep copy
 	currStatus := getDaemonStatus()
 	prevStatus := getDaemonStatus()
 	prevStatus.Version="temporary change to enable print"
 	for true{
-		if ! areStatusesEquall(prevStatus,currStatus) {
+		currStatus = getDaemonStatus()
+		if ! areStatusesEqual(prevStatus,currStatus) {
 			printStatus(ctx,currStatus)
 			prevStatus = currStatus
 		}
-		currStatus = getDaemonStatus()
 		time.Sleep(500 * time.Millisecond)
 	}
 }
 
-func areStatusesEquall(prevStatus, currStatus DaemonStatus) bool {
+func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 	if prevStatus.Version != currStatus.Version {
 		return false
 	}
@@ -321,26 +321,26 @@ func areStatusesEquall(prevStatus, currStatus DaemonStatus) bool {
 	if prevStatus.IsReadyToJoin != currStatus.IsReadyToJoin {
 		return false
 	}
-	if ! CompareConnectionStatus(prevStatus.ConnectionStatus, currStatus.ConnectionStatus) {
+	if ! areConnectionStatusesEqual(prevStatus.ConnectionStatus, currStatus.ConnectionStatus) {
 		return false
 	}
-	if ! CompareAddressLists(prevStatus.Whitelist, currStatus.Whitelist) {
+	if ! areAddressListsEqual(prevStatus.Whitelist, currStatus.Whitelist) {
 		return false
 	}
-	if ! CompareUserSettings(prevStatus.UserSettings, currStatus.UserSettings) {
+	if ! areUserSettingsEqual(prevStatus.UserSettings, currStatus.UserSettings) {
 		return false
 	}
-	if ! CompareHostTables(prevStatus.HostTable, currStatus.HostTable) {
+	if ! areHostTablesEqual(prevStatus.HostTable, currStatus.HostTable) {
 		return false
 	}
-	if ! ComparePeers(prevStatus.Peers, currStatus.Peers) {
+	if ! arePeersEqual(prevStatus.Peers, currStatus.Peers) {
 		return false
 	}
 	return true
 
 }
 
-func CompareConnectionStatus(a, b map[string]bool) bool {
+func areConnectionStatusesEqual(a, b map[string]bool) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -352,7 +352,7 @@ func CompareConnectionStatus(a, b map[string]bool) bool {
 	return true
 }
 
-func CompareAddressLists(a, b []netip.Addr) bool {
+func areAddressListsEqual(a, b []netip.Addr) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -364,7 +364,7 @@ func CompareAddressLists(a, b []netip.Addr) bool {
 	return true
 }
 
-func ComparePortAddressLists(a, b []netip.AddrPort) bool {
+func arePortAddressListsEqual(a, b []netip.AddrPort) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -376,7 +376,7 @@ func ComparePortAddressLists(a, b []netip.AddrPort) bool {
 	return true
 }
 
-func CompareUserSettings(a, b map[string]string) bool {
+func areUserSettingsEqual(a, b map[string]string) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -388,7 +388,7 @@ func CompareUserSettings(a, b map[string]string) bool {
 	return true
 }
 
-func CompareHostTables(a, b map[string]netip.Addr) bool {
+func areHostTablesEqual(a, b map[string]netip.Addr) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -400,7 +400,7 @@ func CompareHostTables(a, b map[string]netip.Addr) bool {
 	return true
 }
 
-func ComparePeerStatus(a, b PeerStatus) bool {
+func arePeerStatusesEqual(a, b PeerStatus) bool {
 	if (a.HusarnetAddress.Compare(b.HusarnetAddress) !=0){
 		return false
 	}
@@ -419,10 +419,10 @@ func ComparePeerStatus(a, b PeerStatus) bool {
 	if a.IsTunelled != b.IsTunelled {
 		return false
 	}
-	if ! ComparePortAddressLists(a.SourceAddresses, b.SourceAddresses) {
+	if ! arePortAddressListsEqual(a.SourceAddresses, b.SourceAddresses) {
 		return false
 	}
-	if ! ComparePortAddressLists(a.TargetAddresses, b.TargetAddresses) {
+	if ! arePortAddressListsEqual(a.TargetAddresses, b.TargetAddresses) {
 		return false
 	}
 	if ((a.UsedTargetAddress.Addr().Compare(b.UsedTargetAddress.Addr()) !=0) || (a.UsedTargetAddress.Port()!= b.UsedTargetAddress.Port())) {
@@ -431,12 +431,12 @@ func ComparePeerStatus(a, b PeerStatus) bool {
 	return true
 }
 
-func ComparePeers(a,b []PeerStatus) bool {
+func arePeersEqual(a,b []PeerStatus) bool {
 	if len(a) != len(b) {
 		return false
 	}
 	for i := range a {
-		if ! ComparePeerStatus(a[i], b[i]) {
+		if ! arePeerStatusesEqual(a[i], b[i]) {
 			return false
 		}
 	}
