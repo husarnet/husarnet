@@ -223,7 +223,7 @@ namespace Privileged {
   }
 
   // TODO long term - prevent websetup from renaming this host for no reason
-  bool setSelfHostname(std::string newHostname)
+  bool setSelfHostname(const std::string& newHostname)
   {
     // TODO: implement
     return true;

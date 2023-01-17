@@ -46,15 +46,20 @@ struct ares_result {
 
 static void ares_wait(ares_channel channel)
 {
-  int nfds;
   fd_set readers, writers;
-  struct timeval tv, *tvp;
-  while(1) {
+
+  while(true) {
+    int nfds;
+    struct timeval tv, *tvp;
+
     FD_ZERO(&readers);
     FD_ZERO(&writers);
+
     nfds = ares_fds(channel, &readers, &writers);
-    if(nfds == 0)
+    if(nfds == 0) {
       break;
+    }
+
     tvp = ares_timeout(channel, NULL, &tv);
     select(nfds, &readers, &writers, NULL, tvp);
     ares_process(channel, &readers, &writers);
@@ -111,7 +116,7 @@ namespace Port {
     t.detach();
   }
 
-  IpAddress resolveToIp(std::string hostname)
+  IpAddress resolveToIp(const std::string& hostname)
   {
     if(hostname.empty()) {
       LOG("Empty hostname provided for a DNS search");
@@ -160,7 +165,8 @@ namespace Port {
     }
 
     system(("ifconfig " + interfaceName + " inet6 " + myIp).c_str());
-    system(("route -nv add -inet6 fc94::/16 -interface " + interfaceName).c_str());
+    system(
+        ("route -nv add -inet6 fc94::/16 -interface " + interfaceName).c_str());
     // TODO multicast, right?
 
     return tunTap;
@@ -192,7 +198,7 @@ namespace Port {
     return result;
   }
 
-  std::string readFile(std::string path)
+  std::string readFile(const std::string& path)
   {
     std::ifstream f(path);
     if(!f.good()) {
@@ -206,7 +212,7 @@ namespace Port {
     return buffer.str();
   }
 
-  static bool writeFileDirect(std::string path, std::string data)
+  static bool writeFileDirect(const std::string& path, const std::string& data)
   {
     FILE* f = fopen(path.c_str(), "wb");
     int ret = fwrite(data.data(), data.size(), 1, f);
@@ -220,7 +226,7 @@ namespace Port {
     return true;
   }
 
-  static bool removeFile(std::string path)
+  static bool removeFile(const std::string& path)
   {
     if(remove(path.c_str()) != 0) {
       return false;
@@ -229,12 +235,13 @@ namespace Port {
     return true;
   }
 
-  static bool renameFileReal(std::string src, std::string dst, bool quiet)
+  static bool
+  renameFileReal(const std::string& src, const std::string& dst, bool quiet)
   {
     bool success = rename(src.c_str(), dst.c_str()) == 0;
     if(!success) {
       if(!quiet) {
-        LOGV("failed to rename %s to %s", src.c_str(), dst.c_str());
+        LOG_WARNING("failed to rename %s to %s", src.c_str(), dst.c_str());
       }
       return false;
     }
@@ -242,18 +249,18 @@ namespace Port {
     return true;
   }
 
-  bool writeFile(std::string path, std::string data)
+  bool writeFile(const std::string& path, const std::string& data)
   {
     std::string tmpPath = path + ".tmp";
 
     bool success = writeFileDirect(tmpPath, data);
     if(!success) {
-      LOGV(
+      LOG_INFO(
           "unable to write to a temporary file %s, writing to %s directly",
           tmpPath.c_str(), path.c_str());
       success = writeFileDirect(path, data);
       if(!success) {
-        LOGV("unable to write to %s directly", path.c_str());
+        LOG_WARNING("unable to write to %s directly", path.c_str());
         return false;
       }
       return true;
@@ -264,37 +271,36 @@ namespace Port {
       return true;
     }
 
-    LOGV(
+    LOG_DEBUG(
         "unable to rename %s to %s, writing to %s directly", tmpPath.c_str(),
         path.c_str(), path.c_str());
 
     success = removeFile(tmpPath);
     if(!success) {
-      LOGV("unable to remove temporary file %s", tmpPath.c_str());
+      LOG_INFO("unable to remove temporary file %s", tmpPath.c_str());
     }
 
     success = writeFileDirect(path, data);
     if(!success) {
-      LOGV("unable to write directly to %s", path.c_str());
+      LOG_WARNING("unable to write directly to %s", path.c_str());
       return false;
     }
 
     return true;
   }
 
-  bool isFile(std::string path)
+  bool isFile(const std::string& path)
   {
     return std::filesystem::exists(path);
   }
 
-  bool renameFile(std::string src, std::string dst)
+  bool renameFile(const std::string& src, const std::string& dst)
   {
     return renameFileReal(src, dst, false);
   }
 
   void notifyReady()
   {
-    const char* msg = "READY=1";
     const char* sockPath = getenv("NOTIFY_SOCKET");
     if(sockPath != NULL) {
       sockaddr_un un;
@@ -312,6 +318,7 @@ namespace Port {
         perror("systemd socket");
       }
 
+      const char* msg = "READY=1";
       if(sendto(
              fd, msg, strlen(msg), MSG_NOSIGNAL, (sockaddr*)(&un),
              sizeof(un)) <= 0) {
@@ -324,5 +331,11 @@ namespace Port {
 
       LOG("Systemd notification end");
     }
+  }
+
+  void log(const std::string& message)
+  {
+    fprintf(stderr, "%s\n", message.c_str());
+    fflush(stderr);
   }
 }  // namespace Port

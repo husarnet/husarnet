@@ -23,7 +23,8 @@ class TunTap : public UpperLayer {
 
  public:
   TunTap();
-  // name getter because the name will be utun%d and we must find out which slot is available...
+  // name getter because the name will be utun%d and we must find out which slot
+  // is available...
   std::string getName();
 
   void onLowerLayerData(DeviceId source, string_view data) override;
