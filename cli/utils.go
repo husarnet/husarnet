@@ -60,7 +60,12 @@ func onWindows() bool {
 }
 
 // re run the whole CLI invocation with sudo
-func rerunWithSudo() {
+// note that this function replaces current process with a sudoed one so it won't return to your program in any casse
+func rerunWithSudoOrDie() {
+	if onWindows() {
+		dieEmpty()
+	}
+
 	if !askForConfirmation(runSelfWithSudoQuestion) {
 		dieEmpty()
 	}
@@ -100,11 +105,13 @@ func runSubcommand(confirm bool, command string, args ...string) {
 		// TODO long-term/research: figure out how to mimic "sudo" on Windows,
 		// so the user does not need to have elevated command prompt for these commands
 		// and also we get rid of this awkward error handling
+		// NOTE (from pidpawel) I'm using `gsudo` on Windows but AFAIR it's not a standard tool
 		errorStringAtNoAdministratorPrivileges := "status 3"
 		errorStringAtServiceAlreadyRunning := "status 1"
 
 		if strings.Contains(err.Error(), errorStringAtNoAdministratorPrivileges) {
 			printError("Unable to manage the service - are you Administrator?")
+			rerunWithSudoOrDie() // At the moment this will be a no-op on Windows
 		}
 
 		if strings.Contains(err.Error(), errorStringAtServiceAlreadyRunning) {
@@ -186,4 +193,16 @@ func removeDuplicates[T string](input []T) []T {
 	}
 
 	return keys
+}
+
+// checks whether a given string contains only [0-9a-f]
+// won't check the length for full bytes though
+func isHexString(s string) bool {
+	for _, c := range s {
+		if !(('a' <= c && c <= 'f') || ('0' <= c && c <= '9')) {
+			return false
+		}
+	}
+
+	return true
 }

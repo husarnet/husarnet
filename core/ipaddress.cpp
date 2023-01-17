@@ -14,7 +14,7 @@ namespace std {
     return buf;
   }
 
-  int stoi(std::string s)
+  int stoi(const std::string& s)
   {
     int ret = -1;
     sscanf(s.c_str(), "%d", &ret);

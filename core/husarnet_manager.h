@@ -16,7 +16,6 @@
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/licensing.h"
-#include "husarnet/logmanager.h"
 #include "husarnet/ngsocket.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
@@ -27,7 +26,6 @@
 class SecurityLayer;
 class ConfigStorage;
 class License;
-class LogManager;
 class NgSocket;
 class PeerContainer;
 class PeerFlags;
@@ -44,7 +42,6 @@ class HusarnetManager {
   SecurityLayer* securityLayer;
   ConfigStorage* configStorage;
   PeerContainer* peerContainer;
-  LogManager* logManager;
   WebsetupConnection* websetup;
   License* license;
   std::vector<std::thread*> threadpool;
@@ -64,7 +61,6 @@ class HusarnetManager {
   HusarnetManager();
   HusarnetManager(const HusarnetManager&) = delete;
 
-  LogManager& getLogManager();
   ConfigStorage& getConfigStorage();
   void setConfigStorage(ConfigStorage* cs);
   PeerContainer* getPeerContainer();

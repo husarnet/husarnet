@@ -28,6 +28,7 @@
 
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #include "nlohmann/json.hpp"
@@ -183,7 +184,7 @@ static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
 
 struct cap_header_struct {
   __u32 version;
-  int pid;
+  int pid;  // cppcheck-suppress unusedStructMember
 };
 
 struct cap_data_struct {
@@ -375,17 +376,17 @@ namespace Privileged {
   }
 
   // TODO long term - prevent websetup from renaming this host for no reason
-  bool setSelfHostname(std::string newHostname)
+  bool setSelfHostname(const std::string& newHostname)
   {
     return callPrivilegedProcess(
         PrivilegedMethod::setSelfHostname, newHostname);
   }
 
-  void updateHostsFile(std::map<std::string, IpAddress> data)
+  void updateHostsFile(const std::map<std::string, IpAddress>& data)
   {
     std::map<std::string, std::string> dataStringified;
 
-    for(auto& [hostname, address] : data) {
+    for(auto [hostname, address] : data) {
       dataStringified.insert({hostname, address.toString()});
     }
 

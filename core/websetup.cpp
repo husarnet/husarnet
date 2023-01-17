@@ -22,6 +22,7 @@
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
 
@@ -32,7 +33,7 @@ WebsetupConnection::WebsetupConnection(HusarnetManager* manager)
 {
 }
 
-void WebsetupConnection::bind()
+void WebsetupConnection::start()
 {
   websetupFd = SOCKFUNC(socket)(AF_INET6, SOCK_DGRAM, 0);
   assert(websetupFd > 0);
@@ -40,9 +41,10 @@ void WebsetupConnection::bind()
   addr.sin6_family = AF_INET6;
   addr.sin6_port = htons(WEBSETUP_SERVER_PORT);
 
-  SOCKFUNC(bind)(websetupFd, (sockaddr*)&addr, sizeof(addr));
-  // TODO: we could probably handle the error and display some helpful info for
-  // user e.g. EADRRINUSE -> you probably have Husarnet running... etc.
+  int ret = SOCKFUNC(bind)(websetupFd, (sockaddr*)&addr, sizeof(addr));
+  if(ret != 0) {
+    LOG_SOCKETERR("unable to bind websetup's UDP socket");
+  }
 
   // this timeout is needed, so we can check initResponseReceived
 #ifdef _WIN32
@@ -52,17 +54,21 @@ void WebsetupConnection::bind()
   timeout.tv_sec = 2;
 #endif
 
-  SOCKFUNC(setsockopt)
-  (websetupFd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
-}
+  ret = SOCKFUNC(setsockopt)(
+      websetupFd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+  if(ret != 0) {
+    LOG_SOCKETERR("unable to setsockopt");
+  }
 
-void WebsetupConnection::send(
-    std::string command,
-    std::list<std::string> arguments)
-{
-  send(
-      InetAddress{manager->getWebsetupAddress(), WEBSETUP_CLIENT_PORT}, command,
-      arguments);
+  if(manager->getWebsetupSecret().empty()) {
+    manager->setWebsetupSecret(encodeHex(generateRandomString(12)));
+  }
+
+  Port::startThread(
+      [this]() { this->periodicThread(); }, "websetupPeriodic", 6000);
+
+  GIL::startThread(
+      [this]() { this->handleConnectionThread(); }, "websetupConnection", 6000);
 }
 
 void WebsetupConnection::send(
@@ -88,54 +94,66 @@ void WebsetupConnection::send(
   addr.sin6_port = htons(dstAddress.port);
   memcpy(&(addr.sin6_addr), dstAddress.ip.data.data(), 16);
 
-  if(SOCKFUNC(sendto)(
-         websetupFd, frame.data(), frame.size(), 0, (sockaddr*)&addr,
-         sizeof(addr)) < 0) {
-    LOG("websetup UDP send failed (%d)", (int)errno);
+  int ret = SOCKFUNC(sendto)(
+      websetupFd, frame.data(), frame.size(), 0, (sockaddr*)&addr,
+      sizeof(addr));
+  if(ret == -1) {
+    LOG_SOCKETERR("websetup UDP send failed");
   }
 }
 
-void WebsetupConnection::sendJoinRequest()
+void WebsetupConnection::send(
+    std::string command,
+    std::list<std::string> arguments)
 {
-  if(joinCode.empty()) {
-    return;
-  }
-
-  if(reportedHostname.empty()) {
-    return;
-  }
-
-  LOGV("Sending join request to websetup");
   send(
-      "init-request-join-code",
-      {joinCode, manager->getWebsetupSecret(), reportedHostname});
-}
-
-void WebsetupConnection::sendInit()
-{
-  LOGV("Sending init-request to websetup");
-  send("init-request", {});
+      InetAddress{manager->getWebsetupAddress(), WEBSETUP_CLIENT_PORT}, command,
+      arguments);
 }
 
 Time WebsetupConnection::getLastContact()
 {
-  return lastContact;
+  threadMutex.lock();
+  auto tmp = lastContact;
+  threadMutex.unlock();
+  return tmp;
 }
 
 Time WebsetupConnection::getLastInitReply()
 {
-  return lastInitReply;
+  threadMutex.lock();
+  auto tmp = lastInitReply;
+  threadMutex.unlock();
+  return tmp;
 }
 
 void WebsetupConnection::periodicThread()
 {
   while(true) {
-    if(lastInitReply < (Port::getCurrentTime() - WEBSETUP_CONTACT_TIMEOUT_MS)) {
-      if(joinCode.empty()) {
-        sendInit();
-      } else {
-        sendJoinRequest();
-      }
+    threadMutex.lock();
+    bool sendJoin = false, sendPeriodic = false;
+
+    if(!joinCode.empty() && !reportedHostname.empty()) {
+      sendJoin = true;
+    }
+
+    if(!sendJoin &&
+       Port::getCurrentTime() - lastInitReply > WEBSETUP_CONTACT_TIMEOUT_MS) {
+      sendPeriodic = true;
+    }
+
+    auto joinTmp = joinCode;
+    auto hostnameTmp = reportedHostname;
+    threadMutex.unlock();
+
+    if(sendJoin) {
+      LOG_WARNING("Sending join request to websetup");
+      send(
+          "init-request-join-code",
+          {joinTmp, manager->getWebsetupSecret(), hostnameTmp});
+    } else if(sendPeriodic) {
+      LOG_INFO("Sending update request to websetup");
+      send("init-request", {});
     }
 
     sleep(5);  // Remember that websetup has it's throttling mechanism
@@ -155,6 +173,7 @@ void WebsetupConnection::handleConnectionThread()
           &addrsize);
     });
 
+    // Async handling
 #ifdef _WIN32
     int err = WSAGetLastError();
     if(ret < 0 && (err == WSAETIMEDOUT || err == WSAECONNRESET))
@@ -163,31 +182,26 @@ void WebsetupConnection::handleConnectionThread()
     if(ret < 0 && (errno == EWOULDBLOCK || errno == EINTR))
       continue;
 #endif
-    assert(ret > 0 && addr.sin6_family == AF_INET6);
+
+    if(ret < 0) {
+      LOG_SOCKETERR("websetup UDP recv failed");
+    }
+
+    if(addr.sin6_family != AF_INET6) {
+      LOG_ERROR("received UDP packet from websetup on a wrong transport");
+      continue;
+    }
 
     auto sourceIp = IpAddress::fromBinary((char*)&addr.sin6_addr);
     if(sourceIp != manager->getWebsetupAddress()) {
-      LOG("Websetup packet from invalid address: %s", sourceIp.str().c_str());
+      LOG_ERROR(
+          "Websetup packet from invalid address: %s", sourceIp.str().c_str());
+      continue;
     }
 
     InetAddress replyAddress{sourceIp, htons(addr.sin6_port)};
     handleWebsetupPacket(replyAddress, buffer.substr(0, ret));
   }
-}
-
-void WebsetupConnection::start()
-{
-  bind();
-
-  if(manager->getWebsetupSecret().empty()) {
-    manager->setWebsetupSecret(encodeHex(generateRandomString(12)));
-  }
-
-  Port::startThread(
-      [this]() { this->periodicThread(); }, "websetupPeriodic", 6000);
-
-  GIL::startThread(
-      [this]() { this->handleConnectionThread(); }, "websetupConnection", 6000);
 }
 
 void WebsetupConnection::handleWebsetupPacket(
@@ -199,9 +213,10 @@ void WebsetupConnection::handleWebsetupPacket(
   if(data.size() < sharedSecret.size() ||
      !NgSocketCrypto::safeEquals(
          data.substr(0, sharedSecret.size()), sharedSecret)) {
-    LOG("invalid management shared secret.\ngot: %s\nexp: %s",
+    LOG_ERROR(
+        "invalid management shared secret.\ngot: %s\nexp: %s",
         data.substr(0, sharedSecret.size()).c_str(), sharedSecret.c_str());
-    LOG("message: %s", data.c_str());
+    LOG_DEBUG("message: %s", data.c_str());
     return;
   }
 
@@ -209,7 +224,7 @@ void WebsetupConnection::handleWebsetupPacket(
 
   long s = data.find("\n");
   if(s <= 5) {
-    LOG("bad packet format");
+    LOG_ERROR("bad websetup packet format");
     return;
   }
   std::string seqnum = data.substr(0, 5);
@@ -218,12 +233,15 @@ void WebsetupConnection::handleWebsetupPacket(
 
   // Pings are too verbose - handle their logging separately
   if(command == "ping") {
-    LOGV("remote command: ping");
+    LOG_DEBUG("remote command: ping");
   } else {
-    LOG("remote command: %s, arguments: %s", command.c_str(), payload.c_str());
+    LOG_INFO(
+        "remote command: %s, arguments: %s", command.c_str(), payload.c_str());
   }
 
+  threadMutex.lock();
   lastContact = Port::getCurrentTime();
+  threadMutex.unlock();
 
   auto response = handleWebsetupCommand(command, payload);
 
@@ -245,8 +263,10 @@ std::list<std::string> WebsetupConnection::handleWebsetupCommand(
   if(command == "ping") {
     return {"pong"};
   } else if(command == "init-response") {
+    threadMutex.lock();
     lastInitReply = Port::getCurrentTime();
     joinCode = "";  // mark that we've already joined
+    threadMutex.unlock();
     return {"ok"};
   } else if(command == "whitelist-add") {
     manager->whitelistAdd(IpAddress::fromBinary(decodeHex(payload)));
@@ -300,10 +320,10 @@ void WebsetupConnection::join(
     std::string joinCode,
     std::string reportedHostname)
 {
+  threadMutex.lock();
   manager->setWebsetupSecret(encodeHex(generateRandomString(12)));
 
   this->joinCode = joinCode;
   this->reportedHostname = reportedHostname;
-
-  lastInitReply = 0;  // initiate immediate join action
+  threadMutex.unlock();
 }

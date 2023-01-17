@@ -36,3 +36,11 @@ class LogManager {
 };
 
 extern LogManager* globalLogManager;
+inline LogManager* getGlobalLogManager()
+{
+  if(globalLogManager == nullptr) {
+    globalLogManager = new LogManager(100);
+  }
+
+  return globalLogManager;
+}

@@ -40,9 +40,9 @@ namespace Privileged {
   std::vector<IpAddress> getLocalAddresses();
 
   std::string getSelfHostname();
-  bool setSelfHostname(std::string newHostname);
+  bool setSelfHostname(const std::string& newHostname);
 
-  void updateHostsFile(std::map<std::string, IpAddress> data);
+  void updateHostsFile(const std::map<std::string, IpAddress>& data);
 
   void notifyReady();
 }  // namespace Privileged

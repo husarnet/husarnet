@@ -10,6 +10,7 @@
 #include "husarnet/ports/port.h"
 
 #include "husarnet/identity.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 std::string WindowsNetworking::getNetshNameForGuid(std::string guid) const
@@ -26,7 +27,7 @@ std::string WindowsNetworking::getNetshNameForGuid(std::string guid) const
   RegOpenKey(HKEY_LOCAL_MACHINE, path.c_str(), &hKey);
   RegQueryValueEx(hKey, "name", NULL, &dwType, (LPBYTE)&value, &value_length);
 
-  return value;
+  return std::string(value);
 }
 
 int WindowsNetworking::callWindowsCmd(std::string cmd) const

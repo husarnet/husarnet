@@ -17,6 +17,7 @@
 #include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
 
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 const static std::string hostnamePath = "/etc/hostname";
@@ -34,7 +35,7 @@ json PrivilegedProcess::handleUpdateHostsFile(json data)
 {
   std::map<std::string, IpAddress> dataMap;
 
-  for(auto& [hostname, address] : std::map<std::string, std::string>(data)) {
+  for(auto [hostname, address] : std::map<std::string, std::string>(data)) {
     dataMap[hostname] = IpAddress::parse(address);
   }
 

@@ -7,6 +7,7 @@
 
 #include "husarnet/ports/port_interface.h"
 
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 sqlite3_stmt* LegacyConfig::sqlitePrepareStatement(const char* stmt)

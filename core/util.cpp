@@ -9,8 +9,6 @@
 
 #include <time.h>
 
-LogManager* globalLogManager = nullptr;
-
 std::vector<std::string> splitWhitespace(std::string s)
 {
   std::vector<std::string> res;
@@ -43,37 +41,6 @@ std::vector<std::string> split(std::string s, char byChar, int maxSplit)
   }
 
   return res;
-}
-
-std::pair<bool, int> parse_integer(std::string s)
-{
-  if(s.size() == 0)
-    return {false, -1};
-
-  bool isneg = false;
-
-  if(s[0] == '-') {
-    isneg = true;
-    s = s.substr(1);
-  }
-
-  int64_t val = 0;
-  for(char ch : s) {
-    if(ch < '0' || ch > '9')
-      return {false, -1};
-
-    val *= 10;
-    val += ch - '0';
-    if(val - 1 > INT_MAX)
-      return {false, -1};
-  }
-
-  if(isneg)
-    val *= -1;
-  if(val > INT_MAX)
-    return {false, -1};
-
-  return {true, val};
 }
 
 std::string base64Decode(std::string s)

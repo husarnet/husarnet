@@ -6,6 +6,7 @@ format() {
     echo "[HUSARNET BS] clang-formatting ${suffix}"
     pushd ${base_dir}/$suffix
     find . -regextype posix-egrep -regex ".*\.(cpp|hpp|h|c)" -exec clang-format -style=file -i {} \;
+    # find . -regextype posix-egrep -regex ".*\.(cpp|hpp|h|c)" -exec cpplint {} \;
     popd
 }
 

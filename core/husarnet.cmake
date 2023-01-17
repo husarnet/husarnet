@@ -107,6 +107,10 @@ add_library(husarnet_core STATIC ${husarnet_core_SRC})
 target_include_directories(husarnet_core PUBLIC ${TEMP_INCLUDE_DIR})
 target_compile_definitions(husarnet_core PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PROCESSOR}")
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  target_compile_definitions(husarnet_core PRIVATE DEBUG_BUILD=1)
+endif()
+
 # Configure dependencies
 include(FetchContent)
 
@@ -124,7 +128,7 @@ endif()
 FetchContent_Declare(
   libsodium
   GIT_REPOSITORY https://github.com/jedisct1/libsodium.git
-  GIT_TAG 1.0.14
+  GIT_TAG 1.0.18
 )
 FetchContent_MakeAvailable(libsodium)
 include_directories(${libsodium_SOURCE_DIR}/src/libsodium/include)

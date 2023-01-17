@@ -33,3 +33,7 @@ function update_version {
 update_version
 
 in_ci=${CI:-false}
+
+function docker_builder() {
+  docker run --rm --privileged --volume ${base_dir}:/app ghcr.io/husarnet/husarnet:builder ${@}
+}

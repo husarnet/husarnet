@@ -95,7 +95,7 @@ func getDaemonApiUrl() string {
 func getDaemonApiSecretPath() string {
 	if onWindows() {
 		sep := string(os.PathSeparator)
-		return os.ExpandEnv("${programdata}") + sep + "Husarnet" + sep + "daemon_api_token"
+		return os.ExpandEnv("${programdata}") + sep + "husarnet" + sep + "daemon_api_token"
 	}
 	return "/var/lib/husarnet/daemon_api_token"
 }
@@ -103,13 +103,19 @@ func getDaemonApiSecretPath() string {
 func addDaemonApiSecret(params *url.Values) {
 	apiSecret, err := os.ReadFile(getDaemonApiSecretPath())
 	if err != nil {
-		if onWindows() {
-			die("Error reading secret file, are you root/administrator? " + err.Error())
-		}
-		rerunWithSudo()
+		printError("Error reading secret file, are you root/administrator? " + err.Error())
+		rerunWithSudoOrDie()
 	}
 
 	params.Add("secret", string(apiSecret))
+}
+
+func getDaemonIdPath() string {
+	if onWindows() {
+		sep := string(os.PathSeparator)
+		return os.ExpandEnv("${programdata}") + sep + "husarnet" + sep + "id"
+	}
+	return "/var/lib/husarnet/id"
 }
 
 func getApiErrorString[ResultType any](response DaemonResponse[ResultType]) string {
@@ -153,9 +159,9 @@ func callDaemonRetryable[ResultType any](retryable bool, route string, urlencode
 	if err != nil {
 		printDebug("%v", err)
 
-		if !onWindows() && retryable && errors.Is(err, syscall.ECONNREFUSED) {
+		if retryable && errors.Is(err, syscall.ECONNREFUSED) {
 			printInfo("Daemon does not seem to be running")
-			runSubcommand(true, "sudo", "systemctl", "restart", "husarnet")
+			daemonRestart(true)
 			waitDaemon()
 			return lambda(route, urlencodedBody)
 		}

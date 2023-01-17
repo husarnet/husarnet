@@ -19,9 +19,10 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-static int openTun(std::string name, bool isTap)
+static int openTun(const std::string& name, bool isTap)
 {
   struct ifreq ifr;
   int fd;

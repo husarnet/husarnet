@@ -11,6 +11,7 @@
 #include "husarnet/ports/port_interface.h"
 
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #ifdef _WIN32
@@ -45,6 +46,13 @@ bool updateHostsFileInternal(std::map<std::string, IpAddress> data)
   // First rewrite all unmanaged lines as they are
   std::string line;
   while(std::getline(hostsFileStream, line)) {
+    // getline assumes line ending is LF by default, even on Windows
+    // in earlier versions of Husarnet hosts file on Windows got unwanted orphan
+    // CRs here we make sure no such thing happen again AND we clean up after
+    // this bug we could just add delimiter param to std::getline above, but we
+    // still have to clean up after older versions so might as well leave
+    // getline as-is and just trim exceess ws.
+    line = rtrim(line);
     if(!isLineMarked(line)) {
       newContents += line + lineEnding;
     }

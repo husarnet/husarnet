@@ -200,6 +200,12 @@ func getUserCredentialsFromStandardInput() (string, string) {
 	}
 	pterm.Println()
 
+	password := getPasswordFromStandardInput()
+
+	return trimNewlines(username), trimNewlines(password)
+}
+
+func getPasswordFromStandardInput() string {
 	pterm.ThemeDefault.PrimaryStyle.Print("Password: ")
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
@@ -208,7 +214,7 @@ func getUserCredentialsFromStandardInput() (string, string) {
 	password := string(bytePassword)
 	pterm.Println()
 
-	return trimNewlines(username), trimNewlines(password)
+	return trimNewlines(password)
 }
 
 // Prompts user for confirmation and exits the whole program if user does not confirm

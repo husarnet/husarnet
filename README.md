@@ -7,9 +7,9 @@ Husarnet is a Peer-to-Peer VPN to connect your laptops, servers and microcontrol
 Key features:
 
 - **Low Latency** - thanks to Peer-to-Peer connection between devices. After establishing a connection, Husarnet infrastructure (Husarnet Base Servers) is used only as a failover proxy if P2P connection is not possible.
-- **Zero Configuration** - after installing Husarnet Client, you can add new devices to a group with a single command `husarnet join <YOUR_JOINCODE> mydevname` (on Linux. See [the docs](https://husarnet.com/docs) for other platforms).
+- **Zero Configuration** - after installing Husarnet Client, you can add new devices to a group with a single command `husarnet join <YOUR_JOINCODE> mydevname` on Linux. See [the docs](https://husarnet.com/docs) for other platforms.
 - **Low Reconfiguration Time** - in case of a network topology change (eg. transition between two Wi-Fi hotspots), Husarnet needs usually 1 - 3 seconds to reestablish Peer-to-Peer connection.
-- **Lightweight** - it works not only on popular OSes (currently only Linux version is released, Windows, MacOS, Android coming soon) but even on ESP32 microcontrollers. That means you can P2P access your things without IoT server at all!
+- **Lightweight** - it works not only on popular OSes (currently only Windows and Linux version is released, MacOS, Android coming soon) but even on ESP32 microcontrollers. That means you can P2P access your things without IoT server at all!
 - **Secure & Private** - packets never leave connected devices unencrypted, Perfect Forward Secrecy (PFC) enabled by default.
 
 Husarnet, in it's core, is **one big, automatically routed, IPv6 network**. Running Husarnet daemon creates a virtual network interface (by default named `hnet0`) with an unique Husarnet IPv6 address and associated `fc94::/16` route. If you choose to disable the permission system, any node can reach your node using IPv6 `fc94:...` address, but if you choose to leave it enabled, we've prepared an extensive permissions system for you. You can have multiple virtual islands/groups, your devices can access multiple groups or you can even share access to those groups with other users!
@@ -25,15 +25,15 @@ If Husarnet instance is not connected to the Husarnet Dashboard, the whitelist (
 ***Husarnet Dashboard:*** Husarnet Dashboard is a web application that allows users to fully configure how they use Husarnet, including adding and removing networks, adding and removing devices, associationg devices with networks and more.
 
 ***Husarnet CLI:*** Husarnet CLI is a new (added as of Husarnet 2.0) and powerful tool which aims to allow user to manage the local Husarnet daemon while also
-providing users with a simple way to manage all of their Husarnet devices and networks via intuitive and simple to use Dashboard API. For more information about the new CLI capabilities visit [CLI docs](https://husarnet.com/docs/manual-client/).
+providing users with a simple way to manage all of their Husarnet devices and networks via intuitive and simple to use Dashboard API. For more information about the new CLI capabilities visit [CLI docs](https://husarnet.com/docs/cli-guide/).
 
 -------------
 
 This is the main development repository for all of the Husarnet Client apps.
 
-For more generic information please have a look at the [Husarnet Docs](https://husarnet.com/docs/manual-general/).
+For more generic information please have a look at the [Husarnet Docs](https://husarnet.com/docs/).
 
-Typical issues preventing Peer-to-Peer connection (thus enjoing a low-latency) and their workarounds are described in the [Troubleshooting Guide](https://husarnet.com/docs/tutorial-troubleshooting).
+Typical issues preventing Peer-to-Peer connection (thus enjoing a low-latency) and their workarounds are described in the [Troubleshooting Guide](https://husarnet.com/docs/troubleshooting-guide/).
 
 If you need help and/or have questions regarding Husarnet, feel welcome to post on [Husarnet Community Forums](https://community.husarnet.com). Please, do not use GitHub Issues in this repository for reporting general usage problems and requests. Use the Issues only for technical questions and concerns regarding Husarnet Client building and development.
 

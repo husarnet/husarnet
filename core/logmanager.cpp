@@ -3,6 +3,8 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/logmanager.h"
 
+LogManager* globalLogManager;
+
 std::string LogManager::getLogs()
 {
   if(currentSize == 0)
@@ -16,6 +18,8 @@ std::string LogManager::getLogs()
   return result;
 };
 
+// TODO make it accept verbosity argument from logging.h and ignore non-matching
+// ones
 void LogManager::insert(std::string log)
 {
   LogElement* logElement = new LogElement(log);

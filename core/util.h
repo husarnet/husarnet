@@ -12,94 +12,7 @@
 #include "husarnet/ports/port_interface.h"
 
 #include "husarnet/fstring.h"
-#include "husarnet/logmanager.h"
 #include "husarnet/string_view.h"
-
-#ifdef __ANDROID__
-#include <android/log.h>
-
-#define LOG(msg, x...)                                 \
-  __android_log_print(                                 \
-      ANDROID_LOG_INFO, "husarnet", "[%ld] " msg "\n", \
-      (long int)Port::getCurrentTime(), ##x)
-#define LOGV(msg, x...) LOG(msg, ##x)
-
-#else
-#ifdef _WIN32
-#define LOG(msg, x...)                                                         \
-  do {                                                                         \
-    fprintf(                                                                   \
-        stderr, "[%lld] %s: " msg "\n", (long long int)Port::getCurrentTime(), \
-        Port::getThreadName(), ##x);                                           \
-    fflush(stderr);                                                            \
-  } while(0)
-#else
-#define LOG(msg, x...)                                                     \
-  do {                                                                     \
-    fprintf(                                                               \
-        stderr, "[%lld] " msg "\n", (long long int)Port::getCurrentTime(), \
-        ##x);                                                              \
-    fflush(stderr);                                                        \
-    if(globalLogManager != nullptr) {                                      \
-      char buf[1024];                                                      \
-      snprintf(                                                            \
-          buf, 1024, "[%lld] " msg "\n",                                   \
-          (long long int)Port::getCurrentTime(), ##x);                     \
-      globalLogManager->insert(buf);                                       \
-    }                                                                      \
-  } while(0)
-#endif
-// globalLogManager->insert("["+std::to_string((long long
-// int)Port::getCurrentTime())+"]
-// "+msg);
-#define LOGV1(msg, x...)                          \
-  do {                                            \
-    if(globalLogManager != nullptr) {             \
-      if(globalLogManager->getVerbosity() >= 1) { \
-        LOG(msg, ##x);                            \
-      }                                           \
-    } else {                                      \
-      LOG(msg, ##x);                              \
-    }                                             \
-  } while(0)
-#define LOGV2(msg, x...)                          \
-  do {                                            \
-    if(globalLogManager != nullptr) {             \
-      if(globalLogManager->getVerbosity() >= 2) { \
-        LOG(msg, ##x);                            \
-      }                                           \
-    } else {                                      \
-      LOG(msg, ##x);                              \
-    }                                             \
-  } while(0)
-#define LOGV(msg, x...)                           \
-  do {                                            \
-    if(globalLogManager != nullptr) {             \
-      if(globalLogManager->getVerbosity() >= 3) { \
-        LOG(msg, ##x);                            \
-      }                                           \
-    } else {                                      \
-      LOG(msg, ##x);                              \
-    }                                             \
-  } while(0)
-#endif
-
-#define LOG_DEBUG(msg, x...)  // LOG(msg, ##x)
-
-#ifdef ESP_PLATFORM
-inline const char*
-memmem(const char* stack, int slen, const char* needle, int nlen)
-{
-  if(nlen > slen)
-    return nullptr;
-
-  for(int i = 0; i <= slen - nlen; i++) {
-    if(memcmp(stack + i, needle, nlen) == 0)
-      return stack + i;
-  }
-  return nullptr;
-}
-#endif
 
 template <typename Vec, typename T>
 bool insertIfNotPresent(Vec& v, const T& t)
@@ -188,8 +101,6 @@ inline bool endswith(std::string s, std::string with)
 
 std::vector<std::string> splitWhitespace(std::string s);
 std::vector<std::string> split(std::string s, char byChar, int maxSplit);
-
-std::pair<bool, int> parse_integer(std::string s);
 
 template <typename A, typename B>
 struct pair_hash {

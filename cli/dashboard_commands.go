@@ -15,10 +15,25 @@ import (
 )
 
 var dashboardLoginCommand = &cli.Command{
-	Name:  "login",
-	Usage: "obtain short-lived API token to authenticate while executing queries",
+	Name:      "login",
+	Usage:     "obtain short-lived API token to authenticate while executing queries",
+	ArgsUsage: "[username] [password]",
 	Action: func(c *cli.Context) error {
-		loginAndSaveAuthToken()
+		requiredArgumentsRange(c, 0, 2)
+
+		var username, password string
+
+		if c.Args().Len() == 2 {
+			username = c.Args().Get(0)
+			password = c.Args().Get(1)
+		} else if c.Args().Len() == 1 {
+			username = c.Args().Get(0)
+			password = getPasswordFromStandardInput()
+		} else {
+			username, password = getUserCredentialsFromStandardInput()
+		}
+
+		loginAndSaveAuthToken(username, password)
 		return nil
 	},
 }

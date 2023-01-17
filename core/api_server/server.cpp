@@ -12,6 +12,7 @@
 #include "husarnet/config_storage.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/logmanager.h"
 #include "husarnet/peer.h"
 #include "husarnet/peer_container.h"
@@ -106,9 +107,9 @@ std::list<std::string> stringifyInetAddressList(
     const std::list<InetAddress>& source)
 {
   std::list<std::string> stringified;
-  for(auto& element : source) {
-    stringified.push_back(element.str());
-  }
+  std::transform(
+      source.cbegin(), source.cend(), stringified.begin(),
+      [](const InetAddress element) { return element.str(); });
 
   return stringified;
 }
@@ -319,7 +320,7 @@ void ApiServer::runThread()
   svr.Get(
       "/api/logs/get",
       [&](const httplib::Request& req, httplib::Response& res) {
-        returnSuccess(req, res, manager->getLogManager().getLogs());
+        returnSuccess(req, res, getGlobalLogManager()->getLogs());
       });
 
   // TODO this one makes a GET request require auth token in some cases - change
@@ -327,7 +328,7 @@ void ApiServer::runThread()
   svr.Get(
       "/api/logs/settings",
       [&](const httplib::Request& req, httplib::Response& res) {
-        auto logManager = manager->getLogManager();
+        auto logManager = getGlobalLogManager();
 
         if(req.has_param("verbosity") || req.has_param("size")) {
           if(!validateSecret(req, res)) {
@@ -335,19 +336,19 @@ void ApiServer::runThread()
           }
 
           if(req.has_param("verbosity")) {
-            logManager.setVerbosity(
+            logManager->setVerbosity(
                 std::stoi(req.get_param_value("verbosity")));
           }
           if(req.has_param("size")) {
-            logManager.setSize(std::stoi(req.get_param_value("size")));
+            logManager->setSize(std::stoi(req.get_param_value("size")));
           }
         }
 
         returnSuccess(
             req, res,
-            {{"verbosity", logManager.getVerbosity()},
-             {"size", logManager.getSize()},
-             {"current_size", logManager.getCurrentSize()}});
+            {{"verbosity", logManager->getVerbosity()},
+             {"size", logManager->getSize()},
+             {"current_size", logManager->getCurrentSize()}});
       });
 
   if(!svr.bind_to_port("127.0.0.1", manager->getApiPort())) {

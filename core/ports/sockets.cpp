@@ -7,6 +7,7 @@
 #include "husarnet/ports/port_interface.h"
 
 #include "husarnet/gil.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 namespace OsSocket {
@@ -42,11 +43,6 @@ namespace OsSocket {
       memcpy(&s6, &s, sizeof(s));
       return s6;
     }
-  }
-
-  sockaddr_in6 sockaddrFromIp(InetAddress ip)
-  {
-    return makeSockaddr(ip);
   }
 
   InetAddress ipFromSockaddr(struct sockaddr_storage st)
@@ -109,7 +105,6 @@ namespace OsSocket {
 
   int bindUdpSocket(InetAddress addr, bool reuse, bool v6)
   {
-    // cppcheck-suppress knownConditionTrueFalse
     int fd = SOCKFUNC(socket)(useV6 ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
     if(fd < 0) {
       LOG("creating socket failed with %d", (int)errno);
@@ -140,11 +135,6 @@ namespace OsSocket {
   void bindCustomFd(int fd, std::function<void()> readyCallback)
   {
     customSockets.push_back(CustomSocket{fd, readyCallback});
-  }
-
-  void bindCustomDgramFd(int fd, PacketCallack callback)
-  {
-    udpSockets.push_back(UdpSocket{fd, callback});
   }
 
   bool udpListenUnicast(int port, PacketCallack callback, bool setAsDefault)

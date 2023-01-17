@@ -4,6 +4,7 @@
 #include "husarnet/ngsocket_crypto.h"
 
 #include "husarnet/identity.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #include "sodium.h"
@@ -46,7 +47,7 @@ namespace NgSocketCrypto {
     return ret == 0;
   }
 
-  bool safeEquals(std::string a, std::string b)
+  bool safeEquals(const std::string& a, const std::string& b)
   {
     if(a.size() != b.size())
       return false;

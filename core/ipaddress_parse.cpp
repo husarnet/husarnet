@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "husarnet/ports/port.h"
+
 // Copied from LwIP core/ipv6/ip6_addr.c
 
 using u32_t = uint32_t;

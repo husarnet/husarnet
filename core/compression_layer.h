@@ -15,7 +15,11 @@ class PeerContainer;
 
 class CompressionLayer : public BidirectionalLayer {
  private:
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-private-field"
   HusarnetManager* manager;
+#pragma clang diagnostic pop
+
   ConfigStorage& config;
   PeerContainer* peerContainer;
 

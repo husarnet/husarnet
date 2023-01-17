@@ -1,4 +1,7 @@
 {
+  manifestYamlDoc:: function(v)
+    std.manifestYamlDoc(v, indent_array_in_object=true, quote_keys=false),
+
   steps: {
     checkout:: function(ref) {
       name: 'Check out the repo',
@@ -48,11 +51,12 @@
       },
     },
 
-    builder:: function(container) {
-      name: 'Builder run ' + container,
-      run: 'docker compose -f builder/compose.yml up --exit-code-from ' + container + ' ' + container,
-    },
+    builder:: function(command) self.docker('ghcr.io/husarnet/husarnet:builder', command),
 
+    docker:: function(container, command) {
+      name: 'Docker run ' + container + ' ' + command,
+      run: 'docker run --rm --privileged --volume $(pwd):/app ' + container + ' ' + command,
+    },
   },
 
   jobs: {
@@ -111,7 +115,7 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
-        $.steps.builder('unix_${{matrix.arch}}'),
+        $.steps.builder('/app/platforms/unix/build.sh ${{matrix.arch}}'),
         $.steps.push_artifacts('*${{matrix.arch}}*'),
       ],
     },
@@ -124,7 +128,7 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
-        $.steps.builder('windows_win64'),
+        $.steps.builder('/app/platforms/windows/build.sh'),
         $.steps.push_artifacts('*win64*'),
       ],
     },
@@ -166,14 +170,67 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
-        $.steps.builder('format'),
-        $.steps.builder('test'),
+        $.steps.builder('/app/daemon/format.sh'),
+        $.steps.builder('/app/tests/test.sh'),
+      ],
+    },
+
+    run_integration_tests:: function(ref, docker_project) {
+      needs: [
+        'build_unix',
+        'build_docker',
+      ],
+
+      'runs-on': 'ubuntu-latest',
+
+      strategy: {
+        matrix: {
+          container_name: [
+            docker_project + ':amd64',
+            'ubuntu:18.04',
+            'ubuntu:20.04',
+            'ubuntu:22.04',
+            'debian:oldstable',
+            'debian:stable',
+            'debian:testing',
+            'fedora:37',
+            'fedora:38',
+          ],
+          test_file: [
+            'functional-basic',
+            'join-workflow',
+          ],
+          include: [
+            { container_name: docker_project + ':amd64', test_platform: 'docker' },
+            { container_name: 'ubuntu:18.04', test_platform: 'ubuntu_debian' },
+            { container_name: 'ubuntu:20.04', test_platform: 'ubuntu_debian' },
+            { container_name: 'ubuntu:22.04', test_platform: 'ubuntu_debian' },
+            { container_name: 'debian:oldstable', test_platform: 'ubuntu_debian' },
+            { container_name: 'debian:stable', test_platform: 'ubuntu_debian' },
+            { container_name: 'debian:testing', test_platform: 'ubuntu_debian' },
+            { container_name: 'fedora:37', test_platform: 'fedora' },
+            { container_name: 'fedora:38', test_platform: 'fedora' },
+          ],
+        },
+      },
+
+      steps: [
+        $.steps.checkout(ref),
+        $.steps.pull_artifacts(),
+        $.steps.ghcr_login(),
+        $.steps.docker_login(),
+        {
+          name: 'Save a password for unlocking a shared secrets repository in a known place',
+          run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/integration/secrets-password.bin",
+        },
+        $.steps.docker('${{matrix.container_name}}', '/app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}'),
       ],
     },
 
     release:: function(target, ref) {
       needs: [
         'run_tests',
+        'run_integration_tests',
         'build_unix',
         'build_windows_installer',
       ],
@@ -197,6 +254,7 @@
     release_github:: function() {
       needs: [
         'run_tests',
+        'run_integration_tests',
         'build_unix',
         'build_windows_installer',
       ],
@@ -261,6 +319,7 @@
           uses: 'docker/setup-buildx-action@v2',
           with: {
             version: 'latest',
+            'driver-opts': 'image=moby/buildkit:v0.10.5',
           },
         },
         $.steps.docker_login(),
@@ -286,6 +345,7 @@
     release_docker:: function(namespace, ref) {
       needs: [
         'run_tests',
+        'run_integration_tests',
         'build_docker',
       ],
 
