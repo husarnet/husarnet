@@ -20,6 +20,7 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 static int openTun(std::string& name)

@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "husarnet/ports/unix/privileged_process.h"
+#include "husarnet/ports/macos/privileged_process.h"
 
 #include <initializer_list>
 #include <map>
@@ -16,6 +16,7 @@
 #include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
 
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 const static std::string hostnamePath = "/etc/hostname";

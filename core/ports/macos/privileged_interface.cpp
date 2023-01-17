@@ -229,7 +229,7 @@ namespace Privileged {
     return true;
   }
 
-  void updateHostsFile(std::map<std::string, IpAddress> data)
+  void updateHostsFile(const std::map<std::string, IpAddress>& data)
   {
     updateHostsFileInternal(data);
   }
