@@ -196,7 +196,7 @@ namespace OsSocket {
       memcpy(&mreq.ipv6mr_multiaddr, address.ip.data.data(), 16);
       mreq.ipv6mr_interface = 0;
       if(SOCKFUNC(setsockopt)(
-             fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, (const char*)&mreq,
+             fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (const char*)&mreq,
              sizeof(mreq)) == 0) {
         udpSockets.push_back(UdpSocket{fd, callback});
         return true;

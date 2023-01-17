@@ -22,3 +22,9 @@
 #define PORT_NAME "Unix"
 #include "husarnet/ports/unix/port.h"
 #endif
+
+#ifdef __APPLE__
+#define PORT_MACOS
+#define PORT_NAME "MacOS"
+#include "husarnet/ports/macos/port.h"
+#endif
