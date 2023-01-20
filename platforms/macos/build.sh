@@ -12,5 +12,5 @@ arch=arm64
 
 platform_base=${base_dir}/platforms/${platform}
 
-${base_dir}/daemon/build.sh unix ${arch}
+${base_dir}/daemon/build.sh ${platform} ${arch}
 ${base_dir}/cli/build.sh ${platform} ${arch}

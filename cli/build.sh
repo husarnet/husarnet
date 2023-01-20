@@ -11,8 +11,7 @@ arch=$2
 
 # directory setup
 source_dir="${base_dir}/cli"
-
-if [ ${platform} == "unix" ]; then
+if [[ ${platform} == "unix" || ${platform} == "macos" ]]; then
   go_output=${release_base}/husarnet-${platform}-${arch}
 elif [ ${platform} == "windows" ]; then
   go_output=${release_base}/husarnet-${platform}-${arch}.exe
@@ -20,7 +19,10 @@ fi
 
 # GOOS and GOARCH setup
 go_variables_suffix=""
-if [ $arch = "amd64" ]; then
+if [ $platform == "macos" ]; then
+  goos="darwin"
+  goarch="arm64"
+elif [ $arch = "amd64" ]; then
   goos="linux"
   goarch="amd64"
   platform="unix"

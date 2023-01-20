@@ -120,6 +120,19 @@
       ],
     },
 
+    build_macos:: function(ref) {
+      needs: [],
+
+      'runs-on': 'ubuntu-latest',
+
+      steps: [
+        $.steps.checkout(ref),
+        $.steps.ghcr_login(),
+        $.steps.builder('/app/platforms/macos/build.sh arm64'),
+        $.steps.push_artifacts('*macos*'),
+      ],
+    },
+
     build_windows:: function(ref) {
       needs: [],
 
@@ -232,6 +245,7 @@
         'run_tests',
         'run_integration_tests',
         'build_unix',
+        'build_macos',
         'build_windows_installer',
       ],
 
@@ -256,6 +270,7 @@
         'run_tests',
         'run_integration_tests',
         'build_unix',
+        'build_macos',
         'build_windows_installer',
       ],
 
