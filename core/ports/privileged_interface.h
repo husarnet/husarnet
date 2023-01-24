@@ -35,6 +35,7 @@ namespace Privileged {
   void writeIdentity(Identity identity);
 
   std::string readApiSecret();
+  // TODO would be nice to move this somewhere else - like HusarnetManager
   void rotateApiSecret();
 
   std::vector<IpAddress> getLocalAddresses();

@@ -10,4 +10,4 @@ fix_perms () {
 fix_perms ${build_base}
 fix_perms ${base_dir}/cli/generated
 
-su -w "CGO_ENABLED,GOCACHE,GOFLAGS" -l -P builder -c "/usr/bin/bash ${*}"
+su -w "CGO_ENABLED,GOCACHE,GOFLAGS,IDF_PATH,IDF_TOOLS_PATH,IDF_PYTHON_CHECK_CONSTRAINTS" -l -P builder -c "/usr/bin/bash ${*}"

@@ -34,7 +34,7 @@ static const std::string marker = " # managed by Husarnet";
 
 static bool isLineMarked(std::string line)
 {
-  return endswith(line, marker);
+  return endsWith(line, marker);
 }
 
 bool updateHostsFileInternal(std::map<std::string, IpAddress> data)

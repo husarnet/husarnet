@@ -142,15 +142,11 @@ License::License(std::string dashboardHostname)
 
 std::string License::getDashboardFqdn()
 {
-  if(this->dashboardFqdn.starts_with("https://")) {
-    return this->dashboardFqdn.substr(strlen("https://"));
-  }
+  auto fqdn = this->dashboardFqdn;
+  fqdn = removePrefix(fqdn, "https://");
+  fqdn = removePrefix(fqdn, "http://");
 
-  if(this->dashboardFqdn.starts_with("http://")) {
-    return this->dashboardFqdn.substr(strlen("http://"));
-  }
-
-  return this->dashboardFqdn;
+  return fqdn;
 }
 
 IpAddress License::getWebsetupAddress()

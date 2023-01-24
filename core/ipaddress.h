@@ -11,13 +11,6 @@
 
 #include "husarnet/fstring.h"
 
-#if defined(ESP_PLATFORM)
-namespace std {
-  std::string to_string(int a);
-  int stoi(std::string s);
-}  // namespace std
-#endif
-
 struct IpAddress {
   std::array<unsigned char, 16> data;
 
@@ -117,6 +110,15 @@ struct IpAddress {
     r.data[10] = 0xFF;
     r.data[11] = 0xFF;
     memcpy(r.data.data() + 12, &addr, 4);
+    return r;
+  }
+
+  static IpAddress fromBinary4(const char* data)
+  {
+    IpAddress r;
+    r.data[10] = 0xFF;
+    r.data[11] = 0xFF;
+    memcpy(r.data.data() + 12, data, 4);
     return r;
   }
 
