@@ -20,6 +20,7 @@ var husarnetDashboardFQDN string
 var husarnetDaemonAPIPort = 0
 var verboseLogs bool
 var wait bool
+var nonInteractive bool
 
 func main() {
 	app := &cli.App{
@@ -49,6 +50,13 @@ func main() {
 				Aliases:     []string{"v"},
 				Usage:       "show verbose logs (for debugging purposes)",
 				Destination: &verboseLogs,
+			},
+			&cli.BoolFlag{
+				Name:        "noninteractive",
+				Aliases:     []string{"n", "non-interactive"},
+				Usage:       "assume running in a non-interactive session, always select default action for all of the prompts",
+				Destination: &nonInteractive,
+				Value:       false,
 			},
 		},
 		Before: func(ctx *cli.Context) error {
