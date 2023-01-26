@@ -474,7 +474,7 @@ void HusarnetManager::stage3()
     }
   }
 
-  this->hostTableAdd("husarnet-local",this->getSelfAddress());
+  this->hostTableAdd("husarnet-local", this->getSelfAddress());
 
   stage3Started = true;
 }
