@@ -3,4 +3,4 @@ yum install -y \
 
 # Test prerequisites
 yum install -y \
-    jq curl iputils openssl
+    jq curl iputils openssl hostname ca-certificates
