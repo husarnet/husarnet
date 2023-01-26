@@ -35,6 +35,7 @@ type Mutation {
   updateGroup(id: ID!, name: String): UpdateGroupMutation
   removeGroup(id: ID!): RemoveGroupMutation
   updateDevice(addGroups: [ID], deviceIdFragment: String!, name: String, removeGroups: [ID]): UpdateDeviceMutation
+  removeDevice(id: ID!): RemoveDeviceMutation
 }
 
 type ObtainJSONWebToken {
@@ -53,6 +54,10 @@ type Refresh {
   payload: GenericScalar!
   refreshExpiresIn: Int!
   token: String!
+}
+
+type RemoveDeviceMutation {
+  success: Boolean
 }
 
 type RemoveGroupMutation {

@@ -233,6 +233,24 @@ func (v *RefreshTokenResponse) GetRefreshToken() RefreshTokenRefreshTokenRefresh
 	return v.RefreshToken
 }
 
+// RemoveDeviceRemoveDeviceRemoveDeviceMutation includes the requested fields of the GraphQL type RemoveDeviceMutation.
+type RemoveDeviceRemoveDeviceRemoveDeviceMutation struct {
+	Success bool `json:"success"`
+}
+
+// GetSuccess returns RemoveDeviceRemoveDeviceRemoveDeviceMutation.Success, and is useful for accessing the field via an interface.
+func (v *RemoveDeviceRemoveDeviceRemoveDeviceMutation) GetSuccess() bool { return v.Success }
+
+// RemoveDeviceResponse is returned by RemoveDevice on success.
+type RemoveDeviceResponse struct {
+	RemoveDevice RemoveDeviceRemoveDeviceRemoveDeviceMutation `json:"removeDevice"`
+}
+
+// GetRemoveDevice returns RemoveDeviceResponse.RemoveDevice, and is useful for accessing the field via an interface.
+func (v *RemoveDeviceResponse) GetRemoveDevice() RemoveDeviceRemoveDeviceRemoveDeviceMutation {
+	return v.RemoveDevice
+}
+
 // RemoveGroupRemoveGroupRemoveGroupMutation includes the requested fields of the GraphQL type RemoveGroupMutation.
 type RemoveGroupRemoveGroupRemoveGroupMutation struct {
 	Success bool `json:"success"`
@@ -448,6 +466,14 @@ type __RefreshTokenInput struct {
 
 // GetToken returns __RefreshTokenInput.Token, and is useful for accessing the field via an interface.
 func (v *__RefreshTokenInput) GetToken() string { return v.Token }
+
+// __RemoveDeviceInput is used internally by genqlient
+type __RemoveDeviceInput struct {
+	DeviceId string `json:"deviceId"`
+}
+
+// GetDeviceId returns __RemoveDeviceInput.DeviceId, and is useful for accessing the field via an interface.
+func (v *__RemoveDeviceInput) GetDeviceId() string { return v.DeviceId }
 
 // __RemoveGroupInput is used internally by genqlient
 type __RemoveGroupInput struct {
@@ -700,6 +726,37 @@ mutation RefreshToken ($token: String!) {
 	var err error
 
 	var data RefreshTokenResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		nil,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+func RemoveDevice(
+	client graphql.Client,
+	deviceId string,
+) (*RemoveDeviceResponse, error) {
+	req := &graphql.Request{
+		OpName: "RemoveDevice",
+		Query: `
+mutation RemoveDevice ($deviceId: ID!) {
+	removeDevice(id: $deviceId) {
+		success
+	}
+}
+`,
+		Variables: &__RemoveDeviceInput{
+			DeviceId: deviceId,
+		},
+	}
+	var err error
+
+	var data RemoveDeviceResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(

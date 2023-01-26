@@ -123,9 +123,23 @@ var dashboardDeviceCommand = &cli.Command{
 			Aliases:   []string{"rm"},
 			Usage:     "remove device from your account",
 			ArgsUsage: "[device ip]",
-			Action: func(c *cli.Context) error {
-				// TODO device ip or device name (selector?)
-				notImplementedYet() // TODO
+			Action: func(ctx *cli.Context) error {
+				requiredArgumentsRange(ctx, 0, 1)
+
+				var deviceIp string
+
+				if ctx.Args().Len() < 1 {
+					deviceIp = interactiveGetDeviceIpByName()
+				} else {
+					deviceIp = getDeviceIpByNameOrIp(ctx.Args().Get(0))
+				}
+
+				callDashboardAPI(func(client graphql.Client) (*generated.RemoveDeviceResponse, error) {
+					return generated.RemoveDevice(client, deviceIp)
+				})
+
+				printSuccess("Device removed successfully.")
+
 				return nil
 			}},
 	},
