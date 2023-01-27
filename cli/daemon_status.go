@@ -169,6 +169,14 @@ func printWhitelist(status DaemonStatus, verbose bool) {
 	}
 }
 
+func printHooksStatus(status DaemonStatus) {
+	if status.hooksEnabled {
+		pterm.Printfln("Hooks are currently enabled")
+	}	else {
+		pterm.Printfln("Hooks are currently disabled")
+	}
+}
+
 func printStatus(ctx *cli.Context) {
 	verbose := verboseLogs || ctx.Bool("verbose")
 

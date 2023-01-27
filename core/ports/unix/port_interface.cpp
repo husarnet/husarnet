@@ -19,9 +19,11 @@
 #include <string.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include "husarnet/ports/unix/tun.h"
 
@@ -366,5 +368,49 @@ namespace Port {
   {
     fprintf(stderr, "%s\n", message.c_str());
     fflush(stderr);
+  }
+
+  void runScripts(std::string path)
+  {
+    DIR* dir = opendir(path.c_str());
+    if (dir == NULL) {return;}
+    
+    struct dirent* ent;
+    while ((ent = readdir(dir)) != NULL) {
+        std::string fileName = ent->d_name;
+        if (fileName.length() > 3 && fileName.substr(fileName.length() - 3) == ".sh") {
+            std::string filePath = path + "/" + fileName;
+            if (access(filePath.c_str(), X_OK) == 0) {
+                pid_t pid = fork();
+                if (pid == 0) {
+                    char *args[] = { (char*)"bash", (char*)filePath.c_str(), NULL };
+                    execv("/bin/bash", args);
+                } else {
+                    int status;
+                    waitpid(pid, &status, 0);
+                }
+            }
+        }
+    }
+    closedir(dir);
+  }
+
+  bool checkScriptsExist(std::string path)
+  {
+    DIR* dir = opendir(path.c_str());
+    if (dir == NULL) {return false;}
+    struct dirent* ent;
+    while ((ent = readdir(dir)) != NULL) {
+        std::string fileName = ent->d_name;
+        if (fileName.length() > 3 && fileName.substr(fileName.length() - 3) == ".sh") {
+            std::string filePath = path + "/" + fileName;
+            if (access(filePath.c_str(), X_OK) == 0) {
+                closedir(dir);
+                return true;
+            }
+        }
+    }
+    closedir(dir);
+    return false;
   }
 }  // namespace Port

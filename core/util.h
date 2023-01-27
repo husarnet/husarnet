@@ -14,6 +14,19 @@
 #include "husarnet/fstring.h"
 #include "husarnet/string_view.h"
 
+
+
+BETTER_ENUM(
+    HookType,
+    int,
+    hostTableChanged = 1,
+    whiteListChanged = 2,
+    joinned = 3,
+    recconected = 4,
+    rw_request=5,
+    rw_release=6)
+
+
 template <typename Vec, typename T>
 bool insertIfNotPresent(Vec& v, const T& t)
 {

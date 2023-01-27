@@ -45,4 +45,7 @@ namespace Privileged {
   void updateHostsFile(const std::map<std::string, IpAddress>& data);
 
   void notifyReady();
+
+  void runScripts(std::string path);
+  bool checkScriptsExist(std::string path);
 }  // namespace Privileged

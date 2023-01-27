@@ -20,6 +20,7 @@
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
 #include "husarnet/websetup.h"
+#include "husarnet/hooks_manager.h"
 
 #include "ports/port.h"
 
@@ -30,6 +31,8 @@ class NgSocket;
 class PeerContainer;
 class PeerFlags;
 class WebsetupConnection;
+class HooksManager;
+
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
@@ -45,6 +48,7 @@ class HusarnetManager {
   WebsetupConnection* websetup;
   License* license;
   std::vector<std::thread*> threadpool;
+  HooksManager* hooksManager;
 
   bool stage1Started = false;
   bool stage2Started = false;
@@ -60,6 +64,7 @@ class HusarnetManager {
  public:
   HusarnetManager();
   HusarnetManager(const HusarnetManager&) = delete;
+  ~HusarnetManager();
 
   ConfigStorage& getConfigStorage();
   void setConfigStorage(ConfigStorage* cs);
@@ -109,6 +114,10 @@ class HusarnetManager {
   bool isWhitelistEnabled();
   void whitelistEnable();
   void whitelistDisable();
+
+  bool areHooksEnabled();
+  void hooksEnable();
+  void hooksDisable();
 
   bool isPeerAddressAllowed(IpAddress id);
   bool isRealAddressAllowed(InetAddress addr);

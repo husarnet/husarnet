@@ -75,6 +75,19 @@ json PrivilegedProcess::handleNotifyReady(json data)
   return true;
 }
 
+json PrivilegedProcess::handleRunHook(json data)
+{
+  auto path = data.get<std::string>();
+  Port::runScripts(path);
+  return true;
+}
+
+json PrivilegedProcess::handleCheckHookExists(json data)
+{
+  auto path = data.get<std::string>();
+  return Port::checkScriptsExist(path);
+}
+
 void PrivilegedProcess::run()
 {
   // so parent can't ptrace us
@@ -112,6 +125,13 @@ void PrivilegedProcess::run()
       case +PrivilegedMethod::notifyReady:
         response = handleNotifyReady(data);
         break;
+      case +PrivilegedMethod::runHook:
+        response = handleRunHook(data);
+        break;
+      case +PrivilegedMethod::checkHook:
+        response = handleCheckHookExists(data);
+        break;
+
     }
 
     std::string txBuffer = response.dump(0);

@@ -165,6 +165,7 @@ void ApiServer::runThread()
                 {"local_ip", manager->getSelfAddress().toString()},
                 {"local_hostname", manager->getSelfHostname()},
                 {"is_dirty", manager->isDirty()},
+                {"hooks_enabled", manager->areHooksEnabled()},
                 {"is_joined", manager->isJoined()},
                 {"is_ready_to_join",
                  manager
@@ -314,6 +315,28 @@ void ApiServer::runThread()
         }
 
         manager->whitelistDisable();
+        returnSuccess(req, res);
+      });
+
+  svr.Post(
+      "/api/hooks/enable",
+      [&](const httplib::Request& req, httplib::Response& res) {
+        if(!validateSecret(req, res)) {
+          return;
+        }
+
+        manager->hooksEnable();
+        returnSuccess(req, res);
+      });
+
+  svr.Post(
+      "/api/hooks/disable",
+      [&](const httplib::Request& req, httplib::Response& res) {
+        if(!validateSecret(req, res)) {
+          return;
+        }
+
+        manager->hooksDisable();
         returnSuccess(req, res);
       });
 

@@ -170,6 +170,8 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
   }
 
   websetup->join(parseJoinCode(joinCode), dashboardHostname);
+  hooksManager->runHook(HookType::joinned);
+  hooksManager->waitHook(HookType::joinned);
 }
 
 bool HusarnetManager::isJoined()
@@ -295,6 +297,21 @@ void HusarnetManager::setInterfaceName(std::string name)
   // also this should probably be internal setting in windows case
 }
 
+bool HusarnetManager::areHooksEnabled()
+{
+  return configStorage->getUserSettingBool(UserSetting::enableHooks);
+}
+
+void HusarnetManager::hooksEnable()
+{
+  configStorage->setUserSetting(UserSetting::enableHooks, true);
+}
+
+void HusarnetManager::hooksDisable()
+{
+  configStorage->setUserSetting(UserSetting::enableHooks, false);
+}
+
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
   if(!id == deviceIdFromIpAddress(IpAddress::parse(multicastDestination))) {
@@ -326,6 +343,12 @@ HusarnetManager::HusarnetManager()
 {
   Port::init();
   Privileged::init();
+  this->hooksManager = new HooksManager(this);
+}
+
+HusarnetManager::~HusarnetManager()
+{
+  delete this->hooksManager;
 }
 
 void HusarnetManager::readLegacyConfig()
