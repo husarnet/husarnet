@@ -372,6 +372,8 @@ namespace Port {
 
   void runScripts(std::string path)
   {
+    std::string msg = "running hooks under path " + path;
+    LOG(msg.c_str());
     DIR* dir = opendir(path.c_str());
     if (dir == NULL) {return;}
     
@@ -397,8 +399,13 @@ namespace Port {
 
   bool checkScriptsExist(std::string path)
   {
+    std::string msg = "checking if valid hooks under path " + path;
+    LOG(msg.c_str());
+
     DIR* dir = opendir(path.c_str());
-    if (dir == NULL) {return false;}
+    if (dir == NULL) {
+      return false;
+      }
     struct dirent* ent;
     while ((ent = readdir(dir)) != NULL) {
         std::string fileName = ent->d_name;

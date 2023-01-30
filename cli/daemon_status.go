@@ -170,7 +170,7 @@ func printWhitelist(status DaemonStatus, verbose bool) {
 }
 
 func printHooksStatus(status DaemonStatus) {
-	if status.hooksEnabled {
+	if status.HooksEnabled {
 		pterm.Printfln("Hooks are currently enabled")
 	}	else {
 		pterm.Printfln("Hooks are currently disabled")

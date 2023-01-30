@@ -400,13 +400,11 @@ namespace Privileged {
 
   void runScripts(std::string path)
   {
-    path =  configDir+path;
     callPrivilegedProcess(PrivilegedMethod::runHook,path);
   }
 
   bool checkScriptsExist(std::string path)
   {
-    path =  configDir+path;
     return callPrivilegedProcess(PrivilegedMethod::checkHook,path);
   }
 

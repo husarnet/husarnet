@@ -170,8 +170,10 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
   }
 
   websetup->join(parseJoinCode(joinCode), dashboardHostname);
+  LOG("Running join hook");
   hooksManager->runHook(HookType::joinned);
   hooksManager->waitHook(HookType::joinned);
+  LOG("waiting for join hook");
 }
 
 bool HusarnetManager::isJoined()
@@ -304,12 +306,12 @@ bool HusarnetManager::areHooksEnabled()
 
 void HusarnetManager::hooksEnable()
 {
-  configStorage->setUserSetting(UserSetting::enableHooks, true);
+  configStorage->setUserSetting(UserSetting::enableHooks, "true");
 }
 
 void HusarnetManager::hooksDisable()
 {
-  configStorage->setUserSetting(UserSetting::enableHooks, false);
+  configStorage->setUserSetting(UserSetting::enableHooks, "false");
 }
 
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)

@@ -21,6 +21,7 @@
 #include "husarnet/util.h"
 
 const static std::string hostnamePath = "/etc/hostname";
+const static std::string configDir = "/var/lib/husarnet/";
 
 PrivilegedProcess::PrivilegedProcess()
 {
@@ -78,14 +79,14 @@ json PrivilegedProcess::handleNotifyReady(json data)
 json PrivilegedProcess::handleRunHook(json data)
 {
   auto path = data.get<std::string>();
-  Port::runScripts(path);
+  Port::runScripts(configDir+path);
   return true;
 }
 
 json PrivilegedProcess::handleCheckHookExists(json data)
 {
   auto path = data.get<std::string>();
-  return Port::checkScriptsExist(path);
+  return Port::checkScriptsExist(configDir+path);
 }
 
 void PrivilegedProcess::run()
