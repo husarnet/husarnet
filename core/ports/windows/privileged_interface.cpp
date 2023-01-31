@@ -6,6 +6,8 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <fstream>
+
 
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
@@ -217,5 +219,46 @@ namespace Privileged {
   void notifyReady()
   {
     // Not implemented in Windows port.
+  }
+
+  void runScripts(std::string path)
+  {
+  char* appdata = std::getenv("APPDATA");
+  std::filesystem::path dir(appdata);
+  dir /= "Husarnet\\"+path;
+  std::string msg = "running hooks under path " + path;
+  LOG(msg.c_str());
+
+  if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
+    return;
+  }
+
+  for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+    if (entry.path().extension() == ".ps1" && (entry.status().permissions() & std::filesystem::perms::owner_exec) == std::filesystem::perms::owner_exec) {
+      std::string command = "powershell.exe -File " + entry.path().string();
+      std::system(command.c_str());
+    }
+  }
+  }
+
+  bool checkScriptsExist(std::string path)
+  {
+  char* appdata = std::getenv("APPDATA");
+  std::filesystem::path dir(appdata);
+  dir /= "Husarnet\\"+path;
+  std::string msg = "checking if valid hooks under path " + path;
+  LOG(msg.c_str());
+
+  if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
+    return false;
+  }
+
+  for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+    if (entry.path().extension() == ".ps1" && (entry.status().permissions() & std::filesystem::perms::owner_exec) == std::filesystem::perms::owner_exec) {
+      return true;
+    }
+  }
+
+  return false;
   }
 }  // namespace Privileged
