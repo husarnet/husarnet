@@ -43,6 +43,11 @@ PeerContainer* HusarnetManager::getPeerContainer()
   return peerContainer;
 }
 
+HooksManager* HusarnetManager::getHooksManager()
+{
+  return hooksManager;
+}
+
 std::string HusarnetManager::getVersion()
 {
   return HUSARNET_VERSION;
@@ -170,10 +175,8 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
   }
 
   websetup->join(parseJoinCode(joinCode), dashboardHostname);
-  LOG("Running join hook");
   hooksManager->runHook(HookType::joinned);
-  hooksManager->waitHook(HookType::joinned);
-  LOG("waiting for join hook");
+
 }
 
 bool HusarnetManager::isJoined()

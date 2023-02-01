@@ -57,8 +57,8 @@ private:
     std::map<std::string, Timer*> hookTimers;
     std::map<std::string, std::condition_variable*> hookConditionalVariables;
     std::mutex m;
-    std::chrono::milliseconds timespan{30};
-    std::chrono::milliseconds interval{1};
+    std::chrono::milliseconds timespan{100};
+    std::chrono::milliseconds interval{5};
     std::chrono::milliseconds waitspan{1000};
 
 };

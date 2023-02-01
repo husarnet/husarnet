@@ -78,6 +78,7 @@ class HusarnetManager {
   Identity* getIdentity();
   IpAddress getSelfAddress();
   PeerFlags* getSelfFlags();
+  HooksManager* getHooksManager();
 
   std::string getSelfHostname();
   bool setSelfHostname(std::string newHostname);
