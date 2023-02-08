@@ -264,6 +264,7 @@ std::list<std::string> WebsetupConnection::handleWebsetupCommand(
     return {"pong"};
   } else if(command == "init-response") {
     threadMutex.lock();
+    LOG("WWWWWOOOOOOOOOOOOOOOOOOOOWWWWWWWWWWW");
     lastInitReply = Port::getCurrentTime();
     joinCode = "";  // mark that we've already joined
     threadMutex.unlock();

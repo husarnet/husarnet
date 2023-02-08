@@ -76,7 +76,11 @@ void ConfigStorage::save()
   }
 
   LOG("saving settings");
+  manager->getHooksManager()->runHook(HookType::rw_request);
+  manager->getHooksManager()->waitHook(HookType::rw_request);
   writeFunc(serialize());
+  manager->getHooksManager()->runHook(HookType::rw_release);
+  manager->getHooksManager()->waitHook(HookType::rw_release);
   updateHostsInSystem();
 }
 

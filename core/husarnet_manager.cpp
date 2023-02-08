@@ -86,12 +86,21 @@ void HusarnetManager::setConfigStorage(ConfigStorage* cs)
 
 bool HusarnetManager::setSelfHostname(std::string newHostname)
 {
-  return Privileged::setSelfHostname(newHostname);
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
+  auto result = Privileged::setSelfHostname(newHostname);
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
+  return result;
 }
 
 void HusarnetManager::updateHosts()
 {
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
   Privileged::updateHostsFile(configStorage->getHostTable());
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
 }
 
 IpAddress HusarnetManager::resolveHostname(std::string hostname)
@@ -257,12 +266,21 @@ int HusarnetManager::getApiPort()
 
 std::string HusarnetManager::getApiSecret()
 {
-  return Privileged::readApiSecret();
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
+  auto result = Privileged::readApiSecret();
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
+  return result;
 }
 
 std::string HusarnetManager::rotateApiSecret()
 {
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
   Privileged::rotateApiSecret();
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
   return getApiSecret();
 }
 
@@ -393,15 +411,23 @@ void HusarnetManager::readLegacyConfig()
 
 void HusarnetManager::getLicenseStage()
 {
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
   license =
       new License(configStorage->getUserSetting(UserSetting::dashboardFqdn));
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
 }
 
 void HusarnetManager::getIdentityStage()
 {
   // TODO long term - reenable the smartcard support but with proper
   // multiplatform support
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
   identity = Privileged::readIdentity();
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
 }
 
 void HusarnetManager::startNetworkingStack()
