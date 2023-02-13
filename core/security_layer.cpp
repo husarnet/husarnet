@@ -101,6 +101,7 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
 
 void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 {
+  LOG_DEBUG("received data packet")
   const int headerSize = 1 + 24 + 16;
   if(data.size() <= headerSize + 8)
     return;
@@ -111,7 +112,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 
   if(!peer->negotiated) {
     sendHelloPacket(peer);
-    LOG_DEBUG("received data packet before hello");
+    LOG_WARNING("received data packet before hello");
     return;
   }
 
@@ -134,7 +135,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
   if(r == 0) {
     sendToUpperLayer(peerId, decryptedData);
   } else {
-    LOG("received forged message");
+    LOG_CRITICAL("received forged message");
   }
 }
 
@@ -181,19 +182,19 @@ void SecurityLayer::handleHelloPacket(
   LOG_DEBUG("peer flags: %llx", (unsigned long long)flags_bin);
 
   if(targetId != manager->getIdentity()->getDeviceId()) {
-    LOG("misdirected hello packet");
+    LOG_ERROR("misdirected hello packet");
     return;
   }
 
   if(NgSocketCrypto::pubkeyToDeviceId(incomingPubkey) != target) {
-    LOG("forged hello packet (invalid pubkey)");
+    LOG_CRITICAL("forged hello packet (invalid pubkey)");
     return;
   }
 
   if(!NgSocketCrypto::verifySignature(
          data.substr(0, data.size() - 64), "ng-kx-pubkey", incomingPubkey,
          signature)) {
-    LOG("forged hello packet (invalid signature)");
+    LOG_CRITICAL("forged hello packet (invalid signature)");
     return;
   }
 
@@ -239,7 +240,7 @@ void SecurityLayer::handleHelloPacket(
         encodeHex(peer->txKey.substr(0, 6)).c_str());
     finishNegotiation(peer);
   } else {
-    LOG("key exchange failed");
+    LOG_CRITICAL("key exchange failed");
     return;
   }
 
@@ -251,7 +252,7 @@ void SecurityLayer::handleHelloPacket(
 
 void SecurityLayer::finishNegotiation(Peer* peer)
 {
-  LOG("established secure connection to %s", encodeHex(peer->id).c_str());
+  LOG_INFO("established secure connection to %s", encodeHex(peer->id).c_str());
   peer->negotiated = true;
   for(auto& packet : peer->packetQueue) {
     queuedPackets--;

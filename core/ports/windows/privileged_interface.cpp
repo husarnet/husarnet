@@ -191,7 +191,7 @@ namespace Privileged {
     bool result =
         GetComputerNameEx(ComputerNamePhysicalDnsHostname, buf, &size);
     if(!result) {
-      LOG("Cant retrieve hostname");
+      LOG_WARNING("Cant retrieve hostname");
       return "windows-pc";
     }
 

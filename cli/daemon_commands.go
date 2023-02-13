@@ -102,6 +102,71 @@ var daemonStatusCommand = &cli.Command{
 	},
 }
 
+var daemonLogsCommand = &cli.Command{
+	Name:  "logs",
+	Usage: "Displaly and manage logs settings",
+	Subcommands: []*cli.Command{
+		{
+			Name:      "settings",
+			Aliases:   []string{"status"},
+			Usage:     "print logs settings",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				settings := callDaemonGet[LogsSettings]("/api/logs/settings").Result
+				printSuccess("Logs verbosity level: ",settings.VerbosityLevel)
+				printSuccess("Logs maximum size: ",settings.Size)
+				printSuccess("Logs current size: ",settings.CurrentSize)
+
+				return nil
+			},
+		},
+		{
+			Name:      "print",
+			Aliases:   []string{"get"},
+			Usage:     "print logs settings",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				logs := callDaemonGet[string]("/api/logs/get").Result
+				printSuccess(logs)
+
+				return nil
+			},
+		},
+		{
+			Name:      "verbosity",
+			Aliases:   []string{""},
+			Usage:     "change logs verbosity level",
+			ArgsUsage: "Wanted logs verbosity level 0-4", 
+			Action: func(ctx *cli.Context) error {
+				requiredArgumentsNumber(ctx, 1)
+
+				verbosity := ctx.Args().Get(0)
+				callDaemonPost[EmptyResult]("/api/logs/settings", url.Values{
+					"verbosity": {verbosity},
+				})
+				printSuccess("Verbosity level changed")
+				return nil
+			},
+		},
+		{
+			Name:      "size",
+			Aliases:   []string{""},
+			Usage:     "change size of in memeory stored logs",
+			ArgsUsage: "Wanted number of logs", 
+			Action: func(ctx *cli.Context) error {
+				requiredArgumentsNumber(ctx, 1)
+
+				size := ctx.Args().Get(0)
+				callDaemonPost[EmptyResult]("/api/logs/settings", url.Values{
+					"size": {size},
+				})
+				printSuccess("In memory logs size changed")
+				return nil
+			},
+		},
+	},
+}
+
 var daemonSetupServerCommand = &cli.Command{
 	Name:      "setup-server",
 	Aliases:   []string{"change-dashboard"},
@@ -434,6 +499,7 @@ var daemonCommand = &cli.Command{
 		joinCommand,
 		daemonSetupServerCommand,
 		daemonStartCommand,
+		daemonLogsCommand,
 		daemonRestartCommand,
 		daemonStopCommand,
 		daemonWhitelistCommand,

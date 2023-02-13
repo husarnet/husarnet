@@ -22,6 +22,7 @@ std::string LogManager::getLogs()
 // ones
 void LogManager::insert(std::string log)
 {
+  std::unique_lock<std::mutex> lock(mtx);
   LogElement* logElement = new LogElement(log);
   if(last == nullptr or size == 1) {
     if(first != nullptr)
@@ -51,6 +52,7 @@ void LogManager::insert(std::string log)
 
 void LogManager::setSize(uint16_t size)
 {
+  std::unique_lock<std::mutex> lock(mtx);
   if(size >= currentSize) {
     this->size = size;
     return;
@@ -90,12 +92,13 @@ void LogManager::setSize(uint16_t size)
   this->currentSize = size;
 };
 
-void LogManager::setVerbosity(uint16_t verb)
+void LogManager::setVerbosity(LogLevel verb)
 {
+  std::unique_lock<std::mutex> lock(mtx);
   verbosity = verb;
 };
 
-uint16_t LogManager::getVerbosity()
+LogLevel LogManager::getVerbosity()
 {
   return verbosity;
 };

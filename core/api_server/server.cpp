@@ -53,7 +53,7 @@ void ApiServer::returnInvalidQuery(
     httplib::Response& res,
     std::string errorString)
 {
-  LOG("httpApi: returning invalid query: %s", errorString.c_str());
+  LOG_ERROR("httpApi: returning invalid query: %s", errorString.c_str());
   json doc;
 
   doc["status"] = "invalid";
@@ -67,7 +67,7 @@ void ApiServer::returnError(
     httplib::Response& res,
     std::string errorString)
 {
-  LOG("httpApi: returning error: %s", errorString.c_str());
+  LOG_ERROR("httpApi: returning error: %s", errorString.c_str());
   json doc;
 
   doc["status"] = "error";
@@ -325,7 +325,7 @@ void ApiServer::runThread()
 
   // TODO this one makes a GET request require auth token in some cases - change
   // this so all write operations are under POST endpoint
-  svr.Get(
+  svr.Post(
       "/api/logs/settings",
       [&](const httplib::Request& req, httplib::Response& res) {
         auto logManager = getGlobalLogManager();
@@ -336,33 +336,41 @@ void ApiServer::runThread()
           }
 
           if(req.has_param("verbosity")) {
-            logManager->setVerbosity(
-                std::stoi(req.get_param_value("verbosity")));
+            if(std::stoi(req.get_param_value("verbosity"))<=4)
+            manager->setLogVerbosity(std::stoi(req.get_param_value("verbosity")));
           }
           if(req.has_param("size")) {
             logManager->setSize(std::stoi(req.get_param_value("size")));
           }
         }
 
+        returnSuccess(req, res);
+      });
+      
+      svr.Get(
+      "/api/logs/settings",
+      [&](const httplib::Request& req, httplib::Response& res) {
+        auto logManager = getGlobalLogManager();
+
         returnSuccess(
             req, res,
-            {{"verbosity", logManager->getVerbosity()},
+            {{"verbosity", logLevelToInt(logManager->getVerbosity())},
              {"size", logManager->getSize()},
              {"current_size", logManager->getCurrentSize()}});
       });
 
   if(!svr.bind_to_port("127.0.0.1", manager->getApiPort())) {
-    LOG("Unable to bind HTTP thread to port 127.0.0.1:%d. Exiting!",
+    LOG_CRITICAL("Unable to bind HTTP thread to port 127.0.0.1:%d. Exiting!",
         manager->getApiPort());
     exit(1);
   } else {
-    LOG("HTTP thread bound to 127.0.0.1:%d. Will start handling the "
+    LOG_WARNING("HTTP thread bound to 127.0.0.1:%d. Will start handling the "
         "connections.",
         manager->getApiPort());
   }
 
   if(!svr.listen_after_bind()) {
-    LOG("HTTP thread finished unexpectedly. Exiting!");
+    LOG_CRITICAL("HTTP thread finished unexpectedly. Exiting!");
     exit(1);
   }
 }

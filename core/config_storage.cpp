@@ -75,7 +75,7 @@ void ConfigStorage::save()
     return;
   }
 
-  LOG("saving settings");
+  LOG_INFO("saving settings");
   writeFunc(serialize());
   updateHostsInSystem();
 }

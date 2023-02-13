@@ -52,7 +52,7 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
     packet += mcastAddr;
     packet += data.substr(19);
 
-    LOG("received multicast from %s", encodeHex(source).c_str());
+    LOG_INFO("received multicast from %s", encodeHex(source).c_str());
 
     sendToUpperLayer(BadDeviceId, packet);
   } else {
@@ -77,12 +77,12 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
 void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
 {
   if(packet.size() <= 40) {
-    LOG("truncated packet");
+    LOG_INFO("truncated packet");
     return;
   }
   int version = packet[0] >> 4;
   if(version != 6) {
-    LOG("bad IP version %d", version);
+    LOG_WARNING("bad IP version %d", version);
     return;
   }
 
@@ -103,7 +103,7 @@ void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
     }
 
     if(dst.size() > 0) {
-      LOG("send multicast to %d destinations", (int)dst.size());
+      LOG_INFO("send multicast to %d destinations", (int)dst.size());
     }
   }
 

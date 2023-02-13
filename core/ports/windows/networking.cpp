@@ -40,15 +40,15 @@ void WindowsNetworking::setupNetworkInterface(std::string interfaceName)
   auto identity = Identity::deserialize(Port::readFile(identityPath));
 
   std::string sourceNetshName = getNetshNameForGuid(interfaceName);
-  LOG("sourceNetshName: %s", sourceNetshName.c_str());
+  LOG_WARNING("sourceNetshName: %s", sourceNetshName.c_str());
   if(netshName != sourceNetshName) {
     if(callWindowsCmd(
            "netsh interface set interface name = \"" + sourceNetshName +
            "\" newname = \"" + netshName + "\"") == 0) {
-      LOG("renamed successfully");
+      LOG_INFO("renamed successfully");
     } else {
       netshName = sourceNetshName;
-      LOG("rename failed");
+      LOG_WARNING("rename failed");
     }
   }
   std::string quotedName = "\"" + netshName + "\"";
@@ -57,7 +57,7 @@ void WindowsNetworking::setupNetworkInterface(std::string interfaceName)
       "netsh interface ipv6 add neighbors " + quotedName +
       " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001 52-54-00-fc-94-4d");
   std::string myIp = IpAddress::fromBinary(identity.getDeviceId()).str();
-  LOG("myIp is: %s", myIp.c_str());
+  LOG_INFO("myIp is: %s", myIp.c_str());
   callWindowsCmd(
       "netsh interface ipv6 add address " + quotedName + " " + myIp + "/128");
   callWindowsCmd(
@@ -71,7 +71,7 @@ void WindowsNetworking::setupNetworkInterface(std::string interfaceName)
 
 void WindowsNetworking::insertFirewallRule(std::string firewallRuleName) const
 {
-  LOG("Installing rule: %s in Windows Firewall", firewallRuleName.c_str());
+  LOG_WARNING("Installing rule: %s in Windows Firewall", firewallRuleName.c_str());
 
   std::string insertCmd =
       "powershell New-NetFirewallRule -DisplayName " + firewallRuleName +
@@ -104,7 +104,7 @@ void WindowsNetworking::allowHusarnetThroughWindowsFirewall(
     // Due to bug in earlier versions of Windows client, the rule was inserted
     // on each start of the service, which means users could have a lot of
     // redundant rules in their firewall. we delete them here to cleanup
-    LOG("Firewall rule: %s already exists! Cleaning up...",
+    LOG_WARNING("Firewall rule: %s already exists! Cleaning up...",
         firewallRuleName.c_str());
     deleteFirewallRules(firewallRuleName);
   }

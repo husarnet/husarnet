@@ -3,6 +3,22 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <string>
+#include <mutex>
+#include <enum.h>
+
+// Windows API is broken
+#undef ERROR
+BETTER_ENUM(LogLevel, int, DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
+static inline LogLevel logLevelFromInt(int value)
+{
+  return LogLevel::_from_integral(value);
+}
+
+static inline int logLevelToInt(LogLevel value)
+{
+  return value._to_integral();
+}
 
 class LogManager {
   class LogElement {
@@ -17,7 +33,9 @@ class LogManager {
   uint16_t currentSize;
   LogElement* first;
   LogElement* last;
-  uint16_t verbosity;
+  LogLevel verbosity;
+  std::mutex mtx;
+
 
  public:
   explicit LogManager(uint16_t size)
@@ -25,12 +43,12 @@ class LogManager {
         currentSize(0),
         first(nullptr),
         last(nullptr),
-        verbosity(3){};
+        verbosity(LogLevel::INFO){};
   std::string getLogs();
   void setSize(uint16_t size);
   void insert(std::string log);
-  void setVerbosity(uint16_t verb);
-  uint16_t getVerbosity();
+  void setVerbosity(LogLevel verb);
+  LogLevel getVerbosity();
   uint16_t getSize();
   uint16_t getCurrentSize();
 };

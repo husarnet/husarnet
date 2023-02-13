@@ -50,10 +50,10 @@ static HANDLE openTun(const std::string& name)
   if(tun_fd == INVALID_HANDLE_VALUE) {
     int errcode = GetLastError();
 
-    LOG("failed to open tap device: %d", errcode);
+    LOG_ERROR("failed to open tap device: %d", errcode);
     return INVALID_HANDLE_VALUE;
   }
-  LOG("success: tap device opened");
+  LOG_INFO("success: tap device opened");
 
   return tun_fd;
 }
@@ -119,7 +119,7 @@ string_view TunTap::read(std::string& buffer)
     if(ReadFile(tap_fd, &buffer[0], (DWORD)buffer.size(), NULL, &overlapped) ==
        0) {
       if(GetLastError() != ERROR_IO_PENDING) {
-        LOG("tap read failed %d", (int)GetLastError());
+        LOG_ERROR("tap read failed %d", (int)GetLastError());
         assert(false);
       }
     }
@@ -140,7 +140,7 @@ void TunTap::write(string_view data)
     if(WriteFile(tap_fd, data.data(), (DWORD)data.size(), NULL, &overlapped)) {
       auto error = GetLastError();
       if(error != ERROR_IO_PENDING) {
-        LOG("tap write failed");
+        LOG_ERROR("tap write failed");
       }
     }
 
@@ -157,11 +157,11 @@ void TunTap::bringUp()
   if(DeviceIoControl(
          tap_fd, TAP_IOCTL_SET_MEDIA_STATUS, &flag, sizeof(flag), &flag,
          sizeof(flag), &len, NULL) == 0) {
-    LOG("failed to bring up the tap device");
+    LOG_ERROR("failed to bring up the tap device");
     return;
   }
 
-  LOG("tap config OK");
+  LOG_INFO("tap config OK");
 }
 
 std::string TunTap::getMac()
@@ -173,10 +173,10 @@ std::string TunTap::getMac()
   if(DeviceIoControl(
          tap_fd, TAP_IOCTL_GET_MAC, &hwaddr[0], hwaddr.size(), &hwaddr[0],
          hwaddr.size(), &len, NULL) == 0) {
-    LOG("failed to retrieve MAC address");
+    LOG_ERROR("failed to retrieve MAC address");
     assert(false);
   } else {
-    LOG("MAC address: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 0xFF & hwaddr[0],
+    LOG_WARNING("MAC address: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 0xFF & hwaddr[0],
         0xFF & hwaddr[1], 0xFF & hwaddr[2], 0xFF & hwaddr[3], 0xFF & hwaddr[4],
         0xFF & hwaddr[5]);
   }

@@ -88,15 +88,15 @@ void writeBlob(const char* name, const std::string& data)
     nvsInit = true;
   }
 
-  LOG("write %s (len: %d)", name, (int)data.size());
+  LOG_INFO("write %s (len: %d)", name, (int)data.size());
 
   if(nvs_set_blob(nvsHandle, name, &data[0], data.size()) != ESP_OK) {
-    LOG("failed to update key %s", name);
+    LOG_ERROR("failed to update key %s", name);
     return;
   }
 
   if(nvs_commit(nvsHandle) != ESP_OK) {
-    LOG("failed to commit key %s", name);
+    LOG_ERROR("failed to commit key %s", name);
   }
 }
 

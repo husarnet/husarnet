@@ -77,7 +77,7 @@ static void ares_local_callback(
   result->status = status;
 
   if(status != ARES_SUCCESS) {
-    LOG("DNS resolution failed. c-ares status code: %i (%s)", status,
+    LOG_ERROR("DNS resolution failed. c-ares status code: %i (%s)", status,
         ares_strerror(status));
     return;
   }
@@ -120,7 +120,7 @@ namespace Port {
   IpAddress resolveToIp(const std::string& hostname)
   {
     if(hostname.empty()) {
-      LOG("Empty hostname provided for a DNS search");
+      LOG_ERROR("Empty hostname provided for a DNS search");
       return IpAddress();
     }
 
@@ -128,7 +128,7 @@ namespace Port {
     ares_channel channel;
 
     if(ares_init(&channel) != ARES_SUCCESS) {
-      LOG("Unable to init ARES/DNS channel for doman: %s", hostname.c_str());
+      LOG_ERROR("Unable to init ARES/DNS channel for domain: %s", hostname.c_str());
       return IpAddress();
     }
 
@@ -157,12 +157,12 @@ namespace Port {
 
     auto tunTap = new TunTap();
     auto interfaceName = tunTap->getName();
-    LOG("our utun interface name is %s", interfaceName.c_str());
+    LOG_INFO("our utun interface name is %s", interfaceName.c_str());
 
     if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||
        system(("sysctl net.ipv6.conf." + interfaceName + ".disable_ipv6=0")
                   .c_str()) != 0) {
-      LOG("failed to enable IPv6 (may be harmless)");
+      LOG_WARNING("failed to enable IPv6 (may be harmless)");
     }
 
     system(("ifconfig " + interfaceName + " inet6 " + myIp).c_str());
@@ -191,7 +191,7 @@ namespace Port {
 
         if(key == candidate) {
           result[UserSetting::_from_string(enumName)] = value;
-          LOG("Overriding user setting %s=%s", enumName, value.c_str());
+          LOG_WARNING("Overriding user setting %s=%s", enumName, value.c_str());
         }
       }
     }
@@ -203,7 +203,7 @@ namespace Port {
   {
     std::ifstream f(path);
     if(!f.good()) {
-      LOG("failed to open %s", path.c_str());
+      LOG_ERROR("failed to open %s", path.c_str());
       exit(1);
     }
 
@@ -330,7 +330,7 @@ namespace Port {
         perror("systemd close");
       }
 
-      LOG("Systemd notification end");
+      LOG_WARNING("Systemd notification end");
     }
   }
 

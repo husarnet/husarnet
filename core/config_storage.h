@@ -39,7 +39,8 @@ BETTER_ENUM(
     overrideSourcePort = 11,      // int
     extraAdvertisedAddress = 12,  // inet
     joinCode = 13,                // string, this will never be persisted
-    hostname = 14                 // string, this will never be persisted
+    hostname = 14,                // string, this will never be persisted
+    logVerbosity = 16             // int
 )
 
 const std::string trueValue = "true";
