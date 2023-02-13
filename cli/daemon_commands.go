@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"strconv"
 
 	"github.com/pterm/pterm"
 	"github.com/urfave/cli/v2"
@@ -113,9 +114,9 @@ var daemonLogsCommand = &cli.Command{
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				settings := callDaemonGet[LogsSettings]("/api/logs/settings").Result
-				printSuccess("Logs verbosity level: ",settings.VerbosityLevel)
-				printSuccess("Logs maximum size: ",settings.Size)
-				printSuccess("Logs current size: ",settings.CurrentSize)
+				printSuccess("Logs verbosity level: "+strconv.Itoa(settings.VerbosityLevel))
+				printSuccess("Logs maximum size: "+strconv.Itoa(settings.Size))
+				printSuccess("Logs current size: "+strconv.Itoa(settings.CurrentSize))
 
 				return nil
 			},
@@ -127,7 +128,11 @@ var daemonLogsCommand = &cli.Command{
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				logs := callDaemonGet[string]("/api/logs/get").Result
-				printSuccess(logs)
+				lines := strings.Split(logs,"\n")
+
+				for _, line := range lines {
+					printInfo(line)
+				}
 
 				return nil
 			},

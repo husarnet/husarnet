@@ -13,6 +13,7 @@ std::string LogManager::getLogs()
   std::string result = "";
   while(itr != nullptr) {
     result += itr->log;
+    result += '\n';
     itr = itr->prev;
   }
   return result;
