@@ -11,7 +11,8 @@ bin\nssm set husarnet DisplayName "Husarnet"
 
 bin\nssm set husarnet AppRotateOnline 1
 bin\nssm set husarnet AppRotateFiles 1
-bin\nssm set husarnet AppRotateBytes 100000
+bin\nssm set husarnet AppRotateBytes 1000000
+bin\nssm set husarnet AppRotateSeconds 86400
 bin\nssm set husarnet AppStdout "%PROGRAMDATA%\Husarnet\husarnet.log"
 bin\nssm set husarnet AppStderr "%PROGRAMDATA%\Husarnet\husarnet.log"
 
