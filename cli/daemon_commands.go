@@ -153,7 +153,7 @@ var daemonWhitelistCommand = &cli.Command{
 			Usage:     "disable whitelist",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
-				callDaemonPost[EmptyResult]("/api/whitelist/disable", url.Values{})
+				callDaemonPost[EmptyResult]("/api/whitelist/whitelist", url.Values{})
 				printSuccess("Disabled the whitelist")
 
 				return nil
@@ -238,7 +238,7 @@ var daemonHooksCommand = &cli.Command{
 		},
 		{
 			Name:      "show",
-			Aliases:   []string{"check"},
+			Aliases:   []string{"check", "ls"},
 			Usage:     "check if hooks are enabled",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {

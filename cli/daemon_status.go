@@ -171,9 +171,9 @@ func printWhitelist(status DaemonStatus, verbose bool) {
 
 func printHooksStatus(status DaemonStatus) {
 	if status.HooksEnabled {
-		pterm.Printfln("Hooks are currently enabled")
+		pterm.Printfln("Daemon hooks are currently enabled")
 	}	else {
-		pterm.Printfln("Hooks are currently disabled")
+		pterm.Printfln("Daemon hooks are currently disabled")
 	}
 }
 
@@ -200,6 +200,8 @@ func printStatus(ctx *cli.Context) {
 	} else {
 		dashboardDot = greenDot
 	}
+
+	printHooksStatus(status)
 
 	printStatusHeader("Dashboard URL")
 	printStatusLine(dashboardDot, "CLI", husarnetDashboardFQDN)

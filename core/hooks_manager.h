@@ -47,12 +47,12 @@ public:
 private:
     HusarnetManager * manager;
     std::map<HookType, std::string> hookDirNames{
-    {HookType::hostTableChanged, "hook.hostTableChanged.d"},
-    {HookType::whiteListChanged, "hook.whiteListChanged.d"},
+    {HookType::hosttable_changed, "hook.hosttable_changed.d"},
+    {HookType::whitelist_changed, "hook.whitelist_changed.d"},
     {HookType::joinned, "hook.joined.d"},
-    {HookType::recconected, "hook.reconnected.d"},
-    {HookType::rw_request, "hook.rwRequest.d"},
-    {HookType::rw_release, "hook.rwRelease.d"}
+    {HookType::reconnected, "hook.reconnected.d"},
+    {HookType::rw_request, "hook.rw_request.d"},
+    {HookType::rw_release, "hook.rw_release.d"}
     };
     std::map<std::string, Timer*> hookTimers;
     std::map<std::string, std::condition_variable*> hookConditionalVariables;

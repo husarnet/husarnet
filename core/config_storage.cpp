@@ -112,7 +112,7 @@ void ConfigStorage::hostTableAdd(std::string hostname, IpAddress address)
 
   hostCacheInvalidated = true;
   save();
-  manager->getHooksManager()->runHook(HookType::hostTableChanged);
+  manager->getHooksManager()->runHook(HookType::hosttable_changed);
 }
 
 void ConfigStorage::hostTableRm(std::string hostname)
@@ -121,7 +121,7 @@ void ConfigStorage::hostTableRm(std::string hostname)
 
   hostCacheInvalidated = true;
   save();
-   manager->getHooksManager()->runHook(HookType::hostTableChanged);
+   manager->getHooksManager()->runHook(HookType::hosttable_changed);
 }
 
 std::map<std::string, IpAddress> ConfigStorage::getHostTable()
@@ -152,7 +152,7 @@ void ConfigStorage::whitelistAdd(IpAddress address)
 
   currentData[WHITELIST_KEY] += address.toString();
   save();
-  manager->getHooksManager()->runHook(HookType::whiteListChanged);
+  manager->getHooksManager()->runHook(HookType::whitelist_changed);
 }
 
 void ConfigStorage::whitelistRm(IpAddress address)
@@ -175,7 +175,7 @@ void ConfigStorage::whitelistRm(IpAddress address)
   }
 
   save();
-  manager->getHooksManager()->runHook(HookType::whiteListChanged);
+  manager->getHooksManager()->runHook(HookType::whitelist_changed);
 }
 
 bool ConfigStorage::isOnWhitelist(IpAddress address)

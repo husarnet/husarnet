@@ -19,10 +19,10 @@
 BETTER_ENUM(
     HookType,
     int,
-    hostTableChanged = 1,
-    whiteListChanged = 2,
+    hosttable_changed = 1,
+    whitelist_changed = 2,
     joinned = 3,
-    recconected = 4,
+    reconnected = 4,
     rw_request=5,
     rw_release=6)
 

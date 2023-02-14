@@ -380,19 +380,16 @@ namespace Port {
     struct dirent* ent;
     while ((ent = readdir(dir)) != NULL) {
         std::string fileName = ent->d_name;
-        if (fileName.length() > 3 && fileName.substr(fileName.length() - 3) == ".sh") {
             std::string filePath = path + "/" + fileName;
             if (access(filePath.c_str(), X_OK) == 0) {
                 pid_t pid = fork();
                 if (pid == 0) {
-                    char *args[] = { (char*)"bash", (char*)filePath.c_str(), NULL };
-                    execv("/bin/bash", args);
+                    std::system((char*)filePath.c_str());
                 } else {
                     int status;
                     waitpid(pid, &status, 0);
                 }
             }
-        }
     }
     closedir(dir);
   }
@@ -409,13 +406,11 @@ namespace Port {
     struct dirent* ent;
     while ((ent = readdir(dir)) != NULL) {
         std::string fileName = ent->d_name;
-        if (fileName.length() > 3 && fileName.substr(fileName.length() - 3) == ".sh") {
             std::string filePath = path + "/" + fileName;
             if (access(filePath.c_str(), X_OK) == 0) {
                 closedir(dir);
                 return true;
             }
-        }
     }
     closedir(dir);
     return false;

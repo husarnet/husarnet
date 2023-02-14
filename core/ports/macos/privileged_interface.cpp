@@ -168,20 +168,31 @@ namespace Privileged {
   Identity readIdentity()
   {
     auto identityPath = getIdentityPath();
+    auto identity = Identity::deserialize(Port::readFile(identityPath));
+    return identity;
+  }
+
+  bool checkValidIdentityExists()
+  {
+    auto identityPath = getIdentityPath();
 
     if(!Port::isFile(identityPath)) {
-      auto identity = Identity::create();
-      Privileged::writeIdentity(identity);
-      return identity;
+      return false;
     }
 
     auto identity = Identity::deserialize(Port::readFile(identityPath));
 
     if(!identity.isValid()) {
-      identity = Identity::create();
-      Privileged::writeIdentity(identity);
+      return false;
     }
 
+    return true;
+  }
+
+  Identity createIdentity()
+  {
+    auto identity = Identity::create();
+    Privileged::writeIdentity(identity);
     return identity;
   }
 

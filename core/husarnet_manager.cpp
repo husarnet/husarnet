@@ -184,7 +184,6 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
   }
 
   websetup->join(parseJoinCode(joinCode), dashboardHostname);
-  hooksManager->runHook(HookType::joinned);
 
 }
 
@@ -237,12 +236,12 @@ bool HusarnetManager::isWhitelistEnabled()
 
 void HusarnetManager::whitelistEnable()
 {
-  configStorage->setUserSetting(UserSetting::enableWhitelist, true);
+  configStorage->setUserSetting(UserSetting::enableWhitelist, trueValue);
 }
 
 void HusarnetManager::whitelistDisable()
 {
-  configStorage->setUserSetting(UserSetting::enableWhitelist, false);
+  configStorage->setUserSetting(UserSetting::enableWhitelist, falseValue);
 }
 
 bool HusarnetManager::isPeerAddressAllowed(IpAddress address)
@@ -327,12 +326,12 @@ bool HusarnetManager::areHooksEnabled()
 
 void HusarnetManager::hooksEnable()
 {
-  configStorage->setUserSetting(UserSetting::enableHooks, "true");
+  configStorage->setUserSetting(UserSetting::enableHooks, trueValue);
 }
 
 void HusarnetManager::hooksDisable()
 {
-  configStorage->setUserSetting(UserSetting::enableHooks, "false");
+  configStorage->setUserSetting(UserSetting::enableHooks, falseValue);
 }
 
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
@@ -423,11 +422,18 @@ void HusarnetManager::getIdentityStage()
 {
   // TODO long term - reenable the smartcard support but with proper
   // multiplatform support
+  if(Privileged::checkValidIdentityExists())
+  {
+    identity = Privileged::readIdentity();
+  }
+  else
+  {
   this->getHooksManager()->runHook(HookType::rw_request);
   this->getHooksManager()->waitHook(HookType::rw_request);
-  identity = Privileged::readIdentity();
+  identity = Privileged::createIdentity();
   this->getHooksManager()->runHook(HookType::rw_release);
   this->getHooksManager()->waitHook(HookType::rw_release);
+  }
 }
 
 void HusarnetManager::startNetworkingStack()

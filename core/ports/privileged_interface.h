@@ -32,6 +32,8 @@ namespace Privileged {
   void writeConfig(std::string);
 
   Identity readIdentity();
+  Identity createIdentity();
+  bool checkValidIdentityExists();
   void writeIdentity(Identity identity);
 
   std::string readApiSecret();
