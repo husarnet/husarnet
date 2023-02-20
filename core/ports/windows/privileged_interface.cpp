@@ -234,9 +234,9 @@ namespace Privileged {
 
   void runScripts(std::string path)
   {
-    char* appdata = std::getenv("APPDATA");
-  std::string full_path(appdata);
-  full_path+="Husarnet\\";
+    char* conf_path = std::getenv("PROGRAMDATA");
+  std::string full_path(conf_path);
+  full_path+="\\Husarnet\\";
   full_path+=path;
   std::filesystem::path dir(full_path);
   std::string msg = "checking if valid hooks under path " + full_path;
@@ -256,8 +256,8 @@ namespace Privileged {
 
   bool checkScriptsExist(std::string path)
   {
-  char* appdata = std::getenv("APPDATA");
-  std::string full_path(appdata);
+  char* conf_path = std::getenv("PROGRAMDATA");
+  std::string full_path(conf_path);
   full_path+="Husarnet\\";
   full_path+=path;
   std::filesystem::path dir(full_path);
