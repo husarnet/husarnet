@@ -258,7 +258,7 @@ namespace Privileged {
   {
   char* conf_path = std::getenv("PROGRAMDATA");
   std::string full_path(conf_path);
-  full_path+="Husarnet\\";
+  full_path+="\\Husarnet\\";
   full_path+=path;
   std::filesystem::path dir(full_path);
   std::string msg = "checking if valid hooks under path " + full_path;
