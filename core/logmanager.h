@@ -2,6 +2,9 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <mutex>
 #include <enum.h>
@@ -35,6 +38,7 @@ class LogManager {
   LogElement* last;
   LogLevel verbosity;
   std::mutex mtx;
+  void prependLogTime(std::string&);
 
 
  public:
@@ -46,7 +50,7 @@ class LogManager {
         verbosity(LogLevel::INFO){};
   std::string getLogs();
   void setSize(uint16_t size);
-  void insert(std::string log);
+  void insert(std::string &log);
   void setVerbosity(LogLevel verb);
   LogLevel getVerbosity();
   uint16_t getSize();

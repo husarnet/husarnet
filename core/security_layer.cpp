@@ -101,7 +101,7 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
 
 void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 {
-  LOG_DEBUG("received data packet")
+  LOG_DEBUG("received data packet from peer: %s", std::string(peerId).c_str())
   const int headerSize = 1 + 24 + 16;
   if(data.size() <= headerSize + 8)
     return;

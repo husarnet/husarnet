@@ -323,8 +323,6 @@ void ApiServer::runThread()
         returnSuccess(req, res, getGlobalLogManager()->getLogs());
       });
 
-  // TODO this one makes a GET request require auth token in some cases - change
-  // this so all write operations are under POST endpoint
   svr.Post(
       "/api/logs/settings",
       [&](const httplib::Request& req, httplib::Response& res) {
@@ -336,11 +334,15 @@ void ApiServer::runThread()
           }
 
           if(req.has_param("verbosity")) {
-            if(std::stoi(req.get_param_value("verbosity"))<=4)
-            manager->setLogVerbosity(std::stoi(req.get_param_value("verbosity")));
+            if(std::stoi(req.get_param_value("verbosity"))<=logLevelToInt(LogLevel::CRITICAL)){
+              manager->setLogVerbosity(std::stoi(req.get_param_value("verbosity")));
+            }
           }
           if(req.has_param("size")) {
-            logManager->setSize(std::stoi(req.get_param_value("size")));
+            if(std::stoi(req.get_param_value("size"))<=1000 && std::stoi(req.get_param_value("size"))>=10)
+            {
+              logManager->setSize(std::stoi(req.get_param_value("size")));
+            }
           }
         }
 

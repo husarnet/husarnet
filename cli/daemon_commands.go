@@ -105,7 +105,7 @@ var daemonStatusCommand = &cli.Command{
 
 var daemonLogsCommand = &cli.Command{
 	Name:  "logs",
-	Usage: "Displaly and manage logs settings",
+	Usage: "Display and manage logs settings",
 	Subcommands: []*cli.Command{
 		{
 			Name:      "settings",
@@ -124,7 +124,7 @@ var daemonLogsCommand = &cli.Command{
 		{
 			Name:      "print",
 			Aliases:   []string{"get"},
-			Usage:     "print logs settings",
+			Usage:     "print logs",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				logs := callDaemonGet[string]("/api/logs/get").Result
@@ -141,31 +141,41 @@ var daemonLogsCommand = &cli.Command{
 			Name:      "verbosity",
 			Aliases:   []string{""},
 			Usage:     "change logs verbosity level",
-			ArgsUsage: "Wanted logs verbosity level 0-4", 
+			ArgsUsage: "[0-4]", 
 			Action: func(ctx *cli.Context) error {
 				requiredArgumentsNumber(ctx, 1)
 
-				verbosity := ctx.Args().Get(0)
-				callDaemonPost[EmptyResult]("/api/logs/settings", url.Values{
-					"verbosity": {verbosity},
-				})
-				printSuccess("Verbosity level changed")
+				verbosityStr := ctx.Args().Get(0)
+				verbosity, error := strconv.Atoi(verbosityStr)
+				if(error ==nil && verbosity<=4 && verbosity>=0){
+					callDaemonPost[EmptyResult]("/api/logs/settings", url.Values{
+						"verbosity": {verbosityStr},
+					})
+					printSuccess("Verbosity level changed")
+					return nil
+				}
+				printError("Verbosity provided should belong to range 0-4")
 				return nil
 			},
 		},
 		{
 			Name:      "size",
 			Aliases:   []string{""},
-			Usage:     "change size of in memeory stored logs",
-			ArgsUsage: "Wanted number of logs", 
+			Usage:     "change size of in memory stored logs",
+			ArgsUsage: "[10-1000]", 
 			Action: func(ctx *cli.Context) error {
 				requiredArgumentsNumber(ctx, 1)
 
-				size := ctx.Args().Get(0)
-				callDaemonPost[EmptyResult]("/api/logs/settings", url.Values{
-					"size": {size},
-				})
-				printSuccess("In memory logs size changed")
+				sizeStr := ctx.Args().Get(0)
+				size, error := strconv.Atoi(sizeStr)
+				if(error == nil && size<=1000 && size>=10){
+					callDaemonPost[EmptyResult]("/api/logs/settings", url.Values{
+						"size": {sizeStr},
+					})
+					printSuccess("In memory logs size changed")
+					return nil
+				}
+				printError("Size provided should belong to range 10-1000")
 				return nil
 			},
 		},
