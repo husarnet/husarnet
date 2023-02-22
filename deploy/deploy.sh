@@ -87,6 +87,11 @@ if [ "${deploy_target}" == "nightly" ]; then
   sed "s=install.husarnet=nightly.husarnet=" ${working_path}/husarnet_deb.repo > ${working_path}/husarnet-nightly_deb.repo
   sed "s=husarnet.com/husarnet_rpm.repo=husarnet.com/husarnet-nightly_rpm.repo=" -i ${working_path}/install-nightly.sh
   sed "s=husarnet.com/husarnet_deb.repo=husarnet.com/husarnet-nightly_deb.repo=" -i ${working_path}/install-nightly.sh
+
+  # if on nightly, we can also have mac
+  echo "[==] Copy MacOS ARM64 binaries"
+  tar -zcf husarnet-macos-${package_version}-arm64.tar.gz husarnet-macos-arm64 husarnet-daemon-macos-arm64
+  cp husarnet-macos-${package_version}-arm64.tar.gz ${working_path}/husarnet-macos-${package_version}-arm64.tar.gz
 fi
 
 echo "[==] Copy also windows installer exe"
