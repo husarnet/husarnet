@@ -7,6 +7,6 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "OK."
     exit 0
 } else {
-    Write-Host "Nie ok."
+    Write-Host "Not ok."
     exit 1
 }
