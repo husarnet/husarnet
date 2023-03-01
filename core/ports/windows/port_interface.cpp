@@ -46,7 +46,7 @@ static std::vector<std::string> getExistingDeviceNames()
       adapters, NULL, NULL, NULL, &sub_keys, NULL, NULL, NULL, NULL, NULL, NULL,
       NULL);
   if(ret != ERROR_SUCCESS) {
-    LOG_ERROR("RegQueryInfoKey returned error");
+    LOG_ERROR("RegQueryInfoKey returned error %u", ret);
     return {};
   }
 
@@ -92,7 +92,7 @@ static std::vector<std::string> getExistingDeviceNames()
       ret = RegQueryValueEx(
           adapter, "NetCfgInstanceId", NULL, &type, (LPBYTE)data, &len);
       if(ret != ERROR_SUCCESS) {
-        LOG_ERROR("RegQueryValueEx returned error");
+        LOG_ERROR("RegQueryValueEx returned error %u", ret);
         goto clean;
       }
       LOG_WARNING("found tap device: %s", data);
@@ -269,7 +269,8 @@ namespace Port {
     bool success =
         MoveFileEx(src.c_str(), dst.c_str(), MOVEFILE_REPLACE_EXISTING);
     if(!success) {
-      LOG_ERROR("failed to rename %s to %s with following error code: %ld",
+      LOG_ERROR(
+          "failed to rename %s to %s with following error code: %ld",
           src.c_str(), dst.c_str(), GetLastError());
     }
     return success;

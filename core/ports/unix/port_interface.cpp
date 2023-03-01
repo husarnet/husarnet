@@ -77,7 +77,8 @@ static void ares_local_callback(
   result->status = status;
 
   if(status != ARES_SUCCESS) {
-    LOG_ERROR("DNS resolution failed. c-ares status code: %i (%s)", status,
+    LOG_ERROR(
+        "DNS resolution failed. c-ares status code: %i (%s)", status,
         ares_strerror(status));
     return;
   }
@@ -137,7 +138,8 @@ namespace Port {
     ares_channel channel;
 
     if(ares_init(&channel) != ARES_SUCCESS) {
-      LOG_ERROR("Unable to init ARES/DNS channel for domain: %s", hostname.c_str());
+      LOG_ERROR(
+          "Unable to init ARES/DNS channel for domain: %s", hostname.c_str());
       return IpAddress();
     }
 
@@ -284,12 +286,12 @@ namespace Port {
 
     bool success = writeFileDirect(tmpPath, data);
     if(!success) {
-      LOG_INFO(
+      LOG_WARNING(
           "unable to write to a temporary file %s, writing to %s directly",
           tmpPath.c_str(), path.c_str());
       success = writeFileDirect(path, data);
       if(!success) {
-        LOG_WARNING("unable to write to %s directly", path.c_str());
+        LOG_ERROR("unable to write to %s directly", path.c_str());
         return false;
       }
       return true;
@@ -300,18 +302,18 @@ namespace Port {
       return true;
     }
 
-    LOG_DEBUG(
+    LOG_WARNING(
         "unable to rename %s to %s, writing to %s directly", tmpPath.c_str(),
         path.c_str(), path.c_str());
 
     success = removeFile(tmpPath);
     if(!success) {
-      LOG_INFO("unable to remove temporary file %s", tmpPath.c_str());
+      LOG_WARNING("unable to remove temporary file %s", tmpPath.c_str());
     }
 
     success = writeFileDirect(path, data);
     if(!success) {
-      LOG_WARNING("unable to write directly to %s", path.c_str());
+      LOG_ERROR("unable to write directly to %s", path.c_str());
       return false;
     }
 
@@ -358,7 +360,7 @@ namespace Port {
         perror("systemd close");
       }
 
-      LOG_WARNING("Systemd notification end");
+      LOG_INFO("Systemd notification end");
     }
   }
 

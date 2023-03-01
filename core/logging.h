@@ -11,7 +11,6 @@
 
 #include "husarnet/logmanager.h"
 
-
 static inline const std::string pad(int minLength, const std::string& text)
 {
   int padSize = 0;
@@ -32,8 +31,7 @@ static inline void log(
     const char* format,
     ...)
 {
-  if(level<getGlobalLogManager()->getVerbosity())
-  {
+  if(level < getGlobalLogManager()->getVerbosity()) {
     return;
   }
   int buffer_len = 256;

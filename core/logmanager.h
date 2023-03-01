@@ -4,9 +4,10 @@
 #pragma once
 #include <chrono>
 #include <iomanip>
+#include <mutex>
 #include <sstream>
 #include <string>
-#include <mutex>
+
 #include <enum.h>
 
 // Windows API is broken
@@ -40,7 +41,6 @@ class LogManager {
   std::mutex mtx;
   void prependLogTime(std::string&);
 
-
  public:
   explicit LogManager(uint16_t size)
       : size(size),
@@ -50,7 +50,7 @@ class LogManager {
         verbosity(LogLevel::INFO){};
   std::string getLogs();
   void setSize(uint16_t size);
-  void insert(std::string &log);
+  void insert(std::string& log);
   void setVerbosity(LogLevel verb);
   LogLevel getVerbosity();
   uint16_t getSize();

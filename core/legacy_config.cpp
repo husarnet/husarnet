@@ -44,7 +44,7 @@ std::vector<std::string> LegacyConfig::sqliteIterate(
     } else if(res == SQLITE_ROW) {
       result.push_back(f());
     } else {
-      LOG_WARNING("SQLite read failed");
+      LOG_WARNING("SQLite read failed with %d", res);
     }
   }
   return result;
@@ -60,7 +60,9 @@ std::string LegacyConfig::sqliteGetValue(sqlite3_stmt* stmt, int pos)
 bool LegacyConfig::open()
 {
   if(sqlite3_open(pathToLegacyConfig.c_str(), &db) != SQLITE_OK) {
-    LOG_WARNING("failed to open legacy config database");
+    LOG_WARNING(
+        "failed to open legacy config database in %s",
+        pathToLegacyConfig.c_str());
     return false;
   }
 

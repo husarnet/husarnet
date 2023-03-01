@@ -112,7 +112,9 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 
   if(!peer->negotiated) {
     sendHelloPacket(peer);
-    LOG_WARNING("received data packet before hello");
+    LOG_WARNING(
+        "received data packet before hello from peer: %s",
+        std::string(peerId).c_str());
     return;
   }
 
@@ -135,7 +137,8 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
   if(r == 0) {
     sendToUpperLayer(peerId, decryptedData);
   } else {
-    LOG_CRITICAL("received forged message");
+    LOG_WARNING(
+        "received forged message from peer: %s", std::string(peerId).c_str());
   }
 }
 
@@ -182,19 +185,24 @@ void SecurityLayer::handleHelloPacket(
   LOG_DEBUG("peer flags: %llx", (unsigned long long)flags_bin);
 
   if(targetId != manager->getIdentity()->getDeviceId()) {
-    LOG_ERROR("misdirected hello packet");
+    LOG_ERROR(
+        "misdirected hello packet for peer: %s", std::string(targetId).c_str());
     return;
   }
 
   if(NgSocketCrypto::pubkeyToDeviceId(incomingPubkey) != target) {
-    LOG_CRITICAL("forged hello packet (invalid pubkey)");
+    LOG_CRITICAL(
+        "forged hello packet (invalid pubkey: %s)",
+        std::string(incomingPubkey).c_str());
     return;
   }
 
   if(!NgSocketCrypto::verifySignature(
          data.substr(0, data.size() - 64), "ng-kx-pubkey", incomingPubkey,
          signature)) {
-    LOG_CRITICAL("forged hello packet (invalid signature)");
+    LOG_CRITICAL(
+        "forged hello packet (invalid signature: %s)",
+        std::string(signature).c_str());
     return;
   }
 
@@ -206,7 +214,7 @@ void SecurityLayer::handleHelloPacket(
   if(myHelloseq != this->helloseq) {  // prevents replay DoS
     // this will occur under normal operation, if both sides attempt to
     // initialize at once or two handshakes are interleaved
-    LOG_DEBUG("invalid helloseq");
+    LOG_DEBUG("invalid helloseq from %s", std::string(peer->id).c_str());
     return;
   }
 
@@ -240,7 +248,7 @@ void SecurityLayer::handleHelloPacket(
         encodeHex(peer->txKey.substr(0, 6)).c_str());
     finishNegotiation(peer);
   } else {
-    LOG_CRITICAL("key exchange failed");
+    LOG_CRITICAL("key exchange failed with %s", std::string(peer->id).c_str());
     return;
   }
 

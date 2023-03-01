@@ -71,7 +71,7 @@ void WindowsNetworking::setupNetworkInterface(std::string interfaceName)
 
 void WindowsNetworking::insertFirewallRule(std::string firewallRuleName) const
 {
-  LOG_WARNING("Installing rule: %s in Windows Firewall", firewallRuleName.c_str());
+  LOG_INFO("Installing rule: %s in Windows Firewall", firewallRuleName.c_str());
 
   std::string insertCmd =
       "powershell New-NetFirewallRule -DisplayName " + firewallRuleName +
@@ -104,7 +104,8 @@ void WindowsNetworking::allowHusarnetThroughWindowsFirewall(
     // Due to bug in earlier versions of Windows client, the rule was inserted
     // on each start of the service, which means users could have a lot of
     // redundant rules in their firewall. we delete them here to cleanup
-    LOG_WARNING("Firewall rule: %s already exists! Cleaning up...",
+    LOG_WARNING(
+        "Firewall rule: %s already exists! Cleaning up...",
         firewallRuleName.c_str());
     deleteFirewallRules(firewallRuleName);
   }

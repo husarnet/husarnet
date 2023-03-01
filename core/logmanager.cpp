@@ -19,7 +19,7 @@ std::string LogManager::getLogs()
   return result;
 };
 
-void LogManager::insert(std::string &log)
+void LogManager::insert(std::string& log)
 {
   std::unique_lock<std::mutex> lock(mtx);
   prependLogTime(log);

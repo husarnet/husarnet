@@ -77,7 +77,7 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
 void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
 {
   if(packet.size() <= 40) {
-    LOG_INFO("truncated packet");
+    LOG_WARNING("truncated packet from %s", std::string(target).c_str());
     return;
   }
   int version = packet[0] >> 4;

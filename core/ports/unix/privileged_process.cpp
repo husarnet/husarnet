@@ -62,7 +62,7 @@ json PrivilegedProcess::handleSetSelfHostname(json data)
   Port::writeFile(hostnamePath, newHostname);
 
   if(system("hostname -F /etc/hostname") != 0) {
-    LOG_ERROR("cannot update hostname");
+    LOG_ERROR("cannot update hostname to %s", newHostname.c_str());
     return false;
   }
 

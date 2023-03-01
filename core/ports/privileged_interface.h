@@ -2,6 +2,7 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
+#include <ctime>
 #include <list>
 #include <map>
 #include <string>
@@ -36,6 +37,10 @@ namespace Privileged {
 
   std::string readApiSecret();
   void rotateApiSecret();
+
+  std::vector<std::pair<std::time_t, std::string>> readNotifications();
+  void writeNotifications(
+      std::vector<std::pair<std::time_t, std::string>> list);
 
   std::vector<IpAddress> getLocalAddresses();
 

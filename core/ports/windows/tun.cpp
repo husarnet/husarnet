@@ -176,7 +176,8 @@ std::string TunTap::getMac()
     LOG_ERROR("failed to retrieve MAC address");
     assert(false);
   } else {
-    LOG_WARNING("MAC address: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 0xFF & hwaddr[0],
+    LOG_WARNING(
+        "MAC address: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 0xFF & hwaddr[0],
         0xFF & hwaddr[1], 0xFF & hwaddr[2], 0xFF & hwaddr[3], 0xFF & hwaddr[4],
         0xFF & hwaddr[5]);
   }

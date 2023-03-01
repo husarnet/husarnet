@@ -7,7 +7,9 @@
 
 ForUpperProducer::ForUpperProducer()
     : fromUpperConsumer([](DeviceId peerId, string_view data) {
-        LOG_DEBUG("dropping frame for upper layer");
+        LOG_DEBUG(
+            "dropping frame for upper layer, peer: %s",
+            std::string(peerId).c_str());
       })
 {
 }
@@ -25,7 +27,9 @@ void ForUpperProducer::sendToUpperLayer(DeviceId peerId, string_view data)
 
 ForLowerProducer::ForLowerProducer()
     : fromLowerConsumer([](DeviceId peerId, string_view data) {
-        LOG_DEBUG("dropping frame for lower layer");
+        LOG_DEBUG(
+            "dropping frame for lower layer, peer: %s",
+            std::string(peerId).c_str());
       }){};
 
 void ForLowerProducer::setLowerLayerConsumer(

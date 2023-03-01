@@ -334,13 +334,15 @@ void ApiServer::runThread()
           }
 
           if(req.has_param("verbosity")) {
-            if(std::stoi(req.get_param_value("verbosity"))<=logLevelToInt(LogLevel::CRITICAL)){
-              manager->setLogVerbosity(std::stoi(req.get_param_value("verbosity")));
+            if(std::stoi(req.get_param_value("verbosity")) <=
+               logLevelToInt(LogLevel::CRITICAL)) {
+              manager->setLogVerbosity(
+                  std::stoi(req.get_param_value("verbosity")));
             }
           }
           if(req.has_param("size")) {
-            if(std::stoi(req.get_param_value("size"))<=1000 && std::stoi(req.get_param_value("size"))>=10)
-            {
+            if(std::stoi(req.get_param_value("size")) <= 1000 &&
+               std::stoi(req.get_param_value("size")) >= 10) {
               logManager->setSize(std::stoi(req.get_param_value("size")));
             }
           }
@@ -348,8 +350,8 @@ void ApiServer::runThread()
 
         returnSuccess(req, res);
       });
-      
-      svr.Get(
+
+  svr.Get(
       "/api/logs/settings",
       [&](const httplib::Request& req, httplib::Response& res) {
         auto logManager = getGlobalLogManager();
@@ -362,11 +364,13 @@ void ApiServer::runThread()
       });
 
   if(!svr.bind_to_port("127.0.0.1", manager->getApiPort())) {
-    LOG_CRITICAL("Unable to bind HTTP thread to port 127.0.0.1:%d. Exiting!",
+    LOG_CRITICAL(
+        "Unable to bind HTTP thread to port 127.0.0.1:%d. Exiting!",
         manager->getApiPort());
     exit(1);
   } else {
-    LOG_WARNING("HTTP thread bound to 127.0.0.1:%d. Will start handling the "
+    LOG_INFO(
+        "HTTP thread bound to 127.0.0.1:%d. Will start handling the "
         "connections.",
         manager->getApiPort());
   }

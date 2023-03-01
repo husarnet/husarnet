@@ -256,7 +256,7 @@ int HusarnetManager::getLogVerbosity()
 void HusarnetManager::setLogVerbosity(int logLevel)
 {
   getGlobalLogManager()->setVerbosity(logLevelFromInt(logLevel));
-  configStorage->setUserSetting(UserSetting::logVerbosity,logLevel);
+  configStorage->setUserSetting(UserSetting::logVerbosity, logLevel);
 }
 
 std::string HusarnetManager::getApiSecret()
@@ -348,12 +348,17 @@ void HusarnetManager::readLegacyConfig()
 
   LegacyConfig legacyConfig(legacyConfigPath);
   if(!legacyConfig.open()) {
-    LOG_WARNING("Legacy config is present, but couldn't read its contents");
+    LOG_WARNING(
+        "Legacy config is present, but couldn't read its contents on path: %s",
+        legacyConfigPath.c_str());
     return;
   }
 
-  LOG_WARNING("Found legacy config, will attempt to transfer the values to new "
-      "format");
+  LOG_WARNING(
+      "Found legacy config on path: %s, will attempt to transfer the values to "
+      "new "
+      "format",
+      legacyConfigPath.c_str());
 
   auto websetupSecretOld = legacyConfig.getWebsetupSecret();
   auto whitelistEnabledOld = legacyConfig.getWhitelistEnabled();
