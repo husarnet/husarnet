@@ -90,7 +90,7 @@ if [ "${deploy_target}" == "nightly" ]; then
 
   # if on nightly, we can also have mac
   echo "[==] Copy MacOS ARM64 binaries"
-  tar -zcf husarnet-macos-${package_version}-arm64.tar.gz husarnet-macos-arm64 husarnet-daemon-macos-arm64
+  tar -zcf husarnet-macos-${package_version}-arm64.tar.gz husarnet-macos-arm64 husarnet-daemon-unix-macos_arm64
   cp husarnet-macos-${package_version}-arm64.tar.gz ${working_path}/husarnet-macos-${package_version}-arm64.tar.gz
 fi
 
