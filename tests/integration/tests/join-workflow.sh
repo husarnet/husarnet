@@ -28,6 +28,9 @@ husarnet join "${join_code}"
 echo "INFO: Waiting until joined"
 husarnet daemon wait joined
 
+# This sleep is required to make /etc/hosts less flaky as we sometimes do rewrite or even delete it while changing the host table
+sleep 10
+
 echo "INFO: Testing /etc/hosts content"
 managed_lines=$(cat /etc/hosts | grep -c '# managed by Husarnet')
 if [ ${managed_lines} -lt 1 ]; then
