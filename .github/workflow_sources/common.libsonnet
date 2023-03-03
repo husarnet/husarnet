@@ -57,6 +57,16 @@
       name: 'Docker run ' + container + ' ' + command,
       run: 'docker run --rm --privileged --volume $(pwd):/app ' + container + ' ' + command,
     },
+
+    build_macos_daemon:: function() {
+      name: 'Build daemon natively on MacOS',
+      run: './daemon/build.sh unix macos_arm64',
+    },
+
+    build_macos_cli:: function() {
+      name: 'Build CLI natively on MacOS',
+      run: './cli/build.sh macos arm64',
+    },
   },
 
   jobs: {
@@ -130,8 +140,8 @@
 
       steps: [
         $.steps.checkout(ref),
-        $.steps.ghcr_login(),
-        $.steps.builder('/app/platforms/macos/build.sh arm64'),
+        $.steps.build_macos_daemon(),
+        $.steps.build_macos_cli(),
         $.steps.push_artifacts('*macos*'),
       ],
     },
