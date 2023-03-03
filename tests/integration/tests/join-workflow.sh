@@ -1,13 +1,15 @@
-# This test is ready but we need to deploy dashboard changes first so cleanup is operational
-exit 0
-
 my_hostname=$(hostname -f)
 
 function CLEANUP {
    echo "INFO: Cleaning up"
+
+   pkill husarnet-daemon
+   echo "This 'killed' message is a good thing! We need to stop husarnet-daemon before we remove it from the dashboard"
+
    husarnet dashboard login "${dashboard_login}" "${dashboard_pass}"
    husarnet dashboard rm "${my_hostname}" "${network_name}"
    husarnet dashboard device rm "${my_hostname}"
+
    echo "INFO: Cleaned up successfully"
 }
 
