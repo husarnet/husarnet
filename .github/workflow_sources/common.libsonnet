@@ -120,10 +120,13 @@
       ],
     },
 
-    build_macos:: function(ref) {
+    build_macos_natively:: function(ref) {
       needs: [],
 
-      'runs-on': 'ubuntu-latest',
+      'runs-on': [
+        'self-hosted',
+        'macOS',
+      ],
 
       steps: [
         $.steps.checkout(ref),
@@ -245,7 +248,7 @@
         'run_tests',
         'run_integration_tests',
         'build_unix',
-        'build_macos',
+        'build_macos_natively',
         'build_windows_installer',
       ],
 
@@ -270,7 +273,7 @@
         'run_tests',
         'run_integration_tests',
         'build_unix',
-        'build_macos',
+        'build_macos_natively',
         'build_windows_installer',
       ],
 

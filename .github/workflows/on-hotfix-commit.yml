@@ -51,9 +51,11 @@ jobs:
             arch_alias: "arm64"
           - arch: "linux/arm/v7"
             arch_alias: "armhf"
-  build_macos:
+  build_macos_natively:
     needs: []
-    runs-on: "ubuntu-latest"
+    runs-on:
+      - "self-hosted"
+      - "macOS"
     steps:
       - name: "Check out the repo"
         uses: "actions/checkout@v3"
@@ -161,7 +163,7 @@ jobs:
       - "run_tests"
       - "run_integration_tests"
       - "build_unix"
-      - "build_macos"
+      - "build_macos_natively"
       - "build_windows_installer"
     runs-on:
       - "self-hosted"
@@ -216,7 +218,7 @@ jobs:
       - "run_tests"
       - "run_integration_tests"
       - "build_unix"
-      - "build_macos"
+      - "build_macos_natively"
       - "build_windows_installer"
     runs-on: "ubuntu-latest"
     steps:
