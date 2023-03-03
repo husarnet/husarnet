@@ -186,6 +186,7 @@ jobs:
       - name: "Docker run ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}"
         run: "docker run --rm --privileged --volume $(pwd):/app ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}"
     strategy:
+      fail-fast: false
       matrix:
         container_name:
           - "husarnet/husarnet-nightly:amd64"

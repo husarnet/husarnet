@@ -210,6 +210,7 @@
       'runs-on': 'ubuntu-latest',
 
       strategy: {
+        'fail-fast': false,
         matrix: {
           container_name: [
             docker_project + ':amd64',
