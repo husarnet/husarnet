@@ -360,7 +360,7 @@ namespace OsSocket {
 
         uint16_t expectedSize = unpack<uint16_t>(conn->readBuffer.substr(3, 2));
         if(expectedSize + 5 >= (int)conn->readBuffer.size()) {
-          LOG_ERROR(
+          LOG_INFO(
               "TCP message too large (%d, max is %d)", expectedSize,
               (int)conn->readBuffer.size());
           close(conn);  // oops

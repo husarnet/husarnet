@@ -137,7 +137,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
   if(r == 0) {
     sendToUpperLayer(peerId, decryptedData);
   } else {
-    LOG_WARNING(
+    LOG_INFO(
         "received forged message from peer: %s", std::string(peerId).c_str());
   }
 }
@@ -185,14 +185,14 @@ void SecurityLayer::handleHelloPacket(
   LOG_DEBUG("peer flags: %llx", (unsigned long long)flags_bin);
 
   if(targetId != manager->getIdentity()->getDeviceId()) {
-    LOG_ERROR(
-        "misdirected hello packet for peer: %s", std::string(targetId).c_str());
+    LOG_INFO(
+        "misdirected hello packet received from peer: %s", std::string(targetId).c_str());
     return;
   }
 
   if(NgSocketCrypto::pubkeyToDeviceId(incomingPubkey) != target) {
-    LOG_CRITICAL(
-        "forged hello packet (invalid pubkey: %s)",
+    LOG_INFO(
+        "forged hello packet received (invalid pubkey: %s)",
         std::string(incomingPubkey).c_str());
     return;
   }
@@ -248,7 +248,7 @@ void SecurityLayer::handleHelloPacket(
         encodeHex(peer->txKey.substr(0, 6)).c_str());
     finishNegotiation(peer);
   } else {
-    LOG_CRITICAL("key exchange failed with %s", std::string(peer->id).c_str());
+    LOG_INFO("key exchange failed with %s", std::string(peer->id).c_str());
     return;
   }
 

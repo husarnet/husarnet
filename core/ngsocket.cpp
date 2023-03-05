@@ -71,8 +71,9 @@ void NgSocket::periodic()
 
   if(reloadLocalAddresses()) {
     // new addresses, accelerate reconnection
-    LOG_WARNING(
-        "IP address change detected: %s", localAddresses[0].str().c_str());
+    auto addresses_string = std::transform_reduce(localAddresses.begin(), localAddresses.end(), std::string(""), [](std::string a, std::string b){return a + " | " + b;}, [](InetAddress addr){return addr.str();});
+    LOG_INFO(
+        "Local IP address change detected, new addresses: %s", addresses_string.c_str());
     requestRefresh();
     if(Port::getCurrentTime() - lastBaseTcpAction > NAT_INIT_TIMEOUT)
       connectToBase();
@@ -298,7 +299,7 @@ void NgSocket::helloReceived(InetAddress source, const PeerToPeerMessage& msg)
       IDSTR(msg.myId), peer->isActive() ? "YES" : "NO");
 
   if(!manager->isRealAddressAllowed(source)) {
-    LOG_WARNING(
+    LOG_INFO(
         "rejected due to real world addresses blacklist %s",
         source.str().c_str());
     return;
@@ -338,7 +339,7 @@ void NgSocket::helloReplyReceived(
     return;
 
   if(!manager->isRealAddressAllowed(source)) {
-    LOG_WARNING(
+    LOG_INFO(
         "rejected due to real world addresses blacklist %s",
         source.str().c_str());
     return;
@@ -372,7 +373,7 @@ void NgSocket::baseMessageReceivedUdp(const BaseToPeerMessage& msg)
       break;
     case +BaseToPeerMessageKind::NAT_OK: {
       if(lastNatInitConfirmation == 0) {
-        LOG_INFO("UDP connection to base server established");
+        LOG_INFO("UDP connection to base server established, server address: %s", baseAddress.str().c_str());
       }
       lastNatInitConfirmation = Port::getCurrentTime();
       natInitConfirmed = true;
@@ -399,7 +400,7 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
       sendToUpperLayer(msg.source, msg.data);
       break;
     case +BaseToPeerMessageKind::HELLO:
-      LOG_INFO("TCP connection to base server established");
+      LOG_INFO("TCP connection to base server established, server address: %s", baseAddress.str().c_str());
       LOG_DEBUG("received hello cookie %s", encodeHex(msg.cookie).c_str());
       cookie = msg.cookie;
       resendInfoRequests();
@@ -894,7 +895,7 @@ void NgSocket::connectToBase()
   }
   baseConnectRetries++;
   if(!baseAddress) {
-    LOG_INFO("waiting until base address is resolved...");
+    LOG_DEBUG("waiting until base address is resolved...");
     return;
   }
 
