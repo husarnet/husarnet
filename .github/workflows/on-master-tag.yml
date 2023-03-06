@@ -323,3 +323,4 @@ name: "Release production"
   push:
     tags:
       - "v*"
+  workflow_dispatch: {}

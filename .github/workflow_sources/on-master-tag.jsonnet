@@ -7,6 +7,7 @@ common.manifestYamlDoc(
       push: {
         tags: ['v*'],
       },
+      workflow_dispatch: {},  // Allow starting the workflow manually
     },
 
     jobs: {
