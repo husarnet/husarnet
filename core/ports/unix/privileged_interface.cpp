@@ -409,12 +409,12 @@ namespace Privileged {
     callPrivilegedProcess(PrivilegedMethod::notifyReady, {});
   }
 
-  void runScripts(std::string path)
+  void runScripts(const std::string& path)
   {
     callPrivilegedProcess(PrivilegedMethod::runHook,path);
   }
 
-  bool checkScriptsExist(std::string path)
+  bool checkScriptsExist(const std::string& path)
   {
     return callPrivilegedProcess(PrivilegedMethod::checkHook,path);
   }

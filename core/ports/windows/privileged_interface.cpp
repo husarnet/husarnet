@@ -232,7 +232,7 @@ namespace Privileged {
     // Not implemented in Windows port.
   }
 
-  void runScripts(std::string path)
+  void runScripts(const std::string& path)
   {
     char* conf_path = std::getenv("PROGRAMDATA");
   std::string full_path(conf_path);
@@ -254,7 +254,7 @@ namespace Privileged {
   }
   }
 
-  bool checkScriptsExist(std::string path)
+  bool checkScriptsExist(const std::string& path)
   {
   char* conf_path = std::getenv("PROGRAMDATA");
   std::string full_path(conf_path);
@@ -267,8 +267,9 @@ namespace Privileged {
   if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
     return false;
   }
-
+  
   for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+    // cppcheck-suppress useStlAlgorithm
     if (entry.path().extension() == ".ps1" && (entry.status().permissions() & std::filesystem::perms::owner_exec) == std::filesystem::perms::owner_exec) {
       return true;
     }

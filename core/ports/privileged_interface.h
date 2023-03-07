@@ -54,6 +54,6 @@ namespace Privileged {
 
   void notifyReady();
 
-  void runScripts(std::string path);
-  bool checkScriptsExist(std::string path);
+  void runScripts(const std::string& path);
+  bool checkScriptsExist(const std::string& path);
 }  // namespace Privileged

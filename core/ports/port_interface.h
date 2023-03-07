@@ -47,6 +47,6 @@ namespace Port {
 
   void log(const std::string& message);
 
-  void runScripts(std::string path);
-  bool checkScriptsExist(std::string path);
+  void runScripts(const std::string& path);
+  bool checkScriptsExist(const std::string& path);
 }  // namespace Port

@@ -372,7 +372,7 @@ namespace Port {
     fflush(stderr);
   }
 
-  void runScripts(std::string path)
+  void runScripts(const std::string& path)
   {
     std::string msg = "running hooks under path " + path;
     LOG(msg.c_str());
@@ -396,7 +396,7 @@ namespace Port {
     closedir(dir);
   }
 
-  bool checkScriptsExist(std::string path)
+  bool checkScriptsExist(const std::string& path)
   {
     std::string msg = "checking if valid hooks under path " + path;
     LOG(msg.c_str());
