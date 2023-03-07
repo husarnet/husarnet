@@ -219,6 +219,11 @@ func getPasswordFromStandardInput() string {
 
 // Prompts user for confirmation and exits the whole program if user does not confirm
 func askForConfirmation(question string) bool {
+	if nonInteractive {
+		pterm.Println("Running in non-interactive mode, selecting 'NO', as an answer to: " + question)
+		dieEmpty()
+	}
+
 	pterm.Println()
 	// pterm.Printf(" %s   QUESTION   %s  ", neutralDot, neutralDot)
 	result, err := pterm.DefaultInteractiveConfirm.Show(question)

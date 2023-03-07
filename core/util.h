@@ -102,14 +102,23 @@ inline std::string decodeHex(std::string s)
 
 std::string base64Decode(std::string s);
 
-inline bool startswith(std::string s, std::string with)
+inline bool startsWith(std::string s, std::string with)
 {
   return s.size() >= with.size() && s.substr(0, with.size()) == with;
 }
 
-inline bool endswith(std::string s, std::string with)
+inline bool endsWith(std::string s, std::string with)
 {
   return s.size() >= with.size() && s.substr(s.size() - with.size()) == with;
+}
+
+inline std::string removePrefix(const std::string s, const std::string prefix)
+{
+  if(!startsWith(s, prefix)) {
+    return s;
+  }
+
+  return s.substr(prefix.length());
 }
 
 std::vector<std::string> splitWhitespace(std::string s);
@@ -128,3 +137,15 @@ std::string strToUpper(std::string input);
 std::string strToLower(std::string input);
 std::string rtrim(std::string input);
 std::string camelCaseToUnderscores(std::string camel);
+
+template <typename K, typename V>
+inline bool mapContains(std::map<K, V> m, K needle)
+{
+  for(const auto& pair : m) {
+    if(pair.first == needle) {
+      return true;
+    }
+  }
+
+  return false;
+}

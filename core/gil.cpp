@@ -57,18 +57,18 @@ namespace GIL {
   void lock()
   {
     if(globalLock.try_lock()) {
-      LOG("lock");
+      LOG_DEBUG("lock");
     } else {
-      LOG("wait for lock");
+      LOG_DEBUG("wait for lock");
       globalLock.lock();
-      LOG("locked");
+      LOG_DEBUG("locked");
     }
   }
 
   void unlock()
   {
     globalLock.unlock();
-    LOG("unlock");
+    LOG_DEBUG("unlock");
   }
 #endif
 

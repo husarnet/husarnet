@@ -113,7 +113,7 @@ static void getLocalIpv6Addresses(std::vector<IpAddress>& ret)
   FILE* f =
       fileOpenedManually ? fopen("/proc/self/net/if_inet6", "r") : if_inet6;
   if(f == nullptr) {
-    LOG("failed to open if_inet6 file");
+    LOG_WARNING("failed to open if_inet6 file");
     return;
   }
   fseek(f, 0, SEEK_SET);

@@ -35,6 +35,11 @@ WebsetupConnection::WebsetupConnection(HusarnetManager* manager)
 
 void WebsetupConnection::start()
 {
+  if(manager->getIdentity()->getIpAddress() == manager->getWebsetupAddress()) {
+    LOG("There's no need to contact websetup if we're the websetup");
+    return;
+  }
+
   websetupFd = SOCKFUNC(socket)(AF_INET6, SOCK_DGRAM, 0);
   assert(websetupFd > 0);
   sockaddr_in6 addr{};
@@ -147,7 +152,8 @@ void WebsetupConnection::periodicThread()
     threadMutex.unlock();
 
     if(sendJoin) {
-      LOG_WARNING("Sending join request to websetup");
+      LOG_INFO(
+          "Sending join request to websetup (joincode: %s)", joinCode.c_str());
       send(
           "init-request-join-code",
           {joinTmp, manager->getWebsetupSecret(), hostnameTmp});
@@ -224,7 +230,7 @@ void WebsetupConnection::handleWebsetupPacket(
 
   long s = data.find("\n");
   if(s <= 5) {
-    LOG_ERROR("bad websetup packet format");
+    LOG_ERROR("bad websetup packet format: %s", data.c_str());
     return;
   }
   std::string seqnum = data.substr(0, 5);

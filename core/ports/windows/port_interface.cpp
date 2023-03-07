@@ -38,7 +38,7 @@ static std::vector<std::string> getExistingDeviceNames()
   ret =
       RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(key_name), 0, KEY_READ, &adapters);
   if(ret != ERROR_SUCCESS) {
-    LOG("RegOpenKeyEx returned error");
+    LOG_ERROR("RegOpenKeyEx returned error");
     return {};
   }
 
@@ -46,12 +46,12 @@ static std::vector<std::string> getExistingDeviceNames()
       adapters, NULL, NULL, NULL, &sub_keys, NULL, NULL, NULL, NULL, NULL, NULL,
       NULL);
   if(ret != ERROR_SUCCESS) {
-    LOG("RegQueryInfoKey returned error");
+    LOG_ERROR("RegQueryInfoKey returned error %u", ret);
     return {};
   }
 
   if(sub_keys <= 0) {
-    LOG("Wrong registry key");
+    LOG_ERROR("Wrong registry key");
     return {};
   }
 
@@ -92,10 +92,10 @@ static std::vector<std::string> getExistingDeviceNames()
       ret = RegQueryValueEx(
           adapter, "NetCfgInstanceId", NULL, &type, (LPBYTE)data, &len);
       if(ret != ERROR_SUCCESS) {
-        LOG("RegQueryValueEx returned error");
+        LOG_ERROR("RegQueryValueEx returned error %u", ret);
         goto clean;
       }
-      LOG("found tap device: %s", data);
+      LOG_WARNING("found tap device: %s", data);
 
       names.push_back(std::string(data));
       // break;
@@ -113,11 +113,11 @@ static std::string whatNewDeviceWasCreated(
   for(std::string name : getExistingDeviceNames()) {
     if(std::find(previousNames.begin(), previousNames.end(), name) ==
        previousNames.end()) {
-      LOG("new device: %s", name.c_str());
+      LOG_INFO("new device: %s", name.c_str());
       return name;
     }
   }
-  LOG("no new device was created?");
+  LOG_WARNING("no new device was created?");
   abort();
 }
 
@@ -192,7 +192,7 @@ namespace Port {
     auto existingDevices = getExistingDeviceNames();
     auto deviceName = manager->getInterfaceName();
     // this should also work if deviceName is ""
-    LOG("Windows interface ID is %s", deviceName.c_str());
+    LOG_INFO("Windows interface ID is %s", deviceName.c_str());
     if(std::find(existingDevices.begin(), existingDevices.end(), deviceName) ==
        existingDevices.end()) {
       system("addtap.bat");
@@ -225,7 +225,7 @@ namespace Port {
 
       std::string value(&envVarBuffer[0], envVarLength);
       result[UserSetting::_from_string(enumName)] = value;
-      LOG("Overriding user setting %s=%s", enumName, value.c_str());
+      LOG_WARNING("Overriding user setting %s=%s", enumName, value.c_str());
     }
 
     return result;
@@ -236,7 +236,7 @@ namespace Port {
     // TODO: identical as in unix port - merge candidate
     std::ifstream f(path);
     if(!f.good()) {
-      LOG("failed to open %s", path.c_str());
+      LOG_ERROR("failed to open %s", path.c_str());
       exit(1);
     }
 
@@ -250,7 +250,7 @@ namespace Port {
   {
     std::ofstream f(path, std::ofstream::out);
     if(!f.good()) {
-      LOG("failed to write: %s", path.c_str());
+      LOG_ERROR("failed to write: %s", path.c_str());
       f.close();
       return false;
     }
@@ -269,7 +269,8 @@ namespace Port {
     bool success =
         MoveFileEx(src.c_str(), dst.c_str(), MOVEFILE_REPLACE_EXISTING);
     if(!success) {
-      LOG("failed to rename %s to %s with following error code: %ld",
+      LOG_ERROR(
+          "failed to rename %s to %s with following error code: %ld",
           src.c_str(), dst.c_str(), GetLastError());
     }
     return success;

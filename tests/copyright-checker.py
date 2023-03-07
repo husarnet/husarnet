@@ -3,7 +3,7 @@ import sys
 import os.path
 import os
 
-ignore_dirs = {"build", ".git", ".vscode"}
+ignore_dirs = {"build", ".git", ".vscode", ".pio", ".pio_core"}
 
 old_copyright = """// Copyright (c) 2017 Husarion Sp. z o.o.
 // author: Michał Zieliński (zielmicha)"""
@@ -66,7 +66,7 @@ def analyze_source(file_path):
     print(f"{file_path} does not match any expected rules")
     print(top_comment)
     issues_found = True
-    
+
 
 
 def __main__():

@@ -75,9 +75,9 @@ void ConfigStorage::save()
     return;
   }
 
-  LOG("saving settings");
   manager->getHooksManager()->runHook(HookType::rw_request);
   manager->getHooksManager()->waitHook(HookType::rw_request);
+  LOG_INFO("saving settings for ConfigStorage");
   writeFunc(serialize());
   manager->getHooksManager()->runHook(HookType::rw_release);
   manager->getHooksManager()->waitHook(HookType::rw_release);
@@ -240,7 +240,7 @@ std::string ConfigStorage::getInternalSetting(InternalSetting setting)
   if(currentData[INTERNAL_SETTINGS_KEY].contains(settingStr)) {
     return currentData[INTERNAL_SETTINGS_KEY][settingStr];
   }
-  if(internalDefaults.contains(setting)) {
+  if(mapContains(internalDefaults, setting)) {
     return internalDefaults[setting];
   }
 
@@ -309,7 +309,7 @@ void ConfigStorage::clearUserSetting(UserSetting setting)
 
 bool ConfigStorage::isUserSettingOverriden(UserSetting setting)
 {
-  if(!userOverrides.contains(setting)) {
+  if(!mapContains(userOverrides, setting)) {
     return false;
   }
 
@@ -326,7 +326,7 @@ std::string ConfigStorage::getPersistentUserSetting(UserSetting setting)
   if(currentData[USER_SETTINGS_KEY].contains(settingStr)) {
     return currentData[USER_SETTINGS_KEY][settingStr];
   }
-  if(userDefaults.contains(setting)) {
+  if(mapContains(userDefaults, setting)) {
     return userDefaults[setting];
   }
 
@@ -346,7 +346,7 @@ void ConfigStorage::persistUserSettingOverride(UserSetting setting)
 
 std::string ConfigStorage::getUserSetting(UserSetting setting)
 {
-  if(userOverrides.contains(setting)) {
+  if(mapContains(userOverrides, setting)) {
     return userOverrides[setting];
   }
 

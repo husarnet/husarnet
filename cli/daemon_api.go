@@ -75,6 +75,12 @@ type DaemonStatus struct {
 	Peers        []PeerStatus
 }
 
+type LogsSettings struct {
+	VerbosityLevel int `json:"verbosity"`
+	Size           int `json:"size"`
+	CurrentSize    int `json:"current_size"`
+}
+
 func (s DaemonStatus) getPeerByAddr(addr netip.Addr) *PeerStatus {
 	for _, peer := range s.Peers {
 		if peer.HusarnetAddress == addr {

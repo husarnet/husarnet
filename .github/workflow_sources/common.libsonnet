@@ -57,6 +57,16 @@
       name: 'Docker run ' + container + ' ' + command,
       run: 'docker run --rm --privileged --volume $(pwd):/app ' + container + ' ' + command,
     },
+
+    build_macos_daemon:: function() {
+      name: 'Build daemon natively on MacOS',
+      run: './daemon/build.sh unix macos_arm64',
+    },
+
+    build_macos_cli:: function() {
+      name: 'Build CLI natively on MacOS',
+      run: './cli/build.sh macos arm64',
+    },
   },
 
   jobs: {
@@ -117,6 +127,22 @@
         $.steps.ghcr_login(),
         $.steps.builder('/app/platforms/unix/build.sh ${{matrix.arch}}'),
         $.steps.push_artifacts('*${{matrix.arch}}*'),
+      ],
+    },
+
+    build_macos_natively:: function(ref) {
+      needs: [],
+
+      'runs-on': [
+        'self-hosted',
+        'macOS',
+      ],
+
+      steps: [
+        $.steps.checkout(ref),
+        $.steps.build_macos_daemon(),
+        $.steps.build_macos_cli(),
+        $.steps.push_artifacts('*macos*'),
       ],
     },
 
@@ -184,6 +210,7 @@
       'runs-on': 'ubuntu-latest',
 
       strategy: {
+        'fail-fast': false,
         matrix: {
           container_name: [
             docker_project + ':amd64',
@@ -232,6 +259,7 @@
         'run_tests',
         'run_integration_tests',
         'build_unix',
+        'build_macos_natively',
         'build_windows_installer',
       ],
 
@@ -256,6 +284,7 @@
         'run_tests',
         'run_integration_tests',
         'build_unix',
+        'build_macos_natively',
         'build_windows_installer',
       ],
 

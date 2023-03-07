@@ -79,7 +79,8 @@ static void ares_local_callback(
   result->status = status;
 
   if(status != ARES_SUCCESS) {
-    LOG("DNS resolution failed. c-ares status code: %i (%s)", status,
+    LOG_ERROR(
+        "DNS resolution failed. c-ares status code: %i (%s)", status,
         ares_strerror(status));
     return;
   }
@@ -131,7 +132,7 @@ namespace Port {
   IpAddress resolveToIp(const std::string& hostname)
   {
     if(hostname.empty()) {
-      LOG("Empty hostname provided for a DNS search");
+      LOG_ERROR("Empty hostname provided for a DNS search");
       return IpAddress();
     }
 
@@ -139,7 +140,8 @@ namespace Port {
     ares_channel channel;
 
     if(ares_init(&channel) != ARES_SUCCESS) {
-      LOG("Unable to init ARES/DNS channel for doman: %s", hostname.c_str());
+      LOG_ERROR(
+          "Unable to init ARES/DNS channel for domain: %s", hostname.c_str());
       return IpAddress();
     }
 
@@ -167,7 +169,7 @@ namespace Port {
   {
     if(system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c "
               "10 200)") != 0) {
-      LOG("failed to create TUN device");
+      LOG_CRITICAL("failed to create TUN device");
     }
 
     std::string myIp =
@@ -180,7 +182,7 @@ namespace Port {
     if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||
        system(("sysctl net.ipv6.conf." + interfaceName + ".disable_ipv6=0")
                   .c_str()) != 0) {
-      LOG("failed to enable IPv6 (may be harmless)");
+      LOG_WARNING("failed to enable IPv6 (may be harmless)");
     }
 
     if(system(("ip link set dev " + interfaceName + " mtu 1350").c_str()) !=
@@ -189,7 +191,7 @@ namespace Port {
            ("ip addr add dev " + interfaceName + " " + myIp + "/16").c_str()) !=
            0 ||
        system(("ip link set dev " + interfaceName + " up").c_str()) != 0) {
-      LOG("failed to setup IP address");
+      LOG_ERROR("failed to setup IP address");
       exit(1);
     }
 
@@ -197,7 +199,7 @@ namespace Port {
     if(system(("ip -6 route add " + multicastDestination + "/48 dev " +
                interfaceName + " table local")
                   .c_str()) != 0) {
-      LOG("failed to setup multicast route");
+      LOG_WARNING("failed to setup multicast route");
     }
 
     return tunTap;
@@ -221,7 +223,7 @@ namespace Port {
 
         if(key == candidate) {
           result[UserSetting::_from_string(enumName)] = value;
-          LOG("Overriding user setting %s=%s", enumName, value.c_str());
+          LOG_WARNING("Overriding user setting %s=%s", enumName, value.c_str());
         }
       }
     }
@@ -233,7 +235,7 @@ namespace Port {
   {
     std::ifstream f(path);
     if(!f.good()) {
-      LOG("failed to open %s", path.c_str());
+      LOG_ERROR("failed to open %s", path.c_str());
       exit(1);
     }
 
@@ -286,12 +288,12 @@ namespace Port {
 
     bool success = writeFileDirect(tmpPath, data);
     if(!success) {
-      LOG_INFO(
+      LOG_WARNING(
           "unable to write to a temporary file %s, writing to %s directly",
           tmpPath.c_str(), path.c_str());
       success = writeFileDirect(path, data);
       if(!success) {
-        LOG_WARNING("unable to write to %s directly", path.c_str());
+        LOG_ERROR("unable to write to %s directly", path.c_str());
         return false;
       }
       return true;
@@ -302,18 +304,18 @@ namespace Port {
       return true;
     }
 
-    LOG_DEBUG(
+    LOG_WARNING(
         "unable to rename %s to %s, writing to %s directly", tmpPath.c_str(),
         path.c_str(), path.c_str());
 
     success = removeFile(tmpPath);
     if(!success) {
-      LOG_INFO("unable to remove temporary file %s", tmpPath.c_str());
+      LOG_WARNING("unable to remove temporary file %s", tmpPath.c_str());
     }
 
     success = writeFileDirect(path, data);
     if(!success) {
-      LOG_WARNING("unable to write directly to %s", path.c_str());
+      LOG_ERROR("unable to write directly to %s", path.c_str());
       return false;
     }
 
@@ -360,7 +362,7 @@ namespace Port {
         perror("systemd close");
       }
 
-      LOG("Systemd notification end");
+      LOG_INFO("Systemd notification end");
     }
   }
 

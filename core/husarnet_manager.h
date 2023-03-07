@@ -2,7 +2,6 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include <condition_variable>
 #include <functional>
 #include <mutex>
 #include <string>
@@ -126,6 +125,9 @@ class HusarnetManager {
   int getApiPort();
   std::string getApiSecret();
   std::string rotateApiSecret();
+
+  int getLogVerbosity();
+  void setLogVerbosity(int logLevel);
 
   // Copy of methods from License class
   std::string getDashboardFqdn();

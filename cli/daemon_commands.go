@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"strconv"
 
 	"github.com/pterm/pterm"
 	"github.com/urfave/cli/v2"
@@ -93,12 +94,101 @@ var daemonStatusCommand = &cli.Command{
 			Aliases: []string{"v"},
 			Usage:   "show more information",
 		},
+		&cli.BoolFlag{
+			Name:    "follow",
+			Aliases: []string{"f"},
+			Usage:   "show more information",
+		},
 	},
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx *cli.Context) error {
-		printStatus(ctx)
+		if ctx.Bool("follow") {
+			printStatusFollow(ctx)
+		}else {
+			status := getDaemonStatus()
+			printStatus(ctx,status)
+		}
 		return nil
 
+	},
+}
+
+var daemonLogsCommand = &cli.Command{
+	Name:  "logs",
+	Usage: "Display and manage logs settings",
+	Subcommands: []*cli.Command{
+		{
+			Name:      "settings",
+			Aliases:   []string{"status"},
+			Usage:     "print logs settings",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				settings := callDaemonGet[LogsSettings]("/api/logs/settings").Result
+				printSuccess("Logs verbosity level: "+strconv.Itoa(settings.VerbosityLevel))
+				printSuccess("Logs maximum size: "+strconv.Itoa(settings.Size))
+				printSuccess("Logs current size: "+strconv.Itoa(settings.CurrentSize))
+
+				return nil
+			},
+		},
+		{
+			Name:      "print",
+			Aliases:   []string{"get"},
+			Usage:     "print logs",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				logs := callDaemonGet[string]("/api/logs/get").Result
+				lines := strings.Split(logs,"\n")
+
+				for _, line := range lines {
+					printInfo(line)
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:      "verbosity",
+			Aliases:   []string{""},
+			Usage:     "change logs verbosity level",
+			ArgsUsage: "[0-4]", 
+			Action: func(ctx *cli.Context) error {
+				requiredArgumentsNumber(ctx, 1)
+
+				verbosityStr := ctx.Args().Get(0)
+				verbosity, error := strconv.Atoi(verbosityStr)
+				if(error ==nil && verbosity<=4 && verbosity>=0){
+					callDaemonPost[EmptyResult]("/api/logs/settings", url.Values{
+						"verbosity": {verbosityStr},
+					})
+					printSuccess("Verbosity level changed")
+					return nil
+				}
+				printError("Verbosity provided should belong to range 0-4")
+				return nil
+			},
+		},
+		{
+			Name:      "size",
+			Aliases:   []string{""},
+			Usage:     "change size of in memory stored logs",
+			ArgsUsage: "[10-1000]", 
+			Action: func(ctx *cli.Context) error {
+				requiredArgumentsNumber(ctx, 1)
+
+				sizeStr := ctx.Args().Get(0)
+				size, error := strconv.Atoi(sizeStr)
+				if(error == nil && size<=1000 && size>=10){
+					callDaemonPost[EmptyResult]("/api/logs/settings", url.Values{
+						"size": {sizeStr},
+					})
+					printSuccess("In memory logs size changed")
+					return nil
+				}
+				printError("Size provided should belong to range 10-1000")
+				return nil
+			},
+		},
 	},
 }
 
@@ -153,7 +243,7 @@ var daemonWhitelistCommand = &cli.Command{
 			Usage:     "disable whitelist",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
-				callDaemonPost[EmptyResult]("/api/whitelist/whitelist", url.Values{})
+				callDaemonPost[EmptyResult]("/api/whitelist/disable", url.Values{})
 				printSuccess("Disabled the whitelist")
 
 				return nil
@@ -477,6 +567,7 @@ var daemonCommand = &cli.Command{
 		joinCommand,
 		daemonSetupServerCommand,
 		daemonStartCommand,
+		daemonLogsCommand,
 		daemonRestartCommand,
 		daemonStopCommand,
 		daemonWhitelistCommand,

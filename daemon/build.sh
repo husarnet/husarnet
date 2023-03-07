@@ -35,7 +35,7 @@ cmake -G "Ninja" \
 cmake --build ${build_dir}
 cmake --build ${build_dir} --target install
 
-if [ ${platform} == "unix" ]; then
+if [[ ${platform} == "unix" || ${platform} == "macos" ]]; then
   cp ${build_dir}/husarnet-daemon ${release_base}/husarnet-daemon-${platform}-${arch}
 elif [ ${platform} == "windows" ]; then
   cp ${build_dir}/husarnet-daemon.exe ${release_base}/husarnet-daemon-${platform}-${arch}.exe

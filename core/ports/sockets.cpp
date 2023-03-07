@@ -107,7 +107,7 @@ namespace OsSocket {
   {
     int fd = SOCKFUNC(socket)(useV6 ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
     if(fd < 0) {
-      LOG("creating socket failed with %d", (int)errno);
+      LOG_CRITICAL("creating socket failed with %d", (int)errno);
       return -1;
     }
     if(reuse) {
@@ -233,14 +233,14 @@ namespace OsSocket {
   {
     int fd = SOCKFUNC(socket)(AF_INETx, SOCK_STREAM, 0);
     if(fd < 0) {
-      LOG("creating socket failed with %d", (int)errno);
+      LOG_CRITICAL("creating socket failed with %d", (int)errno);
       return -1;
     }
 
     auto sa = makeSockaddr(addr, useV6);
     socklen_t socklen = sizeof(sa);
     if(SOCKFUNC(connect)(fd, (sockaddr*)&sa, socklen) < 0) {
-      LOG("connection with the server (%s) failed", addr.str().c_str());
+      LOG_ERROR("connection with the server (%s) failed", addr.str().c_str());
       SOCKFUNC_close(fd);
       return -1;
     }
@@ -353,14 +353,15 @@ namespace OsSocket {
           return;
 
         if(conn->readBuffer.substr(0, 3) != "\x17\x03\x03") {
-          LOG("TCP socket format error (1)");
+          LOG_ERROR("TCP socket format error (1)");
           close(conn);  // oops
           return;
         }
 
         uint16_t expectedSize = unpack<uint16_t>(conn->readBuffer.substr(3, 2));
         if(expectedSize + 5 >= (int)conn->readBuffer.size()) {
-          LOG("TCP message too large (%d, max is %d)", expectedSize,
+          LOG_INFO(
+              "TCP message too large (%d, max is %d)", expectedSize,
               (int)conn->readBuffer.size());
           close(conn);  // oops
           return;

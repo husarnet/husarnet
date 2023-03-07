@@ -7,6 +7,7 @@ import (
 	"net/netip"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gobeam/stringy"
 	"github.com/mattn/go-runewidth"
@@ -169,6 +170,7 @@ func printWhitelist(status DaemonStatus, verbose bool) {
 	}
 }
 
+
 func printHooksStatus(status DaemonStatus) {
 	if status.HooksEnabled {
 		pterm.Printfln("Daemon hooks are currently enabled")
@@ -177,10 +179,9 @@ func printHooksStatus(status DaemonStatus) {
 	}
 }
 
-func printStatus(ctx *cli.Context) {
-	verbose := verboseLogs || ctx.Bool("verbose")
+func printStatus(ctx *cli.Context,status DaemonStatus) {
 
-	status := getDaemonStatus()
+	verbose := verboseLogs || ctx.Bool("verbose")
 
 	printStatusHeader("Version")
 	printVersion(status.Version)
@@ -278,4 +279,178 @@ func printStatus(ctx *cli.Context) {
 	printStatusHeader("Whitelist")
 	printWhitelist(status, verbose)
 
+}
+
+func printStatusFollow(ctx *cli.Context) {
+	// Obtaining status twice is simpler than deep copy
+	currStatus := getDaemonStatus()
+	prevStatus := getDaemonStatus()
+	prevStatus.Version="temporary change to enable print"
+	for true{
+		currStatus = getDaemonStatus()
+		if ! areStatusesEqual(prevStatus,currStatus) {
+			printStatus(ctx,currStatus)
+			prevStatus = currStatus
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
+	if prevStatus.Version != currStatus.Version {
+		return false
+	}
+	if prevStatus.DashboardFQDN != currStatus.DashboardFQDN {
+		return false
+	}
+	if prevStatus.IsDirty != currStatus.IsDirty {
+		return false
+	}
+	if prevStatus.WebsetupAddress.Compare(currStatus.WebsetupAddress) != 0 {
+		return false
+	}
+	if prevStatus.BaseConnection.Address.Compare(currStatus.BaseConnection.Address) != 0 {
+		return false
+	}
+	if prevStatus.BaseConnection.Port != currStatus.BaseConnection.Port {
+		return false
+	}
+	if prevStatus.BaseConnection.Type != currStatus.BaseConnection.Type {
+		return false
+	}
+	if prevStatus.LocalIP.Compare(currStatus.LocalIP) != 0 {
+		return false
+	}
+	if prevStatus.LocalHostname != currStatus.LocalHostname {
+		return false
+	}
+	if prevStatus.IsJoined != currStatus.IsJoined {
+		return false
+	}
+	if prevStatus.IsReady != currStatus.IsReady {
+		return false
+	}
+	if prevStatus.IsReadyToJoin != currStatus.IsReadyToJoin {
+		return false
+	}
+	if ! areConnectionStatusesEqual(prevStatus.ConnectionStatus, currStatus.ConnectionStatus) {
+		return false
+	}
+	if ! areAddressListsEqual(prevStatus.Whitelist, currStatus.Whitelist) {
+		return false
+	}
+	if ! areUserSettingsEqual(prevStatus.UserSettings, currStatus.UserSettings) {
+		return false
+	}
+	if ! areHostTablesEqual(prevStatus.HostTable, currStatus.HostTable) {
+		return false
+	}
+	if ! arePeersEqual(prevStatus.Peers, currStatus.Peers) {
+		return false
+	}
+	return true
+
+}
+
+func areConnectionStatusesEqual(a, b map[string]bool) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for key, value := range a {
+		if value != b[key] {
+			return false
+		}
+	}
+	return true
+}
+
+func areAddressListsEqual(a, b []netip.Addr) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i].Compare(b[i]) !=0 {
+			return false
+		}
+	}
+	return true
+}
+
+func arePortAddressListsEqual(a, b []netip.AddrPort) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if (a[i].Addr().Compare(b[i].Addr()) !=0) || (a[i].Port()!= b[i].Port())  {
+			return false
+		}
+	}
+	return true
+}
+
+func areUserSettingsEqual(a, b map[string]string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for key, value := range a {
+		if value != b[key] {
+			return false
+		}
+	}
+	return true
+}
+
+func areHostTablesEqual(a, b map[string]netip.Addr) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for key, value := range a {
+		if value.Compare(b[key]) !=0 {
+			return false
+		}
+	}
+	return true
+}
+
+func arePeerStatusesEqual(a, b PeerStatus) bool {
+	if (a.HusarnetAddress.Compare(b.HusarnetAddress) !=0){
+		return false
+	}
+	if (a.LinkLocalAddress.Addr().Compare(b.LinkLocalAddress.Addr()) !=0) || (a.LinkLocalAddress.Port()!= b.LinkLocalAddress.Port()) {
+		return false
+	}
+	if a.IsActive != b.IsActive {
+		return false
+	}
+	if a.IsReestablishing != b.IsReestablishing {
+		return false
+	}
+	if a.IsSecure != b.IsSecure {
+		return false
+	}
+	if a.IsTunelled != b.IsTunelled {
+		return false
+	}
+	if ! arePortAddressListsEqual(a.SourceAddresses, b.SourceAddresses) {
+		return false
+	}
+	if ! arePortAddressListsEqual(a.TargetAddresses, b.TargetAddresses) {
+		return false
+	}
+	if ((a.UsedTargetAddress.Addr().Compare(b.UsedTargetAddress.Addr()) !=0) || (a.UsedTargetAddress.Port()!= b.UsedTargetAddress.Port())) {
+		return false
+	}
+	return true
+}
+
+func arePeersEqual(a,b []PeerStatus) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if ! arePeerStatusesEqual(a[i], b[i]) {
+			return false
+		}
+	}
+	return true
 }

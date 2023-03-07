@@ -19,3 +19,8 @@ inline DeviceId deviceIdFromIpAddress(IpAddress ip)
 {
   return ip.toBinary();
 }
+
+inline const char* deviceIdToCStr(DeviceId id)
+{
+  return reinterpret_cast<char*>(id.data());
+}
