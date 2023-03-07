@@ -168,7 +168,7 @@ func callDaemonRetryable[ResultType any](retryable bool, route string, urlencode
 
 		if retryable && errors.Is(err, syscall.ECONNREFUSED) {
 			printInfo("Daemon does not seem to be running")
-			daemonRestart(true)
+			restartDaemonWithConfirmationPrompt()
 			waitDaemon()
 			return lambda(route, urlencodedBody)
 		}
@@ -177,7 +177,7 @@ func callDaemonRetryable[ResultType any](retryable bool, route string, urlencode
 	return response, err
 }
 
-// Technically those should not requre auth tokens so can be run at any time
+// Technically those should not require auth tokens so can be run at any time
 func callDaemonGetRaw[ResultType any](retryable bool, route string) (DaemonResponse[ResultType], error) {
 	return callDaemonRetryable(retryable, route, url.Values{}, func(route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error) {
 		response, err := http.Get(getDaemonApiUrl() + route)

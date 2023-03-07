@@ -10,6 +10,8 @@ import (
 )
 
 func getDaemonBinaryPath() string {
+	// TODO: align to macOS
+	// also: is this like always true?
 	if onWindows() {
 		return "husarnet-daemon"
 	}
@@ -17,12 +19,17 @@ func getDaemonBinaryPath() string {
 	return "/usr/bin/husarnet-daemon"
 }
 
-func daemonRestart(prompt bool) {
-	if onWindows() {
-		runSubcommand(prompt, "nssm", "restart", "husarnet")
-	} else {
-		runSubcommand(prompt, "sudo", "systemctl", "restart", "husarnet")
+func restartDaemonWithConfirmationPrompt() {
+	if !askForConfirmation("Do you want to restart Husarnet Daemon now?") {
+		dieEmpty()
 	}
+
+	err := ServiceObject.Restart()
+	if err != nil {
+		printWarning("Wasn't able to restart Husarnet Daemon. Try restarting the service manually.")
+	}
+
+	waitDaemon()
 }
 
 func getDaemonBinaryVersion() string {
