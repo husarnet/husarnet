@@ -16,7 +16,7 @@ sqlite3_stmt* LegacyConfig::sqlitePrepareStatement(const char* stmt)
 {
   sqlite3_stmt* res;
   if(sqlite3_prepare_v2(db, stmt, -1, &res, 0) != SQLITE_OK) {
-    LOG("WARN: cannot prepare SQLite statement %s", stmt);
+    LOG_WARNING("cannot prepare SQLite statement %s", stmt);
   }
   return res;
 }
@@ -29,7 +29,7 @@ void LegacyConfig::sqliteBind(sqlite3_stmt* stmt, std::vector<std::string> args)
     int res = sqlite3_bind_text(
         stmt, i + 1, args[i].data(), args[i].size(), SQLITE_TRANSIENT);
     if(res != SQLITE_OK) {
-      LOG("WARN: SQLite bind failed with %d", res);
+      LOG_WARNING("SQLite bind failed with %d", res);
     }
   }
 }
@@ -46,7 +46,7 @@ std::vector<std::string> LegacyConfig::sqliteIterate(
     } else if(res == SQLITE_ROW) {
       result.push_back(f());
     } else {
-      LOG("WARN: SQLite read failed");
+      LOG_WARNING("SQLite read failed with %d", res);
     }
   }
   return result;
@@ -62,7 +62,9 @@ std::string LegacyConfig::sqliteGetValue(sqlite3_stmt* stmt, int pos)
 bool LegacyConfig::open()
 {
   if(sqlite3_open(pathToLegacyConfig.c_str(), &db) != SQLITE_OK) {
-    LOG("WARN: failed to open legacy config database");
+    LOG_WARNING(
+        "failed to open legacy config database in %s",
+        pathToLegacyConfig.c_str());
     return false;
   }
 

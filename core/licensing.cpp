@@ -24,7 +24,8 @@ json retrieveLicenseJson(std::string dashboardHostname)
   InetAddress address{ip, 80};
   int sockfd = OsSocket::connectTcpSocket(address);
   if(sockfd < 0) {
-    LOG("Can't contact %s - is DNS resolution working properly?",
+    LOG_ERROR(
+        "Can't contact %s - is DNS resolution working properly?",
         dashboardHostname.c_str());
     return json::parse("{}");
   }
@@ -46,7 +47,7 @@ json retrieveLicenseJson(std::string dashboardHostname)
   size_t pos = readBuffer.find("\r\n\r\n");
 
   if(pos == std::string::npos) {
-    LOG("invalid response from the server: %s", readBuffer.c_str());
+    LOG_ERROR("invalid response from the server: %s", readBuffer.c_str());
     abort();
   }
   pos += 4;
@@ -114,13 +115,16 @@ License::License(std::string dashboardHostname)
     licenseJson = retrieveCachedLicenseJson();
 
     if(licenseJson.empty()) {
-      LOG("No license! Husarnet Daemon can't start without license.json. "
-          "License not found on local disk and download was not possible. "
-          "Exiting.");
+      LOG_CRITICAL(
+          "No license! Husarnet Daemon can't start without license.json. "
+          "License not found on local disk and download from %s was not "
+          "possible. "
+          "Exiting.",
+          dashboardHostname.c_str());
       abort();
     }
 
-    LOG("Found cached license.json on local disk, proceed");
+    LOG_INFO("Found cached license.json on local disk, proceed");
   }
 
   verifySignature(

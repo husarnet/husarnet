@@ -13,15 +13,16 @@ std::string LogManager::getLogs()
   std::string result = "";
   while(itr != nullptr) {
     result += itr->log;
+    result += '\n';
     itr = itr->prev;
   }
   return result;
 };
 
-// TODO make it accept verbosity argument from logging.h and ignore non-matching
-// ones
-void LogManager::insert(std::string log)
+void LogManager::insert(std::string& log)
 {
+  std::unique_lock<std::mutex> lock(mtx);
+  prependLogTime(log);
   LogElement* logElement = new LogElement(log);
   if(last == nullptr or size == 1) {
     if(first != nullptr)
@@ -51,6 +52,7 @@ void LogManager::insert(std::string log)
 
 void LogManager::setSize(uint16_t size)
 {
+  std::unique_lock<std::mutex> lock(mtx);
   if(size >= currentSize) {
     this->size = size;
     return;
@@ -90,12 +92,13 @@ void LogManager::setSize(uint16_t size)
   this->currentSize = size;
 };
 
-void LogManager::setVerbosity(uint16_t verb)
+void LogManager::setVerbosity(LogLevel verb)
 {
+  std::unique_lock<std::mutex> lock(mtx);
   verbosity = verb;
 };
 
-uint16_t LogManager::getVerbosity()
+LogLevel LogManager::getVerbosity()
 {
   return verbosity;
 };
@@ -108,4 +111,13 @@ uint16_t LogManager::getSize()
 uint16_t LogManager::getCurrentSize()
 {
   return currentSize;
+};
+
+void LogManager::prependLogTime(std::string& log)
+{
+  auto now = std::chrono::system_clock::now();
+  auto now_c = std::chrono::system_clock::to_time_t(now);
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&now_c), "[%Y-%m-%d %H:%M:%S] ") << log;
+  log = ss.str();
 };

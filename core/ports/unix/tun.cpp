@@ -41,7 +41,7 @@ static int openTun(const std::string& name, bool isTap)
     exit(1);
   }
 
-  LOG("allocated tun %s", ifr.ifr_name);
+  LOG_INFO("allocated tun %s", ifr.ifr_name);
 
   return fd;
 }
@@ -85,6 +85,6 @@ void TunTap::onLowerLayerData(DeviceId source, string_view data)
 {
   long wr = write(fd, data.data(), data.size());
   if(wr != data.size()) {
-    LOG("short tun write");
+    LOG_INFO("short tun write");
   }
 }

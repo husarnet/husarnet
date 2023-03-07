@@ -187,8 +187,8 @@ void HusarnetManager::changeServer(std::string domain)
 {
   configStorage->setUserSetting(UserSetting::dashboardFqdn, domain);
   setDirty();
-  LOG("Dashboard URL has been changed to %s.", domain.c_str());
-  LOG("DAEMON WILL CONTINUE TO USE THE OLD ONE UNTIL YOU RESTART IT");
+  LOG_WARNING("Dashboard URL has been changed to %s.", domain.c_str());
+  LOG_WARNING("DAEMON WILL CONTINUE TO USE THE OLD ONE UNTIL YOU RESTART IT");
 }
 
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)
@@ -248,6 +248,17 @@ bool HusarnetManager::isRealAddressAllowed(InetAddress addr)
 int HusarnetManager::getApiPort()
 {
   return configStorage->getUserSettingInt(UserSetting::daemonApiPort);
+}
+
+int HusarnetManager::getLogVerbosity()
+{
+  return configStorage->getUserSettingInt(UserSetting::logVerbosity);
+}
+
+void HusarnetManager::setLogVerbosity(int logLevel)
+{
+  getGlobalLogManager()->setVerbosity(logLevelFromInt(logLevel));
+  configStorage->setUserSetting(UserSetting::logVerbosity, logLevel);
 }
 
 std::string HusarnetManager::getApiSecret()
@@ -340,12 +351,17 @@ void HusarnetManager::readLegacyConfig()
 
   LegacyConfig legacyConfig(legacyConfigPath);
   if(!legacyConfig.open()) {
-    LOG("WARN: Legacy config is present, but couldn't read its contents");
+    LOG_WARNING(
+        "Legacy config is present, but couldn't read its contents on path: %s",
+        legacyConfigPath.c_str());
     return;
   }
 
-  LOG("Found legacy config, will attempt to transfer the values to new "
-      "format");
+  LOG_WARNING(
+      "Found legacy config on path: %s, will attempt to transfer the values to "
+      "new "
+      "format",
+      legacyConfigPath.c_str());
 
   auto websetupSecretOld = legacyConfig.getWebsetupSecret();
   auto whitelistEnabledOld = legacyConfig.getWhitelistEnabled();
@@ -474,6 +490,7 @@ void HusarnetManager::stage3()
     }
   }
 
+  getGlobalLogManager()->setVerbosity(logLevelFromInt(this->getLogVerbosity()));
   this->hostTableAdd("husarnet-local", this->getSelfAddress());
 
   stage3Started = true;

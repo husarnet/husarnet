@@ -11,10 +11,6 @@
 
 #include "husarnet/logmanager.h"
 
-// Windows API is broken
-#undef ERROR
-BETTER_ENUM(LogLevel, int, DEBUG, INFO, WARNING, ERROR, CRITICAL)
-
 static inline const std::string pad(int minLength, const std::string& text)
 {
   int padSize = 0;
@@ -35,6 +31,9 @@ static inline void log(
     const char* format,
     ...)
 {
+  if(level < getGlobalLogManager()->getVerbosity()) {
+    return;
+  }
   int buffer_len = 256;
   char buffer[buffer_len];
   va_list args;
@@ -57,8 +56,7 @@ static inline void log(
   auto message = std::string(buffer);
 
   Port::log(message);
-  // TODO reenable this after adding some synchronization primitvies to it
-  // getGlobalLogManager()->insert(message);
+  getGlobalLogManager()->insert(message);
 }
 
 // Legacy compatibility alias

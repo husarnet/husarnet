@@ -116,6 +116,9 @@ class HusarnetManager {
   std::string getApiSecret();
   std::string rotateApiSecret();
 
+  int getLogVerbosity();
+  void setLogVerbosity(int logLevel);
+
   // Copy of methods from License class
   std::string getDashboardFqdn();
   IpAddress getWebsetupAddress();
