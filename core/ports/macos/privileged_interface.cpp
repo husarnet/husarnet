@@ -249,4 +249,16 @@ namespace Privileged {
   {
     // TODO: implement
   }
+
+  void runScripts(const std::string& path)
+  {
+    // TODO: implement MAC hooks at some point?
+  }
+
+  bool checkScriptsExist(const std::string& path)
+  {
+    return false;
+  }
+
+
 }  // namespace Privileged
