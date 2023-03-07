@@ -19,9 +19,11 @@
 #include <string.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include "husarnet/ports/unix/tun.h"
 
@@ -368,5 +370,51 @@ namespace Port {
   {
     fprintf(stderr, "%s\n", message.c_str());
     fflush(stderr);
+  }
+
+  void runScripts(const std::string& path)
+  {
+    std::string msg = "running hooks under path " + path;
+    LOG(msg.c_str());
+    DIR* dir = opendir(path.c_str());
+    if (dir == NULL) {return;}
+    
+    struct dirent* ent;
+    while ((ent = readdir(dir)) != NULL) {
+        std::string fileName = ent->d_name;
+            std::string filePath = path + "/" + fileName;
+            if (access(filePath.c_str(), X_OK) == 0) {
+                pid_t pid = fork();
+                if (pid == 0) {
+                    std::system((char*)filePath.c_str());
+                } else {
+                    int status;
+                    waitpid(pid, &status, 0);
+                }
+            }
+    }
+    closedir(dir);
+  }
+
+  bool checkScriptsExist(const std::string& path)
+  {
+    std::string msg = "checking if valid hooks under path " + path;
+    LOG(msg.c_str());
+
+    DIR* dir = opendir(path.c_str());
+    if (dir == NULL) {
+      return false;
+      }
+    struct dirent* ent;
+    while ((ent = readdir(dir)) != NULL) {
+        std::string fileName = ent->d_name;
+            std::string filePath = path + "/" + fileName;
+            if (access(filePath.c_str(), X_OK) == 0) {
+                closedir(dir);
+                return true;
+            }
+    }
+    closedir(dir);
+    return false;
   }
 }  // namespace Port

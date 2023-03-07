@@ -298,6 +298,49 @@ var daemonWhitelistCommand = &cli.Command{
 	},
 }
 
+var daemonHooksCommand = &cli.Command{
+	Name:  "hooks",
+	Usage: "Manage hooks on the device.",
+	Subcommands: []*cli.Command{
+		{
+			Name:      "enable",
+			Aliases:   []string{"on"},
+			Usage:     "enable hooks",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				callDaemonPost[EmptyResult]("/api/hooks/enable", url.Values{})
+				printSuccess("Enabled hooks")
+
+				return nil
+			},
+		},
+		{
+			Name:      "disable",
+			Aliases:   []string{"off"},
+			Usage:     "disable hooks",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				callDaemonPost[EmptyResult]("/api/hooks/disable", url.Values{})
+				printSuccess("Disabled hooks")
+
+				return nil
+			},
+		},
+		{
+			Name:      "show",
+			Aliases:   []string{"check", "ls"},
+			Usage:     "check if hooks are enabled",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				status := getDaemonStatus()
+				printHooksStatus(status)
+
+				return nil
+			},
+		},
+	},
+}
+
 var daemonWaitCommand = &cli.Command{
 	Name:  "wait",
 	Usage: "Wait until certain events occur. If no events provided will wait for as many elements as it can (the best case scenario). Husarnet will continue working even if some of those elements are unreachable, so consider narrowing your search down a bit.",
@@ -528,6 +571,7 @@ var daemonCommand = &cli.Command{
 		daemonRestartCommand,
 		daemonStopCommand,
 		daemonWhitelistCommand,
+		daemonHooksCommand,
 		daemonWaitCommand,
 		daemonGenIdCommand,
 	},

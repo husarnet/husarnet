@@ -33,6 +33,8 @@ namespace Privileged {
   void writeConfig(std::string);
 
   Identity readIdentity();
+  Identity createIdentity();
+  bool checkValidIdentityExists();
   void writeIdentity(Identity identity);
 
   std::string readApiSecret();
@@ -51,4 +53,7 @@ namespace Privileged {
   void updateHostsFile(const std::map<std::string, IpAddress>& data);
 
   void notifyReady();
+
+  void runScripts(const std::string& path);
+  bool checkScriptsExist(const std::string& path);
 }  // namespace Privileged

@@ -45,6 +45,11 @@ PeerContainer* HusarnetManager::getPeerContainer()
   return peerContainer;
 }
 
+HooksManager* HusarnetManager::getHooksManager()
+{
+  return hooksManager;
+}
+
 std::string HusarnetManager::getVersion()
 {
   return HUSARNET_VERSION;
@@ -83,12 +88,21 @@ void HusarnetManager::setConfigStorage(ConfigStorage* cs)
 
 bool HusarnetManager::setSelfHostname(std::string newHostname)
 {
-  return Privileged::setSelfHostname(newHostname);
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
+  auto result = Privileged::setSelfHostname(newHostname);
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
+  return result;
 }
 
 void HusarnetManager::updateHosts()
 {
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
   Privileged::updateHostsFile(configStorage->getHostTable());
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
 }
 
 IpAddress HusarnetManager::resolveHostname(std::string hostname)
@@ -172,6 +186,7 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
   }
 
   websetup->join(parseJoinCode(joinCode), dashboardHostname);
+
 }
 
 bool HusarnetManager::isJoined()
@@ -223,12 +238,12 @@ bool HusarnetManager::isWhitelistEnabled()
 
 void HusarnetManager::whitelistEnable()
 {
-  configStorage->setUserSetting(UserSetting::enableWhitelist, true);
+  configStorage->setUserSetting(UserSetting::enableWhitelist, trueValue);
 }
 
 void HusarnetManager::whitelistDisable()
 {
-  configStorage->setUserSetting(UserSetting::enableWhitelist, false);
+  configStorage->setUserSetting(UserSetting::enableWhitelist, falseValue);
 }
 
 bool HusarnetManager::isPeerAddressAllowed(IpAddress address)
@@ -263,12 +278,21 @@ void HusarnetManager::setLogVerbosity(int logLevel)
 
 std::string HusarnetManager::getApiSecret()
 {
-  return Privileged::readApiSecret();
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
+  auto result = Privileged::readApiSecret();
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
+  return result;
 }
 
 std::string HusarnetManager::rotateApiSecret()
 {
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
   Privileged::rotateApiSecret();
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
   return getApiSecret();
 }
 
@@ -308,6 +332,21 @@ void HusarnetManager::setInterfaceName(std::string name)
   // also this should probably be internal setting in windows case
 }
 
+bool HusarnetManager::areHooksEnabled()
+{
+  return configStorage->getUserSettingBool(UserSetting::enableHooks);
+}
+
+void HusarnetManager::hooksEnable()
+{
+  configStorage->setUserSetting(UserSetting::enableHooks, trueValue);
+}
+
+void HusarnetManager::hooksDisable()
+{
+  configStorage->setUserSetting(UserSetting::enableHooks, falseValue);
+}
+
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
   if(!id == deviceIdFromIpAddress(IpAddress::parse(multicastDestination))) {
@@ -339,6 +378,12 @@ HusarnetManager::HusarnetManager()
 {
   Port::init();
   Privileged::init();
+  this->hooksManager = new HooksManager(this);
+}
+
+HusarnetManager::~HusarnetManager()
+{
+  delete this->hooksManager;
 }
 
 void HusarnetManager::readLegacyConfig()
@@ -385,15 +430,30 @@ void HusarnetManager::readLegacyConfig()
 
 void HusarnetManager::getLicenseStage()
 {
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
   license =
       new License(configStorage->getUserSetting(UserSetting::dashboardFqdn));
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
 }
 
 void HusarnetManager::getIdentityStage()
 {
   // TODO long term - reenable the smartcard support but with proper
   // multiplatform support
-  identity = Privileged::readIdentity();
+  if(Privileged::checkValidIdentityExists())
+  {
+    identity = Privileged::readIdentity();
+  }
+  else
+  {
+  this->getHooksManager()->runHook(HookType::rw_request);
+  this->getHooksManager()->waitHook(HookType::rw_request);
+  identity = Privileged::createIdentity();
+  this->getHooksManager()->runHook(HookType::rw_release);
+  this->getHooksManager()->waitHook(HookType::rw_release);
+  }
 }
 
 void HusarnetManager::startNetworkingStack()

@@ -56,6 +56,7 @@ type DaemonStatus struct {
 	Version       string
 	DashboardFQDN string `json:"dashboard_fqdn"`
 	IsDirty       bool   `json:"is_dirty"`
+	HooksEnabled  bool   `json:"hooks_enabled"`
 
 	WebsetupAddress netip.Addr           `json:"websetup_address"`
 	BaseConnection  BaseConnectionStatus `json:"base_connection"`

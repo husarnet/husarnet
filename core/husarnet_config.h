@@ -38,6 +38,7 @@ const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::extraAdvertisedAddress, ""},
     {UserSetting::joinCode, ""},
     {UserSetting::hostname, ""},
+    {UserSetting::enableHooks, falseValue},
     {UserSetting::logVerbosity, "1"},
 };
 

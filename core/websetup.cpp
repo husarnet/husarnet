@@ -273,6 +273,7 @@ std::list<std::string> WebsetupConnection::handleWebsetupCommand(
     lastInitReply = Port::getCurrentTime();
     joinCode = "";  // mark that we've already joined
     threadMutex.unlock();
+    manager->getHooksManager()->runHook(HookType::joinned);
     return {"ok"};
   } else if(command == "whitelist-add") {
     manager->whitelistAdd(IpAddress::fromBinary(decodeHex(payload)));
