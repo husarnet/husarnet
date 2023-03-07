@@ -71,7 +71,7 @@ void NgSocket::periodic()
 
   if(reloadLocalAddresses()) {
     // new addresses, accelerate reconnection
-    auto addresses_string = std::transform_reduce(localAddresses.begin(), localAddresses.end(), std::string(""), [](std::string a, std::string b){return a + " | " + b;}, [](InetAddress addr){return addr.str();});
+    auto addresses_string = std::transform_reduce(localAddresses.begin(), localAddresses.end(), std::string(""), [](const std::string& a, const std::string& b){return a + " | " + b;}, [](InetAddress addr){return addr.str();});
     LOG_INFO(
         "Local IP address change detected, new addresses: %s", addresses_string.c_str());
     requestRefresh();
