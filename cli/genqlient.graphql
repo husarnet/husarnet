@@ -49,6 +49,12 @@ mutation RenameDevice($deviceIdFragment: String!, $name: String!) {
   }
 }
 
+mutation RemoveDevice($deviceId: ID!) {
+  removeDevice(id: $deviceId) {
+    success
+  }
+}
+
 mutation AssignDeviceGroup($devicedeviceIdFragment: String!, $groupName: ID!) {
   updateDevice(deviceIdFragment: $devicedeviceIdFragment, addGroups: [$groupName]) {
     device {

@@ -76,6 +76,12 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
   list(APPEND husarnet_core_SRC ${port_macos_SRC} ${port_shared_unix_windows_SRC})
 endif()
 
+if(${CMAKE_SYSTEM_NAME} STREQUAL ESP32)
+  include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/esp32)
+  file(GLOB port_esp32_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/esp32/*.cpp")
+  list(APPEND husarnet_core_SRC ${port_esp32_SRC})
+endif()
+
 include_directories(${CMAKE_CURRENT_LIST_DIR}/ports)
 file(GLOB husarnet_ports_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_ports_SRC})
@@ -153,6 +159,7 @@ FetchContent_Declare(
 )
 set(JSON_BuildTests OFF)
 FetchContent_MakeAvailable(nlohmann_json)
+target_include_directories(husarnet_core PUBLIC ${nlohmann_json_SOURCE_DIR}/include)
 target_link_libraries(husarnet_core nlohmann_json)
 
 FetchContent_Declare(
@@ -164,14 +171,17 @@ FetchContent_MakeAvailable(better_enums)
 target_include_directories(husarnet_core PUBLIC ${better_enums_SOURCE_DIR})
 target_compile_options(husarnet_core PUBLIC -DBETTER_ENUMS_STRICT_CONVERSION=1)
 
-FetchContent_Declare(
-  sqlite3
-  URL https://sqlite.org/2022/sqlite-amalgamation-3390200.zip
-)
-FetchContent_MakeAvailable(sqlite3)
-include_directories(${sqlite3_SOURCE_DIR})
-add_library(sqlite3 STATIC ${sqlite3_SOURCE_DIR}/sqlite3.c)
-target_link_libraries(husarnet_core sqlite3 ${CMAKE_DL_LIBS})
+if((${CMAKE_SYSTEM_NAME} STREQUAL Linux) OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows))
+  FetchContent_Declare(
+    sqlite3
+    URL https://sqlite.org/2022/sqlite-amalgamation-3390200.zip
+  )
+  FetchContent_MakeAvailable(sqlite3)
+  include_directories(${sqlite3_SOURCE_DIR})
+  add_library(sqlite3 STATIC ${sqlite3_SOURCE_DIR}/sqlite3.c)
+  target_link_libraries(husarnet_core sqlite3 ${CMAKE_DL_LIBS})
+  target_compile_options(husarnet_core PUBLIC -DENABLE_LEGACY_CONFIG=1)
+endif()
 
 # Include unix port libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))

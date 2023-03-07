@@ -18,7 +18,9 @@
 #include "husarnet/husarnet_config.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
+#ifdef ENABLE_LEGACY_CONFIG
 #include "husarnet/legacy_config.h"
+#endif
 #include "husarnet/licensing.h"
 #include "husarnet/logging.h"
 #include "husarnet/multicast_layer.h"
@@ -341,6 +343,7 @@ HusarnetManager::HusarnetManager()
 
 void HusarnetManager::readLegacyConfig()
 {
+#ifdef ENABLE_LEGACY_CONFIG
   const std::string legacyConfigPath = Privileged::getLegacyConfigPath();
   if(!Port::isFile(legacyConfigPath)) {
     return;
@@ -377,6 +380,7 @@ void HusarnetManager::readLegacyConfig()
   });
 
   Port::renameFile(legacyConfigPath, legacyConfigPath + ".old");
+#endif
 }
 
 void HusarnetManager::getLicenseStage()
@@ -487,6 +491,7 @@ void HusarnetManager::stage3()
   }
 
   getGlobalLogManager()->setVerbosity(logLevelFromInt(this->getLogVerbosity()));
+  this->hostTableAdd("husarnet-local", this->getSelfAddress());
 
   stage3Started = true;
 }
@@ -496,7 +501,6 @@ void HusarnetManager::runHusarnet()
   stage1();
   stage2();
   stage3();
-
   Privileged::notifyReady();
 
   while(true) {

@@ -1,7 +1,7 @@
 set(CMAKE_SYSTEM_NAME Darwin)
 set(CMAKE_SYSTEM_PROCESSOR ARM64)
 
-set(triple aarch64-macos-gnu)
+set(triple aarch64-macos-none)
 
 set(CMAKE_C_COMPILER "zig" cc -target ${triple})
 set(CMAKE_CXX_COMPILER "zig" c++ -target ${triple})

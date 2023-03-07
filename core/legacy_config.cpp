@@ -1,6 +1,8 @@
 // Copyright (c) 2022 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
+#ifdef ENABLE_LEGACY_CONFIG
+#pragma once
 #include "husarnet/legacy_config.h"
 
 #include <sqlite3.h>
@@ -110,3 +112,4 @@ std::vector<std::string> LegacyConfig::getWhitelistEntries()
 
   return values;
 }
+#endif

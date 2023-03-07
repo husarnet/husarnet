@@ -21,7 +21,7 @@ func waitAction(message string, lambda func(*DaemonStatus) (bool, string)) error
 	failedCounter := 0
 	for {
 		failedCounter++
-		if failedCounter > 60 {
+		if failedCounter > 120 {
 			spinner.Fail("timeout")
 			return fmt.Errorf("timeout")
 		}

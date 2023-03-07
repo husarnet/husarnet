@@ -2,4 +2,4 @@ apt update
 
 # Test prerequisites
 apt install -y --no-install-recommends --no-install-suggests \
-    jq curl iputils-ping openssl
+    jq curl iputils-ping openssl ca-certificates

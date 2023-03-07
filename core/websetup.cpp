@@ -35,6 +35,11 @@ WebsetupConnection::WebsetupConnection(HusarnetManager* manager)
 
 void WebsetupConnection::start()
 {
+  if(manager->getIdentity()->getIpAddress() == manager->getWebsetupAddress()) {
+    LOG("There's no need to contact websetup if we're the websetup");
+    return;
+  }
+
   websetupFd = SOCKFUNC(socket)(AF_INET6, SOCK_DGRAM, 0);
   assert(websetupFd > 0);
   sockaddr_in6 addr{};

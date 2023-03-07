@@ -94,10 +94,20 @@ var daemonStatusCommand = &cli.Command{
 			Aliases: []string{"v"},
 			Usage:   "show more information",
 		},
+		&cli.BoolFlag{
+			Name:    "follow",
+			Aliases: []string{"f"},
+			Usage:   "show more information",
+		},
 	},
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx *cli.Context) error {
-		printStatus(ctx)
+		if ctx.Bool("follow") {
+			printStatusFollow(ctx)
+		}else {
+			status := getDaemonStatus()
+			printStatus(ctx,status)
+		}
 		return nil
 
 	},
@@ -233,7 +243,7 @@ var daemonWhitelistCommand = &cli.Command{
 			Usage:     "disable whitelist",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
-				callDaemonPost[EmptyResult]("/api/whitelist/whitelist", url.Values{})
+				callDaemonPost[EmptyResult]("/api/whitelist/disable", url.Values{})
 				printSuccess("Disabled the whitelist")
 
 				return nil

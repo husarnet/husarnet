@@ -5,24 +5,6 @@
 
 #include "husarnet/ports/port.h"
 
-#if defined(ESP_PLATFORM)
-namespace std {
-  std::string to_string(int a)
-  {
-    char buf[15];
-    sprintf(buf, "%d", a);
-    return buf;
-  }
-
-  int stoi(const std::string& s)
-  {
-    int ret = -1;
-    sscanf(s.c_str(), "%d", &ret);
-    return ret;
-  }
-}  // namespace std
-#endif
-
 int husarnet_ip6addr_aton(const char* cp, uint8_t* addr);
 int husarnet_ip4addr_aton(const char* cp, uint8_t* result);
 
