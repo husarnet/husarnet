@@ -12,6 +12,6 @@ TunTap::TunTap()
 {
 }
 
-void TunTap::onLowerLayerData(DeviceId source, string_view data)
+void TunTap::onLowerLayerData(PeerId source, string_view data)
 {
 }

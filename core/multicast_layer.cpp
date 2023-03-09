@@ -17,10 +17,10 @@
 MulticastLayer::MulticastLayer(HusarnetManager* manager) : manager(manager)
 
 {
-  deviceId = manager->getIdentity()->getDeviceId();
+  peerId = manager->getIdentity()->getPeerId();
 }
 
-void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
+void MulticastLayer::onLowerLayerData(PeerId source, string_view data)
 {
   std::string packet;
   if(data.size() < 2)
@@ -54,7 +54,7 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
 
     LOG_INFO("received multicast from %s", encodeHex(source).c_str());
 
-    sendToUpperLayer(BadDeviceId, packet);
+    sendToUpperLayer(BadPeerId, packet);
   } else {
     // unicast
     int payloadSize = (int)data.size() - 1;
@@ -67,14 +67,14 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
     packet[6] = protocol;
     packet[7] = 3;  // hop limit
     packet += source;
-    packet += deviceId;
+    packet += peerId;
     packet += data.substr(1);
 
-    sendToUpperLayer(BadDeviceId, packet);
+    sendToUpperLayer(BadPeerId, packet);
   }
 }
 
-void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
+void MulticastLayer::onUpperLayerData(PeerId target, string_view packet)
 {
   if(packet.size() <= 40) {
     LOG_WARNING("truncated packet from %s", std::string(target).c_str());
@@ -98,7 +98,7 @@ void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
     msgData += packet.substr(40);
 
     auto dst = manager->getMulticastDestinations(dstAddress);
-    for(DeviceId dest : dst) {
+    for(PeerId dest : dst) {
       sendToLowerLayer(dest, msgData);
     }
 
@@ -110,7 +110,7 @@ void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
   if(dstAddress[0] == 0xfc && dstAddress[1] == 0x94) {
     // unicast
 
-    if(srcAddress != deviceId)
+    if(srcAddress != peerId)
       return;
 
     string_view msgData = packet.substr(39);

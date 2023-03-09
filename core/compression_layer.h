@@ -4,9 +4,9 @@
 #pragma once
 #include <string>
 
-#include "husarnet/device_id.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/layer_interfaces.h"
+#include "husarnet/peer.h"
 #include "husarnet/string_view.h"
 
 class ConfigStorage;
@@ -26,11 +26,11 @@ class CompressionLayer : public BidirectionalLayer {
   std::string compressionBuffer;
   std::string cleartextBuffer;
 
-  bool shouldProceed(DeviceId source);
+  bool shouldProceed(PeerId source);
 
  public:
   CompressionLayer(HusarnetManager* manager);
 
-  void onUpperLayerData(DeviceId peerId, string_view data);
-  void onLowerLayerData(DeviceId peerId, string_view data);
+  void onUpperLayerData(PeerId peerId, string_view data);
+  void onLowerLayerData(PeerId peerId, string_view data);
 };

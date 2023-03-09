@@ -22,14 +22,14 @@ namespace NgSocketCrypto {
     return identity->sign(msg);
   }
 
-  fstring<16> pubkeyToDeviceId(fstring<32> pubkey)
+  fstring<16> pubkeyToPeerId(fstring<32> pubkey)
   {
     fstring<32> hash;
     crypto_hash_sha256(
         (unsigned char*)&hash[0], (const unsigned char*)pubkey.data(),
         pubkey.size());
     if(!(hash[0] == 0 && ((unsigned char)hash[1]) < 50)) {
-      return BadDeviceId;
+      return BadPeerId;
     }
     return "\xfc\x94" + std::string(hash).substr(3, 14);
   }

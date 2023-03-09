@@ -56,7 +56,7 @@ void WindowsNetworking::setupNetworkInterface(std::string interfaceName)
   callWindowsCmd(
       "netsh interface ipv6 add neighbors " + quotedName +
       " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001 52-54-00-fc-94-4d");
-  std::string myIp = IpAddress::fromBinary(identity.getDeviceId()).str();
+  std::string myIp = IpAddress::fromBinary(identity.getPeerId()).str();
   LOG_INFO("myIp is: %s", myIp.c_str());
   callWindowsCmd(
       "netsh interface ipv6 add address " + quotedName + " " + myIp + "/128");

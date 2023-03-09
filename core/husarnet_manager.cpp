@@ -13,23 +13,24 @@
 
 #include "husarnet/compression_layer.h"
 #include "husarnet/config_storage.h"
-#include "husarnet/device_id.h"
 #include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
-#ifdef ENABLE_LEGACY_CONFIG
-#include "husarnet/legacy_config.h"
-#endif
 #include "husarnet/licensing.h"
 #include "husarnet/logging.h"
 #include "husarnet/multicast_layer.h"
-#include "husarnet/ngsocket.h"
+#include "husarnet/ngsocket_manager.h"
+#include "husarnet/peer.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/peer_flags.h"
 #include "husarnet/security_layer.h"
 #include "husarnet/util.h"
 #include "husarnet/websetup.h"
+
+#ifdef ENABLE_LEGACY_CONFIG
+#include "husarnet/legacy_config.h"
+#endif
 
 #ifdef HTTP_CONTROL_API
 #include "husarnet/api_server/server.h"
@@ -116,9 +117,9 @@ IpAddress HusarnetManager::resolveHostname(std::string hostname)
   return hostTable[hostname];
 }
 
-InetAddress HusarnetManager::getCurrentBaseAddress()
+IpAddress HusarnetManager::getCurrentBaseAddress()
 {
-  return ngsocket->getCurrentBaseAddress();
+  return ngsocket->getCurrentBase()->getAddress();
 }
 
 std::string HusarnetManager::getCurrentBaseProtocol()
@@ -134,7 +135,7 @@ bool HusarnetManager::isConnectedToBase()
 bool HusarnetManager::isConnectedToWebsetup()
 {
   auto websetupPeer =
-      peerContainer->getPeer(deviceIdFromIpAddress(getWebsetupAddress()));
+      peerContainer->getPeer(peerIdFromIpAddress(getWebsetupAddress()));
   if(websetupPeer == NULL) {
     return false;
   }
@@ -186,13 +187,12 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
   }
 
   websetup->join(parseJoinCode(joinCode), dashboardHostname);
-
 }
 
 bool HusarnetManager::isJoined()
 {
   // TODO long-term - add a periodic latency check for websetup
-  // auto websetupId = deviceIdFromIpAddress(getWebsetupAddress());
+  // auto websetupId = peerIdFromIpAddress(getWebsetupAddress());
   // getLatency(websetupId) >= 0
   return configStorage->isOnWhitelist(getWebsetupAddress()) &&
          websetup->getLastInitReply() > 0;
@@ -309,11 +309,6 @@ std::vector<IpAddress> HusarnetManager::getBaseServerAddresses()
   return license->getBaseServerAddresses();
 }
 
-NgSocket* HusarnetManager::getNGSocket()
-{
-  return ngsocket;
-}
-
 SecurityLayer* HusarnetManager::getSecurityLayer()
 {
   return securityLayer;
@@ -347,20 +342,20 @@ void HusarnetManager::hooksDisable()
   configStorage->setUserSetting(UserSetting::enableHooks, falseValue);
 }
 
-std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
+std::vector<PeerId> HusarnetManager::getMulticastDestinations(PeerId id)
 {
-  if(!id == deviceIdFromIpAddress(IpAddress::parse(multicastDestination))) {
+  if(!id == peerIdFromIpAddress(IpAddress::parse(multicastDestination))) {
     return {};
   }
 
-  std::vector<DeviceId> r;
+  std::vector<PeerId> r;
   for(auto& ipAddress : configStorage->getWhitelist()) {
-    r.push_back(deviceIdFromIpAddress(ipAddress));
+    r.push_back(peerIdFromIpAddress(ipAddress));
   }
   return r;
 }
 
-int HusarnetManager::getLatency(DeviceId destination)
+int HusarnetManager::getLatency(PeerId destination)
 {
   return securityLayer->getLatency(destination);
 }
@@ -442,17 +437,14 @@ void HusarnetManager::getIdentityStage()
 {
   // TODO long term - reenable the smartcard support but with proper
   // multiplatform support
-  if(Privileged::checkValidIdentityExists())
-  {
+  if(Privileged::checkValidIdentityExists()) {
     identity = Privileged::readIdentity();
-  }
-  else
-  {
-  this->getHooksManager()->runHook(HookType::rw_request);
-  this->getHooksManager()->waitHook(HookType::rw_request);
-  identity = Privileged::createIdentity();
-  this->getHooksManager()->runHook(HookType::rw_release);
-  this->getHooksManager()->waitHook(HookType::rw_release);
+  } else {
+    this->getHooksManager()->runHook(HookType::rw_request);
+    this->getHooksManager()->waitHook(HookType::rw_request);
+    identity = Privileged::createIdentity();
+    this->getHooksManager()->runHook(HookType::rw_release);
+    this->getHooksManager()->waitHook(HookType::rw_release);
   }
 }
 
@@ -467,7 +459,7 @@ void HusarnetManager::startNetworkingStack()
   auto multicast = new MulticastLayer(this);
   auto compression = new CompressionLayer(this);
   securityLayer = new SecurityLayer(this);
-  ngsocket = new NgSocket(this);
+  ngsocket = new NgSocketManager(this);
 
   stackUpperOnLower(tunTap, multicast);
   stackUpperOnLower(multicast, compression);
@@ -564,7 +556,6 @@ void HusarnetManager::runHusarnet()
   Privileged::notifyReady();
 
   while(true) {
-    ngsocket->periodic();
     OsSocket::runOnce(1000);  // process socket events for at most so many ms
   }
 }

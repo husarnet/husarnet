@@ -96,7 +96,7 @@ void TunTap::onTunTapData()
   }
 
   string_view packet = string_view(tunBuffer).substr(0, size);
-  sendToLowerLayer(BadDeviceId, packet.substr(4));
+  sendToLowerLayer(BadPeerId, packet.substr(4));
 }
 
 TunTap::TunTap()
@@ -113,7 +113,7 @@ TunTap::TunTap()
   OsSocket::bindCustomFd(fd, std::bind(&TunTap::onTunTapData, this));
 }
 
-void TunTap::onLowerLayerData(DeviceId source, string_view data)
+void TunTap::onLowerLayerData(PeerId source, string_view data)
 {
   std::string wrapped{};
   // prepend bytes specific for utun/macos

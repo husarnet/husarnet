@@ -31,14 +31,14 @@ bool Peer::isSecure()
   return negotiated;
 }
 
-DeviceId Peer::getDeviceId()
+PeerId Peer::getPeerId()
 {
   return id;
 }
 
 IpAddress Peer::getIpAddress()
 {
-  return deviceIdToIpAddress(id);
+  return peerIdToIpAddress(id);
 }
 
 std::list<InetAddress> Peer::getSourceAddresses()

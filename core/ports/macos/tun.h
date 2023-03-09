@@ -4,9 +4,8 @@
 #pragma once
 #include <string>
 
-#include "husarnet/device_id.h"
 #include "husarnet/layer_interfaces.h"
-#include "husarnet/ngsocket.h"
+#include "husarnet/peer.h"
 #include "husarnet/string_view.h"
 
 class TunTap : public UpperLayer {
@@ -27,5 +26,5 @@ class TunTap : public UpperLayer {
   // is available...
   std::string getName();
 
-  void onLowerLayerData(DeviceId source, string_view data) override;
+  void onLowerLayerData(PeerId source, string_view data) override;
 };

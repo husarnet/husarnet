@@ -4,22 +4,22 @@
 #pragma once
 #include <string>
 
-#include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
+#include "husarnet/peer.h"
 
 class Identity {
  private:
   fstring<32> pubkey;
   fstring<64> privkey;
 
-  DeviceId deviceId;
+  PeerId peerId;
 
  public:
-  Identity();  // This will create BadDeviceId. Look below for methods that'll
+  Identity();  // This will create BadPeerId. Look below for methods that'll
                // get you something actually usable
 
   fstring<32> getPubkey();
-  DeviceId getDeviceId();
+  PeerId getPeerId();
   IpAddress getIpAddress();
 
   fstring<64> sign(const std::string& data);

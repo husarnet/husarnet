@@ -13,9 +13,9 @@ PeerContainer::PeerContainer(HusarnetManager* manager) : manager(manager)
 {
 }
 
-Peer* PeerContainer::createPeer(DeviceId id)
+Peer* PeerContainer::createPeer(PeerId id)
 {
-  if(!manager->isPeerAddressAllowed(deviceIdToIpAddress(id))) {
+  if(!manager->isPeerAddressAllowed(peerIdToIpAddress(id))) {
     LOG_WARNING("peer %s is not on the whitelist", encodeHex(id).c_str());
     return nullptr;
   }
@@ -27,17 +27,17 @@ Peer* PeerContainer::createPeer(DeviceId id)
   return peer;
 }
 
-Peer* PeerContainer::getPeer(DeviceId id)
+Peer* PeerContainer::getPeer(PeerId id)
 {
   if(cachedPeerId == id)
     return cachedPeer;
 
-  if(!manager->isPeerAddressAllowed(deviceIdToIpAddress(id))) {
+  if(!manager->isPeerAddressAllowed(peerIdToIpAddress(id))) {
     LOG_WARNING("peer %s is not on the whitelist", encodeHex(id).c_str());
     return nullptr;
   }
 
-  if(id == manager->getIdentity()->getDeviceId())
+  if(id == manager->getIdentity()->getPeerId())
     return nullptr;
 
   auto it = peers.find(id);
@@ -49,7 +49,7 @@ Peer* PeerContainer::getPeer(DeviceId id)
   return it->second;
 }
 
-Peer* PeerContainer::getOrCreatePeer(DeviceId id)
+Peer* PeerContainer::getOrCreatePeer(PeerId id)
 {
   Peer* peer = getPeer(id);
   if(peer == nullptr) {
@@ -58,7 +58,7 @@ Peer* PeerContainer::getOrCreatePeer(DeviceId id)
   return peer;
 }
 
-std::unordered_map<DeviceId, Peer*> PeerContainer::getPeers()
+std::unordered_map<PeerId, Peer*> PeerContainer::getPeers()
 {
   return peers;
 }

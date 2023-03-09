@@ -4,9 +4,8 @@
 #pragma once
 #include <string>
 
-#include "husarnet/device_id.h"
 #include "husarnet/layer_interfaces.h"
-#include "husarnet/ngsocket.h"
+#include "husarnet/peer.h"
 #include "husarnet/string_view.h"
 
 #include "windef.h"
@@ -31,5 +30,5 @@ class TunTap : public UpperLayer {
  public:
   TunTap(std::string name, bool isTap = false);
 
-  void onLowerLayerData(DeviceId source, string_view data) override;
+  void onLowerLayerData(PeerId source, string_view data) override;
 };

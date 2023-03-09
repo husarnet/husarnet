@@ -5,22 +5,22 @@
 #include "husarnet/fstring.h"
 #include "husarnet/ipaddress.h"
 
-using DeviceId = fstring<16>;
+using PeerId = fstring<16>;
 
-static const DeviceId BadDeviceId =
-    DeviceId("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");  //__attribute__((unused));
+static const PeerId BadPeerId =
+    PeerId("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");  //__attribute__((unused));
 
-inline IpAddress deviceIdToIpAddress(DeviceId id)
+inline IpAddress peerIdToIpAddress(PeerId id)
 {
   return IpAddress::fromBinary(id);
 }
 
-inline DeviceId deviceIdFromIpAddress(IpAddress ip)
+inline PeerId peerIdFromIpAddress(IpAddress ip)
 {
   return ip.toBinary();
 }
 
-inline const char* deviceIdToCStr(DeviceId id)
+inline const char* peerIdToCStr(PeerId id)
 {
   return reinterpret_cast<char*>(id.data());
 }

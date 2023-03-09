@@ -13,7 +13,7 @@
 
 Identity::Identity()
 {
-  deviceId = BadDeviceId;
+  peerId = BadPeerId;
 }
 
 fstring<32> Identity::getPubkey()
@@ -21,14 +21,14 @@ fstring<32> Identity::getPubkey()
   return pubkey;
 }
 
-DeviceId Identity::getDeviceId()
+PeerId Identity::getPeerId()
 {
-  return deviceId;
+  return peerId;
 }
 
 IpAddress Identity::getIpAddress()
 {
-  return deviceIdToIpAddress(getDeviceId());
+  return peerIdToIpAddress(getPeerId());
 }
 
 fstring<64> Identity::sign(const std::string& msg)
@@ -43,7 +43,7 @@ fstring<64> Identity::sign(const std::string& msg)
 
 bool Identity::isValid()
 {
-  if(deviceId == BadDeviceId)
+  if(peerId == BadPeerId)
     return false;
 
   // More tests to come I guess
@@ -55,11 +55,11 @@ Identity Identity::create()
 {
   Identity identity;
 
-  while(identity.deviceId == BadDeviceId) {
+  while(identity.peerId == BadPeerId) {
     crypto_sign_ed25519_keypair(
         (unsigned char*)&identity.pubkey[0],
         (unsigned char*)&identity.privkey[0]);
-    identity.deviceId = NgSocketCrypto::pubkeyToDeviceId(identity.pubkey);
+    identity.peerId = NgSocketCrypto::pubkeyToPeerId(identity.pubkey);
   }
 
   return identity;
@@ -69,7 +69,7 @@ std::string Identity::serialize()
 {
   std::stringstream buffer;
 
-  buffer << deviceIdToIpAddress(NgSocketCrypto::pubkeyToDeviceId(pubkey)).str();
+  buffer << peerIdToIpAddress(NgSocketCrypto::pubkeyToPeerId(pubkey)).str();
   buffer << " ";
 
   buffer << encodeHex(pubkey);
@@ -92,6 +92,6 @@ Identity Identity::deserialize(std::string data)
   auto identity = new Identity();
   identity->pubkey = decodeHex(pubkeyStr);
   identity->privkey = decodeHex(privkeyStr);
-  identity->deviceId = IpAddress::parse(ipStr.c_str()).toBinary();
+  identity->peerId = IpAddress::parse(ipStr.c_str()).toBinary();
   return *identity;
 }

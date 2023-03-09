@@ -17,13 +17,13 @@
 
 #include "husarnet/ports/port.h"
 
-#include "husarnet/device_id.h"
 #include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/logging.h"
 #include "husarnet/ngsocket_crypto.h"
+#include "husarnet/peer.h"
 #include "husarnet/util.h"
 
 #define WEBSETUP_CONTACT_TIMEOUT_MS (15 * 60 * 1000)
@@ -312,7 +312,7 @@ std::list<std::string> WebsetupConnection::handleWebsetupCommand(
         std::string("version=") + manager->getVersion() +
         ";ua=" + manager->getUserAgent()};
   } else if(command == "get-latency") {
-    auto destination = deviceIdFromIpAddress(IpAddress::parse(payload));
+    auto destination = peerIdFromIpAddress(IpAddress::parse(payload));
     auto latency = manager->getLatency(destination);
     return {"latency=" + std::to_string(latency)};
   } else if(command == "cleanup") {

@@ -121,7 +121,7 @@ void ConfigStorage::hostTableRm(std::string hostname)
 
   hostCacheInvalidated = true;
   save();
-   manager->getHooksManager()->runHook(HookType::hosttable_changed);
+  manager->getHooksManager()->runHook(HookType::hosttable_changed);
 }
 
 std::map<std::string, IpAddress> ConfigStorage::getHostTable()

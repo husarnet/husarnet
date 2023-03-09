@@ -24,12 +24,12 @@
 #include <unistd.h>
 
 #include "husarnet/config_storage.h"
-#include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/logging.h"
+#include "husarnet/peer.h"
 #include "husarnet/util.h"
 
 #include "enum.h"

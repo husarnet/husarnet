@@ -11,27 +11,25 @@
 #include <vector>
 
 #include "husarnet/config_storage.h"
-#include "husarnet/device_id.h"
+#include "husarnet/hooks_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/licensing.h"
-#include "husarnet/ngsocket.h"
+#include "husarnet/peer.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
 #include "husarnet/websetup.h"
-#include "husarnet/hooks_manager.h"
 
 #include "ports/port.h"
 
 class SecurityLayer;
 class ConfigStorage;
 class License;
-class NgSocket;
+class NgSocketManager;
 class PeerContainer;
 class PeerFlags;
 class WebsetupConnection;
 class HooksManager;
-
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
@@ -40,7 +38,7 @@ class HusarnetManager {
  private:
   Identity identity;
   PeerFlags* selfFlags;
-  NgSocket* ngsocket;
+  NgSocketManager* ngsocket;
   SecurityLayer* securityLayer;
   ConfigStorage* configStorage;
   PeerContainer* peerContainer;
@@ -85,7 +83,7 @@ class HusarnetManager {
   void updateHosts();
   IpAddress resolveHostname(std::string hostname);
 
-  InetAddress getCurrentBaseAddress();
+  IpAddress getCurrentBaseAddress();
   std::string getCurrentBaseProtocol();
 
   bool isConnectedToBase();
@@ -134,12 +132,11 @@ class HusarnetManager {
   IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
 
-  NgSocket* getNGSocket();
   SecurityLayer* getSecurityLayer();
   std::string getInterfaceName();
   void setInterfaceName(std::string name);
-  std::vector<DeviceId> getMulticastDestinations(DeviceId id);
-  int getLatency(DeviceId destination);
+  std::vector<PeerId> getMulticastDestinations(PeerId id);
+  int getLatency(PeerId destination);
 
   void cleanup();
 

@@ -411,13 +411,12 @@ namespace Privileged {
 
   void runScripts(const std::string& path)
   {
-    callPrivilegedProcess(PrivilegedMethod::runHook,path);
+    callPrivilegedProcess(PrivilegedMethod::runHook, path);
   }
 
   bool checkScriptsExist(const std::string& path)
   {
-    return callPrivilegedProcess(PrivilegedMethod::checkHook,path);
+    return callPrivilegedProcess(PrivilegedMethod::checkHook, path);
   }
-
 
 }  // namespace Privileged

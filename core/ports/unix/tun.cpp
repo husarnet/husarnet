@@ -70,7 +70,7 @@ void TunTap::onTunTapData()
   }
 
   string_view packet = string_view(tunBuffer).substr(0, size);
-  sendToLowerLayer(BadDeviceId, packet);
+  sendToLowerLayer(BadPeerId, packet);
 }
 
 TunTap::TunTap(std::string name, bool isTap)
@@ -81,7 +81,7 @@ TunTap::TunTap(std::string name, bool isTap)
   OsSocket::bindCustomFd(fd, std::bind(&TunTap::onTunTapData, this));
 }
 
-void TunTap::onLowerLayerData(DeviceId source, string_view data)
+void TunTap::onLowerLayerData(PeerId source, string_view data)
 {
   long wr = write(fd, data.data(), data.size());
   if(wr != data.size()) {

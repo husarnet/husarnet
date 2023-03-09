@@ -6,39 +6,37 @@
 #include "husarnet/util.h"
 
 ForUpperProducer::ForUpperProducer()
-    : fromUpperConsumer([](DeviceId peerId, string_view data) {
+    : fromUpperConsumer([](PeerId peerId, string_view data) {
         LOG_DEBUG(
-            "dropping frame for upper layer, peer: %s",
-            deviceIdToCStr(peerId));
+            "dropping frame for upper layer, peer: %s", peerIdToCStr(peerId));
       })
 {
 }
 
 void ForUpperProducer::setUpperLayerConsumer(
-    std::function<void(DeviceId peerId, string_view data)> func)
+    std::function<void(PeerId peerId, string_view data)> func)
 {
   fromUpperConsumer = func;
 }
 
-void ForUpperProducer::sendToUpperLayer(DeviceId peerId, string_view data)
+void ForUpperProducer::sendToUpperLayer(PeerId peerId, string_view data)
 {
   fromUpperConsumer(peerId, data);
 }
 
 ForLowerProducer::ForLowerProducer()
-    : fromLowerConsumer([](DeviceId peerId, string_view data) {
+    : fromLowerConsumer([](PeerId peerId, string_view data) {
         LOG_DEBUG(
-            "dropping frame for lower layer, peer: %s",
-            deviceIdToCStr(peerId));
+            "dropping frame for lower layer, peer: %s", peerIdToCStr(peerId));
       }){};
 
 void ForLowerProducer::setLowerLayerConsumer(
-    std::function<void(DeviceId peerId, string_view data)> func)
+    std::function<void(PeerId peerId, string_view data)> func)
 {
   fromLowerConsumer = func;
 }
 
-void ForLowerProducer::sendToLowerLayer(DeviceId peerId, string_view data)
+void ForLowerProducer::sendToLowerLayer(PeerId peerId, string_view data)
 {
   fromLowerConsumer(peerId, data);
 }

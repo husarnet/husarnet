@@ -12,6 +12,7 @@
 
 #include <ares.h>
 #include <assert.h>
+#include <dirent.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <stdio.h>
@@ -19,21 +20,20 @@
 #include <string.h>
 #include <sys/select.h>
 #include <sys/socket.h>
-#include <sys/wait.h>
 #include <sys/un.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-#include <dirent.h>
 
 #include "husarnet/ports/unix/tun.h"
 
 #include "husarnet/config_storage.h"
-#include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/logging.h"
+#include "husarnet/peer.h"
 #include "husarnet/util.h"
 
 #include "enum.h"
@@ -173,7 +173,7 @@ namespace Port {
     }
 
     std::string myIp =
-        deviceIdToIpAddress(manager->getIdentity()->getDeviceId()).str();
+        peerIdToIpAddress(manager->getIdentity()->getPeerId()).str();
 
     auto interfaceName = manager->getInterfaceName();
 
@@ -377,21 +377,23 @@ namespace Port {
     std::string msg = "running hooks under path " + path;
     LOG(msg.c_str());
     DIR* dir = opendir(path.c_str());
-    if (dir == NULL) {return;}
-    
+    if(dir == NULL) {
+      return;
+    }
+
     struct dirent* ent;
-    while ((ent = readdir(dir)) != NULL) {
-        std::string fileName = ent->d_name;
-            std::string filePath = path + "/" + fileName;
-            if (access(filePath.c_str(), X_OK) == 0) {
-                pid_t pid = fork();
-                if (pid == 0) {
-                    std::system((char*)filePath.c_str());
-                } else {
-                    int status;
-                    waitpid(pid, &status, 0);
-                }
-            }
+    while((ent = readdir(dir)) != NULL) {
+      std::string fileName = ent->d_name;
+      std::string filePath = path + "/" + fileName;
+      if(access(filePath.c_str(), X_OK) == 0) {
+        pid_t pid = fork();
+        if(pid == 0) {
+          std::system((char*)filePath.c_str());
+        } else {
+          int status;
+          waitpid(pid, &status, 0);
+        }
+      }
     }
     closedir(dir);
   }
@@ -402,17 +404,17 @@ namespace Port {
     LOG(msg.c_str());
 
     DIR* dir = opendir(path.c_str());
-    if (dir == NULL) {
+    if(dir == NULL) {
       return false;
-      }
+    }
     struct dirent* ent;
-    while ((ent = readdir(dir)) != NULL) {
-        std::string fileName = ent->d_name;
-            std::string filePath = path + "/" + fileName;
-            if (access(filePath.c_str(), X_OK) == 0) {
-                closedir(dir);
-                return true;
-            }
+    while((ent = readdir(dir)) != NULL) {
+      std::string fileName = ent->d_name;
+      std::string filePath = path + "/" + fileName;
+      if(access(filePath.c_str(), X_OK) == 0) {
+        closedir(dir);
+        return true;
+      }
     }
     closedir(dir);
     return false;

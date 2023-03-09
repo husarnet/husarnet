@@ -151,7 +151,7 @@ void ApiServer::runThread()
                stringifyInetAddressList(rawPeer->getTargetAddresses())},
               {"used_target_address", rawPeer->getUsedTargetAddress().str()},
               {"link_local_address", rawPeer->getLinkLocalAddress().str()},
-              // {"latency_ms", manager->getLatency(rawPeer->getDeviceId())}, //
+              // {"latency_ms", manager->getLatency(rawPeer->getPeerId())}, //
               // TODO this is kinda bugged at the moment. Fix this
           };
 
@@ -182,8 +182,8 @@ void ApiServer::runThread()
                 {"websetup_address", manager->getWebsetupAddress().toString()},
                 {"base_connection",
                  {{"type", manager->getCurrentBaseProtocol()},
-                  {"address", manager->getCurrentBaseAddress().ip.toString()},
-                  {"port", manager->getCurrentBaseAddress().port}}},
+                  {"address", manager->getCurrentBaseAddress().toString()},
+                  {"port", 0}}},  // TODO
                 {"host_table", hostTableStringified},
                 {"whitelist", whitelistStringified},
                 {"user_settings",
