@@ -17,7 +17,11 @@ install_deb() {
     apt-get install -y curl apt-transport-https ca-certificates gnupg
 
     # This is the old method
+    apt-key list | grep 'husarnet' -q
+    if [[ ${?} -ne 0 ]]
+    then
     curl https://install.husarnet.com/repo.key | apt-key add -
+    fi
 
     # This is the new method
     curl https://install.husarnet.com/repo.gpg > /usr/share/keyrings/husarnet.gpg
