@@ -19,6 +19,7 @@ const int DEVICEID_LENGTH = 16;
 
 class NgSocket : public LowerLayer {
  private:
+  // TODO change this to a queue of enums
   Queue<std::function<void()>> workerQueue;
 
   void requestRefresh();

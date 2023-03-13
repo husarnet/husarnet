@@ -41,7 +41,9 @@ int SecurityLayer::getLatency(PeerId peerId)
   }
 
   peer->heartbeatIdent = generateRandomString(8);
-  std::string packet = std::string("\4") + peer->heartbeatIdent;
+  std::string packet =
+      std::string("\4") +
+      peer->heartbeatIdent;  // TODO make those magic numbers into enums
   peer->lastLatencySent = Port::getCurrentTime();
   sendToLowerLayer(peer->id, packet);
 

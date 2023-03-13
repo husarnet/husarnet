@@ -5,6 +5,7 @@
 #include "husarnet/fstring.h"
 #include "husarnet/ipaddress.h"
 
+// TODO rework this to a custom class
 using PeerId = fstring<16>;
 
 static const PeerId BadPeerId =

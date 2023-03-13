@@ -20,7 +20,7 @@ class BaseContainer : public BidirectionalLayer {
  public:
   BaseContainer(HusarnetManager* manager);
 
-  InetAddress getCurrentServer();
+  Base* getCurrentServer();
 
   void onUpperLayerData(PeerId source, string_view data) override;
   void onLowerLayerData(PeerId target, string_view packet) override;
