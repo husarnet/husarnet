@@ -547,6 +547,7 @@ var daemonGenIdCommand = &cli.Command{
 			if err != nil {
 				printError("Error: could not save new ID: %s", err)
 
+				// TODO: outdated function according to go docs
 				if os.IsPermission(err) {
 					rerunWithSudoOrDie()
 				} else {
@@ -583,5 +584,7 @@ var daemonCommand = &cli.Command{
 		daemonHooksCommand,
 		daemonWaitCommand,
 		daemonGenIdCommand,
+		serviceInstallCommand,
+		serviceUninstallCommand,
 	},
 }

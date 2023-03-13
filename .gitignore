@@ -25,3 +25,6 @@ tags
 compile_commands.json
 
 .ccls-cache
+
+# jetbrains
+.idea

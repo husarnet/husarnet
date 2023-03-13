@@ -64,3 +64,27 @@ func TestFilterSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestReplaceLastOccurrence(t *testing.T) {
+	var tests = []struct {
+		testName    string
+		needle      string
+		replacement string
+		haystack    string
+		expected    string
+	}{
+		{"one substring occurrence", "lazy", "active", "The quick brown fox jumps over the lazy dog", "The quick brown fox jumps over the active dog"},
+		{"more substring occurrences", "lazy", "brown", "The quick lazy brown fox jumps lazy-ly over the lazy lazy dog", "The quick lazy brown fox jumps lazy-ly over the lazy brown dog"},
+		{"no substring occurrence", "fluffy", "active", "The quick brown fox jumps over the lazy dog", "The quick brown fox jumps over the lazy dog"},
+		{"whole string is substring", "john", "jack", "john", "jack"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			ans := replaceLastOccurrence(tt.needle, tt.replacement, tt.haystack)
+			if ans != tt.expected {
+				t.Error("Test failed. Expected:", tt.expected, "and got:", ans)
+			}
+		})
+	}
+}

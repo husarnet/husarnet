@@ -18,9 +18,6 @@ ${base_dir}/cli/build.sh ${platform} ${arch}
 package_tmp=${build_base}/${platform}/${arch}/package
 mkdir -p ${package_tmp}
 
-mkdir -p ${package_tmp}/lib/systemd/system
-cp ${platform_base}/packaging/husarnet.service ${package_tmp}/lib/systemd/system/
-
 mkdir -p ${package_tmp}/usr/share/bash-completion/completions
 cp ${platform_base}/packaging/autocomplete ${package_tmp}/usr/share/bash-completion/completions/husarnet
 
@@ -46,6 +43,7 @@ for package_type in tar deb rpm; do
         $(if [ "${package_type}" == "rpm" ]; then echo "--depends iproute --depends procps-ng"; fi) \
         --replaces "husarnet-ros" \
         --after-install ${platform_base}/packaging/post-install-script.sh \
+        --before-remove ${platform_base}/packaging/pre-remove-script.sh \
         --after-remove ${platform_base}/packaging/post-remove-script.sh \
         --package ${release_base}/husarnet-${platform}-${arch}.${package_type} \
         --force \

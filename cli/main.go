@@ -78,9 +78,6 @@ func main() {
 
 			dashboardLoginCommand,
 
-			installCommand,
-			uninstallCommand,
-
 			{
 				Name:  "version",
 				Usage: "print the version of the CLI and also of the daemon, if available",

@@ -206,3 +206,20 @@ func isHexString(s string) bool {
 
 	return true
 }
+
+// Simply check if given file exists
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}
+
+// Replace only last occurrence of given substring in a string. Return new string.
+// If substring is not found, original string (haystack) is returned.
+func replaceLastOccurrence(search string, replacement string, subject string) string {
+	lastIdx := strings.LastIndex(subject, search)
+	if lastIdx != -1 {
+		newStr := subject[:lastIdx] + replacement + subject[lastIdx+len(search):]
+		return newStr
+	}
+	return subject
+}
