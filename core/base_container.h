@@ -8,9 +8,12 @@
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/layer_interfaces.h"
 
+class NgSocketManager;
+
 class BaseContainer : public BidirectionalLayer {
  protected:
   HusarnetManager* manager;
+  NgSocketManager* ngsocket;
 
   std::list<BaseServer*> baseServers;
   BaseServer* currentServer;
@@ -18,9 +21,9 @@ class BaseContainer : public BidirectionalLayer {
   void benchmarkingThread();
 
  public:
-  BaseContainer(HusarnetManager* manager);
+  BaseContainer(HusarnetManager* manager, NgSocketManager* ngsocket);
 
-  Base* getCurrentServer();
+  BaseServer* getCurrentServer();
 
   void onUpperLayerData(PeerId source, string_view data) override;
   void onLowerLayerData(PeerId target, string_view packet) override;

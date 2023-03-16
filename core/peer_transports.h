@@ -14,7 +14,7 @@
 
 class NgSocketManager;
 
-BETTER_ENUM(PeerTransportType, int, TCP = 1, UDP = 2, Tunelled = 3)
+BETTER_ENUM(PeerTransportType, int, P2P = 1, Tunelled = 2)
 
 BETTER_ENUM(PeerToPeerMessageKind, uint8_t, HELLO, HELLO_REPLY, DATA, INVALID)
 

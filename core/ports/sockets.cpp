@@ -87,7 +87,7 @@ namespace OsSocket {
 
   std::vector<UdpSocket> udpSockets;
   std::vector<CustomSocket> customSockets;
-  int unicastUdpFd = -1;
+  int outgoingUdpFd = -1;
   int multicastUdpFd4 = -1;
   int multicastUdpFd6 = -1;
 
@@ -137,14 +137,15 @@ namespace OsSocket {
     customSockets.push_back(CustomSocket{fd, readyCallback});
   }
 
-  bool udpListenUnicast(int port, PacketCallack callback, bool setAsDefault)
+  bool
+  udpListenUnicast(int port, PacketCallack callback, bool setAsDefaultOutgoing)
   {
     int fd = bindUdpSocket(InetAddress{IpAddress(), (uint16_t)port}, false);
     if(fd == -1)
       return false;
 
-    if(setAsDefault)
-      unicastUdpFd = fd;
+    if(setAsDefaultOutgoing)
+      outgoingUdpFd = fd;
 
     udpSockets.push_back(UdpSocket{fd, callback});
 
@@ -154,9 +155,9 @@ namespace OsSocket {
   void udpSend(InetAddress address, string_view data, int fd)
   {
     if(fd == -1) {
-      if(unicastUdpFd == -1)
+      if(outgoingUdpFd == -1)
         return;
-      fd = unicastUdpFd;
+      fd = outgoingUdpFd;
     }
     auto sa = makeSockaddr(address);
     socklen_t socklen = sizeof(sa);

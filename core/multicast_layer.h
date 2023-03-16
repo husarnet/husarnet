@@ -14,7 +14,7 @@ class MulticastLayer : public BidirectionalLayer {
   PeerId peerId;
 
  public:
-  MulticastLayer(HusarnetManager* manager);
+  MulticastLayer(NgSocketManager* ngsocket, HusarnetManager* manager);
 
   void onUpperLayerData(PeerId source, string_view data) override;
   void onLowerLayerData(PeerId target, string_view packet) override;

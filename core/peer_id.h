@@ -5,8 +5,10 @@
 #include "husarnet/fstring.h"
 #include "husarnet/ipaddress.h"
 
+const int PEERID_LENGTH = 16;
+
 // TODO rework this to a custom class
-using PeerId = fstring<16>;
+using PeerId = fstring<PEERID_LENGTH>;
 
 static const PeerId BadPeerId =
     PeerId("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");  //__attribute__((unused));

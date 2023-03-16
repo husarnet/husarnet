@@ -15,7 +15,6 @@ const int REESTABLISH_TIMEOUT = 3 * 1000;
 const int MAX_FAILED_ESTABLISHMENTS = 5;
 const int MAX_ADDRESSES = 10;
 const int MAX_SOURCE_ADDRESSES = 5;
-const int DEVICEID_LENGTH = 16;
 
 class NgSocket : public LowerLayer {
  private:

@@ -14,6 +14,7 @@
 #include "husarnet/ipaddress.h"
 #include "husarnet/logging.h"
 #include "husarnet/logmanager.h"
+#include "husarnet/ngsocket_manager.h"
 #include "husarnet/peer.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/util.h"
@@ -23,7 +24,8 @@
 
 using namespace nlohmann;  // json
 
-ApiServer::ApiServer(HusarnetManager* manager) : manager(manager)
+ApiServer::ApiServer(HusarnetManager* manager)
+    : ngsocket(ngsocket), manager(manager)
 {
   manager->rotateApiSecret();
 }
@@ -138,7 +140,8 @@ void ApiServer::runThread()
         }
 
         std::list<json> peerData;
-        for(auto& [peerId, rawPeer] : manager->getPeerContainer()->getPeers()) {
+        for(auto& [peerId, rawPeer] :
+            ngsocket->getPeerContainer()->getPeers()) {
           json newPeer = {
               {"husarnet_address", rawPeer->getIpAddress().str()},
               {"is_active", rawPeer->isActive()},

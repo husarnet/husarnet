@@ -5,9 +5,14 @@
 #include "husarnet/base_container.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
+#include "husarnet/multicast_discovery.h"
 #include "husarnet/peer.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/peer_transports.h"
+#include "husarnet/udp_multiplexer.h"
+
+class HusarnetManager;
+class MulticastDiscoveryServer;
 
 // This will replace the old Ngsocket as an entrypoint to all operations
 // It's called "manager" now to indicate that it's role is not to know the
@@ -15,15 +20,20 @@
 // redirect incoming data in proper directions.
 // All peer discovery related data and message passing should at some point go
 // through it.
-class HusarnetManager;
-
 class NgSocketManager : public BidirectionalLayer {
  private:
+  HusarnetManager* manager;
   PeerContainer* peerContainer;
   BaseContainer* baseContainer;
+  MulticastDiscoveryServer* multicastDiscoveryServer;
+  UdpMultiplexer* udpMultiplexer;
 
  public:
   NgSocketManager(HusarnetManager* manager);
+
+  void start();
+
+  UdpMultiplexer& getUdpMultiplexer();
 
   void registerDiscoveryData(
       PeerId peerId,
@@ -32,6 +42,8 @@ class NgSocketManager : public BidirectionalLayer {
 
   BaseConnectionType getCurrentBaseConnectionType();
   BaseServer* getCurrentBase();
+
+  PeerContainer* getPeerContainer();
 
   void onUpperLayerData(PeerId source, string_view data) override;
   void onLowerLayerData(PeerId target, string_view packet) override;
@@ -45,3 +57,7 @@ class NgSocketManager : public BidirectionalLayer {
 // Containers and Peer/Base classes for the respective choices
 // NOTE remember to record addresses the peer is actually sending the data from,
 // as they may be mangled by NATs along the way
+// NOTE udp ports are shared between base and peer communication so maybe a
+// class like UDPMultiplexer that'd handle incoming/outgoing packets would be
+// accurate. ng socket would create a single instance of it and plug it in into
+// proper places via base/peer containers

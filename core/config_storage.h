@@ -26,22 +26,22 @@ BETTER_ENUM(
 BETTER_ENUM(
     UserSetting,
     int,
-    dashboardFqdn = 1,            // string
-    enableWhitelist = 2,          // bool
-    interfaceName = 3,            // string
-    daemonApiPort = 4,            // int
-    enableCompression = 5,        // bool
-    enableUdpTunelling = 6,       // bool
-    enableTcpTunelling = 7,       // bool
-    enableUdp = 8,                // bool
-    enableMulticast = 9,          // bool
-    overrideBaseAddress = 10,     // inet
-    overrideSourcePort = 11,      // int
-    extraAdvertisedAddress = 12,  // inet
-    joinCode = 13,                // string, this will never be persisted
-    hostname = 14,                // string, this will never be persisted
-    enableHooks = 15,             // bool
-    logVerbosity = 16             // int
+    dashboardFqdn = 1,             // string
+    enableWhitelist = 2,           // bool
+    interfaceName = 3,             // string
+    daemonApiPort = 4,             // int
+    enableCompression = 5,         // bool
+    enableUdpTunelling = 6,        // bool
+    enableTcpTunelling = 7,        // bool
+    enableUdp = 8,                 // bool
+    enableMulticastDiscovery = 9,  // bool
+    overrideBaseAddress = 10,      // inet
+    udpStartingPort = 11,          // int
+    extraAdvertisedAddress = 12,   // inet
+    joinCode = 13,                 // string, this will never be persisted
+    hostname = 14,                 // string, this will never be persisted
+    enableHooks = 15,              // bool
+    logVerbosity = 16              // int
 )
 
 const std::string trueValue = "true";

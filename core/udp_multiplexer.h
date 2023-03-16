@@ -2,20 +2,27 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include "husarnet/ngsocket_manager.h"
+#include <stdint.h>
+
+#include "husarnet/ipaddress.h"
+#include "husarnet/string_view.h"
 
 class HusarnetManager;
+class NgSocketManager;
 
-class MulticastDiscoveryServer {
- private:
+class UdpMultiplexer {
+ protected:
   HusarnetManager* manager;
   NgSocketManager* ngsocket;
 
-  void serverThread();
+  uint16_t runningPort;
+
   void onPacket(InetAddress address, string_view data);
 
  public:
-  MulticastDiscoveryServer(HusarnetManager* manager, NgSocketManager* ngsocket);
+  UdpMultiplexer(HusarnetManager* manager, NgSocketManager* ngsocket);
 
   void start();
+
+  uint16_t getRunningPort();
 };

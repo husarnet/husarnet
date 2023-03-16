@@ -26,7 +26,6 @@ class SecurityLayer;
 class ConfigStorage;
 class License;
 class NgSocketManager;
-class PeerContainer;
 class PeerFlags;
 class WebsetupConnection;
 class HooksManager;
@@ -41,7 +40,6 @@ class HusarnetManager {
   NgSocketManager* ngsocket;
   SecurityLayer* securityLayer;
   ConfigStorage* configStorage;
-  PeerContainer* peerContainer;
   WebsetupConnection* websetup;
   License* license;
   std::vector<std::thread*> threadpool;
@@ -65,7 +63,6 @@ class HusarnetManager {
 
   ConfigStorage& getConfigStorage();
   void setConfigStorage(ConfigStorage* cs);
-  PeerContainer* getPeerContainer();
 
   std::string getVersion();
   std::string getUserAgent();

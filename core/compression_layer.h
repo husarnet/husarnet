@@ -12,11 +12,13 @@
 class ConfigStorage;
 class HusarnetManager;
 class PeerContainer;
+class NgSocketManager;
 
 class CompressionLayer : public BidirectionalLayer {
  private:
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-private-field"
+  NgSocketManager* ngsocket;
   HusarnetManager* manager;
 #pragma clang diagnostic pop
 
@@ -29,7 +31,7 @@ class CompressionLayer : public BidirectionalLayer {
   bool shouldProceed(PeerId source);
 
  public:
-  CompressionLayer(HusarnetManager* manager);
+  CompressionLayer(NgSocketManager* ngsocket, HusarnetManager* manager);
 
   void onUpperLayerData(PeerId peerId, string_view data);
   void onLowerLayerData(PeerId peerId, string_view data);

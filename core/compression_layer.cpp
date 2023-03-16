@@ -6,6 +6,7 @@
 #include "husarnet/config_storage.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
+#include "husarnet/ngsocket_manager.h"
 #include "husarnet/peer.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/peer_flags.h"
@@ -15,11 +16,14 @@
 #include "zstd.h"
 #endif
 
-CompressionLayer::CompressionLayer(HusarnetManager* manager)
-    : manager(manager), config(manager->getConfigStorage())
+CompressionLayer::CompressionLayer(
+    NgSocketManager* ngsocket,
+    HusarnetManager* manager)
+    : ngsocket(ngsocket),
+      manager(manager),
+      config(manager->getConfigStorage()),
+      peerContainer(ngsocket->getPeerContainer())
 {
-  peerContainer = manager->getPeerContainer();
-
   compressionBuffer.resize(2100);
   cleartextBuffer.resize(2010);
 

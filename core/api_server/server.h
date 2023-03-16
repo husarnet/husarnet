@@ -8,6 +8,7 @@
 #include "nlohmann/json.hpp"
 
 class HusarnetManager;
+class NgSocketManager;
 
 namespace httplib {
   struct Request;
@@ -16,6 +17,7 @@ namespace httplib {
 
 class ApiServer {
  private:
+  NgSocketManager* ngsocket;
   HusarnetManager* manager;
 
   void returnSuccess(

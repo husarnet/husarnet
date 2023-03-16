@@ -8,8 +8,11 @@
 
 const uint64_t BOOT_ID_MASK = 0xFFFFFFFF00000000ull;
 
+class NgSocketManager;
+
 class SecurityLayer : public BidirectionalLayer {
  private:
+  NgSocketManager* ngsocket;
   HusarnetManager* manager;
 
   std::string decryptedBuffer;
@@ -35,7 +38,7 @@ class SecurityLayer : public BidirectionalLayer {
   void doSendDataPacket(Peer* peer, string_view data);
 
  public:
-  SecurityLayer(HusarnetManager* manager);
+  SecurityLayer(NgSocketManager* ngsocket, HusarnetManager* manager);
 
   void onUpperLayerData(PeerId peerId, string_view data) override;
   void onLowerLayerData(PeerId peerId, string_view data) override;

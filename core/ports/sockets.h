@@ -37,34 +37,37 @@ namespace OsSocket {
   using TcpErrorCallback =
       std::function<void(std::shared_ptr<FramedTcpConnection>)>;
 
-  bool
-  udpListenUnicast(int port, PacketCallack callback, bool setAsDefault = true);
+  // Helpers
+  InetAddress ipFromSockaddr(struct sockaddr_storage st);
+
+  // UDP
+  bool udpListenUnicast(
+      int port,
+      PacketCallack callback,
+      bool setAsDefaultOutgoing = true);
   void udpSend(InetAddress address, string_view data, int fd = -1);
   bool udpListenMulticast(InetAddress address, PacketCallack callback);
   void udpSendMulticast(InetAddress address, const std::string& data);
   int bindUdpSocket(InetAddress addr, bool reuse);
+
+  // fd
   void bindCustomFd(int fd, std::function<void()> readyCallback);
-  InetAddress ipFromSockaddr(struct sockaddr_storage st);
+
+  // Connect via TCP and return plain fd
   int connectTcpSocket(InetAddress addr);
 
-  bool write(
-      std::shared_ptr<FramedTcpConnection> conn,
-      const std::string& data,
-      bool queue);
-  // Write a data packet.
-  //
-  // If the socket is not ready and queue is true, queue it anyway.
-  // Otherwise discard it.
-  //
-  // Returns true if the packet was sent.
-
-  void close(std::shared_ptr<FramedTcpConnection> conn);
-
+  // TCP
   std::shared_ptr<FramedTcpConnection> tcpConnect(
       InetAddress address,
       TcpDataCallback dataCallback,
       TcpErrorCallback errorCallback);
+  bool write(
+      std::shared_ptr<FramedTcpConnection> conn,
+      const std::string& data,
+      bool queue);
+  void close(std::shared_ptr<FramedTcpConnection> conn);
 
+  // Execute pending callbacks. Remember to call it periodically
   void runOnce(int timeout);
 
 }  // namespace OsSocket

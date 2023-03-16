@@ -12,6 +12,7 @@
 
 #include "husarnet/logging.h"
 #include "husarnet/ngsocket_crypto.h"
+#include "husarnet/ngsocket_manager.h"
 #include "husarnet/util.h"
 
 static fstring<32> mixFlags(fstring<32> key, uint64_t flags1, uint64_t flags2)
@@ -22,7 +23,10 @@ static fstring<32> mixFlags(fstring<32> key, uint64_t flags1, uint64_t flags2)
   return res;
 }
 
-SecurityLayer::SecurityLayer(HusarnetManager* manager) : manager(manager)
+SecurityLayer::SecurityLayer(
+    NgSocketManager* ngsocket,
+    HusarnetManager* manager)
+    : ngsocket(ngsocket), manager(manager)
 {
   randombytes_buf(&helloseq, 8);
   helloseq = helloseq & BOOT_ID_MASK;
@@ -30,7 +34,7 @@ SecurityLayer::SecurityLayer(HusarnetManager* manager) : manager(manager)
   ciphertextBuffer.resize(2100);
   cleartextBuffer.resize(2010);
 
-  peerContainer = manager->getPeerContainer();
+  peerContainer = ngsocket->getPeerContainer();
 }
 
 int SecurityLayer::getLatency(PeerId peerId)

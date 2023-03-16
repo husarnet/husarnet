@@ -41,11 +41,6 @@ ConfigStorage& HusarnetManager::getConfigStorage()
   return *configStorage;
 }
 
-PeerContainer* HusarnetManager::getPeerContainer()
-{
-  return peerContainer;
-}
-
 HooksManager* HusarnetManager::getHooksManager()
 {
   return hooksManager;
@@ -134,13 +129,7 @@ bool HusarnetManager::isConnectedToBase()
 
 bool HusarnetManager::isConnectedToWebsetup()
 {
-  auto websetupPeer =
-      peerContainer->getPeer(peerIdFromIpAddress(getWebsetupAddress()));
-  if(websetupPeer == NULL) {
-    return false;
-  }
-
-  return websetupPeer->isSecure();
+  return false;  // TODO
 }
 
 bool HusarnetManager::isDirty()
@@ -450,16 +439,14 @@ void HusarnetManager::getIdentityStage()
 
 void HusarnetManager::startNetworkingStack()
 {
-  peerContainer = new PeerContainer(this);
-
   auto tunTap = Port::startTunTap(this);
 
   Privileged::dropCapabilities();
 
-  auto multicast = new MulticastLayer(this);
-  auto compression = new CompressionLayer(this);
-  securityLayer = new SecurityLayer(this);
   ngsocket = new NgSocketManager(this);
+  securityLayer = new SecurityLayer(ngsocket, this);
+  auto compression = new CompressionLayer(ngsocket, this);
+  auto multicast = new MulticastLayer(ngsocket, this);
 
   stackUpperOnLower(tunTap, multicast);
   stackUpperOnLower(multicast, compression);

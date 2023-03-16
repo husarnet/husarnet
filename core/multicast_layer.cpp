@@ -14,7 +14,10 @@
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-MulticastLayer::MulticastLayer(HusarnetManager* manager) : manager(manager)
+MulticastLayer::MulticastLayer(
+    NgSocketManager* ngsocket,
+    HusarnetManager* manager)
+    : manager(manager)
 
 {
   peerId = manager->getIdentity()->getPeerId();
