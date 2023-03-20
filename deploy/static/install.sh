@@ -20,6 +20,7 @@ install_deb() {
     if [[ ${?} -eq 0 ]]
     then
     apt-key del husarnet
+    apt-key del 8A4C7BD6
     fi
     curl https://install.husarnet.com/repo.key | apt-key add -
     # This is the new method
