@@ -81,7 +81,7 @@ mkdir -p ${working_path}/rpm
 mkdir -p ${working_path}/deb
 
 cp -R ${golden_tar_path}/.  ${working_path}/tgz/
-cp -R ${golden_pacman_path}/.  ${working_path}/pacman]/
+cp -R ${golden_pacman_path}/.  ${working_path}/pacman/
 cp -R ${golden_rpm_path}/.  ${working_path}/yum/
 cp -R ${golden_rpm_path}/.  ${working_path}/rpm/
 cp -R $HOME/.aptly/public/. ${working_path}/deb/
