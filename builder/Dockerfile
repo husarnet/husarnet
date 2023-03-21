@@ -35,6 +35,7 @@ RUN apt-get update \
     tree \
     wget \
     xz-utils \
+    libarchive-tools \
     && rm -rf /var/lib/apt/lists/*
 
 RUN gem install --no-document fpm
