@@ -35,7 +35,7 @@ unix_archs="amd64 i386 arm64 armhf riscv64"
 
 echo "[==] Adding versioned filenames"
 for arch in ${unix_archs}; do
-  for package_type in tar deb rpm; do
+  for package_type in tar pacman deb rpm; do
     cp husarnet-unix-${arch}.${package_type} husarnet-${package_version}-${arch}.${package_type}
   done
 done
