@@ -3,7 +3,5 @@ version: "3.9"
 services:
   builder:
     image: ghcr.io/husarnet/husarnet:builder
-    build: .
     volumes:
       - ../:/app
- 

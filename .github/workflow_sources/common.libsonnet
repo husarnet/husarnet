@@ -111,6 +111,7 @@
       'runs-on': 'ubuntu-latest',
 
       strategy: {
+        'fail-fast': false,
         matrix: {
           arch: [
             'amd64',
@@ -318,6 +319,7 @@
       'runs-on': 'ubuntu-latest',
 
       strategy: {
+        'fail-fast': false,
         matrix: {
           include: [
             {

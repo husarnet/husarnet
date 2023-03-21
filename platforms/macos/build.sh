@@ -7,8 +7,13 @@ if [ ! "$#" -eq 1 ]; then
 fi
 
 # Right now we only support Apple Silicon i.e. 64-bit ARM
+if [ "$1" != "arm64" ]; then
+    echo "Currently only arm64 is supported"
+    exit 2
+fi
+
 platform=macos
-arch=arm64
+arch="$1"
 
 platform_base=${base_dir}/platforms/${platform}
 
