@@ -111,7 +111,11 @@
       'runs-on': 'ubuntu-latest',
 
       steps: [
-        $.steps.checkout(ref),
+        $.steps.checkout(ref) + {
+          with+: {
+            'fetch-depth': 22,  // This is a semi-random number. We don't want to fetch the whole repository, we only want "a couple of them"
+          },
+        },
         $.steps.ghcr_login(),
         {
           name: 'If there were any changes to builder - build it and push to ghcr',
