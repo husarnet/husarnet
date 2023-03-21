@@ -3,11 +3,10 @@
 // License: specified in project_root/LICENSE.txt
 #include <chrono>
 #include <condition_variable>
+#include <fstream>
 #include <mutex>
 #include <thread>
 #include <vector>
-#include <fstream>
-
 
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
@@ -235,46 +234,49 @@ namespace Privileged {
   void runScripts(const std::string& path)
   {
     char* conf_path = std::getenv("PROGRAMDATA");
-  std::string full_path(conf_path);
-  full_path+="\\husarnet\\";
-  full_path+=path;
-  std::filesystem::path dir(full_path);
-  std::string msg = "checking if valid hooks under path " + full_path;
-  LOG(msg.c_str());
+    std::string full_path(conf_path);
+    full_path += "\\husarnet\\";
+    full_path += path;
+    std::filesystem::path dir(full_path);
+    std::string msg = "checking if valid hooks under path " + full_path;
+    LOG(msg.c_str());
 
-  if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
-    return;
-  }
-
-  for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-    if (entry.path().extension() == ".ps1" && (entry.status().permissions() & std::filesystem::perms::owner_exec) == std::filesystem::perms::owner_exec) {
-      std::string command = "powershell.exe -File " + entry.path().string();
-      std::system(command.c_str());
+    if(!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
+      return;
     }
-  }
+
+    for(const auto& entry : std::filesystem::directory_iterator(dir)) {
+      if(entry.path().extension() == ".ps1" &&
+         (entry.status().permissions() & std::filesystem::perms::owner_exec) ==
+             std::filesystem::perms::owner_exec) {
+        std::string command = "powershell.exe -File " + entry.path().string();
+        std::system(command.c_str());
+      }
+    }
   }
 
   bool checkScriptsExist(const std::string& path)
   {
-  char* conf_path = std::getenv("PROGRAMDATA");
-  std::string full_path(conf_path);
-  full_path+="\\husarnet\\";
-  full_path+=path;
-  std::filesystem::path dir(full_path);
-  std::string msg = "checking if valid hooks under path " + full_path;
-  LOG(msg.c_str());
+    char* conf_path = std::getenv("PROGRAMDATA");
+    std::string full_path(conf_path);
+    full_path += "\\husarnet\\";
+    full_path += path;
+    std::filesystem::path dir(full_path);
+    std::string msg = "checking if valid hooks under path " + full_path;
+    LOG(msg.c_str());
 
-  if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
-    return false;
-  }
-  
-  for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-    // cppcheck-suppress useStlAlgorithm
-    if (entry.path().extension() == ".ps1" && (entry.status().permissions() & std::filesystem::perms::owner_exec) == std::filesystem::perms::owner_exec) {
-      return true;
+    if(!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
+      return false;
     }
-  }
 
-  return false;
+    auto dirIterator = std::filesystem::directory_iterator(dir);
+    return std::any_of(
+        std::filesystem::begin(dirIterator), std::filesystem::end(dirIterator),
+        [](const std::filesystem::directory_entry& entry) {
+          return entry.path().extension() == ".ps1" &&
+                 (entry.status().permissions() &
+                  std::filesystem::perms::owner_exec) ==
+                     std::filesystem::perms::owner_exec;
+        });
   }
 }  // namespace Privileged

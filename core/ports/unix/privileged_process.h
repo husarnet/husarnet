@@ -16,8 +16,8 @@ BETTER_ENUM(
     getSelfHostname = 2,
     setSelfHostname = 3,
     notifyReady = 4,
-    runHook=5,
-    checkHook=6)
+    runHook = 5,
+    checkHook = 6)
 
 class PrivilegedProcess {
  private:

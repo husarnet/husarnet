@@ -260,5 +260,4 @@ namespace Privileged {
     return false;
   }
 
-
 }  // namespace Privileged

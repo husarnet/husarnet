@@ -12,6 +12,7 @@
 
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
+#include "husarnet/hooks_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/licensing.h"
@@ -19,7 +20,6 @@
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
 #include "husarnet/websetup.h"
-#include "husarnet/hooks_manager.h"
 
 #include "ports/port.h"
 
@@ -31,7 +31,6 @@ class PeerContainer;
 class PeerFlags;
 class WebsetupConnection;
 class HooksManager;
-
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;

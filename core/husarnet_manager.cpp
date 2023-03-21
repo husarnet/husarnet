@@ -186,7 +186,6 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
   }
 
   websetup->join(parseJoinCode(joinCode), dashboardHostname);
-
 }
 
 bool HusarnetManager::isJoined()
@@ -442,17 +441,14 @@ void HusarnetManager::getIdentityStage()
 {
   // TODO long term - reenable the smartcard support but with proper
   // multiplatform support
-  if(Privileged::checkValidIdentityExists())
-  {
+  if(Privileged::checkValidIdentityExists()) {
     identity = Privileged::readIdentity();
-  }
-  else
-  {
-  this->getHooksManager()->runHook(HookType::rw_request);
-  this->getHooksManager()->waitHook(HookType::rw_request);
-  identity = Privileged::createIdentity();
-  this->getHooksManager()->runHook(HookType::rw_release);
-  this->getHooksManager()->waitHook(HookType::rw_release);
+  } else {
+    this->getHooksManager()->runHook(HookType::rw_request);
+    this->getHooksManager()->waitHook(HookType::rw_request);
+    identity = Privileged::createIdentity();
+    this->getHooksManager()->runHook(HookType::rw_release);
+    this->getHooksManager()->waitHook(HookType::rw_release);
   }
 }
 

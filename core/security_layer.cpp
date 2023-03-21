@@ -186,7 +186,8 @@ void SecurityLayer::handleHelloPacket(
 
   if(targetId != manager->getIdentity()->getDeviceId()) {
     LOG_INFO(
-        "misdirected hello packet received from peer: %s", std::string(targetId).c_str());
+        "misdirected hello packet received from peer: %s",
+        std::string(targetId).c_str());
     return;
   }
 

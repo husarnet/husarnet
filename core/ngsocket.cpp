@@ -71,9 +71,15 @@ void NgSocket::periodic()
 
   if(reloadLocalAddresses()) {
     // new addresses, accelerate reconnection
-    auto addresses_string = std::transform_reduce(localAddresses.begin(), localAddresses.end(), std::string(""), [](const std::string& a, const std::string& b){return a + " | " + b;}, [](InetAddress addr){return addr.str();});
+    auto addresses_string = std::transform_reduce(
+        localAddresses.begin(), localAddresses.end(), std::string(""),
+        [](const std::string& a, const std::string& b) {
+          return a + " | " + b;
+        },
+        [](InetAddress addr) { return addr.str(); });
     LOG_INFO(
-        "Local IP address change detected, new addresses: %s", addresses_string.c_str());
+        "Local IP address change detected, new addresses: %s",
+        addresses_string.c_str());
     requestRefresh();
     if(Port::getCurrentTime() - lastBaseTcpAction > NAT_INIT_TIMEOUT)
       connectToBase();
@@ -373,7 +379,9 @@ void NgSocket::baseMessageReceivedUdp(const BaseToPeerMessage& msg)
       break;
     case +BaseToPeerMessageKind::NAT_OK: {
       if(lastNatInitConfirmation == 0) {
-        LOG_INFO("UDP connection to base server established, server address: %s", baseAddress.str().c_str());
+        LOG_INFO(
+            "UDP connection to base server established, server address: %s",
+            baseAddress.str().c_str());
       }
       lastNatInitConfirmation = Port::getCurrentTime();
       natInitConfirmed = true;
@@ -400,7 +408,9 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
       sendToUpperLayer(msg.source, msg.data);
       break;
     case +BaseToPeerMessageKind::HELLO:
-      LOG_INFO("TCP connection to base server established, server address: %s", baseAddress.str().c_str());
+      LOG_INFO(
+          "TCP connection to base server established, server address: %s",
+          baseAddress.str().c_str());
       LOG_DEBUG("received hello cookie %s", encodeHex(msg.cookie).c_str());
       cookie = msg.cookie;
       resendInfoRequests();
