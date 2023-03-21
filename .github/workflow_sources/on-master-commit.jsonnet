@@ -18,7 +18,10 @@ common.manifestYamlDoc(
       docker_project:: 'husarnet/husarnet-nightly',
 
       bump_version: common.jobs.bump_version('master'),
-      build_builder: common.jobs.build_builder(self.ref),
+      build_builder: common.jobs.build_builder(self.ref) + {
+        needs+: ['bump_version'],
+      },
+
       build_unix: common.jobs.build_unix(self.ref) + self.base,
       build_macos_natively: common.jobs.build_macos_natively(self.ref) + self.base,
       build_windows: common.jobs.build_windows(self.ref) + self.base,

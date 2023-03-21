@@ -1,6 +1,7 @@
 jobs:
   build_builder:
-    needs: []
+    needs:
+      - "bump_version"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
