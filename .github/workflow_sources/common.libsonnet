@@ -105,6 +105,27 @@
       ],
     },
 
+    build_builder:: function(ref) {
+      needs: [],
+
+      'runs-on': 'ubuntu-latest',
+
+      steps: [
+        $.steps.checkout(ref),
+        $.steps.ghcr_login(),
+        {
+          name: 'If there were any changes to builder - build it and push to ghcr',
+          run: |||
+            if git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -e "^builder/"; then
+              ./builder/build.sh && ./builder/push.sh
+            else
+              echo "No changes to the builder found - refusing to rebuild"
+            fi
+          |||,
+        },
+      ],
+    },
+
     build_unix:: function(ref) {
       needs: [],
 
