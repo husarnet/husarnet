@@ -28,6 +28,7 @@ pushd ${release_base}
 golden_path="$HOME/golden"
 golden_tar_path="${golden_path}/tgz"
 golden_rpm_path="${golden_path}/rpm"
+golden_pacman_path="${golden_path}/pacman"
 working_path="/var/www/install"
 
 unix_archs="amd64 i386 arm64 armhf riscv64"
@@ -44,6 +45,13 @@ mkdir -p ${golden_tar_path}
 for arch in ${unix_archs}; do
   cp husarnet-${package_version}-${arch}.tar ${golden_tar_path}
   ln -fs husarnet-${package_version}-${arch}.tar ${golden_tar_path}/husarnet-latest-${arch}.tar
+done
+
+echo "[==] Adding pacman files"
+mkdir -p ${golden_pacman_path}
+for arch in ${unix_archs}; do
+  cp husarnet-${package_version}-${arch}.pacman ${golden_pacman_path}
+  ln -fs husarnet-${package_version}-${arch}.pacman ${golden_pacman_path}/husarnet-latest-${arch}.pacman
 done
 
 echo "[==] Adding rpm files"
