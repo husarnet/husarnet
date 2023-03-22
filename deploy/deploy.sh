@@ -44,6 +44,7 @@ echo "[==] Adding tar files"
 mkdir -p ${golden_tar_path}
 for arch in ${unix_archs}; do
   cp husarnet-${package_version}-${arch}.tar ${golden_tar_path}
+  ln -fs husarnet-${package_version}-${arch}.tar ${golden_tar_path}/husarnet-latest-${arch}.tar
 done
 
 echo "[==] Adding pacman files"
