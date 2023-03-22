@@ -28,6 +28,7 @@ WantedBy=multi-user.target
 
 // Note: it's not like we can choose it - path prefix is hardcoded in the service library.
 const systemdUnitFilePath = "/etc/systemd/system/husarnet.service"
+const launchctlServiceFilePath = "/Library/LaunchDaemons/husarnet.plist"
 
 // Although service library provides "Executable" option, so we can point to daemon binary instead of CLI,
 // we still have to align to interface as it would be *the CLI* that is managed as a system service.
@@ -95,30 +96,10 @@ func isAlreadyInstalled() bool {
 			printInfo("Found service file in: " + systemdUnitFilePath)
 			return true
 		}
-
-		oldLocation := "/lib/systemd/system/husarnet.service"
-		if fileExists(oldLocation) {
-			// this branch is probably unnecessary, as old post-remove script during update will remove the unit file.
-			// I am leaving this just to figure out that's exactly the case, because apt/dpkg sometimes have weird ideas.
-			printInfo("Found previous installation of husarnet service, moving...")
-			// file exists in old location, move it to new location. sudo is required
-			runSubcommand(false, "sudo", "systemctl", "stop", "husarnet")
-			runSubcommand(false, "sudo", "systemctl", "disable", "husarnet")
-			runSubcommand(false, "sudo", "systemctl", "daemon-reload")
-			// user will enter his credentials, so from this point sudo is guaranteed? (this does not feel right but I gotta test it)
-			err := os.Rename(oldLocation, systemdUnitFilePath)
-			if err != nil {
-				printError("Error during service installation. Try again. Error: %s", err)
-			}
-			return true
-		}
 		return false
 	case "darwin":
-		// TODO: remove duplication
-		serviceFilePath := "/Library/LaunchDaemons/husarnet.plist"
-		_, err := os.Stat(serviceFilePath)
-		if err == nil {
-			printInfo("Found service file in: " + serviceFilePath)
+		if fileExists(launchctlServiceFilePath) {
+			printInfo("Found service file in: " + launchctlServiceFilePath)
 			return true
 		}
 	case "windows":
@@ -135,30 +116,48 @@ var serviceInstallCommand = &cli.Command{
 	Name:      "service-install",
 	Usage:     "install service definition in OS's service manager (e.g. systemctl on Linux)",
 	ArgsUsage: " ", // No arguments needed
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "silent",
+			Usage: "Don't print the usual SUCCESS/FAIL statements.",
+		},
+		&cli.StringFlag{
+			Name:  "force",
+			Usage: "Don't check if the unit/service file exists already before attempting to write",
+		},
+	},
 	Action: func(ctx *cli.Context) error {
-		// I think we must first figure out if we are admin/root.
-		// "install" or "uninstall" should not be run as not admin
+		silentFlag := ctx.Bool("silent")
+		forceFlag := ctx.Bool("force")
 
-		if isAlreadyInstalled() {
-			printInfo("Service already exists. Aborting the installation.")
+		if !forceFlag && isAlreadyInstalled() {
+			if !silentFlag {
+				printInfo("Service already exists. Aborting the installation.")
+			}
 			return nil
 		}
 
 		err := ServiceObject.Install()
 		if err != nil {
-			printError("An error occurred while installing service.")
-			dieE(err)
+			if !silentFlag {
+				printError("An error occurred while installing service.")
+				dieE(err)
+			}
+			dieEmpty()
 		}
 
-		// TODO: We should probably consider having --quiet switch, so we don't spam during apt upgrades
-		printSuccess("Service installed successfully!")
+		if !silentFlag {
+			printSuccess("Service installed successfully!")
+		}
 
 		// we are starting the service right away - why wait?
 		err = ServiceObject.Start()
 		if err != nil {
+			if !silentFlag {
+				printWarning("Service installed, but could not start. Check the status of the service.")
+			}
 			return err
 		}
-
 		return nil
 	},
 }
@@ -167,21 +166,39 @@ var serviceUninstallCommand = &cli.Command{
 	Name:      "service-uninstall",
 	Usage:     "remove service definition from OS's service manager (e.g. systemctl on Linux)",
 	ArgsUsage: " ", // No arguments needed
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "silent",
+			Usage: "Don't print the usual SUCCESS/FAIL statements.",
+		},
+		&cli.BoolFlag{
+			Name:  "force",
+			Usage: "Don't check if the unit/service file exists already before attempting to write",
+		},
+	},
 	Action: func(ctx *cli.Context) error {
-		// Attempt uninstallation only when service file is present...
-		// specific for systemd...
-		if runtime.GOOS == "linux" && !fileExists(systemdUnitFilePath) {
-			printWarning("Service does not seem to be installed. Not attempting uninstallation.")
+		silentFlag := ctx.Bool("silent")
+		forceFlag := ctx.Bool("force")
+
+		if !forceFlag && runtime.GOOS == "linux" && !fileExists(systemdUnitFilePath) {
+			if !silentFlag {
+				printWarning("Service does not seem to be installed. Not attempting uninstallation.")
+			}
 			return nil
 		}
 
 		err := ServiceObject.Uninstall()
 		if err != nil {
-			printError("An error occurred while removing service.")
-			dieE(err)
+			if !silentFlag {
+				printError("An error occurred while removing service.")
+				dieE(err)
+			}
+			dieEmpty()
 		}
 
-		printSuccess("Service removed.")
+		if !silentFlag {
+			printSuccess("Service removed.")
+		}
 
 		return nil
 	},
