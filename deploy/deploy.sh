@@ -50,8 +50,18 @@ done
 echo "[==] Adding pacman files"
 mkdir -p ${golden_pacman_path}
 for arch in ${unix_archs}; do
-  cp husarnet-${package_version}-${arch}.pacman ${golden_pacman_path}
-  ln -fs husarnet-${package_version}-${arch}.pacman ${golden_pacman_path}/husarnet-latest-${arch}.pacman
+  if [[ ${arch} -eq armhf ]]; then
+    archlinux_arch_name="armv7h"
+  elif [[ ${arch} -eq arm64 ]]; then
+    archlinux_arch_name="aarch64"
+  elif [[ ${arch} -eq amd64 ]]; then
+    archlinux_arch_name="x86-64"
+  else
+    archlinux_arch_name=${arch}
+  fi
+
+  mkdir -p ${golden_pacman_path}/${archlinux_arch_name}
+  cp husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/${archlinux_arch_name}/husarnet-${package_version}-${arch}.pkg
 done
 
 echo "[==] Adding rpm files"
