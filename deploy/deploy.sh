@@ -52,7 +52,6 @@ for arch in ${unix_archs}; do
 
   mkdir -p ${golden_pacman_path}/${arch}
   cp husarnet-${package_version}-${arch}.pacman ${golden_pacman_path}/${arch}/husarnet-${package_version}-${arch}.pkg
-  ln -fs ${golden_pacman_path}/${arch}/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/${arch}/husarnet-latest-${arch}.pkg
   if [[ ${arch} -eq armhf ]]; then
     archlinux_arch_name="armhf"
   elif [[ ${arch} -eq arm64 ]]; then
