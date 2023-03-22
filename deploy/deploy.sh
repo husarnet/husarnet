@@ -49,21 +49,21 @@ done
 echo "[==] Adding pacman files"
 mkdir -p ${golden_pacman_path}
 for arch in ${unix_archs}; do
+
   mkdir -p ${golden_pacman_path}/${arch}
   cp husarnet-${package_version}-${arch}.pacman ${golden_pacman_path}/${arch}/husarnet-${package_version}-${arch}.pkg
   ln -fs ${golden_pacman_path}/${arch}/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/${arch}/husarnet-latest-${arch}.pkg
-  if [[ ${arch} -eq amd64 ]]; then
-    mv ${golden_pacman_path}/amd64 ${golden_pacman_path}/x86_64
-    mv ${golden_pacman_path}/x86_64/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/x86_64/husarnet-${package_version}-x86-64.pkg
-  fi
   if [[ ${arch} -eq armhf ]]; then
-    mv ${golden_pacman_path}/armhf ${golden_pacman_path}/armv7h
-    mv ${golden_pacman_path}/armv7h/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/armv7h/husarnet-${package_version}-armv7h.pkg
+    archlinux_arch_name="armhf"
+  elsif [[ ${arch} -eq arm64 ]]; then
+    archlinux_arch_name="aarch64"
+  elsif [[ ${arch} -eq amd64 ]]; then
+    archlinux_arch_name="x86-64"
+  else
+    archlinux_arch_name=${arch}
   fi
-  if [[ ${arch} -eq arm64 ]]; then
-    mv ${golden_pacman_path}/arm64 ${golden_pacman_path}/aarch64
-    mv ${golden_pacman_path}aarch64/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/aarch64/husarnet-${package_version}-aarch64.pkg
-  fi
+  mv ${golden_pacman_path}/${arch} ${golden_pacman_path}/${archlinux_arch_name}
+  mv ${golden_pacman_path}${archlinux-arch-name}/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/${archlinux-arch-name}/husarnet-${package_version}-{$archlinux_arch_name}.pkg
 done
 
 echo "[==] Adding rpm files"
