@@ -55,9 +55,9 @@ for arch in ${unix_archs}; do
   ln -fs ${golden_pacman_path}/${arch}/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/${arch}/husarnet-latest-${arch}.pkg
   if [[ ${arch} -eq armhf ]]; then
     archlinux_arch_name="armhf"
-  elsif [[ ${arch} -eq arm64 ]]; then
+  elif [[ ${arch} -eq arm64 ]]; then
     archlinux_arch_name="aarch64"
-  elsif [[ ${arch} -eq amd64 ]]; then
+  elif [[ ${arch} -eq amd64 ]]; then
     archlinux_arch_name="x86-64"
   else
     archlinux_arch_name=${arch}
