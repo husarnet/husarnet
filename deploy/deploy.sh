@@ -50,28 +50,22 @@ done
 echo "[==] Adding pacman files"
 mkdir -p ${golden_pacman_path}
 for arch in ${unix_archs}; do
-  mkdir ${golden_pacman_path}/${arch}
+  mkdir -p ${golden_pacman_path}/${arch}
   cp husarnet-${package_version}-${arch}.pacman ${golden_pacman_path}/${arch}/husarnet-${package_version}-${arch}.pkg
   ln -fs ${golden_pacman_path}/${arch}/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/${arch}/husarnet-latest-${arch}.pkg
-  if [[ ${arch} -eq amd64 ]]
-  then
-  mv ${golden_pacman_path}/amd64 ${golden_pacman_path}/x86_64
-  mv ${golden_pacman_path}/x86_64/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/x86_64/husarnet-${package_version}-x86-64.pkg
+  if [[ ${arch} -eq amd64 ]]; then
+    mv ${golden_pacman_path}/amd64 ${golden_pacman_path}/x86_64
+    mv ${golden_pacman_path}/x86_64/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/x86_64/husarnet-${package_version}-x86-64.pkg
   fi
-  if [[ ${arch} -eq armhf ]]
-  then
-  mv ${golden_pacman_path}/armhf ${golden_pacman_path}/armv7h
-  mv ${golden_pacman_path}/armv7h/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/armv7h/husarnet-${package_version}-armv7h.pkg
+  if [[ ${arch} -eq armhf ]]; then
+    mv ${golden_pacman_path}/armhf ${golden_pacman_path}/armv7h
+    mv ${golden_pacman_path}/armv7h/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/armv7h/husarnet-${package_version}-armv7h.pkg
   fi
-  if [[ ${arch} -eq arm64 ]]
-  then
-  mv ${golden_pacman_path}/arm64 ${golden_pacman_path}/aarch64
-  mv ${golden_pacman_path}aarch64/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/aarch64/husarnet-${package_version}-aarch64.pkg
+  if [[ ${arch} -eq arm64 ]]; then
+    mv ${golden_pacman_path}/arm64 ${golden_pacman_path}/aarch64
+    mv ${golden_pacman_path}aarch64/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/aarch64/husarnet-${package_version}-aarch64.pkg
   fi
 done
-rm -r ${golden_pacman_path}/amd64
-rm -r ${golden_pacman_path}/armhf
-rm -r ${golden_pacman_path}/arm64
 
 echo "[==] Adding rpm files"
 mkdir -p ${golden_rpm_path}
