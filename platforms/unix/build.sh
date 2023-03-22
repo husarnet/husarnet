@@ -49,5 +49,5 @@ for package_type in tar deb rpm pacman; do
         --package ${release_base}/husarnet-${platform}-${arch}.${package_type} \
         --force \
         --chdir ${package_tmp}
-
+    mv *.pacman *.pkg
 done
