@@ -63,7 +63,7 @@ for arch in ${unix_archs}; do
     archlinux_arch_name=${arch}
   fi
   mv ${golden_pacman_path}/${arch} ${golden_pacman_path}/${archlinux_arch_name}
-  mv ${golden_pacman_path}${archlinux-arch-name}/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/${archlinux-arch-name}/husarnet-${package_version}-{$archlinux_arch_name}.pkg
+  mv ${golden_pacman_path}/${archlinux_arch_name}/husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/${archlinux_arch_name}/husarnet-${package_version}-{$archlinux_arch_name}.pkg
 done
 
 echo "[==] Adding rpm files"
