@@ -5,18 +5,19 @@
 
 LogManager* globalLogManager;
 
-std::string LogManager::getLogs()
+std::list<std::string> LogManager::getLogs()
 {
-  if(currentSize == 0)
-    return "No logs to display";
+  std::list<std::string> logsList;
+  if(currentSize == 0) {
+    logsList.push_back("No logs to display");
+    return logsList;
+  }
   LogElement* itr = last;
-  std::string result = "";
   while(itr != nullptr) {
-    result += itr->log;
-    result += '\n';
+    logsList.push_back(itr->log);
     itr = itr->prev;
   }
-  return result;
+  return logsList;
 };
 
 void LogManager::insert(std::string& log)

@@ -35,6 +35,8 @@ class ApiServer {
 
   bool validateSecret(const httplib::Request& req, httplib::Response& res);
 
+  nlohmann::json getStandardReply();
+
   bool requireParams(
       const httplib::Request& req,
       httplib::Response& res,
