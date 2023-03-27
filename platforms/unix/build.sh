@@ -49,5 +49,9 @@ for package_type in tar deb rpm pacman; do
         --package ${release_base}/husarnet-${platform}-${arch}.${package_type} \
         --force \
         --chdir ${package_tmp}
-    mv *.pacman *.pkg
+        
+    if [[ "${package_type}" == "pacman" ]]
+    then
+    mv ${release_base}/*.pacman ${release_base}/husarnet-${platform}-${arch}.pkg
+    fi
 done
