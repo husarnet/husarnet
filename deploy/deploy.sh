@@ -28,14 +28,14 @@ pushd ${release_base}
 golden_path="$HOME/golden"
 golden_tar_path="${golden_path}/tgz"
 golden_rpm_path="${golden_path}/rpm"
-golden_pacman_path="${golden_path}/pacman"
+golden_pkg_path="${golden_path}/pkg"
 working_path="/var/www/install"
 
 unix_archs="amd64 i386 arm64 armhf riscv64"
 
 echo "[==] Adding versioned filenames"
 for arch in ${unix_archs}; do
-  for package_type in tar pacman deb rpm; do
+  for package_type in tar pkg deb rpm; do
     cp husarnet-unix-${arch}.${package_type} husarnet-${package_version}-${arch}.${package_type}
   done
 done
@@ -48,7 +48,7 @@ for arch in ${unix_archs}; do
 done
 
 echo "[==] Adding pacman files"
-mkdir -p ${golden_pacman_path}
+mkdir -p ${golden_pkg_path}
 for arch in ${unix_archs}; do
   if [[ ${arch} -eq armhf ]]; then
     archlinux_arch_name="armv7h"
@@ -60,8 +60,8 @@ for arch in ${unix_archs}; do
     archlinux_arch_name=${arch}
   fi
 
-  mkdir -p ${golden_pacman_path}/${archlinux_arch_name}
-  cp husarnet-${package_version}-${arch}.pkg ${golden_pacman_path}/${archlinux_arch_name}/husarnet-${package_version}-${arch}.pkg
+  mkdir -p ${golden_pkg_path}/${archlinux_arch_name}
+  cp husarnet-${package_version}-${arch}.pkg ${golden_pkg_path}/${archlinux_arch_name}/husarnet-${package_version}-${arch}.pkg
 done
 
 echo "[==] Adding rpm files"
@@ -91,7 +91,7 @@ mkdir -p ${working_path}/rpm
 mkdir -p ${working_path}/deb
 
 cp -R ${golden_tar_path}/.  ${working_path}/tgz/
-cp -R ${golden_pacman_path}/.  ${working_path}/pacman/
+cp -R ${golden_pkg_path}/.  ${working_path}/pacman/
 cp -R ${golden_rpm_path}/.  ${working_path}/yum/
 cp -R ${golden_rpm_path}/.  ${working_path}/rpm/
 cp -R $HOME/.aptly/public/. ${working_path}/deb/
