@@ -50,11 +50,11 @@ done
 echo "[==] Adding pacman files"
 mkdir -p ${golden_pkg_path}
 for arch in ${unix_archs}; do
-  if [[ ${arch} -eq armhf ]]; then
+  if [[ ${arch} == "armhf" ]]; then
     archlinux_arch_name="armv7h"
-  elif [[ ${arch} -eq arm64 ]]; then
+  elif [[ ${arch} == "arm64" ]]; then
     archlinux_arch_name="aarch64"
-  elif [[ ${arch} -eq amd64 ]]; then
+  elif [[ ${arch} == "amd64" ]]; then
     archlinux_arch_name="x86-64"
   else
     archlinux_arch_name=${arch}
