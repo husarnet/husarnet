@@ -55,7 +55,7 @@ for arch in ${unix_archs}; do
   elif [[ ${arch} == "arm64" ]]; then
     archlinux_arch_name="aarch64"
   elif [[ ${arch} == "amd64" ]]; then
-    archlinux_arch_name="x86-64"
+    archlinux_arch_name="x86_64"
   else
     archlinux_arch_name=${arch}
   fi
