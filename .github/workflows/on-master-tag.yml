@@ -43,6 +43,7 @@ jobs:
           push: true
           tags: "husarnet/husarnet:${{matrix.arch_alias}}"
     strategy:
+      fail-fast: false
       matrix:
         include:
           - arch: "linux/amd64"
@@ -94,6 +95,7 @@ jobs:
           name: "packages"
           path: "./build/release/*${{matrix.arch}}*"
     strategy:
+      fail-fast: false
       matrix:
         arch:
           - "amd64"

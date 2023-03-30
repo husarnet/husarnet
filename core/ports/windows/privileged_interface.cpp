@@ -269,15 +269,14 @@ namespace Privileged {
       return false;
     }
 
-    for(const auto& entry : std::filesystem::directory_iterator(dir)) {
-      // cppcheck-suppress useStlAlgorithm
-      if(entry.path().extension() == ".ps1" &&
-         (entry.status().permissions() & std::filesystem::perms::owner_exec) ==
-             std::filesystem::perms::owner_exec) {
-        return true;
-      }
-    }
-
-    return false;
+    auto dirIterator = std::filesystem::directory_iterator(dir);
+    return std::any_of(
+        std::filesystem::begin(dirIterator), std::filesystem::end(dirIterator),
+        [](const std::filesystem::directory_entry& entry) {
+          return entry.path().extension() == ".ps1" &&
+                 (entry.status().permissions() &
+                  std::filesystem::perms::owner_exec) ==
+                     std::filesystem::perms::owner_exec;
+        });
   }
 }  // namespace Privileged

@@ -19,6 +19,7 @@ require (
 	github.com/alexflint/go-scalar v1.1.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/kardianos/service v1.2.2 // indirect
 	github.com/lithammer/fuzzysearch v1.1.5 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
