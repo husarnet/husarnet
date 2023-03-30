@@ -210,9 +210,7 @@ func printStatus(ctx *cli.Context,status DaemonStatus) {
 	if dashboardHelp != "" {
 		printStatusHelp(dashboardDot, dashboardHelp)
 	}
-	if status.IsDirty {
-		printStatusHelp(redDot, "Daemon's dirty flag is set. You need to restart husarnet-daemon in order to reflect the current settings (like the Dashboard URL)")
-	}
+	handleStandardResult(status.StdResult)
 	pterm.Println()
 
 	var baseServerDot, baseServerHelp string
@@ -303,9 +301,6 @@ func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 	if prevStatus.DashboardFQDN != currStatus.DashboardFQDN {
 		return false
 	}
-	if prevStatus.IsDirty != currStatus.IsDirty {
-		return false
-	}
 	if prevStatus.WebsetupAddress.Compare(currStatus.WebsetupAddress) != 0 {
 		return false
 	}
@@ -333,6 +328,9 @@ func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 	if prevStatus.IsReadyToJoin != currStatus.IsReadyToJoin {
 		return false
 	}
+	if ! areStandardResultsEqual(prevStatus.StdResult, currStatus.StdResult) {
+		return false
+	}
 	if ! areConnectionStatusesEqual(prevStatus.ConnectionStatus, currStatus.ConnectionStatus) {
 		return false
 	}
@@ -350,6 +348,13 @@ func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 	}
 	return true
 
+}
+
+func areStandardResultsEqual(a, b StandardResult) bool {
+	if a.IsDirty != b.IsDirty{
+		return false
+	}
+	return true
 }
 
 func areConnectionStatusesEqual(a, b map[string]bool) bool {
@@ -454,3 +459,5 @@ func arePeersEqual(a,b []PeerStatus) bool {
 	}
 	return true
 }
+
+

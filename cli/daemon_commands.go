@@ -129,6 +129,7 @@ var daemonLogsCommand = &cli.Command{
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				settings := callDaemonGet[LogsSettings]("/api/logs/settings").Result
+				handleStandardResult(settings.StdResult)
 				printSuccess("Logs verbosity level: " + strconv.Itoa(settings.VerbosityLevel))
 				printSuccess("Logs maximum size: " + strconv.Itoa(settings.Size))
 				printSuccess("Logs current size: " + strconv.Itoa(settings.CurrentSize))
@@ -142,10 +143,10 @@ var daemonLogsCommand = &cli.Command{
 			Usage:     "print logs",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
-				logs := callDaemonGet[string]("/api/logs/get").Result
-				lines := strings.Split(logs, "\n")
+				logsResponse := callDaemonGet[LogsResponse]("/api/logs/get").Result
+				handleStandardResult(logsResponse.StdResult)
 
-				for _, line := range lines {
+				for _, line := range logsResponse.Logs {
 					printInfo(line)
 				}
 
@@ -163,9 +164,10 @@ var daemonLogsCommand = &cli.Command{
 				verbosityStr := ctx.Args().Get(0)
 				verbosity, error := strconv.Atoi(verbosityStr)
 				if error == nil && verbosity <= 4 && verbosity >= 0 {
-					callDaemonPost[EmptyResult]("/api/logs/settings", url.Values{
+					stdResult := callDaemonPost[StandardResult]("/api/logs/settings", url.Values{
 						"verbosity": {verbosityStr},
-					})
+					}).Result
+					handleStandardResult(stdResult)
 					printSuccess("Verbosity level changed")
 					return nil
 				}
@@ -184,9 +186,10 @@ var daemonLogsCommand = &cli.Command{
 				sizeStr := ctx.Args().Get(0)
 				size, error := strconv.Atoi(sizeStr)
 				if error == nil && size <= 1000 && size >= 10 {
-					callDaemonPost[EmptyResult]("/api/logs/settings", url.Values{
+					stdResult := callDaemonPost[StandardResult]("/api/logs/settings", url.Values{
 						"size": {sizeStr},
-					})
+					}).Result
+					handleStandardResult(stdResult)
 					printSuccess("In memory logs size changed")
 					return nil
 				}
@@ -240,7 +243,8 @@ var daemonWhitelistCommand = &cli.Command{
 			Usage:     "enable whitelist",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
-				callDaemonPost[EmptyResult]("/api/whitelist/enable", url.Values{})
+				stdResult := callDaemonPost[StandardResult]("/api/whitelist/enable", url.Values{}).Result
+				handleStandardResult(stdResult)
 				printSuccess("Enabled the whitelist")
 
 				return nil
@@ -252,7 +256,8 @@ var daemonWhitelistCommand = &cli.Command{
 			Usage:     "disable whitelist",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
-				callDaemonPost[EmptyResult]("/api/whitelist/disable", url.Values{})
+				stdResult := callDaemonPost[StandardResult]("/api/whitelist/disable", url.Values{}).Result
+				handleStandardResult(stdResult)
 				printSuccess("Disabled the whitelist")
 
 				return nil
@@ -265,6 +270,7 @@ var daemonWhitelistCommand = &cli.Command{
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				status := getDaemonStatus()
+				handleStandardResult(status.StdResult)
 				printWhitelist(status, false)
 
 				return nil
@@ -279,9 +285,10 @@ var daemonWhitelistCommand = &cli.Command{
 
 				addr := makeCannonicalAddr(ctx.Args().Get(0))
 
-				callDaemonPost[EmptyResult]("/api/whitelist/add", url.Values{
+				stdResult := callDaemonPost[StandardResult]("/api/whitelist/add", url.Values{
 					"address": {addr},
-				})
+				}).Result
+				handleStandardResult(stdResult)
 				printSuccess("Added %s to whitelist", addr)
 
 				return nil
@@ -296,9 +303,10 @@ var daemonWhitelistCommand = &cli.Command{
 
 				addr := makeCannonicalAddr(ctx.Args().Get(0))
 
-				callDaemonPost[EmptyResult]("/api/whitelist/rm", url.Values{
+				stdResult := callDaemonPost[StandardResult]("/api/whitelist/rm", url.Values{
 					"address": {addr},
-				})
+				}).Result
+				handleStandardResult(stdResult)
 				printSuccess("Removed %s from whitelist", addr)
 
 				return nil
@@ -317,7 +325,8 @@ var daemonHooksCommand = &cli.Command{
 			Usage:     "enable hooks",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
-				callDaemonPost[EmptyResult]("/api/hooks/enable", url.Values{})
+				stdResult := callDaemonPost[StandardResult]("/api/hooks/enable", url.Values{}).Result
+				handleStandardResult(stdResult)
 				printSuccess("Enabled hooks")
 
 				return nil
@@ -329,7 +338,8 @@ var daemonHooksCommand = &cli.Command{
 			Usage:     "disable hooks",
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
-				callDaemonPost[EmptyResult]("/api/hooks/disable", url.Values{})
+				stdResult := callDaemonPost[StandardResult]("/api/hooks/disable", url.Values{}).Result
+				handleStandardResult(stdResult)
 				printSuccess("Disabled hooks")
 
 				return nil
@@ -342,6 +352,7 @@ var daemonHooksCommand = &cli.Command{
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx *cli.Context) error {
 				status := getDaemonStatus()
+				handleStandardResult(status.StdResult)
 				printHooksStatus(status)
 
 				return nil
