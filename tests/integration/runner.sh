@@ -13,11 +13,42 @@ test_file=${2}
 
 echo "=== Running integration test === ${test_file} === on ${test_platform} ==="
 
-source $(dirname "$0")/common.sh
+case "${test_platform}" in
+docker)
+    apt update
 
-source ${tests_base}/integration/platforms/${test_platform}.sh
+    # Test prerequisites
+    apt install -y --no-install-recommends --no-install-suggests \
+        jq curl iputils-ping ca-certificates
+    ;;
 
-${tests_base}/integration/secrets-tool.sh decrypt
-source $(dirname "$0")/secrets-decrypted.sh
+ubuntu | debian)
+    apt update
 
-source ${tests_base}/integration/tests/${test_file}.sh
+    # Install Husarnet deb
+    apt install -y --no-install-recommends --no-install-suggests \
+        /app/build/release/husarnet-unix-amd64.deb
+
+    # Test prerequisites
+    apt install -y --no-install-recommends --no-install-suggests \
+        jq curl iputils-ping ca-certificates
+    ;;
+
+fedora)
+    # Install Husarnet rpm
+    yum install -y \
+        /app/build/release/husarnet-unix-amd64.rpm
+
+    # Test prerequisites
+    yum install -y \
+        jq curl iputils hostname ca-certificates
+
+    ;;
+
+*)
+    echo "Unknown test platform ${test_platform}!"
+    exit 4
+    ;;
+esac
+
+${tests_base}/integration/tests/${test_file}.sh

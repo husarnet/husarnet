@@ -56,7 +56,7 @@ if [ -f ${decrypted_path} ]; then
 
     decrypt ${tmp_decrypted_path}
 
-    if diff -q ${tmp_decrypted_path} ${decrypted_path} > /dev/null; then
+    if diff -q ${tmp_decrypted_path} ${decrypted_path} >/dev/null; then
         echo "Files have not changed, leaving as they were"
         cleanup
         exit 0

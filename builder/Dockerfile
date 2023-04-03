@@ -7,6 +7,7 @@ RUN apt-get update \
     bind9-host \
     binutils \
     bison \
+    ca-certificates \
     ccache \
     clang-format \
     cmake \
@@ -18,11 +19,13 @@ RUN apt-get update \
     git \
     golang \
     gperf \
+    libarchive-tools \
     libffi-dev \
     libssl-dev \
     libusb-1.0-0 \
     mc \
     ninja-build \
+    openssl \
     patch \
     python3 \
     python3-pip \
@@ -35,7 +38,6 @@ RUN apt-get update \
     tree \
     wget \
     xz-utils \
-    libarchive-tools \
     && rm -rf /var/lib/apt/lists/*
 
 RUN gem install --no-document fpm

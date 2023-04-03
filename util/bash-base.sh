@@ -1,19 +1,35 @@
 #!/bin/bash
-set -euo pipefail
+set -uo pipefail
 
 catch() {
-  if [ "$1" != "0" ]; then
-    echo "$0, line $2: Error $1"
+  # In ERR catch this seems redundant
+  if [ "$1" == "0" ]; then
+    return
   fi
-}
-trap 'catch $? $LINENO' EXIT
 
-pushd () {
-    builtin pushd "$@" > /dev/null
+  local i
+  echo "Error $1 happened. Stack trace:"
+
+  # This should never be true but I still don't trust it
+  if [ ${FUNCNAME[0]} != "catch" ]; then
+    echo "$(realpath ${BASH_SOURCE[0]}):${LINENO} in ${FUNCNAME[0]}"
+  fi
+
+  for ((i = 1; i < ${#FUNCNAME[*]}; i++)); do
+    echo "$(realpath ${BASH_SOURCE[$i]}):${BASH_LINENO[$i - 1]} in ${FUNCNAME[$i]}"
+  done
+
+  # Propagate the same exit status as before
+  exit $1
+}
+trap 'catch $?' ERR
+
+pushd() {
+  builtin pushd "$@" >/dev/null
 }
 
-popd () {
-    builtin popd "$@" > /dev/null
+popd() {
+  builtin popd "$@" >/dev/null
 }
 
 util_base="$(realpath $(dirname "$BASH_SOURCE[0]"))"

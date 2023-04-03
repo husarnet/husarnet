@@ -1,3 +1,8 @@
+#!/bin/bash
+source $(dirname "$0")/../../../util/bash-base.sh
+
+source $(dirname "$0")/../secrets-decrypted.sh
+
 my_hostname=$(hostname -f)
 
 function CLEANUP {
