@@ -25,7 +25,6 @@ mkdir -p ${package_tmp}/usr/bin
 cp ${release_base}/husarnet-daemon-${platform}-${arch} ${package_tmp}/usr/bin/husarnet-daemon
 cp ${release_base}/husarnet-${platform}-${arch} ${package_tmp}/usr/bin/husarnet
 chmod -R 755 ${package_tmp}
-chmod -R 755 ${package_tmp}/*
 for package_type in tar deb rpm pacman; do
     echo "[HUSARNET BS] Building ${platform} ${arch} ${package_type} package"
 
