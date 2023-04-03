@@ -42,7 +42,7 @@ for package_type in tar deb rpm pacman; do
         --url "https://husarnet.com" \
         $(if [ "${package_type}" == "deb" ]; then echo "--depends iproute2 --depends procps --deb-recommends sudo --deb-recommends systemd --deb-recommends fonts-noto-color-emoji"; fi) \
         $(if [ "${package_type}" == "rpm" ]; then echo "--depends iproute --depends procps-ng"; fi) \
-        $(if [ "${package_type}" == "pacman" ]; then echo "--pacman-compression none --depends iproute2 --depends procps-ng --pacman-optional-depends sudo --pacman-optional-depends systemd --pacman-optional-depends noto-fonts-emoji"; fi) \
+        $(if [ "${package_type}" == "pacman" ]; then echo "--pacman-compression none --depends iproute2 --depends procps-ng --pacman-optional-depends sudo --pacman-optional-depends systemd --pacman-optional-depends noto-fonts-emoji --pacman-use-file-permissions"; fi) \
         --replaces "husarnet-ros" \
         --after-install ${platform_base}/packaging/post-install-script.sh \
         --before-remove ${platform_base}/packaging/pre-remove-script.sh \
