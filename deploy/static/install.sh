@@ -32,6 +32,18 @@ install_deb() {
     apt-get install -y husarnet
 }
 
+install_pacman() {
+    wget -q https://install.husarnet.com/repo.key -O /tmp/repo.key
+    pacman-key --add /tmp/repo.key >/dev/null 2>/dev/null
+    pacman-key --lsign-key 197D62F68A4C7BD6 >/dev/null 2>/dev/null
+    rm /tmp/repo.key
+    echo '[husarnet]' >> /etc/pacman.conf
+    echo 'SigLevel = PackageRequired' >> /etc/pacman.conf
+    echo 'Server = https://install.husarnet.com/pacman/$arch' >> /etc/pacman.conf
+    pacman -Syy --noconfirm >/dev/null 2>/dev/null
+    pacman -S husarnet --noconfirm >/dev/null 2>/dev/null
+}
+
 enable_service() {
     if ! systemctl >/dev/null; then
         echo "========================================"
@@ -55,8 +67,10 @@ if apt-get --version >/dev/null 2>/dev/null; then
     install_deb
 elif yum --version >/dev/null 2>/dev/null; then
     install_yum
+elif pacman -V --version >/dev/null 2>/dev/null; then
+    install_pacman
 else
-    echo "Currently only apt-get/yum based distributions are supported by this script."
+    echo "Currently only apt-get/yum/pacman based distributions are supported by this script."
     echo "Please follow manual installation method on https://docs.husarnet.com/install/"
     exit 1
 fi
