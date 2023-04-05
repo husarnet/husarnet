@@ -17,10 +17,9 @@ install_deb() {
     apt-get install -y curl apt-transport-https ca-certificates gnupg
     # This is the old method
     apt-key list | grep 'husarnet' -q
-    if [[ ${?} -eq 0 ]]
-    then
-    apt-key del husarnet
-    apt-key del 8A4C7BD6
+    if  apt-key list | grep 'husarnet' >/dev/null; then
+      apt-key del husarnet
+      apt-key del 8A4C7BD6
     fi
     curl https://install.husarnet.com/repo.key | apt-key add -
     # This is the new method
