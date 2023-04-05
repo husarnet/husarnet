@@ -33,15 +33,22 @@ install_deb() {
 }
 
 install_pacman() {
+    pacman --noconfirm -Syy
+    pacman --noconfirm -S wget
     wget -q https://install.husarnet.com/repo.key -O /tmp/repo.key
-    pacman-key --add /tmp/repo.key >/dev/null 2>/dev/null
-    pacman-key --lsign-key 197D62F68A4C7BD6 >/dev/null 2>/dev/null
+    pacman-key --add /tmp/repo.key
+    if ! pacman-key --lsign-key 197D62F68A4C7BD6; then
+        pacman-key --init
+        pacman-key --lsign-key 197D62F68A4C7BD6
+    fi
     rm /tmp/repo.key
-    echo '[husarnet]' >> /etc/pacman.conf
-    echo 'SigLevel = PackageRequired' >> /etc/pacman.conf
-    echo 'Server = https://install.husarnet.com/pacman/$arch' >> /etc/pacman.conf
-    pacman -Syy --noconfirm >/dev/null 2>/dev/null
-    pacman -S husarnet --noconfirm >/dev/null 2>/dev/null
+    if ! grep -F "[husarnet]" /etc/pacman.conf >/dev/null; then
+        echo '[husarnet]' >> /etc/pacman.conf
+        echo 'SigLevel = PackageRequired' >> /etc/pacman.conf
+        echo 'Server = https://install.husarnet.com/pacman/$arch' >> /etc/pacman.conf
+    fi
+    pacman --noconfirm -Syy
+    pacman --noconfirm -S husarnet
 }
 
 enable_service() {
