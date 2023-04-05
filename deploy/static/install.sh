@@ -17,9 +17,10 @@ install_deb() {
     apt-get install -y curl apt-transport-https ca-certificates gnupg
     # This is the old method
     apt-key list | grep 'husarnet' -q
-    if  apt-key list | grep 'husarnet' >/dev/null; then
-      apt-key del husarnet
-      apt-key del 8A4C7BD6
+    if [[ ${?} -eq 0 ]]
+    then
+    apt-key del husarnet
+    apt-key del 8A4C7BD6
     fi
     curl https://install.husarnet.com/repo.key | apt-key add -
     # This is the new method
@@ -29,25 +30,6 @@ install_deb() {
 
     apt-get update || true
     apt-get install -y husarnet
-}
-
-install_pacman() {
-    pacman --noconfirm -Syy
-    pacman --noconfirm -S wget
-    wget -q https://install.husarnet.com/repo.key -O /tmp/repo.key
-    pacman-key --add /tmp/repo.key
-    if ! pacman-key --lsign-key 197D62F68A4C7BD6; then
-        pacman-key --init
-        pacman-key --lsign-key 197D62F68A4C7BD6
-    fi
-    rm /tmp/repo.key
-    if ! grep -F "[husarnet]" /etc/pacman.conf >/dev/null; then
-        echo '[husarnet]' >> /etc/pacman.conf
-        echo 'SigLevel = PackageRequired' >> /etc/pacman.conf
-        echo 'Server = https://install.husarnet.com/pacman/$arch' >> /etc/pacman.conf
-    fi
-    pacman --noconfirm -Syy
-    pacman --noconfirm -S husarnet
 }
 
 enable_service() {
@@ -73,10 +55,8 @@ if apt-get --version >/dev/null 2>/dev/null; then
     install_deb
 elif yum --version >/dev/null 2>/dev/null; then
     install_yum
-elif pacman -V --version >/dev/null 2>/dev/null; then
-    install_pacman
 else
-    echo "Currently only apt-get/yum/pacman based distributions are supported by this script."
+    echo "Currently only apt-get/yum based distributions are supported by this script."
     echo "Please follow manual installation method on https://docs.husarnet.com/install/"
     exit 1
 fi
