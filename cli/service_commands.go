@@ -4,10 +4,11 @@
 package main
 
 import (
-	"github.com/kardianos/service"
-	"github.com/urfave/cli/v2"
 	"os"
 	"runtime"
+
+	"github.com/kardianos/service"
+	"github.com/urfave/cli/v2"
 )
 
 const systemdScriptTemplate = `[Unit]
@@ -89,17 +90,21 @@ func makeService() service.Service {
 
 // This function does the heavy lifting when it comes to figuring out the situation in the system
 // Might rename and/or redesign it later
-func isAlreadyInstalled() bool {
+func isAlreadyInstalled(silent bool) bool {
 	switch runtime.GOOS {
 	case "linux":
 		if fileExists(systemdUnitFilePath) {
-			printInfo("Found service file in: " + systemdUnitFilePath)
+			if !silent {
+				printInfo("Found service file in: " + systemdUnitFilePath)
+			}
 			return true
 		}
 		return false
 	case "darwin":
 		if fileExists(launchctlServiceFilePath) {
-			printInfo("Found service file in: " + launchctlServiceFilePath)
+			if !silent {
+				printInfo("Found service file in: " + launchctlServiceFilePath)
+			}
 			return true
 		}
 	case "windows":
@@ -121,7 +126,7 @@ var serviceInstallCommand = &cli.Command{
 			Name:  "silent",
 			Usage: "Don't print the usual SUCCESS/FAIL statements.",
 		},
-		&cli.StringFlag{
+		&cli.BoolFlag{
 			Name:  "force",
 			Usage: "Don't check if the unit/service file exists already before attempting to write",
 		},
@@ -130,7 +135,7 @@ var serviceInstallCommand = &cli.Command{
 		silentFlag := ctx.Bool("silent")
 		forceFlag := ctx.Bool("force")
 
-		if !forceFlag && isAlreadyInstalled() {
+		if !forceFlag && isAlreadyInstalled(silentFlag) {
 			if !silentFlag {
 				printInfo("Service already exists. Aborting the installation.")
 			}
@@ -187,7 +192,13 @@ var serviceUninstallCommand = &cli.Command{
 			return nil
 		}
 
-		err := ServiceObject.Uninstall()
+		err := ServiceObject.Stop()
+		if err != nil {
+			if !silentFlag {
+				printError("An error occurred while stopping service.")
+			}
+		}
+		err = ServiceObject.Uninstall()
 		if err != nil {
 			if !silentFlag {
 				printError("An error occurred while removing service.")
