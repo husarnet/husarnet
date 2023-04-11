@@ -1,6 +1,8 @@
 jobs:
   deply_arch_repo:
     runs-on: "self-hosted"
+      - "linux"
+      - "nightly"
     steps:
       name: Update arch repo
       run: cd /opt/arch-add-repo/ && docker compose up -d
