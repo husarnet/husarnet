@@ -6,7 +6,7 @@ jobs:
       - "nightly"
     steps:
       - name: Update arch repo
-      - run: cd /opt/arch-add-repo/ && docker compose up -d
+        run: cd /opt/arch-add-repo/ && docker compose up -d
 "on":
   push:
     branches:
