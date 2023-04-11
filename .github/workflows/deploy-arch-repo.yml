@@ -1,6 +1,7 @@
 jobs:
   deply_arch_repo:
-    runs-on: "self-hosted"
+    runs-on: 
+      - "self-hosted"
       - "linux"
       - "nightly"
     steps:
