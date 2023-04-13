@@ -70,7 +70,7 @@ for arch in ${unix_archs}; do
     --volume ${golden_pkg_path}:/release \
     --volume $(gpgconf --list-dirs agent-ssh-socket):/tmp/gpg-agent/socket \
     ghcr.io/husarnet/husarnet:deploy-pkg \
-    ${key_id} ${archlinux_arch_name} husarnet-${package_version}-${arch}.pkg
+    "${key_id}" "${archlinux_arch_name}" "husarnet-${package_version}-${arch}.pkg"
 done
 
 echo "[==] Adding rpm files"
