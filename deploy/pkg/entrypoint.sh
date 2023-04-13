@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 # Check if the user provided an argument
-if [ $# -neq 3 ]; then
+if [ $# -ne 3 ]; then
     echo "Usage: $0 <key_id> <package_arch> <package_filename>"
     exit 1
 fi
