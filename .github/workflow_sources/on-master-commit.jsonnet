@@ -13,12 +13,15 @@ common.manifestYamlDoc(
     jobs: {
       ref:: '${{ needs.bump_version.outputs.commit_ref }}',
       base:: {
-        needs+: ['bump_version', 'build_builder'],
+        needs+: ['bump_version', 'build_builder', 'build_deployers'],
       },
       docker_project:: 'husarnet/husarnet-nightly',
 
       bump_version: common.jobs.bump_version('master'),
       build_builder: common.jobs.build_builder(self.ref) + {
+        needs+: ['bump_version'],
+      },
+      build_deployers: common.jobs.build_deployers(self.ref) + {
         needs+: ['bump_version'],
       },
 

@@ -130,6 +130,31 @@
       ],
     },
 
+    build_deployers:: function(ref) {
+      needs: [],
+
+      'runs-on': 'ubuntu-latest',
+
+      steps: [
+        $.steps.checkout(ref) + {
+          with+: {
+            'fetch-depth': 22,  // This is a semi-random number. We don't want to fetch the whole repository, we only want "a couple of them"
+          },
+        },
+        $.steps.ghcr_login(),
+        {
+          name: 'If there were any changes to deployers - build them and push to ghcr',
+          run: |||
+            if git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -e "^deploy/"; then
+              ./deploy/update-deployers.sh push
+            else
+              echo "No changes to the deployer found - refusing to rebuild"
+            fi
+          |||,
+        },
+      ],
+    },
+
     build_unix:: function(ref) {
       needs: [],
 
@@ -299,6 +324,7 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.pull_artifacts(),
+        $.steps.ghcr_login(),
         {
           name: 'Deploy to Husarnet ' + target + ' repository',
           run: './deploy/deploy.sh ' + target,
