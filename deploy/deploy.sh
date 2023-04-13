@@ -34,8 +34,12 @@ working_path="/var/www/install"
 unix_archs="amd64 i386 arm64 armhf riscv64"
 key_id="87D016FBEC48A791AA4AF675197D62F68A4C7BD6"
 
-echo "[==] Update deployers"
+echo "[==] Updating deployers"
 docker pull ghcr.io/husarnet/husarnet:deploy-pkg
+
+echo "[==] Reloading gpg-agent to make it run in a proper session"
+gpgconf --kill all
+gpgconf --launch gpg-agent
 
 echo "[==] Adding versioned filenames"
 for arch in ${unix_archs}; do
