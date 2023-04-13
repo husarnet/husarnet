@@ -65,7 +65,7 @@ for arch in ${unix_archs}; do
   cp husarnet-${package_version}-${arch}.pkg ${golden_pkg_path}/${archlinux_arch_name}/husarnet-${package_version}-${arch}.pkg
   docker run --rm \
     --volume ${golden_pkg_path}:/release \
-    --volume /run/user/1001/gnupg/S.gpg-agent:/tmp/gpg-agent/socket \
+    --volume $(gpgconf --list-dirs agent-ssh-socket):/tmp/gpg-agent/socket \
     ghcr.io/husarnet/husarnet:deploy-pkg \
     ${key_id} ${archlinux_arch_name} husarnet-${package_version}-${arch}.pkg
 done
