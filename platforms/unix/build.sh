@@ -64,6 +64,6 @@ for package_type in tar deb rpm pacman; do
         --chdir ${package_tmp}
 
     if [[ "${package_type}" == "pacman" ]]; then
-        mv ${release_base}/*.pacman ${release_base}/husarnet-${platform}-${arch}.pkg
+        mv ${release_base}/husarnet-${platform}-${arch}.pacman ${release_base}/husarnet-${platform}-${arch}.pkg
     fi
 done
