@@ -346,6 +346,25 @@ void HusarnetManager::hooksDisable()
   configStorage->setUserSetting(UserSetting::enableHooks, falseValue);
 }
 
+bool HusarnetManager::areNotificationsEnabled()
+{
+  return configStorage->getUserSettingBool(UserSetting::enableNotifications);
+}
+
+void HusarnetManager::notificationsEnable()
+{
+  configStorage->setUserSetting(UserSetting::enableNotifications, trueValue);
+}
+
+void HusarnetManager::notificationsDisable()
+{
+  configStorage->setUserSetting(UserSetting::enableNotifications, falseValue);
+}
+
+std::list<std::string> HusarnetManager::getNotifications(){
+  return notificationManager->getNotifications();
+}
+
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
   if(!id == deviceIdFromIpAddress(IpAddress::parse(multicastDestination))) {
@@ -378,6 +397,7 @@ HusarnetManager::HusarnetManager()
   Port::init();
   Privileged::init();
   this->hooksManager = new HooksManager(this);
+  this->notificationManager = new NotificationManager(configStorage->getUserSetting(UserSetting::dashboardFqdn));
 }
 
 HusarnetManager::~HusarnetManager()

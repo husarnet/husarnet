@@ -40,6 +40,7 @@ const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::hostname, ""},
     {UserSetting::enableHooks, falseValue},
     {UserSetting::logVerbosity, "1"},
+    {UserSetting::enableNotifications, trueValue},
 };
 
 const std::map<InternalSetting, std::string> internalDefaults = {

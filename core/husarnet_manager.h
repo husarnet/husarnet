@@ -13,6 +13,7 @@
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
 #include "husarnet/hooks_manager.h"
+#include "husarnet/notification_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/licensing.h"
@@ -47,6 +48,7 @@ class HusarnetManager {
   License* license;
   std::vector<std::thread*> threadpool;
   HooksManager* hooksManager;
+  NotificationManager* notificationManager;
 
   bool stage1Started = false;
   bool stage2Started = false;
@@ -117,6 +119,10 @@ class HusarnetManager {
   bool areHooksEnabled();
   void hooksEnable();
   void hooksDisable();
+  bool areNotificationsEnabled();
+  void notificationsEnable();
+  void notificationsDisable();
+  std::list<std::string> getNotifications();
 
   bool isPeerAddressAllowed(IpAddress id);
   bool isRealAddressAllowed(InetAddress addr);

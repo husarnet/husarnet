@@ -15,6 +15,7 @@ import (
 	"syscall"
 
 	"github.com/pterm/pterm"
+	"github.com/mitchellh/go-wordwrap"
 )
 
 type DaemonResponse[ResultType any] struct {
@@ -31,7 +32,9 @@ type EmptyResult interface{}
 
 // This can be easily expanded upon to include aditinal data we may want to possibly return
 type StandardResult struct {
-	IsDirty bool `json:"is_dirty"`
+	Notifications         []string `json:"notifications"`
+	NotificationsEnabled  bool `json:"notifications_enabled"`
+	IsDirty  			  bool   `json:"is_dirty"`
 }
 
 type BaseConnectionStatus struct {
@@ -258,5 +261,11 @@ func handleStandardResult(res StandardResult) {
 		formatter := extractFormatter(redDot)
 		help := "Daemon's dirty flag is set. You need to restart husarnet-daemon in order to reflect the current settings (like the Dashboard URL)"
 		pterm.Printfln("%s %s", redDot, formatter(help))
+	}
+	if (res.NotificationsEnabled) && (len(res.Notifications)>0) {
+		for _, announcement := range res.Notifications {
+			wrapped := wordwrap.WrapString(announcement,60)
+			pterm.Println(wrapped)
+		}
 	}
 }
