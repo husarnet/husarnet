@@ -117,7 +117,7 @@ func isAlreadyInstalled(silent bool) bool {
 	// TODO: maybe check also if daemon is running, to inform the user properly.
 }
 
-var serviceInstallCommand = &cli.Command{
+var daemonServiceInstallCommand = &cli.Command{
 	Name:      "service-install",
 	Usage:     "install service definition in OS's service manager (e.g. systemctl on Linux)",
 	ArgsUsage: " ", // No arguments needed
@@ -167,7 +167,7 @@ var serviceInstallCommand = &cli.Command{
 	},
 }
 
-var serviceUninstallCommand = &cli.Command{
+var daemonServiceUninstallCommand = &cli.Command{
 	Name:      "service-uninstall",
 	Usage:     "remove service definition from OS's service manager (e.g. systemctl on Linux)",
 	ArgsUsage: " ", // No arguments needed

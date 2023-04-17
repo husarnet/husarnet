@@ -595,7 +595,7 @@ var daemonCommand = &cli.Command{
 		daemonHooksCommand,
 		daemonWaitCommand,
 		daemonGenIdCommand,
-		serviceInstallCommand,
-		serviceUninstallCommand,
+		daemonServiceInstallCommand,
+		daemonServiceUninstallCommand,
 	},
 }
