@@ -27,6 +27,19 @@ cp ${release_base}/husarnet-${platform}-${arch} ${package_tmp}/usr/bin/husarnet
 chmod -R 755 ${package_tmp}
 for package_type in tar deb rpm pacman; do
     echo "[HUSARNET BS] Building ${platform} ${arch} ${package_type} package"
+    if [[ "${package_type}" == 'pacman' ]]; then
+        if [[ ${arch} == "armhf" ]]; then
+            declared_arch="armv7h"
+        elif [[ ${arch} == "arm64" ]]; then
+            declared_arch="aarch64"
+        elif [[ ${arch} == "amd64" ]]; then
+            declared_arch="x86_64"
+        else
+            declared_arch=${arch}
+        fi
+    else
+        declared_arch=${arch}
+    fi
 
     fpm \
         --input-type dir \
@@ -34,7 +47,7 @@ for package_type in tar deb rpm pacman; do
         --name husarnet \
         --version ${package_version} \
         --epoch 1 \
-        --architecture ${arch} \
+        --architecture ${declared_arch} \
         --maintainer "Husarnet <support@husarnet.com>" \
         --vendor Husarnet \
         --description "Global LAN network" \
@@ -49,9 +62,8 @@ for package_type in tar deb rpm pacman; do
         --package ${release_base}/husarnet-${platform}-${arch}.${package_type} \
         --force \
         --chdir ${package_tmp}
-        
-    if [[ "${package_type}" == "pacman" ]]
-    then
-    mv ${release_base}/*.pacman ${release_base}/husarnet-${platform}-${arch}.pkg
+
+    if [[ "${package_type}" == "pacman" ]]; then
+        mv ${release_base}/*.pacman ${release_base}/husarnet-${platform}-${arch}.pkg
     fi
 done
