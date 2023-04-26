@@ -433,9 +433,16 @@ void ApiServer::runThread()
 
 json ApiServer::getStandardReply()
 {
+  auto notifications = manager->getNotifications();
+  bool notifications_to_display = true;
+  if (notifications.size() == 0){
+    notifications.push_back("No notifications to display");
+    notifications_to_display = false;
+  }
   return json::object({
-      {"notifications", manager->getNotifications()},
+      {"notifications", notifications},
       {"notifications_enabled",manager->areNotificationsEnabled()},
+      {"notifications_to_display", notifications_to_display},
       {"is_dirty", manager->isDirty()},
   });
 }

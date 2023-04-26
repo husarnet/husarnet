@@ -632,6 +632,7 @@ var daemonCommand = &cli.Command{
 	Usage: "Control the local daemon",
 	Subcommands: []*cli.Command{
 		daemonStatusCommand,
+		daemonNotificationCommand,
 		joinCommand,
 		daemonSetupServerCommand,
 		daemonStartCommand,

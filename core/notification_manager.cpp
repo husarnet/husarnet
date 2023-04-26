@@ -8,6 +8,7 @@ std::string NotificationManager::dashboardHostname;
 NotificationManager::NotificationManager(std::string dashboardHostname_){
     this->interval = std::chrono::hours{12};
     dashboardHostname =dashboardHostname_;
+    refreshNotificationFile();
     this->timer = new PeriodicTimer(interval, refreshNotificationFile);
     this->timer->Start();
 
@@ -91,7 +92,7 @@ void NotificationManager::refreshNotificationFile(){
     auto cached = Privileged::readNotificationFile();
     if(cached == "{}") return {};
     auto notifications = nlohmann::json(cached);
-    std::list< std::string> ls;
+    std::list< std::string> ls{};
     int now = static_cast<int>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
     for(const auto& element : notifications["announcements"]){
         if(element["valid_until"].get<int>()>=now){
@@ -103,7 +104,9 @@ void NotificationManager::refreshNotificationFile(){
 
 json NotificationManager::retrieveNotificationJson(std::string dashboardHostname)
 {
+  LOG_ERROR("hostname: %s",dashboardHostname.c_str());
   IpAddress ip = Port::resolveToIp(dashboardHostname);
+  LOG_ERROR("ip: %s",ip.toString().c_str());
   InetAddress address{ip, 80};
   int sockfd = OsSocket::connectTcpSocket(address);
   if(sockfd < 0) {

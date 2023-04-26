@@ -397,7 +397,6 @@ HusarnetManager::HusarnetManager()
   Port::init();
   Privileged::init();
   this->hooksManager = new HooksManager(this);
-  this->notificationManager = new NotificationManager(configStorage->getUserSetting(UserSetting::dashboardFqdn));
 }
 
 HusarnetManager::~HusarnetManager()
@@ -568,7 +567,7 @@ void HusarnetManager::stage3()
 
   getGlobalLogManager()->setVerbosity(logLevelFromInt(this->getLogVerbosity()));
   this->hostTableAdd("husarnet-local", this->getSelfAddress());
-
+  this->notificationManager = new NotificationManager(configStorage->getUserSetting(UserSetting::dashboardFqdn));
   stage3Started = true;
 }
 
@@ -577,6 +576,7 @@ void HusarnetManager::runHusarnet()
   stage1();
   stage2();
   stage3();
+
   Privileged::notifyReady();
 
   while(true) {
