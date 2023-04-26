@@ -15,16 +15,18 @@ install_yum() {
 
 install_deb() {
     apt-get install -y curl apt-transport-https ca-certificates gnupg
+
     # This is the old method
-    apt-key list | grep 'husarnet' -q
     if  apt-key list | grep 'husarnet' >/dev/null; then
       apt-key del husarnet
       apt-key del 8A4C7BD6
     fi
     curl https://install.husarnet.com/repo.key | apt-key add -
+
     # This is the new method
     curl https://install.husarnet.com/repo.gpg > /usr/share/keyrings/husarnet.gpg
 
+    # Install actual repo
     curl https://install.husarnet.com/husarnet_deb.repo > /etc/apt/sources.list.d/husarnet.list
 
     apt-get update || true
