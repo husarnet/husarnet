@@ -397,6 +397,31 @@ jobs:
         run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/daemon/format.sh"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/test.sh"
         run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/test.sh"
+  update_in_homebrew_tap:
+    needs:
+      - "release_nightly"
+      - "bump_version"
+      - "build_builder"
+      - "build_deployers"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Check out the repo"
+        uses: "actions/checkout@v3"
+        with:
+          ref: "${{ needs.bump_version.outputs.commit_ref }}"
+      - name: "Read new version"
+        run: "echo \"VERSION=$(cat version.txt)\" >> $GITHUB_ENV"
+      - env:
+          COMMITTER_TOKEN: "${{ secrets.HOMEBREW_TAP_NIGHTLY_COMMITER_TOKEN }}"
+        uses: "mislav/bump-homebrew-formula-action@v2.2"
+        with:
+          commit-message: |
+            Husarnet for MacOS version {{version}}
+            
+            Automatic commit by https://github.com/mislav/bump-homebrew-formula-action
+          download-url: "https://nightly.husarnet.com/husarnet-macos-${{ env.VERSION }}-arm64.tar.gz"
+          homebrew-tap: "husarnet/homebrew-tap-nightly"
+          tag-name: "${{ env.VERSION }}"
 name: "Release nightly"
 "on":
   push:

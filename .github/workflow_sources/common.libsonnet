@@ -67,6 +67,12 @@
       name: 'Build CLI natively on MacOS',
       run: './cli/build.sh macos arm64',
     },
+
+    read_version_to_env:: function() {
+      name: 'Read new version',
+      run: 'echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV',
+    },
+
   },
 
   jobs: {
@@ -91,10 +97,7 @@
           name: 'Bump version',
           run: 'python ./util/version-bump.py',
         },
-        {
-          name: 'Read new version',
-          run: 'echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV',
-        },
+        $.steps.read_version_to_env(),
         {
           uses: 'stefanzweifel/git-auto-commit-action@v4',
           id: 'autocommit',
@@ -463,6 +466,36 @@
           },
         },
       ],
+    },
+
+    update_in_homebrew_tap:: function(ref) {
+      needs: [
+        'release_nightly',
+      ],
+
+      'runs-on': 'ubuntu-latest',
+
+      steps: [
+        $.steps.checkout(ref),
+        $.steps.read_version_to_env(),
+        {
+          uses: 'mislav/bump-homebrew-formula-action@v2.2',
+          with: {
+            'tag-name': '${{ env.VERSION }}',
+            'homebrew-tap': 'husarnet/homebrew-tap-nightly',
+            'download-url': 'https://nightly.husarnet.com/husarnet-macos-${{ env.VERSION }}-arm64.tar.gz',
+            'commit-message': |||
+              Husarnet for MacOS version {{version}}
+
+              Automatic commit by https://github.com/mislav/bump-homebrew-formula-action
+            |||,
+          },
+          env: {
+            COMMITTER_TOKEN: '${{ secrets.HOMEBREW_TAP_NIGHTLY_COMMITER_TOKEN }}',
+          },
+        },
+      ],
+
     },
 
   },
