@@ -37,7 +37,7 @@ void NotificationManager::refreshNotificationFile(){
     merged["latest_id"] = 0;
     int now = static_cast<int>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
     if(cached!="{}" and new_notifications.contains("announcements")){
-        auto notifications = nlohmann::json(cached);
+        auto notifications = nlohmann::json::parse(cached);
         if(notifications.contains("latest_id") and notifications.contains("announcements")){
             merged["latest_id"]=notifications["latest_id"];
             for(const auto& element : notifications["announcements"]){
@@ -68,7 +68,7 @@ void NotificationManager::refreshNotificationFile(){
         }
 
     }else if(cached!="{}" ){
-        auto notifications = nlohmann::json(cached);
+        auto notifications = nlohmann::json::parse(cached);
         if(notifications.contains("latest_id") and notifications.contains("announcements")){
             merged["latest_id"]=notifications["latest_id"];
             for(const auto& element : notifications["announcements"]){
@@ -91,14 +91,17 @@ void NotificationManager::refreshNotificationFile(){
 
     auto cached = Privileged::readNotificationFile();
     if(cached == "{}") return {};
-    auto notifications = nlohmann::json(cached);
+    auto notifications = nlohmann::json::parse(cached);
     std::list< std::string> ls{};
     int now = static_cast<int>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-    for(const auto& element : notifications["announcements"]){
+    if(notifications.contains("announcements")){
+        for(const auto& element : notifications["announcements"]){
         if(element["valid_until"].get<int>()>=now){
             ls.push_back(element["content"].get<std::string>());
         }
     }
+    }
+    
     return ls;
 };
 
