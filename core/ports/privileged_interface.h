@@ -41,6 +41,8 @@ namespace Privileged {
   bool checkValidIdentityExists();
   void writeIdentity(Identity identity);
 
+  IpAddress resolveToIp(const std::string& hostname);
+
   std::string readApiSecret();
   // TODO would be nice to move this somewhere else - like HusarnetManager
   void rotateApiSecret();

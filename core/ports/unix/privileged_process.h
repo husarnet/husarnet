@@ -17,7 +17,8 @@ BETTER_ENUM(
     setSelfHostname = 3,
     notifyReady = 4,
     runHook = 5,
-    checkHook = 6)
+    checkHook = 6,
+    resolveToIp = 7)
 
 class PrivilegedProcess {
  private:
@@ -29,6 +30,7 @@ class PrivilegedProcess {
   json handleNotifyReady(json data);
   json handleRunHook(json data);
   json handleCheckHookExists(json data);
+  json handleResolveToIp(json data);
 
  public:
   PrivilegedProcess();

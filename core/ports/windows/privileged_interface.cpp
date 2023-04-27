@@ -276,6 +276,11 @@ namespace Privileged {
     }
   }
 
+
+  IpAddress resolveToIp(const std::string& hostname){
+    return Port::resolveToIp(hostname);
+  }
+
   bool checkScriptsExist(const std::string& path)
   {
     char* conf_path = std::getenv("PROGRAMDATA");

@@ -19,6 +19,7 @@
 #include "husarnet/ipaddress.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
+#include "privileged_process.h"
 
 const static std::string hostnamePath = "/etc/hostname";
 const static std::string configDir = "/var/lib/husarnet/";
@@ -89,6 +90,12 @@ json PrivilegedProcess::handleCheckHookExists(json data)
   return Port::checkScriptsExist(configDir + path);
 }
 
+
+json PrivilegedProcess::handleResolveToIp(json data)
+{
+  return Port::resolveToIp(data.get<std::string>()).toString();
+}
+
 void PrivilegedProcess::run()
 {
   // so parent can't ptrace us
@@ -131,6 +138,9 @@ void PrivilegedProcess::run()
         break;
       case +PrivilegedMethod::checkHook:
         response = handleCheckHookExists(data);
+        break;
+      case +PrivilegedMethod::resolveToIp:
+        response = handleResolveToIp(data);
         break;
     }
 

@@ -8,7 +8,7 @@ std::string NotificationManager::dashboardHostname;
 NotificationManager::NotificationManager(std::string dashboardHostname_){
     this->interval = std::chrono::hours{12};
     dashboardHostname =dashboardHostname_;
-    refreshNotificationFile();
+    //refreshNotificationFile();
     this->timer = new PeriodicTimer(interval, refreshNotificationFile);
     this->timer->Start();
 
@@ -105,7 +105,7 @@ void NotificationManager::refreshNotificationFile(){
 json NotificationManager::retrieveNotificationJson(std::string dashboardHostname)
 {
   LOG_ERROR("hostname: %s",dashboardHostname.c_str());
-  IpAddress ip = Port::resolveToIp(dashboardHostname);
+  IpAddress ip = Privileged::resolveToIp(dashboardHostname);
   LOG_ERROR("ip: %s",ip.toString().c_str());
   InetAddress address{ip, 80};
   int sockfd = OsSocket::connectTcpSocket(address);

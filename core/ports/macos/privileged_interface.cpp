@@ -249,6 +249,10 @@ namespace Privileged {
     return ret;
   }
 
+   IpAddress resolveToIp(const std::string& hostname){
+    return Port::resolveToIp(hostname);
+  }
+
   std::string getSelfHostname()
   {
     // TODO: implement
