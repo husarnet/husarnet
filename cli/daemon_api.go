@@ -31,7 +31,7 @@ type EmptyResult interface{}
 
 // This can be easily expanded upon to include aditinal data we may want to possibly return
 type StandardResult struct {
-	IsDirty  bool   `json:"is_dirty"`
+	IsDirty bool `json:"is_dirty"`
 }
 
 type BaseConnectionStatus struct {
@@ -59,9 +59,9 @@ type PeerStatus struct {
 
 type DaemonStatus struct {
 	Version       string
-	DashboardFQDN string `json:"dashboard_fqdn"`
-	StdResult     StandardResult   `json:"standard_result"`
-	HooksEnabled  bool   `json:"hooks_enabled"`
+	DashboardFQDN string         `json:"dashboard_fqdn"`
+	StdResult     StandardResult `json:"standard_result"`
+	HooksEnabled  bool           `json:"hooks_enabled"`
 
 	WebsetupAddress netip.Addr           `json:"websetup_address"`
 	BaseConnection  BaseConnectionStatus `json:"base_connection"`
@@ -81,15 +81,15 @@ type DaemonStatus struct {
 }
 
 type LogsResponse struct {
-	Logs 		[]string `json:"logs"`
-	StdResult   StandardResult   `json:"standard_result"`
+	Logs      []string       `json:"logs"`
+	StdResult StandardResult `json:"standard_result"`
 }
 
 type LogsSettings struct {
-	VerbosityLevel int `json:"verbosity"`
-	Size           int `json:"size"`
-	CurrentSize    int `json:"current_size"`
-	StdResult      StandardResult   `json:"standard_result"`
+	VerbosityLevel int            `json:"verbosity"`
+	Size           int            `json:"size"`
+	CurrentSize    int            `json:"current_size"`
+	StdResult      StandardResult `json:"standard_result"`
 }
 
 func (s DaemonStatus) getPeerByAddr(addr netip.Addr) *PeerStatus {
@@ -260,4 +260,3 @@ func handleStandardResult(res StandardResult) {
 		pterm.Printfln("%s %s", redDot, formatter(help))
 	}
 }
-
