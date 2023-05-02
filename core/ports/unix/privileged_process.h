@@ -22,7 +22,7 @@ BETTER_ENUM(
 
 class PrivilegedProcess {
  private:
-  int fd;
+  int fd = -1;
 
   json handleUpdateHostsFile(json data);
   json handleGetSelfHostname(json data);

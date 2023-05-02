@@ -28,11 +28,11 @@ void NotificationManager::refreshNotificationFile()
   //  list of objects, where each object has id,
   // content of the announcement and a valididty span (in days). On the client
   // side we store the the latest_id we got (and when looking at announcements
-  //we got from dashbaord we igonre those with lower or equal id to this one),
+  // we got from dashbaord we igonre those with lower or equal id to this one),
   // we also store announcements that are still walid and should be displayed
   //(we store content of the announcement and a time point casted to int once
-  //the time point is excedeed this announcement will be filtered out on
-  //refresh) we utilze client system clock to calculate the validity time point
+  // the time point is excedeed this announcement will be filtered out on
+  // refresh) we utilze client system clock to calculate the validity time point
   // adn only specify timespan on the server side this mechanism ensures that
   // even if client system is configured with a custom date and time,
   // announcements will work as if the time and date was the same as on the
