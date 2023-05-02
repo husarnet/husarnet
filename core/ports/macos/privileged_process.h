@@ -26,7 +26,7 @@ class PrivilegedProcess {
   json handleSetSelfHostname(json data);
   json handleNotifyReady(json data);
   json handleResolveToIp(json data);
-  
+
  public:
   PrivilegedProcess();
   void init(int fd);

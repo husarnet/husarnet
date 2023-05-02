@@ -181,12 +181,12 @@ func printHooksStatus(status DaemonStatus) {
 func printNotificationsStatus(status StandardResult) {
 	if status.NotificationsEnabled {
 		pterm.Printfln("Daemon notifications are currently enabled")
-	}	else {
+	} else {
 		pterm.Printfln("Daemon notifications are currently disabled")
 	}
 }
 
-func printStatus(ctx *cli.Context,status DaemonStatus) {
+func printStatus(ctx *cli.Context, status DaemonStatus) {
 
 	verbose := verboseLogs || ctx.Bool("verbose")
 
@@ -369,7 +369,7 @@ func areStandardResultsEqual(a, b StandardResult) bool {
 
 	}
 	for i := range a.Notifications {
-		if a.Notifications[i] != b.Notifications[i]  {
+		if a.Notifications[i] != b.Notifications[i] {
 			return false
 		}
 	}

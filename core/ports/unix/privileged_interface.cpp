@@ -402,9 +402,10 @@ namespace Privileged {
     return ret;
   }
 
-  IpAddress resolveToIp(const std::string& hostname){
-    return IpAddress::parse(callPrivilegedProcess(
-        PrivilegedMethod::resolveToIp, hostname));
+  IpAddress resolveToIp(const std::string& hostname)
+  {
+    return IpAddress::parse(
+        callPrivilegedProcess(PrivilegedMethod::resolveToIp, hostname));
   }
 
   std::string getSelfHostname()

@@ -138,7 +138,6 @@ namespace Privileged {
     return configDir + "notifications.json";
   }
 
-
   std::string readLicenseJson()
   {
     auto licenseJsonPath = getLicenseJsonPath();
@@ -249,7 +248,8 @@ namespace Privileged {
     return ret;
   }
 
-   IpAddress resolveToIp(const std::string& hostname){
+  IpAddress resolveToIp(const std::string& hostname)
+  {
     return Port::resolveToIp(hostname);
   }
 

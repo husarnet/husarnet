@@ -40,9 +40,9 @@ BETTER_ENUM(
     extraAdvertisedAddress = 12,  // inet
     joinCode = 13,                // string, this will never be persisted
     hostname = 14,                // string, this will never be persisted
-    enableHooks = 15,            // bool
-    logVerbosity = 16,             // int
-    enableNotifications = 17     //bool
+    enableHooks = 15,             // bool
+    logVerbosity = 16,            // int
+    enableNotifications = 17      // bool
 )
 
 const std::string trueValue = "true";

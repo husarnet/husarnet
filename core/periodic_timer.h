@@ -2,54 +2,62 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include <thread>
-#include <functional>
 #include <atomic>
 #include <chrono>
-#include<condition_variable>
+#include <condition_variable>
+#include <functional>
+#include <thread>
 
 class PeriodicTimer {
-public:
-    PeriodicTimer(std::chrono::milliseconds interval, std::function<void()> callback)
-        : interval(interval), callback(callback) {}
+ public:
+  PeriodicTimer(
+      std::chrono::milliseconds interval,
+      std::function<void()> callback)
+      : interval(interval), callback(callback)
+  {
+  }
 
-    ~PeriodicTimer(){
-        this->Stop();
-    }
-    
-    void Start() {
-        running = true;
-        thread = std::thread([this] {
-            while (running) {
-                std::unique_lock lk(m);
-                convar.wait_for(lk,interval);
-                lk.unlock();
-                if(running)
-                    callback();
-            }
-        });
-    }
+  ~PeriodicTimer()
+  {
+    this->Stop();
+  }
 
-    void Stop() {
-        running = false;
+  void Start()
+  {
+    running = true;
+    thread = std::thread([this] {
+      while(running) {
         std::unique_lock lk(m);
-        convar.notify_one();
+        convar.wait_for(lk, interval);
         lk.unlock();
-        if (thread.joinable()) {
-            thread.join();
-        }
-    }
+        if(running)
+          callback();
+      }
+    });
+  }
 
-    void Reset() {
-        Stop();
-        Start();
+  void Stop()
+  {
+    running = false;
+    std::unique_lock lk(m);
+    convar.notify_one();
+    lk.unlock();
+    if(thread.joinable()) {
+      thread.join();
     }
+  }
 
-private:
-    std::chrono::milliseconds interval;
-    std::function<void()> callback;
-    std::thread thread;
-    std::atomic<bool> running;
-    std::mutex m;
-    std::condition_variable convar;
+  void Reset()
+  {
+    Stop();
+    Start();
+  }
+
+ private:
+  std::chrono::milliseconds interval;
+  std::function<void()> callback;
+  std::thread thread;
+  std::atomic<bool> running;
+  std::mutex m;
+  std::condition_variable convar;
 };

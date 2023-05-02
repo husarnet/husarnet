@@ -8,7 +8,6 @@
 #include <mutex>
 #include <sstream>
 #include <string>
-#include <list>
 
 #include <enum.h>
 

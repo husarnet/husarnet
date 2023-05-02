@@ -74,7 +74,8 @@ json PrivilegedProcess::handleNotifyReady(json data)
   return true;
 }
 
-json PrivilegedProcess::handleResolveToIp(json data){
+json PrivilegedProcess::handleResolveToIp(json data)
+{
   return Port::resolveToIp(data.get<std::string>()).toString();
 }
 

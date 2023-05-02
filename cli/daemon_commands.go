@@ -407,7 +407,6 @@ var daemonNotificationCommand = &cli.Command{
 	},
 }
 
-
 var daemonWaitCommand = &cli.Command{
 	Name:  "wait",
 	Usage: "Wait until certain events occur. If no events provided will wait for as many elements as it can (the best case scenario). Husarnet will continue working even if some of those elements are unreachable, so consider narrowing your search down a bit.",

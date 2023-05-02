@@ -361,7 +361,8 @@ void HusarnetManager::notificationsDisable()
   configStorage->setUserSetting(UserSetting::enableNotifications, falseValue);
 }
 
-std::list<std::string> HusarnetManager::getNotifications(){
+std::list<std::string> HusarnetManager::getNotifications()
+{
   return notificationManager->getNotifications();
 }
 
@@ -567,7 +568,8 @@ void HusarnetManager::stage3()
 
   getGlobalLogManager()->setVerbosity(logLevelFromInt(this->getLogVerbosity()));
   this->hostTableAdd("husarnet-local", this->getSelfAddress());
-  this->notificationManager = new NotificationManager(configStorage->getUserSetting(UserSetting::dashboardFqdn));
+  this->notificationManager = new NotificationManager(
+      configStorage->getUserSetting(UserSetting::dashboardFqdn));
   stage3Started = true;
 }
 
