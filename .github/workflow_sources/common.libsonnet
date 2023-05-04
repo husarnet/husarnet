@@ -491,7 +491,7 @@
             |||,
           },
           env: {
-            COMMITTER_TOKEN: '${{ secrets.HOMEBREW_TAP_NIGHTLY_COMMITER_TOKEN }}',
+            COMMITTER_TOKEN: '${{ secrets.HOMEBREW_TAP_COMMITER_TOKEN }}',
           },
         },
       ],
