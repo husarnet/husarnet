@@ -14,7 +14,8 @@ BETTER_ENUM(
     updateHostsFile = 1,
     getSelfHostname = 2,
     setSelfHostname = 3,
-    notifyReady = 4)
+    notifyReady = 4,
+    resolveToIp = 7)
 
 class PrivilegedProcess {
  private:
@@ -24,6 +25,7 @@ class PrivilegedProcess {
   json handleGetSelfHostname(json data);
   json handleSetSelfHostname(json data);
   json handleNotifyReady(json data);
+  json handleResolveToIp(json data);
 
  public:
   PrivilegedProcess();

@@ -361,6 +361,52 @@ var daemonHooksCommand = &cli.Command{
 	},
 }
 
+var daemonNotificationCommand = &cli.Command{
+	Name:  "notifications",
+	Usage: "Manage notifications on the device.",
+	Subcommands: []*cli.Command{
+		{
+			Name:      "enable",
+			Aliases:   []string{"on"},
+			Usage:     "enable notifications",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				stdResult := callDaemonPost[StandardResult]("/api/notifications/enable", url.Values{}).Result
+				handleStandardResult(stdResult)
+				printSuccess("Enabled notifications")
+
+				return nil
+			},
+		},
+		{
+			Name:      "disable",
+			Aliases:   []string{"off"},
+			Usage:     "disable notifications",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				stdResult := callDaemonPost[StandardResult]("/api/notifications/disable", url.Values{}).Result
+				handleStandardResult(stdResult)
+				printSuccess("Disabled notifications")
+
+				return nil
+			},
+		},
+		{
+			Name:      "show",
+			Aliases:   []string{"check", "ls"},
+			Usage:     "check if notifications are enabled",
+			ArgsUsage: " ", // No arguments needed
+			Action: func(ctx *cli.Context) error {
+				status := getDaemonStatus()
+				handleStandardResult(status.StdResult)
+				printNotificationsStatus(status.StdResult)
+
+				return nil
+			},
+		},
+	},
+}
+
 var daemonWaitCommand = &cli.Command{
 	Name:  "wait",
 	Usage: "Wait until certain events occur. If no events provided will wait for as many elements as it can (the best case scenario). Husarnet will continue working even if some of those elements are unreachable, so consider narrowing your search down a bit.",
@@ -586,14 +632,15 @@ var daemonCommand = &cli.Command{
 	Subcommands: []*cli.Command{
 		daemonStatusCommand,
 		joinCommand,
-		daemonSetupServerCommand,
-		daemonStartCommand,
 		daemonLogsCommand,
-		daemonRestartCommand,
+		daemonNotificationCommand,
+		daemonWaitCommand,
+		daemonStartCommand,
 		daemonStopCommand,
+		daemonRestartCommand,
+		daemonSetupServerCommand,
 		daemonWhitelistCommand,
 		daemonHooksCommand,
-		daemonWaitCommand,
 		daemonGenIdCommand,
 		daemonServiceInstallCommand,
 		daemonServiceUninstallCommand,

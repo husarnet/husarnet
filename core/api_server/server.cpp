@@ -340,6 +340,28 @@ void ApiServer::runThread()
         returnSuccess(req, res, getStandardReply());
       });
 
+  svr.Post(
+      "/api/notifications/enable",
+      [&](const httplib::Request& req, httplib::Response& res) {
+        if(!validateSecret(req, res)) {
+          return;
+        }
+
+        manager->notificationsEnable();
+        returnSuccess(req, res, getStandardReply());
+      });
+
+  svr.Post(
+      "/api/notifications/disable",
+      [&](const httplib::Request& req, httplib::Response& res) {
+        if(!validateSecret(req, res)) {
+          return;
+        }
+
+        manager->notificationsDisable();
+        returnSuccess(req, res, getStandardReply());
+      });
+
   svr.Get(
       "/api/logs/get",
       [&](const httplib::Request& req, httplib::Response& res) {
@@ -411,7 +433,16 @@ void ApiServer::runThread()
 
 json ApiServer::getStandardReply()
 {
+  auto notifications = manager->getNotifications();
+  bool notifications_to_display = true;
+  if(notifications.size() == 0) {
+    notifications.push_back("No notifications to display");
+    notifications_to_display = false;
+  }
   return json::object({
+      {"notifications", notifications},
+      {"notifications_enabled", manager->areNotificationsEnabled()},
+      {"notifications_to_display", notifications_to_display},
       {"is_dirty", manager->isDirty()},
   });
 }

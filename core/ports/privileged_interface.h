@@ -25,9 +25,13 @@ namespace Privileged {
   std::string getApiSecretPath();
   std::string getLegacyConfigPath();
   std::string getLicenseJsonPath();
+  std::string getNotificationFilePath();
 
   std::string readLicenseJson();
   void writeLicenseJson(std::string);
+
+  std::string readNotificationFile();
+  void writeNotificationFile(std::string);
 
   std::string readConfig();
   void writeConfig(std::string);
@@ -36,6 +40,8 @@ namespace Privileged {
   Identity createIdentity();
   bool checkValidIdentityExists();
   void writeIdentity(Identity identity);
+
+  IpAddress resolveToIp(const std::string& hostname);
 
   std::string readApiSecret();
   // TODO would be nice to move this somewhere else - like HusarnetManager

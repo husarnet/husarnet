@@ -66,6 +66,11 @@ namespace Privileged {
     return configDir + "\\license.json";
   }
 
+  std::string getNotificationFilePath()
+  {
+    return configDir + "\\notifications.json";
+  }
+
   std::string readLicenseJson()
   {
     auto licenseJsonPath = getLicenseJsonPath();
@@ -80,6 +85,22 @@ namespace Privileged {
   void writeLicenseJson(std::string data)
   {
     Port::writeFile(getLicenseJsonPath(), data);
+  }
+
+  std::string readNotificationFile()
+  {
+    auto notificationFilePath = getNotificationFilePath();
+
+    if(!Port::isFile(notificationFilePath)) {
+      return "{}";
+    }
+
+    return Port::readFile(notificationFilePath);
+  }
+
+  void writeNotificationFile(std::string data)
+  {
+    Port::writeFile(getNotificationFilePath(), data);
   }
 
   std::string readConfig()
@@ -253,6 +274,11 @@ namespace Privileged {
         std::system(command.c_str());
       }
     }
+  }
+
+  IpAddress resolveToIp(const std::string& hostname)
+  {
+    return Port::resolveToIp(hostname);
   }
 
   bool checkScriptsExist(const std::string& path)
