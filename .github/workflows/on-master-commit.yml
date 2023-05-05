@@ -412,7 +412,7 @@ jobs:
       - name: "Read new version"
         run: "echo \"VERSION=$(cat version.txt)\" >> $GITHUB_ENV"
       - env:
-          COMMITTER_TOKEN: "${{ secrets.HOMEBREW_TAP_NIGHTLY_COMMITER_TOKEN }}"
+          COMMITTER_TOKEN: "${{ secrets.HOMEBREW_TAP_COMMITER_TOKEN }}"
         uses: "mislav/bump-homebrew-formula-action@v2.2"
         with:
           commit-message: |
