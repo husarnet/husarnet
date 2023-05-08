@@ -9,7 +9,7 @@ NotificationManager::NotificationManager(std::string dashboardHostname_)
 {
   this->interval = std::chrono::hours{12};
   dashboardHostname = dashboardHostname_;
-  // refreshNotificationFile();
+  refreshNotificationFile();
   this->timer = new PeriodicTimer(interval, refreshNotificationFile);
   this->timer->Start();
 };
