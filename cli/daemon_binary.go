@@ -5,18 +5,34 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
 
-func getDaemonBinaryPath() string {
-	// TODO: align to macOS
-	// also: is this like always true?
+func getFallbackDaemonBinaryPath() string {
 	if onWindows() {
 		return "husarnet-daemon"
 	}
 
 	return "/usr/bin/husarnet-daemon"
+}
+
+func getDaemonBinaryPath() string {
+	ourPath, err := os.Executable()
+	if err != nil {
+		printWarning("System problem: could not determine executable path")
+		// let's not die here, and just hope for the best :)
+		return getFallbackDaemonBinaryPath()
+	}
+
+	potentialDaemonBinaryPath := replaceLastOccurrence("husarnet", "husarnet-daemon", ourPath)
+
+	if fileExists(potentialDaemonBinaryPath) {
+		return potentialDaemonBinaryPath
+	}
+
+	return getFallbackDaemonBinaryPath()
 }
 
 func restartDaemonWithConfirmationPrompt() {

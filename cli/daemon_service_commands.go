@@ -4,7 +4,6 @@
 package main
 
 import (
-	"os"
 	"runtime"
 
 	"github.com/kardianos/service"
@@ -53,15 +52,7 @@ func makeService() service.Service {
 		Description: "Husarnet",
 	}
 
-	ourPath, err := os.Executable()
-	if err != nil {
-		printWarning("Error during service creation - cannot determine executable path")
-		// let's not die here, and just hope for the best :)
-		ourPath = "husarnet"
-	}
-
-	// Figure out daemon executable path, which should be alongside the cli, with "-daemon" suffix.
-	serviceConfig.Executable = replaceLastOccurrence("husarnet", "husarnet-daemon", ourPath)
+	serviceConfig.Executable = getDaemonBinaryPath()
 
 	switch runtime.GOOS {
 	case "linux":
