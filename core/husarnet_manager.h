@@ -32,6 +32,7 @@ class PeerContainer;
 class PeerFlags;
 class WebsetupConnection;
 class HooksManager;
+class NotificationManager;
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;

@@ -12,6 +12,7 @@
 
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/sockets.h"
+#include "husarnet/husarnet_manager.h"
 
 #include "husarnet/logging.h"
 #include "husarnet/periodic_timer.h"
@@ -21,7 +22,7 @@
 
 class NotificationManager {
  public:
-  NotificationManager(std::string dashboardHostname);
+  NotificationManager(std::string dashboardHostname, HusarnetManager* husarnetManager);
   ~NotificationManager();
   std::list<std::string> getNotifications();
 
@@ -29,6 +30,7 @@ class NotificationManager {
   PeriodicTimer* timer;
   std::chrono::hours interval;
   std::string static dashboardHostname;
+  static HusarnetManager* husarnetManager;
   void static refreshNotificationFile();
 
  public:

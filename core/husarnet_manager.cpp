@@ -569,7 +569,7 @@ void HusarnetManager::stage3()
   getGlobalLogManager()->setVerbosity(logLevelFromInt(this->getLogVerbosity()));
   this->hostTableAdd("husarnet-local", this->getSelfAddress());
   this->notificationManager = new NotificationManager(
-      configStorage->getUserSetting(UserSetting::dashboardFqdn));
+      configStorage->getUserSetting(UserSetting::dashboardFqdn), this);
   stage3Started = true;
 }
 

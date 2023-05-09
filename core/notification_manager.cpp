@@ -4,11 +4,13 @@
 #include "husarnet/notification_manager.h"
 
 std::string NotificationManager::dashboardHostname;
+HusarnetManager* NotificationManager::husarnetManager;
 
-NotificationManager::NotificationManager(std::string dashboardHostname_)
+NotificationManager::NotificationManager(std::string dashboardHostname_, HusarnetManager* husarnetManager_)
 {
   this->interval = std::chrono::hours{12};
   dashboardHostname = dashboardHostname_;
+  husarnetManager = husarnetManager_;
   refreshNotificationFile();
   this->timer = new PeriodicTimer(interval, refreshNotificationFile);
   this->timer->Start();
@@ -39,6 +41,8 @@ void NotificationManager::refreshNotificationFile()
   // server side. The id mechanism also ensures that individual announcements
   // will be displayed to users for the same time spans independently of the
   // time client received announcement.
+  husarnetManager->getHooksManager()->runHook(HookType::rw_request);
+  husarnetManager->getHooksManager()->waitHook(HookType::rw_request);
   auto new_notifications = retrieveNotificationJson(dashboardHostname);
   auto cached = Privileged::readNotificationFile();
   json merged;
@@ -48,8 +52,7 @@ void NotificationManager::refreshNotificationFile()
       std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   if(cached != "{}" and new_notifications.contains("announcements")) {
     auto notifications = nlohmann::json::parse(cached);
-    if(notifications.contains("latest_id") and
-       notifications.contains("announcements")) {
+    if(notifications.contains("latest_id") and notifications.contains("announcements")) {
       merged["latest_id"] = notifications["latest_id"];
       for(const auto& element : notifications["announcements"]) {
         if(element["valid_until"].get<int>() >= now) {
@@ -100,6 +103,8 @@ void NotificationManager::refreshNotificationFile()
   // Merged cached and requested notifications
 
   Privileged::writeNotificationFile(merged.dump());
+  husarnetManager->getHooksManager()->runHook(HookType::rw_release);
+  husarnetManager->getHooksManager()->waitHook(HookType::rw_release);
 };
 
 std::list<std::string> NotificationManager::getNotifications()
