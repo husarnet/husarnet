@@ -18,9 +18,9 @@
 #endif  // _WIN32
 
 #ifdef __linux__
-#define PORT_UNIX
-#define PORT_NAME "Unix"
-#include "husarnet/ports/unix/port.h"
+#define PORT_LINUX
+#define PORT_NAME "Linux"
+#include "husarnet/ports/linux/port.h"
 #endif
 
 #ifdef __APPLE__

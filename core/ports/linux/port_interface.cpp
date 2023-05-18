@@ -25,7 +25,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "husarnet/ports/unix/tun.h"
+#include "husarnet/ports/linux/tun.h"
 
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"

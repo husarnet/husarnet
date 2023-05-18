@@ -3,9 +3,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y
 
-COPY ./build/release/husarnet-unix.deb /tmp
+COPY ./build/release/husarnet-linux.deb /tmp
 RUN apt install -y --no-install-recommends --no-install-suggests \
-    /tmp/husarnet-unix.deb && rm -f /tmp/husarnet-unix.deb
+    /tmp/husarnet-linux.deb && rm -f /tmp/husarnet-linux.deb
 
 COPY ./platforms/docker/husarnet-docker.sh /usr/bin/husarnet-docker
 COPY ./platforms/docker/husarnet-docker-healthcheck.sh /usr/bin/husarnet-docker-healthcheck

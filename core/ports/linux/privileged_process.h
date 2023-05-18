@@ -2,7 +2,7 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include "husarnet/ports/unix/privileged_process.h"
+#include "husarnet/ports/linux/privileged_process.h"
 
 #include "enum.h"
 #include "nlohmann/json.hpp"

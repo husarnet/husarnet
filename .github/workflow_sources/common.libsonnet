@@ -60,7 +60,7 @@
 
     build_macos_daemon:: function() {
       name: 'Build daemon natively on MacOS',
-      run: './daemon/build.sh unix macos_arm64',
+      run: './daemon/build.sh macos macos_arm64',
     },
 
     build_macos_cli:: function() {
@@ -158,7 +158,7 @@
       ],
     },
 
-    build_unix:: function(ref) {
+    build_linux:: function(ref) {
       needs: [],
 
       'runs-on': 'ubuntu-latest',
@@ -179,7 +179,7 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
-        $.steps.builder('/app/platforms/unix/build.sh ${{matrix.arch}}'),
+        $.steps.builder('/app/platforms/linux/build.sh ${{matrix.arch}}'),
         $.steps.push_artifacts('*${{matrix.arch}}*'),
       ],
     },
@@ -257,7 +257,7 @@
 
     run_integration_tests:: function(ref, docker_project) {
       needs: [
-        'build_unix',
+        'build_linux',
         'build_docker',
       ],
 
@@ -313,7 +313,7 @@
       needs: [
         'run_tests',
         'run_integration_tests',
-        'build_unix',
+        'build_linux',
         'build_macos_natively',
         'build_windows_installer',
       ],
@@ -339,7 +339,7 @@
       needs: [
         'run_tests',
         'run_integration_tests',
-        'build_unix',
+        'build_linux',
         'build_macos_natively',
         'build_windows_installer',
       ],
@@ -368,7 +368,7 @@
 
     build_docker:: function(namespace, push, ref) {
       needs: [
-        'build_unix',
+        'build_linux',
       ],
 
       'runs-on': 'ubuntu-latest',

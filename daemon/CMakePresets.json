@@ -2,7 +2,7 @@
   "version": 2,
   "configurePresets": [
     {
-      "name": "unix",
+      "name": "linux",
       "displayName": "Configure preset using toolchain file",
       "description": "Sets Ninja generator, build and install directory",
       "generator": "Ninja",

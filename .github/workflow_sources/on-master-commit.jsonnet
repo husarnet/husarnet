@@ -25,7 +25,7 @@ common.manifestYamlDoc(
         needs+: ['bump_version'],
       },
 
-      build_unix: common.jobs.build_unix(self.ref) + self.base,
+      build_linux: common.jobs.build_linux(self.ref) + self.base,
       build_macos_natively: common.jobs.build_macos_natively(self.ref) + self.base,
       build_windows: common.jobs.build_windows(self.ref) + self.base,
       build_windows_installer: common.jobs.build_windows_installer(self.ref) + self.base,

@@ -27,7 +27,7 @@ ubuntu | debian)
 
     # Install Husarnet deb
     apt install -y --no-install-recommends --no-install-suggests \
-        /app/build/release/husarnet-unix-amd64.deb
+        /app/build/release/husarnet-linux-amd64.deb
 
     # Test prerequisites
     apt install -y --no-install-recommends --no-install-suggests \
@@ -37,7 +37,7 @@ ubuntu | debian)
 fedora)
     # Install Husarnet rpm
     yum install -y \
-        /app/build/release/husarnet-unix-amd64.rpm
+        /app/build/release/husarnet-linux-amd64.rpm
 
     # Test prerequisites
     yum install -y \

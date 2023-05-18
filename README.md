@@ -50,7 +50,7 @@ Husarnet Client is split in two separate binaries - `husarnet`, which is CLI wri
 - `daemon` contains entry points and build definitions for various platforms Husarnet can run on
 - `deploy` contains files needed for our DEB and RPM repositories
 - `platforms` contains auxiliary files needed for packaging and publishing Husarnet for different platforms
-- `tests` contains unit (and other) tests (unit tests will run on x86_64 unix platform)
+- `tests` contains unit (and other) tests (unit tests will run on x86_64 linux platform)
 - `builder` contains all the files required for building the build environment ( ;) ) for other packages
 - `util` contains all the scripts and utilities used for building, testing and deploying. Used by CI and in developers' daily work
 - `docs` contains only a handful of files used in the markdown files in the repository. Actual documentation is [here](https://husarnet.com/docs)

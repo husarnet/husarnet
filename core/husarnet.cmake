@@ -53,11 +53,11 @@ endif()
 list(APPEND husarnet_core_SRC) # This is more of a define rather than an append
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/unix)
+  include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/linux)
   include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows)
-  file(GLOB port_unix_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/unix/*.cpp")
+  file(GLOB port_linux_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/linux/*.cpp")
   file(GLOB port_shared_unix_windows_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows/*.cpp")
-  list(APPEND husarnet_core_SRC ${port_unix_SRC} ${port_shared_unix_windows_SRC})
+  list(APPEND husarnet_core_SRC ${port_linux_SRC} ${port_shared_unix_windows_SRC})
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
@@ -183,7 +183,7 @@ if((${CMAKE_SYSTEM_NAME} STREQUAL Linux) OR(${CMAKE_SYSTEM_NAME} STREQUAL Window
   target_compile_options(husarnet_core PUBLIC -DENABLE_LEGACY_CONFIG=1)
 endif()
 
-# Include unix port libraries
+# Include linux port libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   FetchContent_Declare(
     c-ares

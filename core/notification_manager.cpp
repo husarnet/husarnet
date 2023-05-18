@@ -6,7 +6,9 @@
 std::string NotificationManager::dashboardHostname;
 HusarnetManager* NotificationManager::husarnetManager;
 
-NotificationManager::NotificationManager(std::string dashboardHostname_, HusarnetManager* husarnetManager_)
+NotificationManager::NotificationManager(
+    std::string dashboardHostname_,
+    HusarnetManager* husarnetManager_)
 {
   this->interval = std::chrono::hours{12};
   dashboardHostname = dashboardHostname_;
@@ -52,7 +54,8 @@ void NotificationManager::refreshNotificationFile()
       std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   if(cached != "{}" and new_notifications.contains("announcements")) {
     auto notifications = nlohmann::json::parse(cached);
-    if(notifications.contains("latest_id") and notifications.contains("announcements")) {
+    if(notifications.contains("latest_id") and
+       notifications.contains("announcements")) {
       merged["latest_id"] = notifications["latest_id"];
       for(const auto& element : notifications["announcements"]) {
         if(element["valid_until"].get<int>() >= now) {

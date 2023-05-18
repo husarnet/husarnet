@@ -23,8 +23,8 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include "husarnet/ports/linux/privileged_process.h"
 #include "husarnet/ports/port_interface.h"
-#include "husarnet/ports/unix/privileged_process.h"
 
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"

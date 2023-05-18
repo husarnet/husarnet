@@ -11,10 +11,10 @@ cppcheck --error-exitcode=1 --enable=all --inline-suppr --force \
     ${tests_base}/unit
 
     # I've tried enabling those and they seem to be generating so much nose that's not worth it
-    # -I ${build_base}/unix/amd64/tempIncludes/ \
-    # -I /app/build/unix/arm64/_deps/better_enums-src \
+    # -I ${build_base}/linux/amd64/tempIncludes/ \
+    # -I /app/build/linux/arm64/_deps/better_enums-src \
 
-    # -I /app/build/unix/arm64/_deps/nlohmann_json-src/include \
+    # -I /app/build/linux/arm64/_deps/nlohmann_json-src/include \
     # -I /zig/zig-linux-x86_64-0.9.1/lib/libcxx/include/ \
     # -I /zig/zig-linux-x86_64-0.9.1/lib/libcxx/include/__support/musl/ \
     # -I /zig/zig-linux-x86_64-0.9.1/lib/libc/include/any-linux-any/ \

@@ -47,7 +47,7 @@ jobs:
           fi
   build_docker:
     needs:
-      - "build_unix"
+      - "build_linux"
       - "bump_version"
       - "build_builder"
       - "build_deployers"
@@ -101,30 +101,7 @@ jobs:
             arch_alias: "arm64"
           - arch: "linux/arm/v7"
             arch_alias: "armhf"
-  build_macos_natively:
-    needs:
-      - "bump_version"
-      - "build_builder"
-      - "build_deployers"
-    runs-on:
-      - "self-hosted"
-      - "macOS"
-    steps:
-      - name: "Check out the repo"
-        uses: "actions/checkout@v3"
-        with:
-          ref: "${{ needs.bump_version.outputs.commit_ref }}"
-      - name: "Build daemon natively on MacOS"
-        run: "./daemon/build.sh unix macos_arm64"
-      - name: "Build CLI natively on MacOS"
-        run: "./cli/build.sh macos arm64"
-      - name: "Push artifacts"
-        uses: "actions/upload-artifact@v3"
-        with:
-          if-no-files-found: "error"
-          name: "packages"
-          path: "./build/release/*macos*"
-  build_unix:
+  build_linux:
     needs:
       - "bump_version"
       - "build_builder"
@@ -141,8 +118,8 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"
           registry: "ghcr.io"
           username: "${{ github.actor }}"
-      - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/unix/build.sh ${{matrix.arch}}"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/unix/build.sh ${{matrix.arch}}"
+      - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}}"
+        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}}"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -158,6 +135,29 @@ jobs:
           - "arm64"
           - "armhf"
           - "riscv64"
+  build_macos_natively:
+    needs:
+      - "bump_version"
+      - "build_builder"
+      - "build_deployers"
+    runs-on:
+      - "self-hosted"
+      - "macOS"
+    steps:
+      - name: "Check out the repo"
+        uses: "actions/checkout@v3"
+        with:
+          ref: "${{ needs.bump_version.outputs.commit_ref }}"
+      - name: "Build daemon natively on MacOS"
+        run: "./daemon/build.sh macos macos_arm64"
+      - name: "Build CLI natively on MacOS"
+        run: "./cli/build.sh macos arm64"
+      - name: "Push artifacts"
+        uses: "actions/upload-artifact@v3"
+        with:
+          if-no-files-found: "error"
+          name: "packages"
+          path: "./build/release/*macos*"
   build_windows:
     needs:
       - "bump_version"
@@ -277,7 +277,7 @@ jobs:
     needs:
       - "run_tests"
       - "run_integration_tests"
-      - "build_unix"
+      - "build_linux"
       - "build_macos_natively"
       - "build_windows_installer"
       - "bump_version"
@@ -307,7 +307,7 @@ jobs:
         run: "./deploy/deploy.sh nightly"
   run_integration_tests:
     needs:
-      - "build_unix"
+      - "build_linux"
       - "build_docker"
       - "bump_version"
       - "build_builder"

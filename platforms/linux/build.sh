@@ -6,7 +6,7 @@ if [ ! "$#" -eq 1 ]; then
     exit 1
 fi
 
-platform=unix
+platform=linux
 arch=$1
 
 platform_base=${base_dir}/platforms/${platform}

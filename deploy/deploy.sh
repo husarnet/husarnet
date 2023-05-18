@@ -31,7 +31,7 @@ golden_rpm_path="${golden_path}/rpm"
 golden_pkg_path="${golden_path}/pkg"
 working_path="/var/www/install"
 
-unix_archs="amd64 i386 arm64 armhf riscv64"
+linux_archs="amd64 i386 arm64 armhf riscv64"
 key_id="87D016FBEC48A791AA4AF675197D62F68A4C7BD6"
 
 echo "[==] Updating deployers"
@@ -42,22 +42,22 @@ gpgconf --kill all
 gpgconf --launch gpg-agent
 
 echo "[==] Adding versioned filenames"
-for arch in ${unix_archs}; do
+for arch in ${linux_archs}; do
   for package_type in tar pkg deb rpm; do
-    cp husarnet-unix-${arch}.${package_type} husarnet-${package_version}-${arch}.${package_type}
+    cp husarnet-linux-${arch}.${package_type} husarnet-${package_version}-${arch}.${package_type}
   done
 done
 
 echo "[==] Adding tar files"
 mkdir -p ${golden_tar_path}
-for arch in ${unix_archs}; do
+for arch in ${linux_archs}; do
   cp husarnet-${package_version}-${arch}.tar ${golden_tar_path}
   ln -fs husarnet-${package_version}-${arch}.tar ${golden_tar_path}/husarnet-latest-${arch}.tar
 done
 
 echo "[==] Adding pacman files"
 mkdir -p ${golden_pkg_path}
-for arch in ${unix_archs}; do
+for arch in ${linux_archs}; do
   if [[ ${arch} == "armhf" ]]; then
     archlinux_arch_name="armv7h"
   elif [[ ${arch} == "arm64" ]]; then
@@ -80,7 +80,7 @@ done
 
 echo "[==] Adding rpm files"
 mkdir -p ${golden_rpm_path}
-for arch in ${unix_archs}; do
+for arch in ${linux_archs}; do
   cp husarnet-${package_version}-${arch}.rpm ${golden_rpm_path}
   rpmsign --define "_gpg_name contact@husarnet.com" --addsign ${golden_rpm_path}/husarnet-${package_version}-${arch}.rpm
 done
@@ -90,7 +90,7 @@ createrepo_c ${golden_rpm_path}/
 gpg -u ${key_id} --no-tty --batch --yes --detach-sign --armor ${golden_rpm_path}/repodata/repomd.xml
 
 echo "[==] Adding deb files"
-for arch in ${unix_archs}; do
+for arch in ${linux_archs}; do
   aptly repo add install-${deploy_target} husarnet-${package_version}-${arch}.deb
 done
 
@@ -122,7 +122,7 @@ if [ "${deploy_target}" == "nightly" ]; then
 
   # if on nightly, we can also have mac
   echo "[==] Copy MacOS ARM64 binaries"
-  tar -zcf husarnet-macos-${package_version}-arm64.tar.gz husarnet-macos-arm64 husarnet-daemon-unix-macos_arm64
+  tar -zcf husarnet-macos-${package_version}-arm64.tar.gz husarnet-macos-arm64 husarnet-daemon-macos-macos_arm64
   cp husarnet-macos-${package_version}-arm64.tar.gz ${working_path}/husarnet-macos-${package_version}-arm64.tar.gz
 fi
 
