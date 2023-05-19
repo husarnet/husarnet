@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "husarnet/ports/port_interface.h"
+#include "husarnet/ports/shared_unix_windows/filesystem.h"
 
 #include "husarnet/ipaddress.h"
 #include "husarnet/logging.h"

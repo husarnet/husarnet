@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include "husarnet/ports/port.h"
+#include "husarnet/ports/shared_unix_windows/filesystem.h"
 
 #include "husarnet/identity.h"
 #include "husarnet/logging.h"

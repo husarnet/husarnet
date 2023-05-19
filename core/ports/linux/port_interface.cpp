@@ -231,20 +231,6 @@ namespace Port {
     return result;
   }
 
-  std::string readFile(const std::string& path)
-  {
-    std::ifstream f(path);
-    if(!f.good()) {
-      LOG_ERROR("failed to open %s", path.c_str());
-      exit(1);
-    }
-
-    std::stringstream buffer;
-    buffer << f.rdbuf();
-
-    return buffer.str();
-  }
-
   static bool writeFileDirect(const std::string& path, const std::string& data)
   {
     FILE* f = fopen(path.c_str(), "wb");

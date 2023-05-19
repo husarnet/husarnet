@@ -231,21 +231,6 @@ namespace Port {
     return result;
   }
 
-  std::string readFile(const std::string& path)
-  {
-    // TODO: identical as in unix port - merge candidate
-    std::ifstream f(path);
-    if(!f.good()) {
-      LOG_ERROR("failed to open %s", path.c_str());
-      exit(1);
-    }
-
-    std::stringstream buffer;
-    buffer << f.rdbuf();
-
-    return buffer.str();
-  }
-
   bool writeFile(const std::string& path, const std::string& content)
   {
     std::ofstream f(path, std::ofstream::out);
