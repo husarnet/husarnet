@@ -236,6 +236,12 @@ func getDaemonStatus() DaemonStatus {
 	return callDaemonGet[DaemonStatus]("/api/status").Result
 }
 
+// isDaemonRunning returns true if daemon is returning sane response to /api/status
+func isDaemonRunning() bool {
+	response, err := getDaemonStatusRaw(true)
+	return err == nil && response.IsOk()
+}
+
 func getDaemonRunningVersion() string {
 	response, err := getDaemonStatusRaw(true)
 	if err != nil {

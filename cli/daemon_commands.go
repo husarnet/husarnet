@@ -29,6 +29,11 @@ var daemonStartCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
+		if isDaemonRunning() {
+			printInfo("Husarnet Daemon is already running. If you want to restart it, use `husarnet daemon restart` command.")
+			return nil
+		}
+
 		err := ServiceObject.Start()
 		if err != nil {
 			printError("Error starting husarnet-daemon: %s", err)
@@ -58,7 +63,7 @@ var daemonRestartCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		err := ServiceObject.Start()
+		err := ServiceObject.Restart()
 		if err != nil {
 			printError("Error restarting husarnet-daemon: %s", err)
 		} else {
