@@ -29,7 +29,7 @@ cmake -G "Ninja" \
 -DCMAKE_INSTALL_PREFIX=${output_dir} \
 -DBUILD_SHARED_LIBS=false \
 ${source_dir}
-elif
+else
 cmake -G "Ninja" \
       -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
       -DCMAKE_INSTALL_PREFIX=${output_dir} \
