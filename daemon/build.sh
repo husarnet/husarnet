@@ -2,8 +2,10 @@
 source $(dirname "$0")/../util/bash-base.sh
 
 if [ ! "$#" -eq 3 ]; then
-    echo "Usage: $0 <platform> <architecture> [stable/nightly]"
-    exit 1
+	if [ ! "$#" -eq 2 ]; then
+    	echo "Usage: $0 <platform> <architecture> (stable/nightly)"
+   	exit 1
+    	fi
 fi
 
 platform=$1
