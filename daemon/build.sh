@@ -1,13 +1,14 @@
 #!/bin/bash
 source $(dirname "$0")/../util/bash-base.sh
 
-if [ ! "$#" -eq 2 ]; then
-    echo "Usage: $0 <platform> <architecture>"
+if [ ! "$#" -eq 3 ]; then
+    echo "Usage: $0 <platform> <architecture> [stable/nightly]"
     exit 1
 fi
 
 platform=$1
 arch=$2
+build_type=$3
 
 echo "[HUSARNET BS] Building ${platform} ${arch} daemon"
 
@@ -22,12 +23,20 @@ mkdir -p ${release_base}
 
 # Actually build the thing
 pushd ${build_dir}
-
+if [[ ${build_type} = nightly ]]; then
+cmake -G "Ninja" \
+-DCMAKE_BUILD_TYPE=Debug \
+-DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
+-DCMAKE_INSTALL_PREFIX=${output_dir} \
+-DBUILD_SHARED_LIBS=false \
+${source_dir}
+elif
 cmake -G "Ninja" \
       -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
       -DCMAKE_INSTALL_PREFIX=${output_dir} \
       -DBUILD_SHARED_LIBS=false \
       ${source_dir}
+fi
 
 # If you want to include debugging symbols move it up a fair bit
 #      -DCMAKE_BUILD_TYPE=Debug \
