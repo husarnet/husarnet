@@ -1,14 +1,14 @@
 #!/bin/bash
 source $(dirname "$0")/../../util/bash-base.sh
 
-if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
     echo "Usage: $0 <architecture> (stable/nightly)" 
     exit 1
 fi
 
 platform=linux
 arch=$1
-
+build_type=$2
 platform_base=${base_dir}/platforms/${platform}
 
 ${base_dir}/daemon/build.sh ${platform} ${arch} ${build_type}
