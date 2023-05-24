@@ -1,8 +1,8 @@
 #!/bin/bash
 source $(dirname "$0")/../../util/bash-base.sh
 
-if [ ! "$#" -eq 1 ]; then
-    echo "Usage: $0 <architecture>"
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+    echo "Usage: $0 <architecture> (stable/nightly)" 
     exit 1
 fi
 
@@ -11,7 +11,7 @@ arch=$1
 
 platform_base=${base_dir}/platforms/${platform}
 
-${base_dir}/daemon/build.sh ${platform} ${arch}
+${base_dir}/daemon/build.sh ${platform} ${arch} ${build_type}
 ${base_dir}/cli/build.sh ${platform} ${arch}
 
 # Package
