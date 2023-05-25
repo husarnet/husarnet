@@ -34,6 +34,13 @@ var daemonStartCommand = &cli.Command{
 			return nil
 		}
 
+		// Temporary solution for Windows, until we get rid of nssm
+		if onWindows() {
+			runSubcommand(false, "nssm", "start", "husarnet")
+			return nil
+		}
+
+		ensureServiceInstalled()
 		err := ServiceObject.Start()
 		if err != nil {
 			printError("Error starting husarnet-daemon: %s", err)
@@ -63,6 +70,13 @@ var daemonRestartCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
+		// Temporary solution for Windows, until we get rid of nssm
+		if onWindows() {
+			runSubcommand(false, "nssm", "restart", "husarnet")
+			return nil
+		}
+
+		ensureServiceInstalled()
 		err := ServiceObject.Restart()
 		if err != nil {
 			printError("Error restarting husarnet-daemon: %s", err)
@@ -84,6 +98,12 @@ var daemonStopCommand = &cli.Command{
 	Usage:     "stop husarnet daemon",
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx *cli.Context) error {
+		if onWindows() {
+			runSubcommand(false, "nssm", "stop", "husarnet")
+			return nil
+		}
+
+		ensureServiceInstalled()
 		err := ServiceObject.Stop()
 		if err != nil {
 			printError("Error stopping husarnet-daemon: %s", err)
@@ -226,6 +246,12 @@ var daemonSetupServerCommand = &cli.Command{
 			dieEmpty()
 		}
 
+		if onWindows() {
+			runSubcommand(false, "nssm", "restart", "husarnet")
+			return nil
+		}
+
+		ensureServiceInstalled()
 		err := ServiceObject.Restart()
 		if err != nil {
 			printWarning("Wasn't able to restart Husarnet Daemon. Try restarting the service manually.")

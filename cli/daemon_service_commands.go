@@ -79,9 +79,7 @@ func makeService() service.Service {
 	return s
 }
 
-// This function does the heavy lifting when it comes to figuring out the situation in the system
-// Might rename and/or redesign it later
-func isAlreadyInstalled(silent bool) bool {
+func isHusarnetInstalledInOSServiceManager(silent bool) bool {
 	switch runtime.GOOS {
 	case "linux":
 		if fileExists(systemdUnitFilePath) {
@@ -108,6 +106,14 @@ func isAlreadyInstalled(silent bool) bool {
 	// TODO: maybe check also if daemon is running, to inform the user properly.
 }
 
+func ensureServiceInstalled() {
+	if !isHusarnetInstalledInOSServiceManager(true) {
+		printInfo("Husarnet Daemon is not installed in the system. Install it first? (requires sudo)")
+		runSubcommand(true, "sudo", "husarnet", "daemon", "service-install")
+		dieEmpty()
+	}
+}
+
 var daemonServiceInstallCommand = &cli.Command{
 	Name:      "service-install",
 	Usage:     "install service definition in OS's service manager (e.g. systemctl on Linux)",
@@ -126,7 +132,7 @@ var daemonServiceInstallCommand = &cli.Command{
 		silentFlag := ctx.Bool("silent")
 		forceFlag := ctx.Bool("force")
 
-		if !forceFlag && isAlreadyInstalled(silentFlag) {
+		if !forceFlag && isHusarnetInstalledInOSServiceManager(silentFlag) {
 			if !silentFlag {
 				printInfo("Service already exists. Aborting the installation.")
 			}
