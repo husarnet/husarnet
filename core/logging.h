@@ -10,17 +10,7 @@
 #include "husarnet/ports/port_interface.h"
 
 #include "husarnet/logmanager.h"
-
-static inline const std::string pad(int minLength, const std::string& text)
-{
-  int padSize = 0;
-
-  if(text.length() < minLength) {
-    padSize = minLength - text.length();
-  }
-
-  return text + std::string(padSize, ' ');
-}
+#include "husarnet/util.h"
 
 const std::string stripLogPathPrefix(const std::string& filename);
 
@@ -43,15 +33,16 @@ static inline void log(
   vsnprintf(buffer, buffer_len, format, args);
   va_end(args);
 
-  std::string message = pad(8, level._to_string());
   std::string userMessage = buffer;
-
   if(extra.length() > 0) {
     userMessage += " " + extra;
   }
 
+  std::string message = Port::getHumanTime();
+  message += " " + padRight(8, level._to_string());
+
 #ifdef DEBUG_BUILD
-  message += " " + pad(80, userMessage);
+  message += " " + padRight(80, userMessage);
   message +=
       " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
 #else

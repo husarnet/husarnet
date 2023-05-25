@@ -6,13 +6,13 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <map>
 #include <vector>
-
-#include "husarnet/ports/port.h"
-#include "husarnet/ports/port_interface.h"
 
 #include "husarnet/fstring.h"
 #include "husarnet/string_view.h"
+
+#include "enum.h"
 
 BETTER_ENUM(
     HookType,
@@ -145,4 +145,28 @@ inline bool mapContains(std::map<K, V> m, K needle)
   }
 
   return false;
+}
+
+static inline const std::string
+padRight(int minLength, const std::string& text, char paddingChar = ' ')
+{
+  int padSize = 0;
+
+  if(text.length() < minLength) {
+    padSize = minLength - text.length();
+  }
+
+  return text + std::string(padSize, paddingChar);
+}
+
+static inline const std::string
+padLeft(int minLength, const std::string& text, char paddingChar = ' ')
+{
+  int padSize = 0;
+
+  if(text.length() < minLength) {
+    padSize = minLength - text.length();
+  }
+
+  return std::string(padSize, paddingChar) + text;
 }

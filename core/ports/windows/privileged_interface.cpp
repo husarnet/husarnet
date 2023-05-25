@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "husarnet/ports/port.h"
-#include "husarnet/ports/shared_unix_windows/filesystem.h"
+#include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
 #include "husarnet/ports/sockets.h"
 

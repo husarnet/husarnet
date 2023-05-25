@@ -4,6 +4,8 @@
 #pragma once
 #include <condition_variable>
 
+#include "husarnet/ports/privileged_interface.h"
+
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/timer.h"
 #include "husarnet/util.h"

@@ -31,12 +31,14 @@ namespace Port {
 
   IpAddress resolveToIp(const std::string& hostname);
 
-  Time getCurrentTime();  // some monotonic time in ms
+  Time getCurrentTime();             // some monotonic time in ms
+  const std::string getHumanTime();  // human readable time
 
   UpperLayer* startTunTap(HusarnetManager* manager);
 
   std::map<UserSetting, std::string> getEnvironmentOverrides();
 
+  std::string readFile(const std::string& path);
   bool writeFile(const std::string& path, const std::string& content);
   bool isFile(const std::string& path);
   bool renameFile(const std::string& src, const std::string& dst);
