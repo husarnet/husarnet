@@ -43,19 +43,20 @@ static inline void log(
   vsnprintf(buffer, buffer_len, format, args);
   va_end(args);
 
-  auto userMessage = std::string(buffer);
+  std::string message = pad(8, level._to_string());
+  std::string userMessage = buffer;
+
   if(extra.length() > 0) {
     userMessage += " " + extra;
   }
 
-  userMessage = pad(80, userMessage);
-  auto levelName = pad(8, level._to_string());
-
-  snprintf(
-      buffer, buffer_len, "%s %s (%s:%d)", levelName.c_str(),
-      userMessage.c_str(), stripLogPathPrefix(filename).c_str(), lineno);
-
-  auto message = std::string(buffer);
+#ifdef DEBUG_BUILD
+  message += " " + pad(80, userMessage);
+  message +=
+      " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
+#else
+  message += " " + userMessage;
+#endif
 
   Port::log(message);
   getGlobalLogManager()->insert(message);
