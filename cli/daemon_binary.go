@@ -40,6 +40,7 @@ func restartDaemonWithConfirmationPrompt() {
 		dieEmpty()
 	}
 
+	ensureServiceInstalled()
 	err := ServiceObject.Restart()
 	if err != nil {
 		printWarning("Wasn't able to restart Husarnet Daemon. Try restarting the service manually.")
