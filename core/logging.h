@@ -22,6 +22,8 @@ static inline const std::string pad(int minLength, const std::string& text)
   return text + std::string(padSize, ' ');
 }
 
+const std::string stripLogPathPrefix(const std::string& filename);
+
 // Do not use this function directly - instead use the macros below
 static inline void log(
     LogLevel level,
@@ -51,7 +53,7 @@ static inline void log(
 
   snprintf(
       buffer, buffer_len, "%s %s (%s:%d)", levelName.c_str(),
-      userMessage.c_str(), filename.c_str(), lineno);
+      userMessage.c_str(), stripLogPathPrefix(filename).c_str(), lineno);
 
   auto message = std::string(buffer);
 
