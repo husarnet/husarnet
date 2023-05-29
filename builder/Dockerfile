@@ -63,6 +63,7 @@ RUN groupadd builder \
 
 ENV CGO_ENABLED="0"
 ENV GOCACHE="/app/build/gocache"
+ENV GOPATH="/app/build/gopath"
 ENV GOFLAGS="-buildvcs=false"
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10

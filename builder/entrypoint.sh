@@ -11,4 +11,4 @@ fix_perms ${build_base}
 fix_perms ${base_dir}/cli/generated
 fix_perms ${base_dir}/tests/integration
 
-su -w "CGO_ENABLED,GOCACHE,GOFLAGS,IDF_PATH,IDF_TOOLS_PATH,IDF_PYTHON_CHECK_CONSTRAINTS" -l -P builder -c "/usr/bin/bash ${*}"
+su -w "CGO_ENABLED,GOCACHE,GOPATH,GOFLAGS,IDF_PATH,IDF_TOOLS_PATH,IDF_PYTHON_CHECK_CONSTRAINTS" -l -P builder -c "/usr/bin/bash ${*}"
