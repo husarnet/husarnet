@@ -75,12 +75,11 @@ void ConfigStorage::save()
     return;
   }
 
-  manager->getHooksManager()->runHook(HookType::rw_request);
-  manager->getHooksManager()->waitHook(HookType::rw_request);
-  LOG_INFO("saving settings for ConfigStorage");
-  writeFunc(serialize());
-  manager->getHooksManager()->runHook(HookType::rw_release);
-  manager->getHooksManager()->waitHook(HookType::rw_release);
+  manager->getHooksManager()->withRw([&]() {
+    LOG_INFO("saving settings for ConfigStorage");
+    writeFunc(serialize());
+  });
+
   updateHostsInSystem();
 }
 

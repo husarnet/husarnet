@@ -22,3 +22,12 @@ void HooksManager::waitHook(HookType hookType)
     }
   }
 }
+
+void HooksManager::withRw(std::function<void()> f)
+{
+  this->runHook(HookType::rw_request);
+  this->waitHook(HookType::rw_request);
+  f();
+  this->runHook(HookType::rw_release);
+  this->waitHook(HookType::rw_release);
+}

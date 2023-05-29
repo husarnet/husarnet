@@ -290,7 +290,7 @@ namespace Port {
       return true;
     }
 
-    LOG_WARNING(
+    LOG_INFO(
         "unable to rename %s to %s, writing to %s directly", tmpPath.c_str(),
         path.c_str(), path.c_str());
 
@@ -358,51 +358,55 @@ namespace Port {
     fflush(stderr);
   }
 
-  void runScripts(const std::string& path)
+  static std::list<std::string> listScripts(const std::string& path)
   {
-    std::string msg = "running hooks under path " + path;
-    LOG(msg.c_str());
+    std::list<std::string> result;
     DIR* dir = opendir(path.c_str());
     if(dir == NULL) {
-      return;
+      return result;
     }
 
     struct dirent* ent;
     while((ent = readdir(dir)) != NULL) {
       std::string fileName = ent->d_name;
+      if(fileName == "." || fileName == "..") {
+        continue;
+      }
+
       std::string filePath = path + "/" + fileName;
       if(access(filePath.c_str(), X_OK) == 0) {
-        pid_t pid = fork();
-        if(pid == 0) {
-          std::system((char*)filePath.c_str());
-        } else {
-          int status;
-          waitpid(pid, &status, 0);
-        }
+        result.push_back(filePath);
       }
     }
     closedir(dir);
+
+    return result;
+  }
+
+  void runScripts(const std::string& path)
+  {
+    auto scriptPaths = listScripts(path);
+    if(scriptPaths.empty()) {
+      return;
+    }
+
+    LOG_INFO(("running hooks under path " + path).c_str());
+    for(auto& scriptPath : scriptPaths) {
+      pid_t pid = fork();
+      if(pid == 0) {
+        LOG_INFO(("running " + scriptPath + " as a hook").c_str());
+        std::system((char*)scriptPath.c_str());
+      } else {
+        int status;
+        waitpid(pid, &status, 0);
+      }
+    }
   }
 
   bool checkScriptsExist(const std::string& path)
   {
-    std::string msg = "checking if valid hooks under path " + path;
-    LOG(msg.c_str());
-
-    DIR* dir = opendir(path.c_str());
-    if(dir == NULL) {
-      return false;
-    }
-    struct dirent* ent;
-    while((ent = readdir(dir)) != NULL) {
-      std::string fileName = ent->d_name;
-      std::string filePath = path + "/" + fileName;
-      if(access(filePath.c_str(), X_OK) == 0) {
-        closedir(dir);
-        return true;
-      }
-    }
-    closedir(dir);
-    return false;
+    LOG_DEBUG(("checking for valid hooks under " + path).c_str());
+    auto scriptPaths = listScripts(path);
+    return !scriptPaths.empty();
   }
 }  // namespace Port

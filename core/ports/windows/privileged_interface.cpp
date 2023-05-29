@@ -260,8 +260,7 @@ namespace Privileged {
     full_path += "\\husarnet\\";
     full_path += path;
     std::filesystem::path dir(full_path);
-    std::string msg = "checking if valid hooks under path " + full_path;
-    LOG(msg.c_str());
+    LOG_INFO(("checking for valid hooks under " + full_path).c_str());
 
     if(!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
       return;
@@ -289,8 +288,7 @@ namespace Privileged {
     full_path += "\\husarnet\\";
     full_path += path;
     std::filesystem::path dir(full_path);
-    std::string msg = "checking if valid hooks under path " + full_path;
-    LOG(msg.c_str());
+    LOG_INFO(("checking for valid hooks under " + full_path).c_str());
 
     if(!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
       return false;

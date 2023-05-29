@@ -39,6 +39,8 @@ class HooksManager {
   void runHook(HookType hookType);
   void waitHook(HookType hookType);
 
+  void withRw(std::function<void()> f);
+
  private:
   HusarnetManager* manager;
   std::map<HookType, std::string> hookDirNames{

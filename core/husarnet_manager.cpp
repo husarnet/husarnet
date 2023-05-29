@@ -88,21 +88,16 @@ void HusarnetManager::setConfigStorage(ConfigStorage* cs)
 
 bool HusarnetManager::setSelfHostname(std::string newHostname)
 {
-  this->getHooksManager()->runHook(HookType::rw_request);
-  this->getHooksManager()->waitHook(HookType::rw_request);
-  auto result = Privileged::setSelfHostname(newHostname);
-  this->getHooksManager()->runHook(HookType::rw_release);
-  this->getHooksManager()->waitHook(HookType::rw_release);
+  bool result = false;
+  this->getHooksManager()->withRw(
+      [&]() { result = Privileged::setSelfHostname(newHostname); });
   return result;
 }
 
 void HusarnetManager::updateHosts()
 {
-  this->getHooksManager()->runHook(HookType::rw_request);
-  this->getHooksManager()->waitHook(HookType::rw_request);
-  Privileged::updateHostsFile(configStorage->getHostTable());
-  this->getHooksManager()->runHook(HookType::rw_release);
-  this->getHooksManager()->waitHook(HookType::rw_release);
+  this->getHooksManager()->withRw(
+      [&]() { Privileged::updateHostsFile(configStorage->getHostTable()); });
 }
 
 IpAddress HusarnetManager::resolveHostname(std::string hostname)
@@ -149,6 +144,7 @@ bool HusarnetManager::isDirty()
 
 void HusarnetManager::setDirty()
 {
+  // Yes, this is only a runtime flag
   dirty = true;
 }
 
@@ -159,6 +155,7 @@ std::string HusarnetManager::getWebsetupSecret()
 
 std::string HusarnetManager::setWebsetupSecret(std::string newSecret)
 {
+  // CS handles rw internally
   configStorage->setInternalSetting(InternalSetting::websetupSecret, newSecret);
   return newSecret;
 }
@@ -175,13 +172,13 @@ static std::string parseJoinCode(std::string joinCode)
 
 void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
 {
-  whitelistAdd(getWebsetupAddress());
+  this->whitelistAdd(this->getWebsetupAddress());
 
   std::string dashboardHostname;
   if(newHostname.empty()) {
     dashboardHostname = Privileged::getSelfHostname();
   } else {
-    setSelfHostname(newHostname);
+    this->setSelfHostname(newHostname);
     dashboardHostname = newHostname;
   }
 
@@ -199,6 +196,7 @@ bool HusarnetManager::isJoined()
 
 void HusarnetManager::changeServer(std::string domain)
 {
+  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::dashboardFqdn, domain);
   setDirty();
   LOG_WARNING("Dashboard URL has been changed to %s.", domain.c_str());
@@ -207,21 +205,25 @@ void HusarnetManager::changeServer(std::string domain)
 
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)
 {
+  // CS handles rw internally
   configStorage->hostTableAdd(hostname, address);
 }
 
 void HusarnetManager::hostTableRm(std::string hostname)
 {
+  // CS handles rw internally
   configStorage->hostTableRm(hostname);
 }
 
 void HusarnetManager::whitelistAdd(IpAddress address)
 {
+  // CS handles rw internally
   configStorage->whitelistAdd(address);
 }
 
 void HusarnetManager::whitelistRm(IpAddress address)
 {
+  // CS handles rw internally
   configStorage->whitelistRm(address);
 }
 
@@ -237,11 +239,13 @@ bool HusarnetManager::isWhitelistEnabled()
 
 void HusarnetManager::whitelistEnable()
 {
+  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableWhitelist, trueValue);
 }
 
 void HusarnetManager::whitelistDisable()
 {
+  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableWhitelist, falseValue);
 }
 
@@ -272,27 +276,19 @@ int HusarnetManager::getLogVerbosity()
 void HusarnetManager::setLogVerbosity(int logLevel)
 {
   getGlobalLogManager()->setVerbosity(logLevelFromInt(logLevel));
+  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::logVerbosity, logLevel);
 }
 
 std::string HusarnetManager::getApiSecret()
 {
-  this->getHooksManager()->runHook(HookType::rw_request);
-  this->getHooksManager()->waitHook(HookType::rw_request);
-  auto result = Privileged::readApiSecret();
-  this->getHooksManager()->runHook(HookType::rw_release);
-  this->getHooksManager()->waitHook(HookType::rw_release);
-  return result;
+  return Privileged::readApiSecret();
 }
 
 std::string HusarnetManager::rotateApiSecret()
 {
-  this->getHooksManager()->runHook(HookType::rw_request);
-  this->getHooksManager()->waitHook(HookType::rw_request);
-  Privileged::rotateApiSecret();
-  this->getHooksManager()->runHook(HookType::rw_release);
-  this->getHooksManager()->waitHook(HookType::rw_release);
-  return getApiSecret();
+  this->getHooksManager()->withRw([&]() { Privileged::rotateApiSecret(); });
+  return this->getApiSecret();
 }
 
 std::string HusarnetManager::getDashboardFqdn()
@@ -325,6 +321,7 @@ std::string HusarnetManager::getInterfaceName()
 
 void HusarnetManager::setInterfaceName(std::string name)
 {
+  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::interfaceName, name);
   // TODO / ympek could return
   // now there is some inconsistency in how setters work
@@ -338,11 +335,13 @@ bool HusarnetManager::areHooksEnabled()
 
 void HusarnetManager::hooksEnable()
 {
+  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableHooks, trueValue);
 }
 
 void HusarnetManager::hooksDisable()
 {
+  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableHooks, falseValue);
 }
 
@@ -353,11 +352,13 @@ bool HusarnetManager::areNotificationsEnabled()
 
 void HusarnetManager::notificationsEnable()
 {
+  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableNotifications, trueValue);
 }
 
 void HusarnetManager::notificationsDisable()
 {
+  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableNotifications, falseValue);
 }
 
@@ -386,6 +387,7 @@ int HusarnetManager::getLatency(DeviceId destination)
 
 void HusarnetManager::cleanup()
 {
+  // CS handles rw internally
   configStorage->groupChanges([&]() {
     configStorage->whitelistClear();
     configStorage->whitelistAdd(getWebsetupAddress());
@@ -431,6 +433,7 @@ void HusarnetManager::readLegacyConfig()
   auto whitelistEnabledOld = legacyConfig.getWhitelistEnabled();
   auto whitelistOld = legacyConfig.getWhitelistEntries();
 
+  // CS handles rw internally
   configStorage->groupChanges([&]() {
     setWebsetupSecret(websetupSecretOld);
     for(auto& entry : whitelistOld) {
@@ -443,18 +446,17 @@ void HusarnetManager::readLegacyConfig()
     }
   });
 
-  Port::renameFile(legacyConfigPath, legacyConfigPath + ".old");
+  this->getHooksManager()->withRw(
+      [&]() { Port::renameFile(legacyConfigPath, legacyConfigPath + ".old"); });
 #endif
 }
 
 void HusarnetManager::getLicenseStage()
 {
-  this->getHooksManager()->runHook(HookType::rw_request);
-  this->getHooksManager()->waitHook(HookType::rw_request);
-  license =
-      new License(configStorage->getUserSetting(UserSetting::dashboardFqdn));
-  this->getHooksManager()->runHook(HookType::rw_release);
-  this->getHooksManager()->waitHook(HookType::rw_release);
+  this->getHooksManager()->withRw([&]() {
+    license =
+        new License(configStorage->getUserSetting(UserSetting::dashboardFqdn));
+  });
 }
 
 void HusarnetManager::getIdentityStage()
@@ -464,11 +466,8 @@ void HusarnetManager::getIdentityStage()
   if(Privileged::checkValidIdentityExists()) {
     identity = Privileged::readIdentity();
   } else {
-    this->getHooksManager()->runHook(HookType::rw_request);
-    this->getHooksManager()->waitHook(HookType::rw_request);
-    identity = Privileged::createIdentity();
-    this->getHooksManager()->runHook(HookType::rw_release);
-    this->getHooksManager()->waitHook(HookType::rw_release);
+    this->getHooksManager()->withRw(
+        [&]() { identity = Privileged::createIdentity(); });
   }
 }
 
@@ -525,7 +524,9 @@ void HusarnetManager::stage1()
   // This checks whether the dashboard URL was recently changed using an
   // environment variable and makes sure it's saved to a persistent storage (as
   // other values like websetup secret) depend on it.
+  // This may be used i.e. in Docker container setup.
   if(configStorage->isUserSettingOverriden(UserSetting::dashboardFqdn)) {
+    // CS handles rw internally
     configStorage->persistUserSettingOverride(UserSetting::dashboardFqdn);
   }
 

@@ -43,8 +43,6 @@ void NotificationManager::refreshNotificationFile()
   // server side. The id mechanism also ensures that individual announcements
   // will be displayed to users for the same time spans independently of the
   // time client received announcement.
-  husarnetManager->getHooksManager()->runHook(HookType::rw_request);
-  husarnetManager->getHooksManager()->waitHook(HookType::rw_request);
   auto new_notifications = retrieveNotificationJson(dashboardHostname);
   auto cached = Privileged::readNotificationFile();
   json merged;
@@ -104,10 +102,8 @@ void NotificationManager::refreshNotificationFile()
   }
 
   // Merged cached and requested notifications
-
-  Privileged::writeNotificationFile(merged.dump());
-  husarnetManager->getHooksManager()->runHook(HookType::rw_release);
-  husarnetManager->getHooksManager()->waitHook(HookType::rw_release);
+  husarnetManager->getHooksManager()->withRw(
+      [&]() { Privileged::writeNotificationFile(merged.dump()); });
 };
 
 std::list<std::string> NotificationManager::getNotifications()
@@ -133,9 +129,7 @@ std::list<std::string> NotificationManager::getNotifications()
 json NotificationManager::retrieveNotificationJson(
     std::string dashboardHostname)
 {
-  LOG_ERROR("hostname: %s", dashboardHostname.c_str());
   IpAddress ip = Privileged::resolveToIp(dashboardHostname);
-  LOG_ERROR("ip: %s", ip.toString().c_str());
   InetAddress address{ip, 80};
   int sockfd = OsSocket::connectTcpSocket(address);
   if(sockfd < 0) {
