@@ -92,5 +92,6 @@
   "cmake.configureOnOpen": true,
   "C_Cpp.default.compilerPath": "/usr/bin/gcc",
   "go.inferGopath": false,
-  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "ansible.python.interpreterPath": "/bin/python3"
 }

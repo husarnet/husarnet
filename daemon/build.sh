@@ -1,13 +1,13 @@
 #!/bin/bash
 source $(dirname "$0")/../util/bash-base.sh
-
-if [ ! "$#" -eq 2 ]; then
-    echo "Usage: $0 <platform> <architecture>"
-    exit 1
+if [ $# -ne 3 ]; then
+  echo "Usage: $0 <platform> <architecture> (stable/nightly)"
+  exit 1
 fi
 
 platform=$1
 arch=$2
+build_type=$3
 
 echo "[HUSARNET BS] Building ${platform} ${arch} daemon"
 
@@ -23,14 +23,21 @@ mkdir -p ${release_base}
 # Actually build the thing
 pushd ${build_dir}
 
-cmake -G "Ninja" \
-      -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
-      -DCMAKE_INSTALL_PREFIX=${output_dir} \
-      -DBUILD_SHARED_LIBS=false \
-      ${source_dir}
+if [[ ${build_type} = nightly ]]; then
+  debug_flags="-DCMAKE_BUILD_TYPE=Debug"
+elif [[ ${build_type} = stable ]]; then
+  debug_flags="-DCMAKE_BUILD_TYPE=Release"
+else
+  echo "Unknown build type: ${build_type}, supported values: stable/nightly"
+  exit 1
+fi
 
-# If you want to include debugging symbols move it up a fair bit
-#      -DCMAKE_BUILD_TYPE=Debug \
+cmake -G "Ninja" \
+  -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
+  -DCMAKE_INSTALL_PREFIX=${output_dir} \
+  -DBUILD_SHARED_LIBS=false \
+  ${debug_flags} \
+  ${source_dir}
 
 cmake --build ${build_dir}
 cmake --build ${build_dir} --target install

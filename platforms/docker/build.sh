@@ -1,8 +1,8 @@
 #!/bin/bash
 source $(dirname "$0")/../../util/bash-base.sh
 
-if [ ! "$#" -eq 1 ]; then
-    echo "Usage: $0 <architecture>"
+if [ ! "$#" -eq 2 ]; then
+    echo "Usage: $0 <architecture> [stable/nightly]"
     exit 1
 fi
 
@@ -17,13 +17,14 @@ else
     arch=$1
 fi
 
+build_type=$2
 base_platform=linux
 
 echo "[HUSARNET BS] Building docker image for ${arch}"
 
 if [ ${in_ci} == false ]; then
     pushd ${base_dir}
-    docker_builder /app/platforms/linux/build.sh amd64
+    docker_builder /app/platforms/linux/build.sh amd64 $build_type
     popd
 fi
 

@@ -33,7 +33,7 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Prepare build"
-        run: "./platforms/docker/build.sh ${{matrix.arch_alias}}"
+        run: "./platforms/docker/build.sh ${{matrix.arch_alias}} stable"
       - name: "Build and push"
         uses: "docker/build-push-action@v3"
         with:
@@ -66,8 +66,8 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"
           registry: "ghcr.io"
           username: "${{ github.actor }}"
-      - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}}"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}}"
+      - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} stable"
+        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} stable"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -94,7 +94,7 @@ jobs:
         with:
           ref: "hotfix"
       - name: "Build daemon natively on MacOS"
-        run: "./daemon/build.sh macos macos_arm64"
+        run: "./daemon/build.sh macos macos_arm64 stable"
       - name: "Build CLI natively on MacOS"
         run: "./cli/build.sh macos arm64"
       - name: "Push artifacts"
@@ -117,8 +117,8 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"
           registry: "ghcr.io"
           username: "${{ github.actor }}"
-      - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh"
+      - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh stable"
+        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh stable"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:

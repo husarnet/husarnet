@@ -58,9 +58,9 @@
       run: 'docker run --rm --privileged --volume $(pwd):/app ' + container + ' ' + command,
     },
 
-    build_macos_daemon:: function() {
+    build_macos_daemon:: function(build_type) {
       name: 'Build daemon natively on MacOS',
-      run: './daemon/build.sh macos macos_arm64',
+      run: './daemon/build.sh macos macos_arm64 ' + build_type,
     },
 
     build_macos_cli:: function() {
@@ -158,7 +158,7 @@
       ],
     },
 
-    build_linux:: function(ref) {
+    build_linux:: function(ref, build_type) {
       needs: [],
 
       'runs-on': 'ubuntu-latest',
@@ -179,12 +179,12 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
-        $.steps.builder('/app/platforms/linux/build.sh ${{matrix.arch}}'),
+        $.steps.builder('/app/platforms/linux/build.sh ${{matrix.arch}} ' + build_type),
         $.steps.push_artifacts('*${{matrix.arch}}*'),
       ],
     },
 
-    build_macos_natively:: function(ref) {
+    build_macos_natively:: function(ref, build_type) {
       needs: [],
 
       'runs-on': [
@@ -194,13 +194,13 @@
 
       steps: [
         $.steps.checkout(ref),
-        $.steps.build_macos_daemon(),
+        $.steps.build_macos_daemon(build_type),
         $.steps.build_macos_cli(),
         $.steps.push_artifacts('*macos*'),
       ],
     },
 
-    build_windows:: function(ref) {
+    build_windows:: function(ref, build_type) {
       needs: [],
 
       'runs-on': 'ubuntu-latest',
@@ -208,7 +208,7 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
-        $.steps.builder('/app/platforms/windows/build.sh'),
+        $.steps.builder('/app/platforms/windows/build.sh ' + build_type),
         $.steps.push_artifacts('*win64*'),
       ],
     },
@@ -366,7 +366,7 @@
       ],
     },
 
-    build_docker:: function(namespace, push, ref) {
+    build_docker:: function(namespace, push, ref, build_type) {
       needs: [
         'build_linux',
       ],
@@ -412,7 +412,7 @@
         $.steps.ghcr_login(),
         {
           name: 'Prepare build',
-          run: './platforms/docker/build.sh ${{matrix.arch_alias}}',
+          run: './platforms/docker/build.sh ${{matrix.arch_alias}} ' + build_type,
         },
         {
           name: 'Build and push',
