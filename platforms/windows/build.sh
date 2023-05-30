@@ -4,6 +4,7 @@ if [ ! "$#" -eq 1 ]; then
     echo "Usage: $0 [stable/nightly]"
     exit 1
 fi
+
 build_type=$1
 platform=windows
 arch=win64
