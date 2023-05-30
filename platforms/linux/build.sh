@@ -1,8 +1,8 @@
 #!/bin/bash
 source $(dirname "$0")/../../util/bash-base.sh
 
-if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-    echo "Usage: $0 <architecture> [stable/nightly]" 
+if [ ! "$#" -eq 2 ]; then
+    echo "Usage: $0 <architecture> [stable/nightly]"
     exit 1
 fi
 

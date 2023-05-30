@@ -1,8 +1,8 @@
 #!/bin/bash
 source $(dirname "$0")/../util/bash-base.sh
 if [ $# -ne 3 ]; then
-    echo "Usage: $0 <platform> <architecture> (stable/nightly)"
-   	exit 1
+  echo "Usage: $0 <platform> <architecture> (stable/nightly)"
+  exit 1
 fi
 
 platform=$1
@@ -24,20 +24,20 @@ mkdir -p ${release_base}
 pushd ${build_dir}
 
 if [[ ${build_type} = nightly ]]; then
-   debug_flags="-DCMAKE_BUILD_TYPE=Debug"
+  debug_flags="-DCMAKE_BUILD_TYPE=Debug"
+elif [[ ${build_type} = stable ]]; then
+  debug_flags="-DCMAKE_BUILD_TYPE=Release"
 else
-    debug_flags=""
+  echo "Unknown build type: ${build_type}, supported values: stable/nightly"
+  exit 1
 fi
 
 cmake -G "Ninja" \
-      -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
-      -DCMAKE_INSTALL_PREFIX=${output_dir} \
-      -DBUILD_SHARED_LIBS=false \
-      ${debug_flags} \
-      ${source_dir}
-
-# If you want to include debugging symbols move it up a fair bit
-#      -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
+  -DCMAKE_INSTALL_PREFIX=${output_dir} \
+  -DBUILD_SHARED_LIBS=false \
+  ${debug_flags} \
+  ${source_dir}
 
 cmake --build ${build_dir}
 cmake --build ${build_dir} --target install
