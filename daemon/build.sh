@@ -1,6 +1,6 @@
 #!/bin/bash
 source $(dirname "$0")/../util/bash-base.sh
-if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+if [ $# -ne 3 ]; then
     echo "Usage: $0 <platform> <architecture> (stable/nightly)"
    	exit 1
 fi
