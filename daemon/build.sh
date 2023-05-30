@@ -22,6 +22,7 @@ mkdir -p ${release_base}
 
 # Actually build the thing
 pushd ${build_dir}
+
 if [[ ${build_type} = nightly ]]; then
    debug_flags="-DCMAKE_BUILD_TYPE=Debug"
 else

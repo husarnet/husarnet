@@ -16,6 +16,7 @@ else
     echo "[HUSARNET BS] Unknown docker arch $1"
     arch=$1
 fi
+
 build_type=$2
 base_platform=linux
 
