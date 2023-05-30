@@ -26,7 +26,7 @@ if [[ ${build_type} = nightly ]]; then
    debug_flags="-DCMAKE_BUILD_TYPE=Debug"
 else
   debug_flags=""
-fi
+
 
 cmake -G "Ninja" \
       -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
