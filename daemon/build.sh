@@ -26,7 +26,7 @@ if [[ ${build_type} = nightly ]]; then
    debug_flags="-DCMAKE_BUILD_TYPE=Debug"
 else
   debug_flags=""
-
+fi
 
 cmake -G "Ninja" \
       -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
@@ -34,7 +34,7 @@ cmake -G "Ninja" \
       -DBUILD_SHARED_LIBS=false \
       ${debug_flags} \
       ${source_dir}
-fi
+
 
 # If you want to include debugging symbols move it up a fair bit
 #      -DCMAKE_BUILD_TYPE=Debug \
