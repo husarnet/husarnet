@@ -25,7 +25,7 @@ namespace Privileged {
 
   void init()
   {
-    configDir = std::string(getenv("PROGRAMDATA")) + "\\husarnet";
+    configDir = std::string(getenv("PROGRAMDATA")) + "\\Husarnet";
     if(!Port::isFile(configDir)) {
       CreateDirectory(configDir.c_str(), NULL);
       // fixPermissions(configDir);
@@ -253,26 +253,43 @@ namespace Privileged {
     // Not implemented in Windows port.
   }
 
-  void runScripts(const std::string& path)
+  static std::list<std::string> getAvailableScripts(const std::string& path)
   {
     char* conf_path = std::getenv("PROGRAMDATA");
-    std::string full_path(conf_path);
-    full_path += "\\husarnet\\";
-    full_path += path;
-    std::filesystem::path dir(full_path);
-    LOG_INFO(("checking for valid hooks under " + full_path).c_str());
+    auto fullPath = std::string(conf_path) + "\\Husarnet\\" + path;
+    auto dir(fullPath);
+    std::list<std::string> results;
+
+    LOG_INFO(("Checking for valid hooks under " + fullPath).c_str());
 
     if(!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
-      return;
+      LOG_INFO((fullPath + " does not exist").c_str());
+      return results;
     }
 
     for(const auto& entry : std::filesystem::directory_iterator(dir)) {
-      if(entry.path().extension() == ".ps1" &&
-         (entry.status().permissions() & std::filesystem::perms::owner_exec) ==
-             std::filesystem::perms::owner_exec) {
-        std::string command = "powershell.exe -File " + entry.path().string();
-        std::system(command.c_str());
+      if(entry.path().extension() != ".ps1") {
+        LOG_INFO((entry.path().string() + " has wrong extension").c_str());
+        continue;
       }
+
+      if((entry.status().permissions() & std::filesystem::perms::owner_exec) !=
+         std::filesystem::perms::owner_exec) {
+        LOG_INFO((entry.path().string() + " is not executable").c_str());
+        continue;
+      }
+
+      results.push_back(entry.path().string());
+    }
+
+    return results;
+  }
+
+  void runScripts(const std::string& path)
+  {
+    for(const auto& scriptPath : getAvailableScripts(path)) {
+      LOG_INFO(("Running " + scriptPath).c_str();
+      std::system(("powershell.exe -File " + scriptPath).c_str());
     }
   }
 
@@ -283,25 +300,6 @@ namespace Privileged {
 
   bool checkScriptsExist(const std::string& path)
   {
-    char* conf_path = std::getenv("PROGRAMDATA");
-    std::string full_path(conf_path);
-    full_path += "\\husarnet\\";
-    full_path += path;
-    std::filesystem::path dir(full_path);
-    LOG_INFO(("checking for valid hooks under " + full_path).c_str());
-
-    if(!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
-      return false;
-    }
-
-    auto dirIterator = std::filesystem::directory_iterator(dir);
-    return std::any_of(
-        std::filesystem::begin(dirIterator), std::filesystem::end(dirIterator),
-        [](const std::filesystem::directory_entry& entry) {
-          return entry.path().extension() == ".ps1" &&
-                 (entry.status().permissions() &
-                  std::filesystem::perms::owner_exec) ==
-                     std::filesystem::perms::owner_exec;
-        });
+    return !getAvailableScripts(path).empty();
   }
 }  // namespace Privileged

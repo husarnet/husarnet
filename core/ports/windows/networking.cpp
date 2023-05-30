@@ -37,7 +37,7 @@ int WindowsNetworking::callWindowsCmd(std::string cmd) const
 }
 void WindowsNetworking::setupNetworkInterface(std::string interfaceName)
 {
-  auto identityPath = std::string(getenv("PROGRAMDATA")) + "\\husarnet\\id";
+  auto identityPath = std::string(getenv("PROGRAMDATA")) + "\\Husarnet\\id";
   auto identity = Identity::deserialize(Port::readFile(identityPath));
 
   std::string sourceNetshName = getNetshNameForGuid(interfaceName);
