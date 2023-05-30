@@ -40,7 +40,6 @@ class LogManager {
   LogElement* last;
   LogLevel verbosity;
   std::mutex mtx;
-  void prependLogTime(std::string&);
 
  public:
   explicit LogManager(uint16_t size)

@@ -172,7 +172,7 @@ var daemonLogsCommand = &cli.Command{
 				handleStandardResult(logsResponse.StdResult)
 
 				for _, line := range logsResponse.Logs {
-					printInfo(line)
+					pterm.Println(line)
 				}
 
 				return nil
