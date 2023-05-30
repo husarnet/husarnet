@@ -23,17 +23,16 @@ mkdir -p ${release_base}
 # Actually build the thing
 pushd ${build_dir}
 if [[ ${build_type} = nightly ]]; then
-cmake -G "Ninja" \
--DCMAKE_BUILD_TYPE=Debug \
--DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
--DCMAKE_INSTALL_PREFIX=${output_dir} \
--DBUILD_SHARED_LIBS=false \
-${source_dir}
+   debug_flags="-DCMAKE_BUILD_TYPE=Debug"
 else
+  debug_flags=""
+fi
+
 cmake -G "Ninja" \
       -DCMAKE_TOOLCHAIN_FILE=${source_dir}/arch_${arch}.cmake \
       -DCMAKE_INSTALL_PREFIX=${output_dir} \
       -DBUILD_SHARED_LIBS=false \
+      ${debug_flags} \
       ${source_dir}
 fi
 
