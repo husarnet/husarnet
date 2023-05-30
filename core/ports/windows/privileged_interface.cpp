@@ -288,7 +288,7 @@ namespace Privileged {
   void runScripts(const std::string& path)
   {
     for(const auto& scriptPath : getAvailableScripts(path)) {
-      LOG_INFO(("Running " + scriptPath).c_str();
+      LOG_INFO(("Running " + scriptPath).c_str());
       std::system(("powershell.exe -File " + scriptPath).c_str());
     }
   }
