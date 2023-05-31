@@ -255,14 +255,16 @@ namespace Privileged {
 
   std::string getSelfHostname()
   {
-    // TODO: implement
-    return "macos-device";
+    const std::string hostnamePath = "/tmp/hostname";
+    const std::string command =
+        "scutil --get LocalHostName > " + hostnamePath + " 2>/dev/null";
+    std::system(command.c_str());
+    return rtrim(Port::readFile(hostnamePath));
   }
 
-  // TODO long term - prevent websetup from renaming this host for no reason
   bool setSelfHostname(const std::string& newHostname)
   {
-    // TODO: implement
+    // Not implemented in MacOS port (on purpose).
     return true;
   }
 
