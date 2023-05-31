@@ -5,6 +5,7 @@ package main
 
 import (
 	"runtime"
+	"time"
 
 	"github.com/kardianos/service"
 	"github.com/urfave/cli/v2"
@@ -77,6 +78,20 @@ func makeService() service.Service {
 		printError("Could not create Service object for OS service manager")
 	}
 	return s
+}
+
+func restartService() error {
+	ensureServiceInstalled()
+	// due to the shortcomings of kardianos/service library,
+	// Restart() does not work properly on darwin
+	if runtime.GOOS == "darwin" {
+		// error during stopping can be ignored, if our objective is to start anew
+		ServiceObject.Stop()
+		time.Sleep(50 * time.Millisecond)
+		return ServiceObject.Start()
+	}
+
+	return ServiceObject.Restart()
 }
 
 func isHusarnetInstalledInOSServiceManager(silent bool) bool {

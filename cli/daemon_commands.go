@@ -76,8 +76,7 @@ var daemonRestartCommand = &cli.Command{
 			return nil
 		}
 
-		ensureServiceInstalled()
-		err := ServiceObject.Restart()
+		err := restartService()
 		if err != nil {
 			printError("Error restarting husarnet-daemon: %s", err)
 		} else {
@@ -251,8 +250,7 @@ var daemonSetupServerCommand = &cli.Command{
 			return nil
 		}
 
-		ensureServiceInstalled()
-		err := ServiceObject.Restart()
+		err := restartService()
 		if err != nil {
 			printWarning("Wasn't able to restart Husarnet Daemon. Try restarting the service manually.")
 			return err
