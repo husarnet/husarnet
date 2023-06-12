@@ -234,6 +234,11 @@ namespace Port {
   static bool writeFileDirect(const std::string& path, const std::string& data)
   {
     FILE* f = fopen(path.c_str(), "wb");
+    if(f == nullptr) {
+      throw std::runtime_error{
+          "Error: \"" + std::string{strerror(errno)} +
+          "\" while opening file: \"" + path + "\""};
+    }
     int ret = fwrite(data.data(), data.size(), 1, f);
     fsync(fileno(f));
     fclose(f);

@@ -41,24 +41,6 @@ IpAddress Peer::getIpAddress()
   return deviceIdToIpAddress(id);
 }
 
-std::list<InetAddress> Peer::getSourceAddresses()
-{
-  std::list<InetAddress> r;
-  for(auto addr : sourceAddresses) {
-    r.push_back(addr);
-  }
-  return r;
-}
-
-std::list<InetAddress> Peer::getTargetAddresses()
-{
-  std::list<InetAddress> r;
-  for(auto addr : targetAddresses) {
-    r.push_back(addr);
-  }
-  return r;
-}
-
 InetAddress Peer::getUsedTargetAddress()
 {
   return targetAddress;
