@@ -26,6 +26,7 @@
 
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
+#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 #include "nlohmann/json.hpp"
@@ -259,6 +260,10 @@ namespace Privileged {
     const std::string command =
         "scutil --get LocalHostName > " + hostnamePath + " 2>/dev/null";
     std::system(command.c_str());
+    if (!Port::isFile(hostnamePath)) {
+      LOG_WARNING("Unable to retrieve hostname from scutil, defaulting to macos-device");
+      return "macos-device";
+    }
     return rtrim(Port::readFile(hostnamePath));
   }
 
