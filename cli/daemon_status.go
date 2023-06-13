@@ -75,7 +75,7 @@ func printVersion(daemonVersion string) {
 
 	if daemonVersion != cliVersion {
 		versionDot = redDot
-		versionHelp = "CLI and Husarnet Daemon versions differ - you may get unexpected results!"
+		versionHelp = "CLI and Husarnet Daemon versions differ! If you updated recently, restart the Daemon"
 	} else if daemonVersion != getDaemonBinaryVersion() {
 		versionDot = yellowDot
 		versionHelp = "Husarnet Daemon you're running and the one saved on a disk differ!"
