@@ -103,14 +103,14 @@ bool ApiServer::requireParams(
   return true;
 }
 
+template <typename iterable_InetAddress_t>
 std::list<std::string> stringifyInetAddressList(
-    const std::list<InetAddress>& source)
+    const iterable_InetAddress_t& source)
 {
-  std::list<std::string> stringified;
+  std::list<std::string> stringified{};
   std::transform(
-      source.cbegin(), source.cend(), stringified.begin(),
+      source.cbegin(), source.cend(), std::back_insert_iterator(stringified),
       [](const InetAddress element) { return element.str(); });
-
   return stringified;
 }
 

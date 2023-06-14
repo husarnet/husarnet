@@ -3,6 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <list>
+#include <cstdint>
 
 #include "enum.h"
 

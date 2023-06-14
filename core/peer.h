@@ -61,8 +61,12 @@ class Peer {
   DeviceId getDeviceId();
   IpAddress getIpAddress();
 
-  std::list<InetAddress> getSourceAddresses();
-  std::list<InetAddress> getTargetAddresses();
+  auto const& getSourceAddresses() {
+    return sourceAddresses;
+  }
+  auto const& getTargetAddresses() {
+    return targetAddresses;
+  }
   InetAddress getUsedTargetAddress();
   InetAddress getLinkLocalAddress();
 };
