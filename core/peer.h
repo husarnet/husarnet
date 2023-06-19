@@ -61,10 +61,12 @@ class Peer {
   DeviceId getDeviceId();
   IpAddress getIpAddress();
 
-  auto const& getSourceAddresses() {
+  auto const& getSourceAddresses()
+  {
     return sourceAddresses;
   }
-  auto const& getTargetAddresses() {
+  auto const& getTargetAddresses()
+  {
     return targetAddresses;
   }
   InetAddress getUsedTargetAddress();
