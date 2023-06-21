@@ -210,8 +210,8 @@
       steps: [
         $.steps.checkout(ref),
         {
-          name: 'Install coreutils, as our scripts depend on them and ninja for building',
-          run: 'brew install coreutils ninja',
+          name: 'Install coreutils, as our scripts depend on them and zig + ninja for building',
+          run: 'brew install coreutils zig ninja',
         },
         $.steps.build_macos_daemon(build_type, 'amd64'),
         $.steps.build_macos_cli('amd64'),
