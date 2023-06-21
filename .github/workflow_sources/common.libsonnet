@@ -209,6 +209,10 @@
 
       steps: [
         $.steps.checkout(ref),
+        {
+          name: 'Install coreutils, as our scripts depend on them',
+          run: 'brew install coreutils',
+        },
         $.steps.build_macos_daemon(build_type, 'amd64'),
         $.steps.build_macos_cli('amd64'),
         $.steps.push_artifacts('*macos*'),
