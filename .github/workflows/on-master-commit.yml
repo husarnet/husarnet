@@ -135,7 +135,29 @@ jobs:
           - "arm64"
           - "armhf"
           - "riscv64"
-  build_macos_natively:
+  build_macos_amd64_natively:
+    needs:
+      - "bump_version"
+      - "build_builder"
+      - "build_deployers"
+    runs-on:
+      - "macos-latest"
+    steps:
+      - name: "Check out the repo"
+        uses: "actions/checkout@v3"
+        with:
+          ref: "${{ needs.bump_version.outputs.commit_ref }}"
+      - name: "Build daemon natively on MacOS"
+        run: "./daemon/build.sh macos macos_amd64 nightly"
+      - name: "Build CLI natively on MacOS"
+        run: "./cli/build.sh macos amd64"
+      - name: "Push artifacts"
+        uses: "actions/upload-artifact@v3"
+        with:
+          if-no-files-found: "error"
+          name: "packages"
+          path: "./build/release/*macos*"
+  build_macos_arm64_natively:
     needs:
       - "bump_version"
       - "build_builder"
@@ -278,7 +300,8 @@ jobs:
       - "run_tests"
       - "run_integration_tests"
       - "build_linux"
-      - "build_macos_natively"
+      - "build_macos_amd64_natively"
+      - "build_macos_arm64_natively"
       - "build_windows_installer"
       - "bump_version"
       - "build_builder"

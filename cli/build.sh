@@ -19,9 +19,9 @@ fi
 
 # GOOS and GOARCH setup
 go_variables_suffix=""
-if [ $platform == "macos" ]; then
+if [ $platform = "macos" ]; then
   goos="darwin"
-  goarch="arm64"
+  goarch=$arch
 elif [ $arch = "amd64" ]; then
   goos="linux"
   goarch="amd64"

@@ -58,14 +58,14 @@
       run: 'docker run --rm --privileged --volume $(pwd):/app ' + container + ' ' + command,
     },
 
-    build_macos_daemon:: function(build_type) {
+    build_macos_daemon:: function(build_type, arch) {
       name: 'Build daemon natively on MacOS',
-      run: './daemon/build.sh macos macos_arm64 ' + build_type,
+      run: './daemon/build.sh macos macos_' + arch + ' ' + build_type,
     },
 
-    build_macos_cli:: function() {
+    build_macos_cli:: function(arch) {
       name: 'Build CLI natively on MacOS',
-      run: './cli/build.sh macos arm64',
+      run: './cli/build.sh macos ' + arch,
     },
 
     read_version_to_env:: function() {
@@ -184,7 +184,7 @@
       ],
     },
 
-    build_macos_natively:: function(ref, build_type) {
+    build_macos_arm64_natively:: function(ref, build_type) {
       needs: [],
 
       'runs-on': [
@@ -194,8 +194,23 @@
 
       steps: [
         $.steps.checkout(ref),
-        $.steps.build_macos_daemon(build_type),
-        $.steps.build_macos_cli(),
+        $.steps.build_macos_daemon(build_type, 'arm64'),
+        $.steps.build_macos_cli('arm64'),
+        $.steps.push_artifacts('*macos*'),
+      ],
+    },
+
+    build_macos_amd64_natively:: function(ref, build_type) {
+      needs: [],
+
+      'runs-on': [
+        'macos-latest',
+      ],
+
+      steps: [
+        $.steps.checkout(ref),
+        $.steps.build_macos_daemon(build_type, 'amd64'),
+        $.steps.build_macos_cli('amd64'),
         $.steps.push_artifacts('*macos*'),
       ],
     },
@@ -314,7 +329,8 @@
         'run_tests',
         'run_integration_tests',
         'build_linux',
-        'build_macos_natively',
+        'build_macos_amd64_natively',
+        'build_macos_arm64_natively',
         'build_windows_installer',
       ],
 
@@ -340,7 +356,8 @@
         'run_tests',
         'run_integration_tests',
         'build_linux',
-        'build_macos_natively',
+        'build_macos_amd64_natively',
+        'build_macos_arm64_natively',
         'build_windows_installer',
       ],
 

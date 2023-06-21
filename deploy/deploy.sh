@@ -124,6 +124,10 @@ if [ "${deploy_target}" == "nightly" ]; then
   echo "[==] Copy MacOS ARM64 binaries"
   tar -zcf husarnet-macos-${package_version}-arm64.tar.gz husarnet-macos-arm64 husarnet-daemon-macos-macos_arm64
   cp husarnet-macos-${package_version}-arm64.tar.gz ${working_path}/husarnet-macos-${package_version}-arm64.tar.gz
+
+  echo "[==] Copy MacOS x86_64 binaries"
+  tar -zcf husarnet-macos-${package_version}-amd64.tar.gz husarnet-macos-amd64 husarnet-daemon-macos-macos_amd64
+  cp husarnet-macos-${package_version}-amd64.tar.gz ${working_path}/husarnet-macos-${package_version}-amd64.tar.gz
 fi
 
 echo "[==] Copy also windows installer exe"
