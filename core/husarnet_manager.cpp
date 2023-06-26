@@ -155,7 +155,6 @@ std::string HusarnetManager::getWebsetupSecret()
 
 std::string HusarnetManager::setWebsetupSecret(std::string newSecret)
 {
-  // CS handles rw internally
   configStorage->setInternalSetting(InternalSetting::websetupSecret, newSecret);
   return newSecret;
 }
@@ -196,7 +195,6 @@ bool HusarnetManager::isJoined()
 
 void HusarnetManager::changeServer(std::string domain)
 {
-  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::dashboardFqdn, domain);
   setDirty();
   LOG_WARNING("Dashboard URL has been changed to %s.", domain.c_str());
@@ -205,25 +203,21 @@ void HusarnetManager::changeServer(std::string domain)
 
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)
 {
-  // CS handles rw internally
   configStorage->hostTableAdd(hostname, address);
 }
 
 void HusarnetManager::hostTableRm(std::string hostname)
 {
-  // CS handles rw internally
   configStorage->hostTableRm(hostname);
 }
 
 void HusarnetManager::whitelistAdd(IpAddress address)
 {
-  // CS handles rw internally
   configStorage->whitelistAdd(address);
 }
 
 void HusarnetManager::whitelistRm(IpAddress address)
 {
-  // CS handles rw internally
   configStorage->whitelistRm(address);
 }
 
@@ -239,13 +233,11 @@ bool HusarnetManager::isWhitelistEnabled()
 
 void HusarnetManager::whitelistEnable()
 {
-  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableWhitelist, trueValue);
 }
 
 void HusarnetManager::whitelistDisable()
 {
-  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableWhitelist, falseValue);
 }
 
@@ -276,7 +268,7 @@ int HusarnetManager::getLogVerbosity()
 void HusarnetManager::setLogVerbosity(int logLevel)
 {
   getGlobalLogManager()->setVerbosity(logLevelFromInt(logLevel));
-  // CS handles rw internally
+
   configStorage->setUserSetting(UserSetting::logVerbosity, logLevel);
 }
 
@@ -321,7 +313,6 @@ std::string HusarnetManager::getInterfaceName()
 
 void HusarnetManager::setInterfaceName(std::string name)
 {
-  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::interfaceName, name);
   // TODO / ympek could return
   // now there is some inconsistency in how setters work
@@ -335,13 +326,11 @@ bool HusarnetManager::areHooksEnabled()
 
 void HusarnetManager::hooksEnable()
 {
-  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableHooks, trueValue);
 }
 
 void HusarnetManager::hooksDisable()
 {
-  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableHooks, falseValue);
 }
 
@@ -352,13 +341,11 @@ bool HusarnetManager::areNotificationsEnabled()
 
 void HusarnetManager::notificationsEnable()
 {
-  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableNotifications, trueValue);
 }
 
 void HusarnetManager::notificationsDisable()
 {
-  // CS handles rw internally
   configStorage->setUserSetting(UserSetting::enableNotifications, falseValue);
 }
 
@@ -387,7 +374,6 @@ int HusarnetManager::getLatency(DeviceId destination)
 
 void HusarnetManager::cleanup()
 {
-  // CS handles rw internally
   configStorage->groupChanges([&]() {
     configStorage->whitelistClear();
     configStorage->whitelistAdd(getWebsetupAddress());
@@ -433,7 +419,6 @@ void HusarnetManager::readLegacyConfig()
   auto whitelistEnabledOld = legacyConfig.getWhitelistEnabled();
   auto whitelistOld = legacyConfig.getWhitelistEntries();
 
-  // CS handles rw internally
   configStorage->groupChanges([&]() {
     setWebsetupSecret(websetupSecretOld);
     for(auto& entry : whitelistOld) {
@@ -526,7 +511,6 @@ void HusarnetManager::stage1()
   // other values like websetup secret) depend on it.
   // This may be used i.e. in Docker container setup.
   if(configStorage->isUserSettingOverriden(UserSetting::dashboardFqdn)) {
-    // CS handles rw internally
     configStorage->persistUserSettingOverride(UserSetting::dashboardFqdn);
   }
 
