@@ -6,8 +6,9 @@ ${tests_base}/integration/secrets-tool.sh decrypt
 
 pushd ${base_dir}
 
-echo "Test the test engine itself I guess"
-docker run --rm --privileged --volume ${base_dir}:/app ubuntu:22.04 /app/tests/integration/runner.sh ubuntu functional-basic
+# This is for development of the tests itself
+# echo "Test the test engine itself I guess"
+# docker run --rm --privileged --volume ${base_dir}:/app ubuntu:22.04 /app/tests/integration/runner.sh ubuntu functional-basic
 
 if [ $(man parallel | grep color-failed | wc -l) -gt 1 ]; then
     parallel_cmd="parallel --color-failed"

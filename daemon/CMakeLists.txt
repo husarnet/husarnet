@@ -3,6 +3,11 @@ cmake_policy(SET CMP0003 NEW)
 cmake_policy(SET CMP0048 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
+set(COMPILER_COMMON -Drelease-safe -Dcpu=baseline -DZIG_TARGET_MCPU=baseline)
+
+set(CMAKE_C_COMPILER ${CMAKE_C_COMPILER} ${COMPILER_COMMON})
+set(CMAKE_CXX_COMPILER ${CMAKE_CXX_COMPILER} ${COMPILER_COMMON})
+
 file(READ ../version.txt husarnet_version)
 string(STRIP ${husarnet_version} husarnet_version)
 project(husarnet VERSION ${husarnet_version})
