@@ -58,7 +58,6 @@ for package_type in tar deb rpm pacman; do
         --replaces "husarnet-ros" \
         --after-install ${platform_base}/packaging/post-install-script.sh \
         --before-remove ${platform_base}/packaging/pre-remove-script.sh \
-        --after-remove ${platform_base}/packaging/post-remove-script.sh \
         --package ${release_base}/husarnet-${platform}-${arch}.${package_type} \
         --force \
         --chdir ${package_tmp}
