@@ -109,6 +109,7 @@ jobs:
     runs-on:
       - "self-hosted"
       - "macOS"
+      - "ARM64"
     steps:
       - name: "Check out the repo"
         uses: "actions/checkout@v3"
