@@ -161,10 +161,10 @@ void ApiServer::runThread()
         returnSuccess(
             req, res,
             json::object({
+                {"standard_result", getStandardReply()},
                 {"version", manager->getVersion()},
                 {"local_ip", manager->getSelfAddress().toString()},
                 {"local_hostname", manager->getSelfHostname()},
-                {"standard_result", getStandardReply()},
                 {"hooks_enabled", manager->areHooksEnabled()},
                 {"is_joined", manager->isJoined()},
                 {"is_ready_to_join",
@@ -407,10 +407,10 @@ void ApiServer::runThread()
 
         returnSuccess(
             req, res,
-            {{"verbosity", logLevelToInt(logManager->getVerbosity())},
+            {{"standard_result", getStandardReply()},
+             {"verbosity", logLevelToInt(logManager->getVerbosity())},
              {"size", logManager->getSize()},
-             {"current_size", logManager->getCurrentSize()},
-             {"standard_result", getStandardReply()}});
+             {"current_size", logManager->getCurrentSize()}});
       });
 
   if(!svr.bind_to_port("127.0.0.1", manager->getApiPort())) {

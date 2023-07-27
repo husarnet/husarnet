@@ -14,7 +14,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/mitchellh/go-wordwrap"
+	//"github.com/mitchellh/go-wordwrap"
 	"github.com/pterm/pterm"
 )
 
@@ -32,10 +32,10 @@ type EmptyResult interface{}
 
 // This can be easily expanded upon to include aditinal data we may want to possibly return
 type StandardResult struct {
+	IsDirty                bool     `json:"is_dirty"`
 	Notifications          []string `json:"notifications"`
 	NotificationsEnabled   bool     `json:"notifications_enabled"`
 	NotificationsToDisplay bool     `json:"notifications_to_display"`
-	IsDirty                bool     `json:"is_dirty"`
 }
 
 type BaseConnectionStatus struct {
@@ -62,9 +62,9 @@ type PeerStatus struct {
 }
 
 type DaemonStatus struct {
+	StdResult     StandardResult `json:"standard_result"`
 	Version       string
 	DashboardFQDN string         `json:"dashboard_fqdn"`
-	StdResult     StandardResult `json:"standard_result"`
 	HooksEnabled  bool           `json:"hooks_enabled"`
 
 	WebsetupAddress netip.Addr           `json:"websetup_address"`
@@ -85,15 +85,15 @@ type DaemonStatus struct {
 }
 
 type LogsResponse struct {
-	Logs      []string       `json:"logs"`
 	StdResult StandardResult `json:"standard_result"`
+	Logs      []string       `json:"logs"`
 }
 
 type LogsSettings struct {
+	StdResult      StandardResult `json:"standard_result"`
 	VerbosityLevel int            `json:"verbosity"`
 	Size           int            `json:"size"`
 	CurrentSize    int            `json:"current_size"`
-	StdResult      StandardResult `json:"standard_result"`
 }
 
 func (s DaemonStatus) getPeerByAddr(addr netip.Addr) *PeerStatus {
@@ -270,9 +270,10 @@ func handleStandardResult(res StandardResult) {
 		pterm.Printfln("%s %s", redDot, formatter(help))
 	}
 	if (res.NotificationsEnabled) && (len(res.Notifications) > 0) && (res.NotificationsToDisplay) {
-		for _, announcement := range res.Notifications {
-			wrapped := wordwrap.WrapString(announcement, 60)
-			pterm.Println(wrapped)
+		for _, notification := range res.Notifications {
+			// Wrapping is skipped for now as it can act unpredictably
+			//wrapped := wordwrap.WrapString(notification, 60)
+			pterm.Println(notification)
 		}
 	}
 }
