@@ -385,6 +385,8 @@ HusarnetManager::HusarnetManager()
 {
   Port::init();
   Privileged::init();
+  Privileged::createConfigDirectories();
+
   this->hooksManager = new HooksManager(this);
 }
 

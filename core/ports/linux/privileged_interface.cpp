@@ -205,8 +205,17 @@ namespace Privileged {
   void init()
   {
     if_inet6 = fopen("/proc/self/net/if_inet6", "r");
-    mkdir(configDir.c_str(), 0700);
-    chmod(configDir.c_str(), 0700);
+  }
+
+  void createConfigDirectories()
+  {
+    struct stat st;
+    if(stat(configDir.c_str(), &st) >= 0) {
+      return;
+    }
+
+    int ret = mkdir(configDir.c_str(), 0700);
+    error_negative(ret, "Unable to create config directory");
   }
 
   void start()

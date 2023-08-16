@@ -18,6 +18,8 @@ namespace Privileged {
   void start();  // Should be called as soon as the parent process is ready to
                  // drop all privileges
 
+  void createConfigDirectories();
+
   void dropCapabilities();
 
   std::string getConfigPath();

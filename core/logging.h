@@ -100,3 +100,10 @@ static inline void log(
   {                                                                      \
     log(LogLevel::ERROR, __FILE__, __LINE__, strerror(errno), fmt, ##x); \
   }
+
+#define error_negative(ret, fmt, x...)                                   \
+  {                                                                      \
+    if(ret == 0)                                                         \
+      return;                                                            \
+    log(LogLevel::ERROR, __FILE__, __LINE__, strerror(errno), fmt, ##x); \
+  }

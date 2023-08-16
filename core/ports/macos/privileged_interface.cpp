@@ -95,8 +95,18 @@ static std::string configDir = "/var/lib/husarnet/";
 namespace Privileged {
   void init()
   {
-    mkdir(configDir.c_str(), 0700);
-    chmod(configDir.c_str(), 0700);
+    // No special init needed on MacOS
+  }
+
+  void createConfigDirectories()
+  {
+    struct stat st;
+    if(stat(configDir.c_str(), &st) >= 0) {
+      return;
+    }
+
+    int ret = mkdir(configDir.c_str(), 0700);
+    error_negative(ret, "Unable to create config directory");
   }
 
   void start()

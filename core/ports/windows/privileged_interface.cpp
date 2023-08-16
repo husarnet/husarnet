@@ -25,16 +25,21 @@ namespace Privileged {
 
   void init()
   {
-    configDir = std::string(getenv("PROGRAMDATA")) + "\\Husarnet";
-    if(!Port::isFile(configDir)) {
-      CreateDirectory(configDir.c_str(), NULL);
-      // fixPermissions(configDir);
-    }
+    // No special init needed on Windows
   }
 
   void start()
   {
     // there is no separate privileged thread on Windows (rn)
+  }
+
+  void createConfigDirectories()
+  {
+    configDir = std::string(getenv("PROGRAMDATA")) + "\\Husarnet";
+    if(!Port::isFile(configDir)) {
+      CreateDirectory(configDir.c_str(), NULL);
+      // fixPermissions(configDir);
+    }
   }
 
   void dropCapabilities()
