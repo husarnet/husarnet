@@ -19,7 +19,7 @@ docker)
 
     # Test prerequisites
     apt install -y --no-install-recommends --no-install-suggests \
-        jq curl iputils-ping ca-certificates
+        jq curl iputils-ping ca-certificates gdb
     ;;
 
 ubuntu | debian)
@@ -31,7 +31,7 @@ ubuntu | debian)
 
     # Test prerequisites
     apt install -y --no-install-recommends --no-install-suggests \
-        jq curl iputils-ping ca-certificates
+        jq curl iputils-ping ca-certificates gdb
     ;;
 
 fedora)
@@ -41,7 +41,7 @@ fedora)
 
     # Test prerequisites
     yum install -y \
-        jq curl iputils hostname ca-certificates
+        jq curl iputils hostname ca-certificates gdb
 
     ;;
 

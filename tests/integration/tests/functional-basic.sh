@@ -1,7 +1,7 @@
 #!/bin/bash
 source $(dirname "$0")/../../../util/bash-base.sh
 
-husarnet-daemon &
+gdb -batch -ex "catch throw" -ex "run" -ex "bt full" -ex "quit" --args husarnet-daemon &
 
 husarnet daemon wait daemon
 

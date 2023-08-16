@@ -18,7 +18,7 @@ function CLEANUP {
    echo "INFO: Cleaned up successfully"
 }
 
-husarnet-daemon &
+gdb -batch -ex "catch throw" -ex "run" -ex "bt full" -ex "quit" --args husarnet-daemon &
 
 # Those are reduntant but we want to test as many items as possible
 echo "INFO: Waiting for deamon connectivity"
