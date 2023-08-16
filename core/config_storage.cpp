@@ -78,9 +78,8 @@ void ConfigStorage::save()
   manager->getHooksManager()->withRw([&]() {
     LOG_INFO("saving settings for ConfigStorage");
     writeFunc(serialize());
+    updateHostsInSystem();
   });
-
-  updateHostsInSystem();
 }
 
 void ConfigStorage::updateHostsInSystem()

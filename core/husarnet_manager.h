@@ -31,7 +31,7 @@ class NgSocket;
 class PeerContainer;
 class PeerFlags;
 class WebsetupConnection;
-class HooksManager;
+class HooksManagerInterface;
 class NotificationManager;
 
 using HostsFileUpdateFunc =
@@ -48,13 +48,15 @@ class HusarnetManager {
   WebsetupConnection* websetup;
   License* license;
   std::vector<std::thread*> threadpool;
-  HooksManager* hooksManager;
+  HooksManagerInterface* hooksManager;
   NotificationManager* notificationManager;
 
   bool stage1Started = false;
   bool stage2Started = false;
   bool stage3Started = false;
   bool dirty = false;
+
+  bool dummyMode = false;
 
   void getLicenseStage();
   void getIdentityStage();
@@ -66,6 +68,8 @@ class HusarnetManager {
   HusarnetManager();
   HusarnetManager(const HusarnetManager&) = delete;
   ~HusarnetManager();
+
+  void enterDummyMode();
 
   ConfigStorage& getConfigStorage();
   void setConfigStorage(ConfigStorage* cs);
@@ -79,7 +83,7 @@ class HusarnetManager {
   Identity* getIdentity();
   IpAddress getSelfAddress();
   PeerFlags* getSelfFlags();
-  HooksManager* getHooksManager();
+  HooksManagerInterface* getHooksManager();
 
   std::string getSelfHostname();
   bool setSelfHostname(std::string newHostname);

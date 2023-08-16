@@ -3,43 +3,43 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <condition_variable>
+#include <functional>
+#include <map>
+#include <mutex>
 
 #include "husarnet/ports/privileged_interface.h"
 
 #include "husarnet/husarnet_manager.h"
+#include "husarnet/logging.h"
 #include "husarnet/timer.h"
 #include "husarnet/util.h"
 
-class HooksManager {
+class HooksManagerInterface {
  public:
-  HooksManager(HusarnetManager* manager)
-  {
-    this->manager = manager;
-    for(const auto& [key_, value_] : hookDirNames) {
-      hookConditionalVariables.insert({value_, new std::condition_variable()});
-    }
+  virtual ~HooksManagerInterface() = default;
 
-    for(const auto& [key, value] : hookDirNames) {
-      std::function<void()> callback = [&, val = value]() {
-        Privileged::runScripts(val);
-        std::lock_guard lk(this->m);
-        hookConditionalVariables[val]->notify_all();
-      };
-      hookTimers.insert({value, new Timer(timespan, interval, callback)});
-    }
-  };
+  virtual void runHook(HookType hookType) = 0;
+  virtual void waitHook(HookType hookType) = 0;
 
-  ~HooksManager()
+  void withRw(std::function<void()> f)
   {
-    for(const auto& [key, value] : hookDirNames) {
-      delete hookConditionalVariables[value];
-      delete hookTimers[value];
-    }
+    this->runHook(HookType::rw_request);
+    this->waitHook(HookType::rw_request);
+
+    f();
+
+    this->runHook(HookType::rw_release);
+    this->waitHook(HookType::rw_release);
   }
-  void runHook(HookType hookType);
-  void waitHook(HookType hookType);
+};
 
-  void withRw(std::function<void()> f);
+class HooksManager : public HooksManagerInterface {
+ public:
+  HooksManager(HusarnetManager* manager);
+  ~HooksManager();
+
+  virtual void runHook(HookType hookType);
+  virtual void waitHook(HookType hookType);
 
  private:
   HusarnetManager* manager;
@@ -56,4 +56,17 @@ class HooksManager {
   std::chrono::milliseconds timespan{500};
   std::chrono::milliseconds interval{10};
   std::chrono::milliseconds waitspan{5000};
+};
+
+class DummyHooksManager : public HooksManagerInterface {
+ public:
+  virtual void runHook(HookType hookType)
+  {
+    LOG_DEBUG("DummyHooksManager::runHook %s", hookType);
+  }
+
+  virtual void waitHook(HookType hookType)
+  {
+    LOG_DEBUG("DummyHooksManager::waitHook %s", hookType);
+  }
 };

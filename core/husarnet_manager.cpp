@@ -45,7 +45,7 @@ PeerContainer* HusarnetManager::getPeerContainer()
   return peerContainer;
 }
 
-HooksManager* HusarnetManager::getHooksManager()
+HooksManagerInterface* HusarnetManager::getHooksManager()
 {
   return hooksManager;
 }
@@ -96,6 +96,10 @@ bool HusarnetManager::setSelfHostname(std::string newHostname)
 
 void HusarnetManager::updateHosts()
 {
+  if(this->dummyMode) {
+    return;
+  }
+
   this->getHooksManager()->withRw(
       [&]() { Privileged::updateHostsFile(configStorage->getHostTable()); });
 }
@@ -326,7 +330,13 @@ bool HusarnetManager::areHooksEnabled()
 
 void HusarnetManager::hooksEnable()
 {
+  bool werentEnabled = !areHooksEnabled();
+
   configStorage->setUserSetting(UserSetting::enableHooks, trueValue);
+
+  if(werentEnabled) {
+    hooksManager = new HooksManager(this);
+  }
 }
 
 void HusarnetManager::hooksDisable()
@@ -385,14 +395,19 @@ HusarnetManager::HusarnetManager()
 {
   Port::init();
   Privileged::init();
-  Privileged::createConfigDirectories();
 
-  this->hooksManager = new HooksManager(this);
+  this->hooksManager = new DummyHooksManager();  // This will be no-op at least
+                                                 // until we can read settings
 }
 
 HusarnetManager::~HusarnetManager()
 {
   delete this->hooksManager;
+}
+
+void HusarnetManager::enterDummyMode()
+{
+  this->dummyMode = true;
 }
 
 void HusarnetManager::readLegacyConfig()
@@ -500,6 +515,7 @@ void HusarnetManager::stage1()
   }
 
   GIL::init();
+  Privileged::createConfigDirectories();
   Privileged::start();
 
   configStorage = new ConfigStorage(
@@ -537,6 +553,10 @@ void HusarnetManager::stage3()
 {
   if(stage3Started) {
     return;
+  }
+
+  if(configStorage->getUserSettingBool(UserSetting::enableHooks)) {
+    this->hooksManager = new HooksManager(this);
   }
 
   startNetworkingStack();
