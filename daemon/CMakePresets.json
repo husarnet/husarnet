@@ -9,7 +9,8 @@
       "binaryDir": "${sourceDir}/../build/ide",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "BUILD_SHARED_LIBS": "false"
+        "BUILD_SHARED_LIBS": "false",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/arch_ide.cmake"
       }
     }
   ]
