@@ -38,3 +38,18 @@ TEST_CASE("base64")
       base64Decode("s6P0S2M=") == ("\xb3\xa3\xf4"
                                    "Kc"));
 }
+
+TEST_CASE("mapContains")
+{
+  std::map<const char*, int> m = {{"a", 1}, {"b", 2}, {"c", 3}};
+  REQUIRE(mapContains(m, "a"));
+  REQUIRE(mapContains(m, "b"));
+  REQUIRE(mapContains(m, "c"));
+  REQUIRE(!mapContains(m, "d"));
+}
+
+TEST_CASE("mapContains empty map")
+{
+  std::map<const char*, int> m;
+  REQUIRE(!mapContains(m, "a"));
+}
