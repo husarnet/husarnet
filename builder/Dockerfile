@@ -44,7 +44,7 @@ RUN apt-get update \
 RUN gem install --no-document fpm
 
 WORKDIR /zig
-# https://github.com/ziglang/zig/issues/6573
+# https://github.com/ziglang/zig/pull/16109
 # Keeping zig at 0.9.1 temporarily due to this
 RUN wget -O zig.tar.xz "https://ziglang.org/download/0.9.1/zig-linux-x86_64-0.9.1.tar.xz" \
     && tar -xf zig.tar.xz \
