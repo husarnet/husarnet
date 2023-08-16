@@ -16,6 +16,7 @@ RUN apt-get update \
     dfu-util \
     file \
     flex \
+    gdb \
     git \
     golang \
     gperf \
@@ -66,18 +67,18 @@ ENV GOCACHE="/app/build/gocache"
 ENV GOPATH="/app/build/gopath"
 ENV GOFLAGS="-buildvcs=false"
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
-RUN pip3 install platformio
-WORKDIR /esp
-RUN chown 1000:1000 /esp
-USER 1000
-RUN git clone --recursive -b v4.4.3 https://github.com/espressif/esp-idf.git
-ENV IDF_PATH=/esp/esp-idf
-ENV IDF_TOOLS_PATH=/esp
-ENV IDF_PYTHON_CHECK_CONSTRAINTS=no
-RUN ./esp-idf/tools/idf_tools.py --non-interactive install required --targets=all
-RUN ./esp-idf/tools/idf_tools.py --non-interactive install-python-env
-RUN rm -rf /esp/dist
+# RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+# RUN pip3 install platformio
+# WORKDIR /esp
+# RUN chown 1000:1000 /esp
+# USER 1000
+# RUN git clone --recursive -b v4.4.3 https://github.com/espressif/esp-idf.git
+# ENV IDF_PATH=/esp/esp-idf
+# ENV IDF_TOOLS_PATH=/esp
+# ENV IDF_PYTHON_CHECK_CONSTRAINTS=no
+# RUN ./esp-idf/tools/idf_tools.py --non-interactive install required --targets=all
+# RUN ./esp-idf/tools/idf_tools.py --non-interactive install-python-env
+# RUN rm -rf /esp/dist
 
 USER 0
 WORKDIR /app
