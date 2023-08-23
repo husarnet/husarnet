@@ -171,19 +171,35 @@ func printWhitelist(status DaemonStatus, verbose bool) {
 }
 
 func printHooksStatus(status DaemonStatus) {
+	var dot, value, help string
+
 	if status.HooksEnabled {
-		pterm.Printfln("Daemon hooks are currently enabled")
+		dot = greenDot
+		value = "enabled"
 	} else {
-		pterm.Printfln("Daemon hooks are currently disabled")
+		dot = yellowDot
+		value = "disabled"
+		help = "Disabled hooks are not a reason to panic, unless your setup needs them"
+	}
+
+	printStatusLine(dot, "Hooks", value)
+	if help != "" {
+		printStatusHelp(dot, help)
 	}
 }
 
 func printNotificationsStatus(status StandardResult) {
+	var dot, value string
+
 	if status.NotificationsEnabled {
-		pterm.Printfln("Daemon notifications are currently enabled")
+		dot = greenDot
+		value = "enabled"
 	} else {
-		pterm.Printfln("Daemon notifications are currently disabled")
+		dot = redDot
+		value = "disabled"
 	}
+
+	printStatusLine(dot, "Notifications", value)
 }
 
 func printStatus(ctx *cli.Context, status DaemonStatus) {
@@ -192,6 +208,11 @@ func printStatus(ctx *cli.Context, status DaemonStatus) {
 
 	printStatusHeader("Version")
 	printVersion(status.Version)
+	pterm.Println()
+
+	printStatusHeader("Feature flags")
+	printHooksStatus(status)
+	printNotificationsStatus(status.StdResult)
 	pterm.Println()
 
 	var dashboardDot, dashboardHelp string
@@ -208,8 +229,6 @@ func printStatus(ctx *cli.Context, status DaemonStatus) {
 	} else {
 		dashboardDot = greenDot
 	}
-
-	printHooksStatus(status)
 
 	printStatusHeader("Dashboard URL")
 	printStatusLine(dashboardDot, "CLI", husarnetDashboardFQDN)

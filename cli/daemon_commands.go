@@ -420,19 +420,6 @@ var daemonNotificationCommand = &cli.Command{
 				return nil
 			},
 		},
-		{
-			Name:      "show",
-			Aliases:   []string{"check", "ls"},
-			Usage:     "check if notifications are enabled",
-			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
-				status := getDaemonStatus()
-				handleStandardResult(status.StdResult)
-				printNotificationsStatus(status.StdResult)
-
-				return nil
-			},
-		},
 	},
 }
 
