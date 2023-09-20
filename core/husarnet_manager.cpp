@@ -388,6 +388,7 @@ void HusarnetManager::cleanup()
     configStorage->whitelistClear();
     configStorage->whitelistAdd(getWebsetupAddress());
     configStorage->hostTableClear();
+    configStorage->hostTableAdd("husarnet-local", getSelfAddress());
   });
 }
 
