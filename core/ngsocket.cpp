@@ -852,6 +852,9 @@ std::string NgSocket::serializePeerToBaseMessage(const PeerToBaseMessage& msg)
     case +PeerToBaseMessageKind::NAT_OK_CONFIRM:
       data += pack((uint64_t)natInitCounter);
       break;
+    case +PeerToBaseMessageKind::NAT_INIT_TRANSIENT:
+      // No extra data needed
+      break;
     default:
       LOG_ERROR(
           "tried to serialize unexpected peer to base message type: %s",
@@ -899,7 +902,7 @@ void NgSocket::connectToBase()
       baseAddress = {
           baseTcpAddressesTmp[baseConnectRetries % baseTcpAddressesTmp.size()],
           BASESERVER_PORT};
-      LOG_WARNING(
+      LOG_INFO(
           "retrying with fallback base address: %s", baseAddress.str().c_str());
     }
   }

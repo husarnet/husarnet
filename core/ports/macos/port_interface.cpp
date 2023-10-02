@@ -260,7 +260,7 @@ namespace Port {
       return true;
     }
 
-    LOG_INFO(
+    LOG_DEBUG(
         "unable to rename %s to %s, writing to %s directly", tmpPath.c_str(),
         path.c_str(), path.c_str());
 
