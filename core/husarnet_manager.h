@@ -40,16 +40,21 @@ using HostsFileUpdateFunc =
 class HusarnetManager {
  private:
   Identity identity;
-  PeerFlags* selfFlags;
-  NgSocket* ngsocket;
-  SecurityLayer* securityLayer;
-  ConfigStorage* configStorage;
-  PeerContainer* peerContainer;
-  WebsetupConnection* websetup;
-  License* license;
+
+  License* license = nullptr;
+
+  PeerFlags* selfFlags = nullptr;
+
+  NgSocket* ngsocket = nullptr;
+  SecurityLayer* securityLayer = nullptr;
+  ConfigStorage* configStorage = nullptr;
+  PeerContainer* peerContainer = nullptr;
+
+  WebsetupConnection* websetup = nullptr;
+  HooksManagerInterface* hooksManager = nullptr;
+  NotificationManager* notificationManager = nullptr;
+
   std::vector<std::thread*> threadpool;
-  HooksManagerInterface* hooksManager;
-  NotificationManager* notificationManager;
 
   bool stage1Started = false;
   bool stage2Started = false;

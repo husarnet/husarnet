@@ -361,6 +361,9 @@ void HusarnetManager::notificationsDisable()
 
 std::list<std::string> HusarnetManager::getNotifications()
 {
+  if(notificationManager == nullptr) {
+    return {};
+  }
   return notificationManager->getNotifications();
 }
 
@@ -562,7 +565,6 @@ void HusarnetManager::stage3()
 
   startNetworkingStack();
   startWebsetup();
-  startHTTPServer();
 
   if(configStorage->isUserSettingOverriden(UserSetting::joinCode)) {
     if(configStorage->isUserSettingOverriden(UserSetting::hostname)) {
@@ -578,6 +580,9 @@ void HusarnetManager::stage3()
   this->hostTableAdd("husarnet-local", this->getSelfAddress());
   this->notificationManager = new NotificationManager(
       configStorage->getUserSetting(UserSetting::dashboardFqdn), this);
+
+  startHTTPServer();
+
   stage3Started = true;
 }
 
