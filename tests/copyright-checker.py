@@ -21,6 +21,11 @@ gotools_exception = """//go:build tools
 
 issues_found = False
 
+def generate_copyright_shell(copyright):
+    return '\n'.join(map(lambda line: "#" + line.removeprefix("//"), copyright.split('\n')))
+
+old_copyright_shell = generate_copyright_shell(old_copyright)
+new_copyright_shell = generate_copyright_shell(new_copyright)
 
 def match_extension(path, allowed):
     _, ext = os.path.splitext(path)
@@ -41,10 +46,8 @@ def read_top_comment(file_path, prefix):
         return "\n".join(comment)
 
 
-def analyze_source(file_path):
+def analyze_source_cpp_golang(file_path):
     global issues_found
-    if not match_extension(file_path, {"h", "c", "cpp", "go"}):
-        return
 
     top_comment = read_top_comment(file_path, "//")
     if top_comment == new_copyright:
@@ -70,6 +73,41 @@ def analyze_source(file_path):
     print(top_comment)
     issues_found = True
 
+def analyze_source_shell(file_path):
+    global issues_found
+
+    top_comment = read_top_comment(file_path, "#")
+
+    shebang, *comment = top_comment.split('\n')
+    comment = '\n'.join(comment)
+
+    if not shebang.startswith("#!"):
+        print(f"{file_path} has no shebang")
+        issues_found = True
+        return
+
+    if comment == new_copyright_shell:
+        return
+
+    if len(comment) < 10:
+        print(f"{file_path} has no copyright at all")
+        issues_found = True
+        return
+
+    if comment == old_copyright_shell:
+        print(f"{file_path} has an old copyright")
+        issues_found = True
+        return
+
+    print(f"{file_path} does not match any expected rules")
+    issues_found = True
+
+def analyze_source(file_path):
+    if match_extension(file_path, {"h", "c", "cpp", "go"}):
+        analyze_source_cpp_golang(file_path)
+
+    elif match_extension(file_path, {"sh"}):
+        analyze_source_shell(file_path)
 
 def __main__():
     print("[HUSARNET BS] Running copyright checker")
