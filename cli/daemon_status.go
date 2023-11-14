@@ -239,22 +239,27 @@ func printStatus(ctx *cli.Context, status DaemonStatus) {
 	handleStandardResult(status.StdResult)
 	pterm.Println()
 
-	var baseServerDot, baseServerHelp string
+	var baseServerDot, baseServerHelp, baseServerStatusReminder string
 
 	if status.BaseConnection.Type == "UDP" {
 		baseServerDot = greenDot
 	} else if status.BaseConnection.Type == "TCP" {
 		baseServerDot = yellowDot
 		baseServerHelp = "TCP is a fallback connection method. You'll get better results on UDP"
+		baseServerStatusReminder = "You can check on https://status.husarnet.com if there are any issues with our infrastructure"
 	} else {
 		baseServerDot = redDot
 		baseServerHelp = "There's no Base Server connection - Husarnet will not be fully functional"
+		baseServerStatusReminder = "You can check on https://status.husarnet.com if there are any issues with our infrastructure"
 	}
 
 	printStatusHeader("Connection status")
 	printStatusLine(baseServerDot, "Base Server", pterm.Sprintf("%s:%v (%s)", status.BaseConnection.Address, status.BaseConnection.Port, status.BaseConnection.Type))
 	if baseServerHelp != "" {
 		printStatusHelp(baseServerDot, baseServerHelp)
+	}
+	if baseServerStatusReminder != "" {
+		printStatusHelp(baseServerDot, baseServerStatusReminder)
 	}
 
 	if verbose {
