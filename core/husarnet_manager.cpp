@@ -536,6 +536,9 @@ void HusarnetManager::stage1()
     configStorage->persistUserSettingOverride(UserSetting::dashboardFqdn);
   }
 
+  getGlobalLogManager()->setVerbosity(logLevelFromInt(this->getLogVerbosity()));
+  LOG_INFO("Running %s", getUserAgent().c_str());
+
   selfFlags = new PeerFlags();
 
   stage1Started = true;
@@ -576,7 +579,6 @@ void HusarnetManager::stage3()
     }
   }
 
-  getGlobalLogManager()->setVerbosity(logLevelFromInt(this->getLogVerbosity()));
   this->hostTableAdd("husarnet-local", this->getSelfAddress());
   this->notificationManager = new NotificationManager(
       configStorage->getUserSetting(UserSetting::dashboardFqdn), this);
