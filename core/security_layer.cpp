@@ -138,7 +138,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
     sendToUpperLayer(peerId, decryptedData);
   } else {
     LOG_INFO(
-        "received forged message from peer: %s", std::string(peerId).c_str());
+        "received forged message from peer: %s", encodeHex(peerId).c_str());
   }
 }
 
