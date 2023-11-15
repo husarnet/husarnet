@@ -29,7 +29,7 @@ include(FetchContent)
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG v2.13.8
+  GIT_TAG v3.4.0
 )
 FetchContent_MakeAvailable(Catch2)
-target_link_libraries(husarnet_tests Catch2::Catch2)
+target_link_libraries(husarnet_tests Catch2::Catch2WithMain)
