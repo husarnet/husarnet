@@ -134,7 +134,7 @@ endif()
 FetchContent_Declare(
   libsodium
   GIT_REPOSITORY https://github.com/jedisct1/libsodium.git
-  GIT_TAG 1.0.18
+  GIT_TAG 1.0.19
 )
 FetchContent_MakeAvailable(libsodium)
 include_directories(${libsodium_SOURCE_DIR}/src/libsodium/include)
@@ -155,7 +155,7 @@ target_link_libraries(husarnet_core sodium)
 FetchContent_Declare(
   nlohmann_json
   GIT_REPOSITORY https://github.com/nlohmann/json.git
-  GIT_TAG v3.10.5
+  GIT_TAG v3.11.2
 )
 set(JSON_BuildTests OFF)
 FetchContent_MakeAvailable(nlohmann_json)
@@ -174,7 +174,7 @@ target_compile_options(husarnet_core PUBLIC -DBETTER_ENUMS_STRICT_CONVERSION=1)
 if((${CMAKE_SYSTEM_NAME} STREQUAL Linux) OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows))
   FetchContent_Declare(
     sqlite3
-    URL https://sqlite.org/2022/sqlite-amalgamation-3390200.zip
+    URL https://sqlite.org/2023/sqlite-amalgamation-3440000.zip
   )
   FetchContent_MakeAvailable(sqlite3)
   include_directories(${sqlite3_SOURCE_DIR})
@@ -188,7 +188,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   FetchContent_Declare(
     c-ares
     GIT_REPOSITORY https://github.com/c-ares/c-ares.git
-    GIT_TAG cares-1_18_1
+    GIT_TAG cares-1_22_0
   )
   set(CARES_SHARED OFF)
   set(CARES_STATIC ON)
@@ -209,7 +209,7 @@ if(${BUILD_HTTP_CONTROL_API})
   FetchContent_Declare(
     httplib
     GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
-    GIT_TAG v0.10.9
+    GIT_TAG v0.14.1
   )
   set(BUILD_SHARED_LIBS OFF)
   set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF)
