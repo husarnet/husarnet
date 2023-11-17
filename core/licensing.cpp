@@ -9,6 +9,7 @@
 
 #include <sodium.h>
 
+#include "husarnet/ports/privileged_interface.h"
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/sockets.h"
 
@@ -18,9 +19,9 @@
 
 #include "ports/port.h"
 
-json retrieveLicenseJson(std::string dashboardHostname)
+json retrieveLicenseJson(std::string dashboardHostname, bool abortOnFailure = true)
 {
-  IpAddress ip = Port::resolveToIp(dashboardHostname);
+  IpAddress ip = Privileged::resolveToIp(dashboardHostname);
   InetAddress address{ip, 80};
   int sockfd = OsSocket::connectTcpSocket(address);
   if(sockfd < 0) {
@@ -48,10 +49,17 @@ json retrieveLicenseJson(std::string dashboardHostname)
 
   if(pos == std::string::npos) {
     LOG_ERROR("invalid response from the server: %s", readBuffer.c_str());
-    abort();
+    
+    if (abortOnFailure) {
+      abort();
+    }
+    else {
+      return json::parse("{}");
+    }
   }
   pos += 4;
-  return json::parse(readBuffer.substr(pos, len - pos));
+
+  return json::parse(readBuffer.substr(pos, len - pos), nullptr, false);
 }
 
 json retrieveCachedLicenseJson()
@@ -94,24 +102,33 @@ static std::string getSignatureData(const json licenseJson)
   return s;
 }
 
-static void verifySignature(
+static bool verifySignature(
     const std::string& signature,
-    const std::string& data)
+    const std::string& data,
+    bool abortOnFailure = true)
 {
   auto* signaturePtr = reinterpret_cast<const unsigned char*>(signature.data());
   auto* dataPtr = reinterpret_cast<const unsigned char*>(data.data());
   if(crypto_sign_ed25519_verify_detached(
          signaturePtr, dataPtr, data.size(), PUBLIC_KEY) != 0) {
     LOG("license file is invalid");
-    abort();
+    
+    if (abortOnFailure) {
+      abort();
+    }
+    else {
+      return false;
+    }
   }
+
+  return true;
 }
 
 License::License(std::string dashboardHostname)
 {
   auto licenseJson = retrieveLicenseJson(dashboardHostname);
 
-  if(licenseJson.empty()) {
+  if(licenseJson.empty() || licenseJson.is_discarded()) {
     licenseJson = retrieveCachedLicenseJson();
 
     if(licenseJson.empty()) {
@@ -161,4 +178,19 @@ IpAddress License::getWebsetupAddress()
 std::vector<IpAddress> License::getBaseServerAddresses()
 {
   return this->baseServerAddresses;
+}
+
+bool License::validateDashboard(std::string dashboardHostname)
+{
+  auto licenseJson = retrieveLicenseJson(dashboardHostname, false);
+
+  // Check if license fetch failed (bad hostname, no internet connection, etc.)
+  if(licenseJson.empty() || licenseJson.is_discarded()) {
+    return false;
+  }
+
+  return verifySignature(
+      base64Decode(licenseJson[LICENSE_SIGNATURE_KEY].get<std::string>()),
+      getSignatureData(licenseJson),
+      false);
 }

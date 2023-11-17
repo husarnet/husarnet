@@ -197,12 +197,19 @@ bool HusarnetManager::isJoined()
          websetup->getLastInitReply() > 0;
 }
 
-void HusarnetManager::changeServer(std::string domain)
+bool HusarnetManager::changeServer(std::string domain)
 {
+  if (!License::validateDashboard(domain)) {
+    LOG_ERROR("%s does not contain a valid licensing endpoint.", domain.c_str());
+    return false;
+  }
+
   configStorage->setUserSetting(UserSetting::dashboardFqdn, domain);
   setDirty();
   LOG_WARNING("Dashboard URL has been changed to %s.", domain.c_str());
   LOG_WARNING("DAEMON WILL CONTINUE TO USE THE OLD ONE UNTIL YOU RESTART IT");
+
+  return true;
 }
 
 void HusarnetManager::hostTableAdd(std::string hostname, IpAddress address)

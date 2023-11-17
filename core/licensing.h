@@ -12,7 +12,7 @@
 
 using namespace nlohmann;  // json
 
-json retrieveLicenseJson(std::string dashboardHostname);
+json retrieveLicenseJson(std::string dashboardHostname, bool abortOnFailure);
 
 class License {
   std::string dashboardFqdn;
@@ -24,4 +24,5 @@ class License {
   std::string getDashboardFqdn();
   IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
+  static bool validateDashboard(std::string dashboardHostname);
 };

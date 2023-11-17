@@ -221,8 +221,12 @@ void ApiServer::runThread()
           return;
         }
 
-        manager->changeServer(req.get_param_value("domain"));
-        returnSuccess(req, res);
+        if (!manager->changeServer(req.get_param_value("domain"))) {
+          returnError(req, res, "Failed to fetch and validate license from the new server, is the URL correct?");
+        }
+        else {
+          returnSuccess(req, res);
+        }
       });
 
   svr.Post(

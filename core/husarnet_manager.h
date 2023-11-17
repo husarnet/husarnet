@@ -113,7 +113,7 @@ class HusarnetManager {
   void joinNetwork(std::string joinCode, std::string hostname = "");
   bool isJoined();
 
-  void changeServer(std::string domain);
+  bool changeServer(std::string domain);
 
   void hostTableAdd(std::string hostname, IpAddress address);
   void hostTableRm(std::string hostname);
