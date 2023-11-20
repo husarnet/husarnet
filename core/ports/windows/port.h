@@ -13,6 +13,7 @@
 #include <ws2ipdef.h>
 #include <ws2tcpip.h>
 #undef IGNORE  // ...
+#undef ERROR   // Windows API macro pollution...
 #endif
 #include <string>
 
