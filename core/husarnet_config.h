@@ -41,6 +41,8 @@ const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::enableHooks, falseValue},
     {UserSetting::logVerbosity, "1"},
     {UserSetting::enableNotifications, trueValue},
+    {UserSetting::daemonApiAddress, "127.0.0.1"},
+    {UserSetting::daemonApiInterface, ""},
 };
 
 const std::map<InternalSetting, std::string> internalDefaults = {

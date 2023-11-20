@@ -417,15 +417,17 @@ void ApiServer::runThread()
              {"standard_result", getStandardReply()}});
       });
 
-  if(!svr.bind_to_port("127.0.0.1", manager->getApiPort())) {
+  if(!svr.bind_to_port(manager->getApiAddress().toString().c_str(), manager->getApiPort())) {
     LOG_CRITICAL(
-        "Unable to bind HTTP thread to port 127.0.0.1:%d. Exiting!",
+        "Unable to bind HTTP thread to port %s:%d. Exiting!",
+        manager->getApiAddress().toString().c_str(),
         manager->getApiPort());
     exit(1);
   } else {
     LOG_INFO(
-        "HTTP thread bound to 127.0.0.1:%d. Will start handling the "
+        "HTTP thread bound to %s:%d. Will start handling the "
         "connections.",
+        manager->getApiAddress().toString().c_str(),
         manager->getApiPort());
   }
 

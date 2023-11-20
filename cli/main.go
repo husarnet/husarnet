@@ -7,16 +7,20 @@ package main
 //go:generate go run github.com/Khan/genqlient
 
 import (
+	"fmt"
 	"log"
+	"net"
 	"os"
 
 	"github.com/urfave/cli/v2"
 )
 
 var defaultDashboard = "app.husarnet.com"
+var defaultDaemonAPIIp = "127.0.0.1"
 var defaultDaemonAPIPort = 16216
 
 var husarnetDashboardFQDN string
+var husarnetDaemonAPIIp = ""
 var husarnetDaemonAPIPort = 0
 var verboseLogs bool
 var wait bool
@@ -44,6 +48,26 @@ func main() {
 				Usage:       "port your Husarnet Daemon is listening at",
 				EnvVars:     []string{"HUSARNET_DAEMON_API_PORT"},
 				Destination: &husarnetDaemonAPIPort,
+				Action: func(ctx *cli.Context, v int) error {
+					if v < 0 || v > 65535 {
+						return fmt.Errorf("invalid port %d", v)
+					}
+					return nil
+				},
+			},
+			&cli.StringFlag{
+				Name:        "daemon_api_address",
+				Aliases:     []string{"a"},
+				Value:       defaultDaemonAPIIp,
+				Usage:       "IP address your Husarnet Daemon is listening at",
+				EnvVars:     []string{"HUSARNET_DAEMON_API_ADDRESS"},
+				Destination: &husarnetDaemonAPIIp,
+				Action: func(ctx *cli.Context, v string) error {
+					if net.ParseIP(v) == nil {
+						return fmt.Errorf("invalid IP address %s", v)
+					}
+					return nil
+				},
 			},
 			&cli.BoolFlag{
 				Name:        "verbose",

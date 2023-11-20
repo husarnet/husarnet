@@ -370,6 +370,11 @@ InetAddress ConfigStorage::getUserSettingInet(UserSetting setting)
   return InetAddress::parse(getUserSetting(setting));
 }
 
+IpAddress ConfigStorage::getUserSettingIp(UserSetting setting)
+{
+  return IpAddress::parse(getUserSetting(setting));
+}
+
 std::map<std::string, std::string> ConfigStorage::getUserSettings()
 {
   std::map<std::string, std::string> allSettings;

@@ -271,6 +271,16 @@ int HusarnetManager::getApiPort()
   return configStorage->getUserSettingInt(UserSetting::daemonApiPort);
 }
 
+IpAddress HusarnetManager::getApiAddress()
+{
+  return configStorage->getUserSettingIp(UserSetting::daemonApiAddress);
+}
+
+std::string HusarnetManager::getApiInterface()
+{
+  return configStorage->getUserSetting(UserSetting::daemonApiInterface);
+}
+
 int HusarnetManager::getLogVerbosity()
 {
   return configStorage->getUserSettingInt(UserSetting::logVerbosity);

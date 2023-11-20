@@ -138,6 +138,8 @@ class HusarnetManager {
   bool isRealAddressAllowed(InetAddress addr);
 
   int getApiPort();
+  IpAddress getApiAddress();
+  std::string getApiInterface();
   std::string getApiSecret();
   std::string rotateApiSecret();
 

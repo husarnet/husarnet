@@ -107,11 +107,15 @@ func (s DaemonStatus) getPeerByAddr(addr netip.Addr) *PeerStatus {
 }
 
 func getDaemonApiUrl() string {
-	if husarnetDaemonAPIPort != 0 {
-		return fmt.Sprintf("http://127.0.0.1:%d", husarnetDaemonAPIPort)
+	if husarnetDaemonAPIPort == 0 {
+		husarnetDaemonAPIPort = defaultDaemonAPIPort
 	}
 
-	return fmt.Sprintf("http://127.0.0.1:%d", defaultDaemonAPIPort)
+	if husarnetDaemonAPIIp == "" {
+		husarnetDaemonAPIIp = defaultDaemonAPIIp
+	}
+
+	return fmt.Sprintf("http://%s:%d", husarnetDaemonAPIIp, husarnetDaemonAPIPort)
 }
 
 func getDaemonApiSecretPath() string {

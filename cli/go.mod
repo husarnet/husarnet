@@ -7,7 +7,7 @@ require (
 	github.com/gobeam/stringy v0.0.5
 	github.com/pterm/pterm v0.12.45
 	github.com/rjNemo/underscore v0.4.0
-	github.com/urfave/cli/v2 v2.11.2
+	github.com/urfave/cli/v2 v2.25.7
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
 	golang.org/x/text v0.3.8
 )

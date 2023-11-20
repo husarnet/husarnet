@@ -42,7 +42,9 @@ BETTER_ENUM(
     hostname = 14,                // string, this will never be persisted
     enableHooks = 15,             // bool
     logVerbosity = 16,            // int
-    enableNotifications = 17      // bool
+    enableNotifications = 17,     // bool
+    daemonApiAddress= 18,         // ip
+    daemonApiInterface = 19       // string
 )
 
 const std::string trueValue = "true";
@@ -125,6 +127,7 @@ class ConfigStorage {
   bool getUserSettingBool(UserSetting setting);
   int getUserSettingInt(UserSetting setting);
   InetAddress getUserSettingInet(UserSetting setting);
+  IpAddress getUserSettingIp(UserSetting setting);
 
   std::map<std::string, std::string> getUserSettings();
 };
