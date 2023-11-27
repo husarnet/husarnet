@@ -6,7 +6,6 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
 
-#include "husarnet/gil.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
@@ -509,18 +508,15 @@ namespace OsSocket {
       maxfd = std::max(conn.fd, maxfd);
     }
 
-    GIL::unlocked<void>([&]() {
-      struct timeval timeoutval;
-      timeoutval.tv_sec = timeout / 1000;
-      timeoutval.tv_usec = (timeout % 1000) * 1000;
+    struct timeval timeoutval;
+    timeoutval.tv_sec = timeout / 1000;
+    timeoutval.tv_usec = (timeout % 1000) * 1000;
 
-      errno = 0;
+    errno = 0;
 
-      int res = SOCKFUNC(select)(
-          maxfd + 1, &readset, &writeset, &errorset,
-          &timeoutval);  // ignore result
-      (void)res;
-    });
+    SOCKFUNC(select)(
+        maxfd + 1, &readset, &writeset, &errorset,
+        &timeoutval);
 
     for(auto& conn : udpSockets) {
       if(conn.fd == -1)

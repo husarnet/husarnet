@@ -18,7 +18,6 @@
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
-#include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
@@ -134,25 +133,19 @@ void NgSocket::workerLoop()
 {
   while(true) {
     std::function<void()> f = workerQueue.pop_blocking();
-    GIL::lock();
     f();
-    GIL::unlock();
   }
 }
 
 void NgSocket::refresh()
 {
-  // release the lock around every operation to reduce latency
   lastRefresh = Port::getCurrentTime();
   sendLocalAddressesToBase();
-
-  GIL::yield();
 
   sendNatInitToBase();
   sendMulticast();
 
   for(Peer* peer : iteratePeers()) {
-    GIL::yield();
     periodicPeer(peer);
   }
 }
@@ -776,10 +769,8 @@ PeerToPeerMessage NgSocket::parsePeerToPeerMessage(string_view data)
       return msg;
     }
 
-    bool ok = GIL::unlocked<bool>([&]() {
-      return NgSocketCrypto::verifySignature(
+    bool ok = NgSocketCrypto::verifySignature(
           data.substr(0, 17 + 64), "ng-p2p-msg", pubkey, signature);
-    });
 
     if(!ok) {
       LOG_ERROR("invalid signature: %s", signature.c_str());
@@ -810,8 +801,7 @@ std::string NgSocket::serializePeerToPeerMessage(const PeerToPeerMessage& msg)
           msg.helloCookie.size() == 16 && pubkey.size() == 32);
       data = pack((uint8_t)msg.kind._value) + deviceId + pubkey + msg.yourId +
              msg.helloCookie;
-      data += GIL::unlocked<std::string>(
-          [&]() { return sign(data, "ng-p2p-msg"); });
+      data += sign(data, "ng-p2p-msg");
       break;
     case +PeerToPeerMessageKind::DATA:
       data = pack((uint8_t)msg.kind._value) + msg.data.str();

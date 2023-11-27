@@ -12,7 +12,6 @@
 #include "husarnet/ports/sockets.h"
 #include "husarnet/ports/windows/tun.h"
 
-#include "husarnet/gil.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
@@ -133,8 +132,6 @@ namespace Port {
 
   void init()
   {
-    // GIL is inited on (stage1)
-    // GIL::init();
     WSADATA wsaData;
     WSAStartup(0x202, &wsaData);
   }

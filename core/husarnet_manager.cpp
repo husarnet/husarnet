@@ -14,7 +14,6 @@
 #include "husarnet/compression_layer.h"
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
-#include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
@@ -535,7 +534,6 @@ void HusarnetManager::stage1()
     return;
   }
 
-  GIL::init();
   Privileged::createConfigDirectories();
   Privileged::start();
 
