@@ -281,10 +281,15 @@ namespace OsSocket {
     }
 
     else {
+      #ifdef _WIN32
+      char so_error;
+      #else
       int so_error;
+      #endif
+      
       socklen_t len = sizeof(so_error);
 
-      getsockopt(fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+      SOCKFUNC(getsockopt)(fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
       if (so_error != 0) {
         LOG_ERROR("connection with the server (%s) failed (error)", addr.str().c_str());
