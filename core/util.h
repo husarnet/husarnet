@@ -136,7 +136,7 @@ std::string rtrim(std::string input);
 std::string camelCaseToUnderscores(std::string camel);
 
 template <typename K, typename V>
-inline bool mapContains(std::map<K, V> m, K needle)
+inline bool mapContains(const std::map<K, V> m, K needle)
 {
   for(const auto& pair : m) {
     if(pair.first == needle) {

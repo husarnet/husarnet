@@ -23,9 +23,10 @@ static inline void log(
     const char* format,
     ...)
 {
-  if(level < getGlobalLogManager()->getVerbosity()) {
+  if(level > getGlobalLogManager()->getVerbosity()) {
     return;
   }
+
   int buffer_len = 256;
   char buffer[buffer_len];
   va_list args;
@@ -105,5 +106,6 @@ static inline void log(
   {                                                                      \
     if(ret == 0)                                                         \
       return;                                                            \
+                                                                         \
     log(LogLevel::ERROR, __FILE__, __LINE__, strerror(errno), fmt, ##x); \
   }

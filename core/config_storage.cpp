@@ -91,7 +91,7 @@ void ConfigStorage::updateHostsInSystem()
   hostCacheInvalidated = false;
 }
 
-json ConfigStorage::getCurrentData()
+json ConfigStorage::getCurrentData() const
 {
   return currentData;
 }
@@ -122,7 +122,7 @@ void ConfigStorage::hostTableRm(std::string hostname)
   manager->getHooksManager()->runHook(HookType::hosttable_changed);
 }
 
-std::map<std::string, IpAddress> ConfigStorage::getHostTable()
+std::map<std::string, IpAddress> ConfigStorage::getHostTable() const
 {
   std::map<std::string, IpAddress> r;
 
@@ -176,7 +176,7 @@ void ConfigStorage::whitelistRm(IpAddress address)
   manager->getHooksManager()->runHook(HookType::whitelist_changed);
 }
 
-bool ConfigStorage::isOnWhitelist(IpAddress address)
+bool ConfigStorage::isOnWhitelist(IpAddress address) const
 {
   // TODO long term - it'd be wise to optimize it (use hashmaps or sth)
   auto whitelist = currentData[WHITELIST_KEY];
@@ -184,7 +184,7 @@ bool ConfigStorage::isOnWhitelist(IpAddress address)
          std::end(whitelist);
 }
 
-std::list<IpAddress> ConfigStorage::getWhitelist()
+std::list<IpAddress> ConfigStorage::getWhitelist() const
 {
   std::list<IpAddress> r;
 
@@ -232,25 +232,25 @@ void ConfigStorage::clearInternalSetting(InternalSetting setting)
   save();
 }
 
-std::string ConfigStorage::getInternalSetting(InternalSetting setting)
+std::string ConfigStorage::getInternalSetting(InternalSetting setting) const
 {
   auto settingStr = setting._to_string();
   if(currentData[INTERNAL_SETTINGS_KEY].contains(settingStr)) {
     return currentData[INTERNAL_SETTINGS_KEY][settingStr];
   }
   if(mapContains(internalDefaults, setting)) {
-    return internalDefaults[setting];
+    return internalDefaults.at(setting);
   }
 
   return "";
 }
 
-bool ConfigStorage::getInternalSettingBool(InternalSetting setting)
+bool ConfigStorage::getInternalSettingBool(InternalSetting setting) const
 {
   return getInternalSetting(setting) == trueValue;
 }
 
-int ConfigStorage::getInternalSettingInt(InternalSetting setting)
+int ConfigStorage::getInternalSettingInt(InternalSetting setting) const
 {
   if(getInternalSetting(setting) == "") {
     return 0;
@@ -259,7 +259,7 @@ int ConfigStorage::getInternalSettingInt(InternalSetting setting)
   return stoi(getInternalSetting(setting));
 }
 
-bool ConfigStorage::isInternalSettingEmpty(InternalSetting setting)
+bool ConfigStorage::isInternalSettingEmpty(InternalSetting setting) const
 {
   auto settingStr = setting._to_string();
   if(!currentData[INTERNAL_SETTINGS_KEY].contains(settingStr)) {
@@ -305,7 +305,7 @@ void ConfigStorage::clearUserSetting(UserSetting setting)
   save();
 }
 
-bool ConfigStorage::isUserSettingOverriden(UserSetting setting)
+bool ConfigStorage::isUserSettingOverriden(UserSetting setting) const
 {
   if(!mapContains(userOverrides, setting)) {
     return false;
@@ -318,14 +318,14 @@ bool ConfigStorage::isUserSettingOverriden(UserSetting setting)
   return true;
 }
 
-std::string ConfigStorage::getPersistentUserSetting(UserSetting setting)
+std::string ConfigStorage::getPersistentUserSetting(UserSetting setting) const
 {
   auto settingStr = setting._to_string();
   if(currentData[USER_SETTINGS_KEY].contains(settingStr)) {
     return currentData[USER_SETTINGS_KEY][settingStr];
   }
   if(mapContains(userDefaults, setting)) {
-    return userDefaults[setting];
+    return userDefaults.at(setting);
   }
 
   return "";
@@ -342,21 +342,21 @@ void ConfigStorage::persistUserSettingOverride(UserSetting setting)
   setUserSetting(setting, getUserSetting(setting));
 }
 
-std::string ConfigStorage::getUserSetting(UserSetting setting)
+std::string ConfigStorage::getUserSetting(UserSetting setting) const
 {
   if(mapContains(userOverrides, setting)) {
-    return userOverrides[setting];
+    return userOverrides.at(setting);
   }
 
   return getPersistentUserSetting(setting);
 }
 
-bool ConfigStorage::getUserSettingBool(UserSetting setting)
+bool ConfigStorage::getUserSettingBool(UserSetting setting) const
 {
   return getUserSetting(setting) == trueValue;
 }
 
-int ConfigStorage::getUserSettingInt(UserSetting setting)
+int ConfigStorage::getUserSettingInt(UserSetting setting) const
 {
   if(getUserSetting(setting) == "") {
     return 0;
@@ -365,23 +365,51 @@ int ConfigStorage::getUserSettingInt(UserSetting setting)
   return stoi(getUserSetting(setting));
 }
 
-InetAddress ConfigStorage::getUserSettingInet(UserSetting setting)
+InetAddress ConfigStorage::getUserSettingInet(UserSetting setting) const
 {
   return InetAddress::parse(getUserSetting(setting));
 }
 
-IpAddress ConfigStorage::getUserSettingIp(UserSetting setting)
+IpAddress ConfigStorage::getUserSettingIp(UserSetting setting) const
 {
   return IpAddress::parse(getUserSetting(setting));
 }
 
-std::map<std::string, std::string> ConfigStorage::getUserSettings()
+std::map<std::string, std::string> ConfigStorage::getUserSettings() const
 {
-  std::map<std::string, std::string> allSettings;
+  std::map<std::string, std::string> response;
 
   for(auto& setting : UserSetting::_values()) {
-    allSettings[setting._to_string()] = getUserSetting(setting);
+    response[setting._to_string()] = getUserSetting(setting);
   }
 
-  return allSettings;
+  return response;
+}
+
+void ConfigStorage::printSettings() const
+{
+  for(auto& setting : UserSetting::_values()) {
+    auto message = "User setting " + std::string(setting._to_string()) + " = " +
+                   getUserSetting(setting);
+
+    bool warn = false;
+
+    if(mapContains(userOverrides, setting)) {
+      message += " (overriden)";
+      warn = true;
+    }
+
+    if(getPersistentUserSetting(setting) != getUserSetting(setting)) {
+      message += " (not persistent)";
+      warn = true;
+    }
+
+    if(warn) {
+      LOG_WARNING(message.c_str());
+    } else {
+      LOG_DEBUG(message.c_str());
+    }
+  }
+
+  // Ignore the internal settings for now as they only contain secrets
 }

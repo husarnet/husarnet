@@ -62,11 +62,11 @@ class DummyHooksManager : public HooksManagerInterface {
  public:
   virtual void runHook(HookType hookType)
   {
-    LOG_DEBUG("DummyHooksManager::runHook %s", hookType);
+    LOG_DEBUG("DummyHooksManager::runHook %s", hookType._to_string());
   }
 
   virtual void waitHook(HookType hookType)
   {
-    LOG_DEBUG("DummyHooksManager::waitHook %s", hookType);
+    LOG_DEBUG("DummyHooksManager::waitHook %s", hookType._to_string());
   }
 };

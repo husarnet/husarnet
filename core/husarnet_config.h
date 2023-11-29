@@ -39,7 +39,11 @@ const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::joinCode, ""},
     {UserSetting::hostname, ""},
     {UserSetting::enableHooks, falseValue},
-    {UserSetting::logVerbosity, "1"},
+#ifdef DEBUG_BUILD
+    {UserSetting::logVerbosity, "4"},  // DEBUG
+#else
+    {UserSetting::logVerbosity, "3"},  // INFO
+#endif
     {UserSetting::enableNotifications, trueValue},
     {UserSetting::daemonApiAddress, "127.0.0.1"},
     {UserSetting::daemonApiInterface, ""},

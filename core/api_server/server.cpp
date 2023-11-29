@@ -221,10 +221,12 @@ void ApiServer::runThread()
           return;
         }
 
-        if (!manager->changeServer(req.get_param_value("domain"))) {
-          returnError(req, res, "Failed to fetch and validate license from the new server, is the URL correct?");
-        }
-        else {
+        if(!manager->changeServer(req.get_param_value("domain"))) {
+          returnError(
+              req, res,
+              "Failed to fetch and validate license from the new server, is "
+              "the URL correct?");
+        } else {
           returnSuccess(req, res);
         }
       });
@@ -388,7 +390,7 @@ void ApiServer::runThread()
 
           if(req.has_param("verbosity")) {
             if(std::stoi(req.get_param_value("verbosity")) <=
-               logLevelToInt(LogLevel::CRITICAL)) {
+               logLevelToInt(LogLevel::DEBUG)) {
               manager->setLogVerbosity(
                   std::stoi(req.get_param_value("verbosity")));
             }
@@ -417,18 +419,17 @@ void ApiServer::runThread()
              {"standard_result", getStandardReply()}});
       });
 
-  if(!svr.bind_to_port(manager->getApiAddress().toString().c_str(), manager->getApiPort())) {
+  if(!svr.bind_to_port(
+         manager->getApiAddress().toString().c_str(), manager->getApiPort())) {
     LOG_CRITICAL(
         "Unable to bind HTTP thread to port %s:%d. Exiting!",
-        manager->getApiAddress().toString().c_str(),
-        manager->getApiPort());
+        manager->getApiAddress().toString().c_str(), manager->getApiPort());
     exit(1);
   } else {
     LOG_INFO(
         "HTTP thread bound to %s:%d. Will start handling the "
         "connections.",
-        manager->getApiAddress().toString().c_str(),
-        manager->getApiPort());
+        manager->getApiAddress().toString().c_str(), manager->getApiPort());
   }
 
   if(!svr.listen_after_bind()) {
