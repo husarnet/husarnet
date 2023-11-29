@@ -144,7 +144,7 @@ target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/i
 target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include/sodium)
 target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config)
 target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config/sodium)
-target_compile_options(sodium PRIVATE -DCONFIGURED=1)
+target_compile_options(sodium PRIVATE -DCONFIGURED=1 -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
   target_link_libraries(husarnet_core stdc++)
@@ -200,6 +200,124 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   add_compile_definitions(CARES_STATICLIB)
   FetchContent_MakeAvailable(c-ares)
   target_link_libraries(husarnet_core c-ares)
+endif()
+
+# Build libnl without its build system to prevent autoconf madness 
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+  FetchContent_Declare(
+    libnl
+    GIT_REPOSITORY https://github.com/thom311/libnl.git
+    GIT_TAG libnl3_8_0
+  )
+
+  FetchContent_MakeAvailable(libnl)
+
+  set(LIBNL_ENABLE_PTHREADS ON)
+  set(LIBNL_ENABLE_DEBUG OFF)
+
+  # Generate compile-time version header
+  # Needs to be populated manually from libnl's configure.ac
+  set(LIBNL_VER_MAJ 3)
+  set(LIBNL_VER_MIN 8)
+  set(LIBNL_VER_MIC 0)
+
+  set(LIBNL_CURRENT  226)
+  set(LIBNL_REVISION 0)
+  set(LIBNL_AGE      26)
+  include(${CMAKE_CURRENT_LIST_DIR}/lib-config/libnl/generate.cmake)
+
+  # Generate Bison/Flex files
+  find_package(BISON)
+  find_package(FLEX)
+
+#   lib/route/pktloc_grammar.h: lib/route/pktloc_grammar.c
+# 	@true
+
+# lib/route/pktloc_grammar.c: lib/route/pktloc_grammar.l lib/route/.dirstamp
+# 	$(AM_V_GEN) $(FLEX) --header-file=lib/route/pktloc_grammar.h $(LFLAGS) -o $@ $<
+
+# lib/route/pktloc_syntax.h: lib/route/pktloc_syntax.c
+# 	@true
+
+# lib/route/pktloc_syntax.c: lib/route/pktloc_syntax.y lib/route/.dirstamp
+# 	$(AM_V_GEN) $(YACC) -d $(YFLAGS) -o $@ $<
+
+# lib/route/cls/ematch_grammar.h: lib/route/cls/ematch_grammar.c
+# 	@true
+
+# lib/route/cls/ematch_grammar.c: lib/route/cls/ematch_grammar.l lib/route/cls/.dirstamp
+# 	$(AM_V_GEN) $(FLEX) --header-file=lib/route/cls/ematch_grammar.h $(LFLAGS) -o $@ $<
+
+# lib/route/cls/ematch_syntax.h: lib/route/cls/ematch_syntax.c
+# 	@true
+
+# lib/route/cls/ematch_syntax.c: lib/route/cls/ematch_syntax.y lib/route/cls/.dirstamp
+# 	$(AM_V_GEN) $(YACC) -d $(YFLAGS) -o $@ $<
+
+  set(BISON_FLAGS "-Wno-deprecated -Wno-other")
+
+  bison_target(
+    libnl_ematch_syntax ${libnl_SOURCE_DIR}/lib/route/cls/ematch_syntax.y
+    ${libnl_SOURCE_DIR}/lib/route/cls/ematch_syntax.c
+    DEFINES_FILE ${libnl_SOURCE_DIR}/lib/route/cls/ematch_syntax.h
+    COMPILE_FLAGS ${BISON_FLAGS}
+  )
+  bison_target(
+    libnl_pktloc_syntax ${libnl_SOURCE_DIR}/lib/route/pktloc_syntax.y
+    ${libnl_SOURCE_DIR}/lib/route/pktloc_syntax.c
+    DEFINES_FILE ${libnl_SOURCE_DIR}/lib/route/pktloc_syntax.h
+    COMPILE_FLAGS ${BISON_FLAGS}
+  )
+  flex_target(
+    libnl_ematch_grammar ${libnl_SOURCE_DIR}/lib/route/cls/ematch_grammar.l
+    ${libnl_SOURCE_DIR}/lib/route/cls/ematch_grammar.c
+    DEFINES_FILE ${libnl_SOURCE_DIR}/lib/route/cls/ematch_grammar.h
+  )
+  flex_target(
+    libnl_pkloc_grammar ${libnl_SOURCE_DIR}/lib/route/pktloc_grammar.l
+    ${libnl_SOURCE_DIR}/lib/route/pktloc_grammar.c
+    DEFINES_FILE ${libnl_SOURCE_DIR}/lib/route/pktloc_grammar.h
+  )
+
+  add_flex_bison_dependency(libnl_ematch_grammar libnl_ematch_syntax)
+  add_flex_bison_dependency(libnl_pkloc_grammar libnl_pktloc_syntax)
+
+  # Alias version.h file to make the library happy
+  file(CREATE_LINK ${libnl_SOURCE_DIR}/include/netlink/version.h ${libnl_SOURCE_DIR}/include/version.h SYMBOLIC)
+
+  file(GLOB_RECURSE libnl_SOURCES "${libnl_SOURCE_DIR}/lib/*.c")
+  
+  include_directories(
+    ${libnl_SOURCE_DIR}/include
+    ${libnl_SOURCE_DIR}/lib/genl
+    ${libnl_SOURCE_DIR}/lib/idiag
+    ${libnl_SOURCE_DIR}/lib/netfilter
+    ${libnl_SOURCE_DIR}/lib/route
+    ${libnl_SOURCE_DIR}/lib/xfrm)
+
+  add_library(libnl STATIC
+    ${libnl_SOURCES}
+    ${BISON_libnl_ematch_syntax_OUTPUTS}
+    ${BISON_libnl_pktloc_syntax_OUTPUTS}
+    ${FLEX_libnl_ematch_grammar_OUTPUTS}
+    ${FLEX_libnl_pkloc_grammar_OUTPUTS}
+  )
+  #target_link_libraries(libnl STATIC ${FLEX_LIBRARIES})
+
+  if(NOT ${LIBNL_ENABLE_PTHREADS})
+    add_compile_definitions(DISABLE_PTHREADS)
+    message(STATUS "Disabling pthreads in libnlS")
+  endif()
+
+  if(${LIBNL_ENABLE_DEBUG})
+    add_compile_definitions(LIBNL_NL_DEBUG)
+    message(STATUS "Enabling debug in libnl")
+  endif()
+  
+  target_compile_definitions(libnl PRIVATE SYSCONFDIR="/etc/libnl" _GNU_SOURCE)
+  target_compile_options(libnl PRIVATE -Wno-unused-variable)
+
+  target_link_libraries(husarnet_core libnl)
 endif()
 
 # Enable HTTP control API

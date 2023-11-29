@@ -4,6 +4,8 @@ ARG DEBCONF_NONINTERACTIVE_SEEN=true
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --yes \
+    bison \
+    libfl-dev \
     bind9-host \
     binutils \
     bison \
