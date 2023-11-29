@@ -230,30 +230,6 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   find_package(BISON)
   find_package(FLEX)
 
-#   lib/route/pktloc_grammar.h: lib/route/pktloc_grammar.c
-# 	@true
-
-# lib/route/pktloc_grammar.c: lib/route/pktloc_grammar.l lib/route/.dirstamp
-# 	$(AM_V_GEN) $(FLEX) --header-file=lib/route/pktloc_grammar.h $(LFLAGS) -o $@ $<
-
-# lib/route/pktloc_syntax.h: lib/route/pktloc_syntax.c
-# 	@true
-
-# lib/route/pktloc_syntax.c: lib/route/pktloc_syntax.y lib/route/.dirstamp
-# 	$(AM_V_GEN) $(YACC) -d $(YFLAGS) -o $@ $<
-
-# lib/route/cls/ematch_grammar.h: lib/route/cls/ematch_grammar.c
-# 	@true
-
-# lib/route/cls/ematch_grammar.c: lib/route/cls/ematch_grammar.l lib/route/cls/.dirstamp
-# 	$(AM_V_GEN) $(FLEX) --header-file=lib/route/cls/ematch_grammar.h $(LFLAGS) -o $@ $<
-
-# lib/route/cls/ematch_syntax.h: lib/route/cls/ematch_syntax.c
-# 	@true
-
-# lib/route/cls/ematch_syntax.c: lib/route/cls/ematch_syntax.y lib/route/cls/.dirstamp
-# 	$(AM_V_GEN) $(YACC) -d $(YFLAGS) -o $@ $<
-
   set(BISON_FLAGS "-Wno-deprecated -Wno-other")
 
   bison_target(
@@ -306,7 +282,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 
   if(NOT ${LIBNL_ENABLE_PTHREADS})
     add_compile_definitions(DISABLE_PTHREADS)
-    message(STATUS "Disabling pthreads in libnlS")
+    message(STATUS "Disabling pthreads in libnl")
   endif()
 
   if(${LIBNL_ENABLE_DEBUG})
