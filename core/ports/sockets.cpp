@@ -268,31 +268,34 @@ namespace OsSocket {
     FD_SET(fd, &fdset);
 
     struct timeval tv {
-      .tv_sec = 5,
-      .tv_usec = 0,
+      .tv_sec = 5, .tv_usec = 0,
     };
 
     res = select(fd + 1, NULL, &fdset, NULL, &tv);
 
-    if (res <= 0) {
-      LOG_ERROR("connection with the server (%s) failed (timeout)", addr.str().c_str());
+    if(res <= 0) {
+      LOG_ERROR(
+          "connection with the server (%s) failed (timeout)",
+          addr.str().c_str());
       SOCKFUNC_close(fd);
       return -1;
     }
 
     else {
-      #ifdef _WIN32
+#ifdef _WIN32
       char so_error;
-      #else
+#else
       int so_error;
-      #endif
-      
+#endif
+
       socklen_t len = sizeof(so_error);
 
       SOCKFUNC(getsockopt)(fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
-      if (so_error != 0) {
-        LOG_ERROR("connection with the server (%s) failed (error)", addr.str().c_str());
+      if(so_error != 0) {
+        LOG_ERROR(
+            "connection with the server (%s) failed (error)",
+            addr.str().c_str());
         SOCKFUNC_close(fd);
         return -1;
       }
