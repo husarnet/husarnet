@@ -188,7 +188,9 @@
       needs: [],
 
       'runs-on': [
-        'macos-13-xlarge',
+        'self-hosted',
+        'macOS',
+        'ARM64',
       ],
 
       steps: [
