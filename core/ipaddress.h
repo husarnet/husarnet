@@ -68,6 +68,21 @@ struct IpAddress {
     return data[0] == 0xfc && data[1] == 0x94;
   }
 
+  bool isWildcard() const
+  {
+    return memcmp(data.data(), "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16) == 0;
+  }
+
+  bool isLoopback() const
+  {
+    return memcmp(data.data(), "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x01", 16) == 0;
+  }
+
+  bool isMulticast() const
+  {
+    return data[0] == 0xff;
+  }
+
   std::string toBinary()
   {
     return std::string((char*)data.data(), 16);

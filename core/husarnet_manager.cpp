@@ -281,6 +281,11 @@ std::string HusarnetManager::getApiInterface()
   return configStorage->getUserSetting(UserSetting::daemonApiInterface);
 }
 
+IpAddress HusarnetManager::getApiInterfaceAddress()
+{
+  return Port::getIpAddressFromInterfaceName(this->getApiInterface());
+}
+
 int HusarnetManager::getLogVerbosity()
 {
   return configStorage->getUserSettingInt(UserSetting::logVerbosity);
@@ -529,8 +534,14 @@ void HusarnetManager::startHTTPServer()
 #endif
 }
 
+volatile int gdb_wait = 0;
+
 void HusarnetManager::stage1()
 {
+  while(gdb_wait) {
+    sleep(1);
+  }
+
   if(stage1Started) {
     return;
   }
@@ -613,7 +624,7 @@ void HusarnetManager::runHusarnet()
 
   Privileged::notifyReady();
 
-  while(true) {
+    while(true) {
     ngsocket->periodic();
     OsSocket::runOnce(1000);  // process socket events for at most so many ms
   }

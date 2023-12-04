@@ -30,6 +30,7 @@ namespace Port {
       int priority = 2);
 
   IpAddress resolveToIp(const std::string& hostname);
+  IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName);
 
   Time getCurrentTime();             // some monotonic time in ms
   const std::string getHumanTime();  // human readable time

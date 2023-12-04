@@ -24,6 +24,8 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <netlink/route/addr.h>
+#include <netlink/route/link.h>
 
 #include "husarnet/ports/linux/tun.h"
 
@@ -154,6 +156,69 @@ namespace Port {
     ares_wait(channel);
 
     return result.address;
+  }
+
+  IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName)
+  {
+    struct rtnl_link *link;
+    struct nl_sock *ns;
+    struct nl_cache *addr_cache;
+    int err, ifindex;
+
+    // Setup netlink socket
+    ns = nl_socket_alloc();
+    if((err = nl_connect(ns, NETLINK_ROUTE)) < 0) {
+      LOG_ERROR("Unable to connect to netlink socket (err: %s)", nl_geterror(err));
+      nl_socket_free(ns);
+      return IpAddress();
+    }
+
+    // Get network interface by name
+    if ((err = rtnl_link_get_kernel(ns, 0, interfaceName.c_str(), &link)) < 0) {
+      LOG_ERROR("Unable to get interface %s information (err: %s)", interfaceName.c_str(), nl_geterror(err));
+      nl_socket_free(ns);
+      return IpAddress();
+    }
+
+    // Get interface addresses into cache
+    if ((err = rtnl_addr_alloc_cache(ns, &addr_cache)) < 0) {
+      LOG_ERROR("Unable to get interface %s addresses (err: %s)", interfaceName.c_str(), nl_geterror(err));
+      nl_socket_free(ns);
+      return IpAddress();
+    }
+    
+    if ((ifindex = rtnl_link_get_ifindex(link)) < 0) {
+      LOG_ERROR("Unable to get interface %s index (err: %s)", interfaceName.c_str(), nl_geterror(ifindex));
+      nl_socket_free(ns);
+      return IpAddress();
+    }
+
+    IpAddress ip{};
+
+    // Iterate over addresses in cache
+    nl_object* obj = nl_cache_get_first(addr_cache);
+    while (obj != NULL) {
+      struct rtnl_addr* addr = (struct rtnl_addr *)obj;
+
+      // Find IPv6 address for given interface
+      if (rtnl_addr_get_ifindex(addr) == ifindex && rtnl_addr_get_family(addr) == AF_INET6) {
+        ip = IpAddress::fromBinary((const char*)nl_addr_get_binary_addr(rtnl_addr_get_local(addr)));
+
+        if (!ip.isMulticast() && !ip.isLoopback() && !ip.isWildcard()) {
+          break;
+        }
+      }
+
+      // Get next address object from cache
+      obj = nl_cache_get_next(obj);
+    }
+
+    // Cleanup
+    nl_cache_free(addr_cache);
+    rtnl_link_put(link);
+    nl_socket_free(ns);
+
+    return ip;
   }
 
   int64_t getCurrentTime()
