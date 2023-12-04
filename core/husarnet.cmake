@@ -212,7 +212,10 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 
   FetchContent_MakeAvailable(libnl)
 
-  set(LIBNL_ENABLE_PTHREADS ON)
+  # Pthreads lib causes an undefined behaviour trap
+  # being triggered when unlocking rwlock
+  #TODO: fix or introduce global nllib mutex
+  set(LIBNL_ENABLE_PTHREADS OFF) 
   set(LIBNL_ENABLE_DEBUG OFF)
 
   # Generate compile-time version header
