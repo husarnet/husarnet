@@ -417,17 +417,32 @@ void ApiServer::runThread()
              {"standard_result", getStandardReply()}});
       });
 
-  if(!svr.bind_to_port(manager->getApiAddress().toString().c_str(), manager->getApiPort())) {
+  IpAddress bindAddress{};
+
+  if (manager->getApiInterface() != "") {
+    // Deduce bind address from the provided interface
+    bindAddress = manager->getApiInterfaceAddress();
+    LOG_INFO(
+      "Deducing bind address %s from the provided interface: %s",
+      bindAddress.toString().c_str(),
+      manager->getApiInterface().c_str()
+    );
+  } else {
+    // Use provided/default bind address
+    bindAddress = manager->getApiAddress();
+  }
+
+  if(!svr.bind_to_port(bindAddress.toString().c_str(), manager->getApiPort())) {
     LOG_CRITICAL(
         "Unable to bind HTTP thread to port %s:%d. Exiting!",
-        manager->getApiAddress().toString().c_str(),
+        bindAddress.toString().c_str(),
         manager->getApiPort());
     exit(1);
   } else {
     LOG_INFO(
         "HTTP thread bound to %s:%d. Will start handling the "
         "connections.",
-        manager->getApiAddress().toString().c_str(),
+        bindAddress.toString().c_str(),
         manager->getApiPort());
   }
 

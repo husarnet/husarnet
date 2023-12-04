@@ -66,6 +66,7 @@ struct IpAddress {
     return false;
   }
 
+  // Husarnet IPv6 address range
   bool isFC94() const
   {
     return data[0] == 0xfc && data[1] == 0x94;
@@ -95,7 +96,7 @@ struct IpAddress {
 
   bool isPrivateNetworkV4() const
   {
-    if (!isMappedV4)
+    if (!isMappedV4())
       return false;
     
     if (data[12] == 10)
@@ -113,7 +114,7 @@ struct IpAddress {
     if (isPrivateNetworkV4())
       return false;
 
-    if (isWildcard() || isLoopback() || isMulticast() || isLinkLocal())
+    if (isWildcard() || isLoopback() || isMulticast() || isLinkLocal() || isFC94())
       return true;
 
     if (isMappedV4()) {
@@ -139,7 +140,7 @@ struct IpAddress {
           data[14] == 255 && data[15] == 255)                   // Broadcast
         return true;
     }
-    else {
+    else { // IPv6
       if (memcmp(data.data(), "\x00\x64\xff\x9b\0\0\0\0\0\0\0\0", 12) == 0) // Global translation
         return true;
       if (memcmp(data.data(), "\x00\x64\xff\x9b\x00\x01", 6) == 0)          // Private translation
@@ -149,7 +150,7 @@ struct IpAddress {
       if (memcmp(data.data(), "\x20\x01\x00\x00", 4) == 0)                  // Teredo
         return true;
       if (data[0] == 0x20 && data[1] == 0x01 && data[2] == 0 &&
-         (data[3] & 0b00001111) == 20)                                      // ORCHIDv2
+         (data[3] & 0b11110000) == 0x20)                                    // ORCHIDv2
         return true;
       if (memcmp(data.data(), "\x20\x01\x0d\xb8", 4) == 0)                  // Documentation
         return true;

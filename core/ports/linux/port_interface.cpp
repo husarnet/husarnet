@@ -206,15 +206,28 @@ namespace Port {
     nl_object* obj = nl_cache_get_first(addr_cache);
     while(obj != NULL) {
       struct rtnl_addr* addr = (struct rtnl_addr*)obj;
+      const char* addr_binary = (const char*)nl_addr_get_binary_addr(rtnl_addr_get_local(addr));
+      int addr_family = rtnl_addr_get_family(addr);
+      IpAddress addr_ip{};
 
-      // Find IPv6 address for given interface
+      // Find IPv4 or IPv6 address for given interface
       if(rtnl_addr_get_ifindex(addr) == ifindex &&
-         rtnl_addr_get_family(addr) == AF_INET6) {
-        ip = IpAddress::fromBinary(
-            (const char*)nl_addr_get_binary_addr(rtnl_addr_get_local(addr)));
+         (addr_family == AF_INET || addr_family == AF_INET6)) {
 
-        if(!ip.isMulticast() && !ip.isLoopback() && !ip.isWildcard()) {
-          break;
+        if (addr_family == AF_INET) {
+            addr_ip = IpAddress::fromBinary4(addr_binary);
+        } else {
+            addr_ip = IpAddress::fromBinary(addr_binary);
+        }
+
+        // Ignore reserved IP addresses
+        if (!addr_ip.isReservedNotPrivate()) {
+          ip = addr_ip;
+
+          // IPv4 address is preferred
+          if(addr_family == AF_INET) {
+            break;
+          }
         }
       }
 
