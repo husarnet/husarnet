@@ -25,6 +25,7 @@ RUN apt-get update \
     libfl-dev \
     libssl-dev \
     libusb-1.0-0 \
+    lldb \
     mc \
     ninja-build \
     openssl \
