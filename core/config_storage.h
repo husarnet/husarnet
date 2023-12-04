@@ -43,7 +43,7 @@ BETTER_ENUM(
     enableHooks = 15,             // bool
     logVerbosity = 16,            // int
     enableNotifications = 17,     // bool
-    daemonApiAddress= 18,         // ip
+    daemonApiAddress = 18,        // ip
     daemonApiInterface = 19       // string
 )
 

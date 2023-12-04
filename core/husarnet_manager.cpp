@@ -534,14 +534,8 @@ void HusarnetManager::startHTTPServer()
 #endif
 }
 
-volatile int gdb_wait = 0;
-
 void HusarnetManager::stage1()
 {
-  while(gdb_wait) {
-    sleep(1);
-  }
-
   if(stage1Started) {
     return;
   }
