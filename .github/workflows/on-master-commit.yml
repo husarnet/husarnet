@@ -165,9 +165,7 @@ jobs:
       - "build_builder"
       - "build_deployers"
     runs-on:
-      - "self-hosted"
-      - "macOS"
-      - "ARM64"
+      - "macos-13-xlarge"
     steps:
       - name: "Check out the repo"
         uses: "actions/checkout@v3"
