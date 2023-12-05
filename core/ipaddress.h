@@ -120,9 +120,9 @@ struct IpAddress {
     if (isMappedV4()) {
       if (data[12] == 100 && (data[13] & 0b11000000) == 64)     // CGNAT
         return true;
-      if (data[12] == 192 && data[13] == 0 & data[14] == 0)     // IETF Protocol Assignments
+      if (data[12] == 192 && data[13] == 0 && data[14] == 0)     // IETF Protocol Assignments
         return true;
-      if (data[12] == 192 && data[13] == 0 & data[14] == 2)     // TEST-NET-1
+      if (data[12] == 192 && data[13] == 0 && data[14] == 2)     // TEST-NET-1
         return true;
       if (data[12] == 198 && (data[13] & 0xfe ) == 18)          // Benchmarking
         return true;
