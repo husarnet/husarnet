@@ -1,0 +1,25 @@
+diff --git a/lib/socket.c b/lib/socket.c
+index 9b42f679..234d33d1 100644
+--- a/lib/socket.c
++++ b/lib/socket.c
+@@ -129,7 +129,19 @@ static uint32_t generate_local_port(void)
+ 			nl_write_unlock(&port_map_lock);
+ 
+ 			/* ensure we don't return zero. */
+-			pid = pid + (n << 22);
++			/* PATCH: zig 0.9 aggresively inlines and merges code.
++			 * Math used in generating randomness above and UB in
++			 * the line below causes compiler to optimize operations
++			 * beyond what would be expected. This results in the n
++			 * variable having it's safe range reduced to 0-511
++			 * (instead of 0-1023 that would be expected from
++			 * shifitng a number by 22 bits into 32 bit uint) and
++			 * causes UB traps to be triggered around half the time.
++			 *
++			 * Issue is specific only to the v0.9
++			 * release of the zig compiler */
++
++			pid = pid + ((uint32_t)n << 22);
+ 			return pid ? pid : 1024;
+ 		}
+ 	}

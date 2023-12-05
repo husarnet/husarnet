@@ -208,6 +208,11 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     libnl
     GIT_REPOSITORY https://github.com/thom311/libnl.git
     GIT_TAG libnl3_8_0
+
+    # Patch specific to the build system (only applies to zig v0.9)
+    # More details are in the patch file
+    PATCH_COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/lib-config/libnl/socket.c.patch
+    UPDATE_DISCONNECTED TRUE
   )
 
   FetchContent_MakeAvailable(libnl)
