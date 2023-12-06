@@ -24,6 +24,8 @@
 #include <string.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -317,10 +319,15 @@ namespace Port {
     netlinkMutex.lock();
 
     // Create TUN device if it doesn't exist
-    if(system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c "
-              "10 200)") != 0) {
-      LOG_CRITICAL("Failed to create TUN device");
-      exit(1);
+    if(access("/dev/net/tun", F_OK) == -1) {
+      LOG_INFO("TUN device does not exist, creating it");
+
+      mkdir("/dev/net", 0755);
+
+      if(mknod("/dev/net/tun", S_IFCHR | 0666, makedev(10, 200)) == -1) {
+        LOG_CRITICAL("Failed to create TUN device");
+        exit(1);
+      }
     }
 
     // Initialize TUN device
