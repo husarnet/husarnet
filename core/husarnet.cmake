@@ -202,12 +202,12 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   target_link_libraries(husarnet_core c-ares)
 endif()
 
-# Build libnl without its build system to prevent autoconf madness 
+# Build libnl without its build system to prevent autoconf madness
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   FetchContent_Declare(
     libnl
     GIT_REPOSITORY https://github.com/thom311/libnl.git
-    GIT_TAG libnl3_8_0
+    GIT_TAG libnl3_9_0
 
     # Patch specific to the build system (only applies to zig v0.9)
     # More details are in the patch file
@@ -217,16 +217,15 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 
   FetchContent_MakeAvailable(libnl)
 
-  # Pthreads lib causes an undefined behaviour trap
-  # being triggered when unlocking rwlock
-  #TODO: fix or introduce global nllib mutex
+  # Locking is handled by a port-wide mutex around libnl calls. Pthread
+  # rwlock unlock sometimes caused UB traps being triggered on zig v0.9
   set(LIBNL_ENABLE_PTHREADS OFF) 
   set(LIBNL_ENABLE_DEBUG OFF)
 
   # Generate compile-time version header
   # Needs to be populated manually from libnl's configure.ac
   set(LIBNL_VER_MAJ 3)
-  set(LIBNL_VER_MIN 8)
+  set(LIBNL_VER_MIN 9)
   set(LIBNL_VER_MIC 0)
 
   set(LIBNL_CURRENT  226)
