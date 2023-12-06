@@ -18,6 +18,6 @@ configure_file(${libnl_SOURCE_DIR}/include/netlink/version.h.in ${libnl_SOURCE_D
 
 
 # Generate config.h file
-#TODO: generate dynamically
-
+# This file orginally used autoconf to generate define feature flags, but cmake automatically populates them for us
+# It is left for compatibility with existing code and time.h include workaround (see config.h.in file)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/config.h.in ${libnl_SOURCE_DIR}/include/config.h @ONLY)
