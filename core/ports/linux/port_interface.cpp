@@ -208,7 +208,8 @@ namespace Port {
       return IpAddress();
     }
 
-    IpAddress ip{};
+    IpAddress ipv4{};
+    IpAddress ipv6{};
 
     // Iterate over addresses in cache
     nl_object* obj = nl_cache_get_first(addr_cache);
@@ -224,18 +225,17 @@ namespace Port {
          (addr_family == AF_INET || addr_family == AF_INET6)) {
         if(addr_family == AF_INET) {
           addr_ip = IpAddress::fromBinary4(addr_binary);
-        } else {
-          addr_ip = IpAddress::fromBinary(addr_binary);
-        }
 
-        // Ignore reserved IP addresses
-        if(!addr_ip.isReservedNotPrivate()) {
-          ip = addr_ip;
-
-          // IPv4 address is preferred
-          if(addr_family == AF_INET) {
-            break;
+          if(!addr_ip.isReservedNotPrivate()) {
+            ipv4 = addr_ip;
+            break;  // Resolving interface address to IPv4 one is prefered
           }
+        } else {  // v6
+          addr_ip = IpAddress::fromBinary(addr_binary);
+
+          if(addr_ip.isReservedNotPrivate())
+            ipv6 = addr_ip;
+          // We don't stop here, because we want to return IPv4 if possible
         }
       }
 
@@ -250,7 +250,11 @@ namespace Port {
 
     netlinkMutex.unlock();
 
-    return ip;
+    if(ipv4) {
+      return ipv4;
+    } else {
+      return ipv6;
+    }
   }
 
   int64_t getCurrentTime()
