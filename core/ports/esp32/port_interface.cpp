@@ -178,4 +178,9 @@ namespace Port {
   {
     // @TODO
   }
+
+  IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName) {
+    LOG_ERROR("getIpAddressFromInterfaceName is not implemented");
+    return IpAddress();
+  }
 }  // namespace Port

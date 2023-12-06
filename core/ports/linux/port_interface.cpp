@@ -280,7 +280,7 @@ namespace Port {
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000 / 1000;
   }
 
-  static void linkEnableIPv6(std::string& interface)
+  static void linkEnableIPv6(const std::string& interface)
   {
     int fd;
     std::string path("/proc/sys/net/ipv6/conf/" + interface + "/disable_ipv6");
@@ -430,7 +430,7 @@ namespace Port {
     rtnl_route_nh_set_ifindex(nh, rtnl_link_get_ifindex(link));
     rtnl_route_add_nexthop(route, nh);
 
-    if((err = rtnl_route_add(ns, route, NLM_F_REPLACE) < 0)) {
+    if((err = rtnl_route_add(ns, route, NLM_F_REPLACE)) < 0) {
       LOG_CRITICAL(
           "Failed to setup TUN device. Unable to add multicast route (err: %s)",
           nl_geterror(err));
