@@ -46,6 +46,20 @@ class UpperLayer;
 
 extern char** environ;
 
+/*
+  Due to netlink system complexity we are using manually-built libnl wrapper
+  library. Current implementation comes with a few limitations:
+  - documentation for both netlink and libnl is let's say "not very good" and
+  sometimes resembles sacred knowledge
+  - our current build system has problems with one line in the socket.c file
+    (see lib-config/libnl/socket.c.patch) causing sporadic illegal instruction
+  exceptions when generating unique socket ports. They are caused by LLVM
+  undefined behavior trap being triggered.
+  - pthread rwlock in libnl sometimes causes undefined behavior on unlock on
+  some systems when built with zig v0.9. Due to this we are using stl mutex. All
+  netlink calls are done on library init, so this should not be a problem.
+*/
+
 // Pthread rwlock in libnl sometimes causes undefined behavior
 // on unlock. This mutex should be used to protect all netlink calls.
 std::mutex netlinkMutex;
@@ -289,8 +303,6 @@ namespace Port {
     }
   }
 
-  // TODO long term - this whole method should be rewritten *not* to utilize
-  // inline bash(?!) and *to* utilize netlink interface
   UpperLayer* startTunTap(HusarnetManager* manager)
   {
     struct nl_sock* ns;
