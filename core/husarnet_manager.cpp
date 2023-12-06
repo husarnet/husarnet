@@ -199,8 +199,9 @@ bool HusarnetManager::isJoined()
 
 bool HusarnetManager::changeServer(std::string domain)
 {
-  if (!License::validateDashboard(domain)) {
-    LOG_ERROR("%s does not contain a valid licensing endpoint.", domain.c_str());
+  if(!License::validateDashboard(domain)) {
+    LOG_ERROR(
+        "%s does not contain a valid licensing endpoint.", domain.c_str());
     return false;
   }
 
@@ -391,7 +392,7 @@ std::list<std::string> HusarnetManager::getNotifications()
 
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
-  if(!id == deviceIdFromIpAddress(IpAddress::parse(multicastDestination))) {
+  if(!id == deviceIdFromIpAddress(multicastDestination)) {
     return {};
   }
 
@@ -618,7 +619,7 @@ void HusarnetManager::runHusarnet()
 
   Privileged::notifyReady();
 
-    while(true) {
+  while(true) {
     ngsocket->periodic();
     OsSocket::runOnce(1000);  // process socket events for at most so many ms
   }

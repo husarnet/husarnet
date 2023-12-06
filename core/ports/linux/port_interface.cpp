@@ -13,9 +13,11 @@
 #include <ares.h>
 #include <assert.h>
 #include <dirent.h>
+#include <linux/if.h>
 #include <netinet/in.h>
 #include <netlink/route/addr.h>
 #include <netlink/route/link.h>
+#include <netlink/route/route.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +45,10 @@
 class UpperLayer;
 
 extern char** environ;
+
+// Pthread rwlock in libnl sometimes causes undefined behavior
+// on unlock. This mutex should be used to protect all netlink calls.
+std::mutex netlinkMutex;
 
 struct ares_result {
   int status;
@@ -165,6 +171,8 @@ namespace Port {
     struct nl_cache* addr_cache;
     int err, ifindex;
 
+    netlinkMutex.lock();
+
     // Setup netlink socket
     ns = nl_socket_alloc();
     if((err = nl_connect(ns, NETLINK_ROUTE)) < 0) {
@@ -206,22 +214,22 @@ namespace Port {
     nl_object* obj = nl_cache_get_first(addr_cache);
     while(obj != NULL) {
       struct rtnl_addr* addr = (struct rtnl_addr*)obj;
-      const char* addr_binary = (const char*)nl_addr_get_binary_addr(rtnl_addr_get_local(addr));
+      const char* addr_binary =
+          (const char*)nl_addr_get_binary_addr(rtnl_addr_get_local(addr));
       int addr_family = rtnl_addr_get_family(addr);
       IpAddress addr_ip{};
 
       // Find IPv4 or IPv6 address for given interface
       if(rtnl_addr_get_ifindex(addr) == ifindex &&
          (addr_family == AF_INET || addr_family == AF_INET6)) {
-
-        if (addr_family == AF_INET) {
-            addr_ip = IpAddress::fromBinary4(addr_binary);
+        if(addr_family == AF_INET) {
+          addr_ip = IpAddress::fromBinary4(addr_binary);
         } else {
-            addr_ip = IpAddress::fromBinary(addr_binary);
+          addr_ip = IpAddress::fromBinary(addr_binary);
         }
 
         // Ignore reserved IP addresses
-        if (!addr_ip.isReservedNotPrivate()) {
+        if(!addr_ip.isReservedNotPrivate()) {
           ip = addr_ip;
 
           // IPv4 address is preferred
@@ -240,6 +248,8 @@ namespace Port {
     rtnl_link_put(link);
     nl_socket_free(ns);
 
+    netlinkMutex.unlock();
+
     return ip;
   }
 
@@ -250,44 +260,174 @@ namespace Port {
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000 / 1000;
   }
 
+  static void linkEnableIPv6(std::string& interface)
+  {
+    int fd;
+    std::string path("/proc/sys/net/ipv6/conf/" + interface + "/disable_ipv6");
+
+    if((fd = open(path.c_str(), O_WRONLY)) < 0) {
+      LOG_WARNING(
+          "Unable to open %s (err: %s). Might be harmless.", path.c_str(),
+          strerror(errno));
+      return;
+    }
+
+    if(dprintf(fd, "0") < 0) {
+      LOG_CRITICAL(
+          "Unable to write to %s (err: %s). Might be harmless.", path.c_str(),
+          strerror(errno));
+    }
+
+    if(close(fd) < 0) {
+      LOG_CRITICAL(
+          "Unable to close %s (err: %s). Might be harmless.", path.c_str(),
+          strerror(errno));
+    }
+  }
+
   // TODO long term - this whole method should be rewritten *not* to utilize
   // inline bash(?!) and *to* utilize netlink interface
   UpperLayer* startTunTap(HusarnetManager* manager)
   {
-    if(system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c "
-              "10 200)") != 0) {
-      LOG_CRITICAL("failed to create TUN device");
-    }
+    struct nl_sock* ns;
+    struct rtnl_link* link;
+    struct nl_addr* addr;
+    struct rtnl_addr* link_addr;
+    int err;
 
-    std::string myIp =
-        deviceIdToIpAddress(manager->getIdentity()->getDeviceId()).str();
-
+    IpAddress myIp = deviceIdToIpAddress(manager->getIdentity()->getDeviceId());
     auto interfaceName = manager->getInterfaceName();
 
-    auto tunTap = new TunTap(interfaceName);
+    netlinkMutex.lock();
 
-    if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||
-       system(("sysctl net.ipv6.conf." + interfaceName + ".disable_ipv6=0")
-                  .c_str()) != 0) {
-      LOG_WARNING("failed to enable IPv6 (may be harmless)");
-    }
-
-    if(system(("ip link set dev " + interfaceName + " mtu 1350").c_str()) !=
-           0 ||
-       system(
-           ("ip addr add dev " + interfaceName + " " + myIp + "/16").c_str()) !=
-           0 ||
-       system(("ip link set dev " + interfaceName + " up").c_str()) != 0) {
-      LOG_ERROR("failed to setup IP address");
+    // Create TUN device if it doesn't exist
+    if(system("[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c "
+              "10 200)") != 0) {
+      LOG_CRITICAL("Failed to create TUN device");
       exit(1);
     }
 
-    // Multicast
-    if(system(("ip -6 route add " + multicastDestination + "/48 dev " +
-               interfaceName + " table local")
-                  .c_str()) != 0) {
-      LOG_WARNING("failed to setup multicast route");
+    // Initialize TUN device
+    auto tunTap = new TunTap(interfaceName);
+
+    // Ensure that IPv6 is enabled on lo and TUN interfaces
+    std::string loName = "lo";
+    linkEnableIPv6(loName);
+    linkEnableIPv6(interfaceName);
+
+    // Setup netlink socket
+    ns = nl_socket_alloc();
+    if((err = nl_connect(ns, NETLINK_ROUTE)) < 0) {
+      LOG_CRITICAL(
+          "Failed to setup TUN device. Unable to connect to netlink socket "
+          "(err: %s)",
+          nl_geterror(err));
+      nl_socket_free(ns);
+      exit(1);
     }
+
+    // Add a IP address to the TUN interface
+    addr = nl_addr_build(AF_INET6, (void*)myIp.toBinary().c_str(), 16);
+    nl_addr_set_prefixlen(addr, 16);
+
+    link_addr = rtnl_addr_alloc();
+    rtnl_addr_set_local(link_addr, addr);
+
+    if((err = rtnl_link_get_kernel(ns, 0, interfaceName.c_str(), &link)) < 0) {
+      LOG_CRITICAL(
+          "Failed to setup TUN device. Unable to get interface %s information "
+          "(err: %s)",
+          interfaceName.c_str(), nl_geterror(err));
+
+      rtnl_link_put(link);
+      rtnl_addr_put(link_addr);
+      nl_addr_put(addr);
+      nl_socket_free(ns);
+
+      exit(1);
+    }
+
+    rtnl_addr_set_link(link_addr, link);
+
+    if((err = rtnl_addr_add(ns, link_addr, 0)) < 0) {
+      LOG_CRITICAL(
+          "Failed to setup TUN device. Unable to add address to interface %s "
+          "(err: %s)",
+          interfaceName.c_str(), nl_geterror(err));
+
+      rtnl_link_put(link);
+      rtnl_addr_put(link_addr);
+      nl_addr_put(addr);
+      nl_socket_free(ns);
+
+      exit(1);
+    }
+
+    struct rtnl_link* change = rtnl_link_alloc();
+
+    // Set MTU
+    rtnl_link_set_mtu(change, 1350);
+
+    // Set interface state to up
+    rtnl_link_set_flags(change, IFF_UP);
+
+    // Apply link changes, bring up interface
+    if((err = rtnl_link_change(ns, link, change, 0)) < 0) {
+      LOG_CRITICAL(
+          "Failed to setup TUN device. Unable to apply link changes to "
+          "interface %s (err: %s)",
+          interfaceName.c_str(), nl_geterror(err));
+
+      rtnl_link_put(change);
+      rtnl_link_put(link);
+      rtnl_addr_put(link_addr);
+      nl_addr_put(addr);
+      nl_socket_free(ns);
+
+      exit(1);
+    }
+
+    rtnl_link_put(change);
+
+    // Add multicast route
+    nl_addr_put(addr);
+    addr = nl_addr_build(AF_INET6, multicastDestination.toBinary().c_str(), 16);
+    nl_addr_set_prefixlen(addr, 48);
+
+    struct rtnl_route* route = rtnl_route_alloc();
+    rtnl_route_set_family(route, AF_INET6);
+    rtnl_route_set_scope(route, RT_SCOPE_UNIVERSE);
+    rtnl_route_set_protocol(route, RTPROT_BOOT);
+    rtnl_route_set_type(route, RTN_UNICAST);
+    rtnl_route_set_dst(route, addr);
+    rtnl_route_set_table(route, RT_TABLE_LOCAL);
+    rtnl_route_set_iif(route, rtnl_link_get_ifindex(link));
+
+    rtnl_nexthop* nh = rtnl_route_nh_alloc();
+    rtnl_route_nh_set_ifindex(nh, rtnl_link_get_ifindex(link));
+    rtnl_route_add_nexthop(route, nh);
+
+    if((err = rtnl_route_add(ns, route, NLM_F_REPLACE) < 0)) {
+      LOG_CRITICAL(
+          "Failed to setup TUN device. Unable to add multicast route (err: %s)",
+          nl_geterror(err));
+
+      rtnl_route_put(route);
+      rtnl_link_put(link);
+      rtnl_addr_put(link_addr);
+      nl_addr_put(addr);
+      nl_socket_free(ns);
+
+      exit(1);
+    }
+
+    rtnl_route_put(route);
+    rtnl_link_put(link);
+    rtnl_addr_put(link_addr);
+    nl_addr_put(addr);
+    nl_socket_free(ns);
+
+    netlinkMutex.unlock();
 
     return tunTap;
   }

@@ -221,10 +221,12 @@ void ApiServer::runThread()
           return;
         }
 
-        if (!manager->changeServer(req.get_param_value("domain"))) {
-          returnError(req, res, "Failed to fetch and validate license from the new server, is the URL correct?");
-        }
-        else {
+        if(!manager->changeServer(req.get_param_value("domain"))) {
+          returnError(
+              req, res,
+              "Failed to fetch and validate license from the new server, is "
+              "the URL correct?");
+        } else {
           returnSuccess(req, res);
         }
       });
@@ -419,14 +421,12 @@ void ApiServer::runThread()
 
   IpAddress bindAddress{};
 
-  if (manager->getApiInterface() != "") {
+  if(manager->getApiInterface() != "") {
     // Deduce bind address from the provided interface
     bindAddress = manager->getApiInterfaceAddress();
     LOG_INFO(
-      "Deducing bind address %s from the provided interface: %s",
-      bindAddress.toString().c_str(),
-      manager->getApiInterface().c_str()
-    );
+        "Deducing bind address %s from the provided interface: %s",
+        bindAddress.toString().c_str(), manager->getApiInterface().c_str());
   } else {
     // Use provided/default bind address
     bindAddress = manager->getApiAddress();
@@ -435,15 +435,13 @@ void ApiServer::runThread()
   if(!svr.bind_to_port(bindAddress.toString().c_str(), manager->getApiPort())) {
     LOG_CRITICAL(
         "Unable to bind HTTP thread to port %s:%d. Exiting!",
-        bindAddress.toString().c_str(),
-        manager->getApiPort());
+        bindAddress.toString().c_str(), manager->getApiPort());
     exit(1);
   } else {
     LOG_INFO(
         "HTTP thread bound to %s:%d. Will start handling the "
         "connections.",
-        bindAddress.toString().c_str(),
-        manager->getApiPort());
+        bindAddress.toString().c_str(), manager->getApiPort());
   }
 
   if(!svr.listen_after_bind()) {
