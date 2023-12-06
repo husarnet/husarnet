@@ -225,7 +225,6 @@ namespace Port {
 
       std::string value(&envVarBuffer[0], envVarLength);
       result[UserSetting::_from_string(enumName)] = value;
-      LOG_WARNING("Overriding user setting %s=%s", enumName, value.c_str());
     }
 
     return result;

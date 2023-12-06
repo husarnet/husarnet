@@ -24,7 +24,9 @@ fi
 
 # Start daemon
 if [ -z "${HUSARNET_DEBUG:-}" ]; then
-    husarnet-daemon >/dev/null 2>&1
+    # 0 - ERROR(1) and CRITICAL(0)
+    HUSARNET_LOG_VERBOSITY=1 husarnet-daemon
 else
-    husarnet-daemon
+    # Basically everything including DEBUG(4) (for nightly builds, stable ones are capped at INFO(3))
+    HUSARNET_LOG_VERBOSITY=100 husarnet-daemon
 fi

@@ -103,6 +103,18 @@ namespace OsSocket {
 #endif
   }
 
+  void set_blocking(int fd)
+  {
+#ifdef _WIN32
+    unsigned long mode = 0;
+    ioctlsocket(fd, FIONBIO, &mode);
+#else
+    int flags = SOCKFUNC(fcntl)(fd, F_GETFL, 0);
+    flags &= ~O_NONBLOCK;
+    SOCKFUNC(fcntl)(fd, F_SETFL, flags);
+#endif
+  }
+
   int bindUdpSocket(InetAddress addr, bool reuse, bool v6)
   {
     int fd = SOCKFUNC(socket)(useV6 ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
@@ -239,11 +251,59 @@ namespace OsSocket {
 
     auto sa = makeSockaddr(addr, useV6);
     socklen_t socklen = sizeof(sa);
-    if(SOCKFUNC(connect)(fd, (sockaddr*)&sa, socklen) < 0) {
+
+    // Set socket to nonblocking to be able to check if connect has stalled
+    set_nonblocking(fd);
+
+    int res = SOCKFUNC(connect)(fd, (sockaddr*)&sa, socklen);
+
+    if(res < 0 && errno != EINPROGRESS) {
       LOG_ERROR("connection with the server (%s) failed", addr.str().c_str());
       SOCKFUNC_close(fd);
       return -1;
     }
+
+    fd_set fdset;
+    FD_ZERO(&fdset);
+    FD_SET(fd, &fdset);
+
+    struct timeval tv {
+      .tv_sec = 5, .tv_usec = 0,
+    };
+
+    res = select(fd + 1, NULL, &fdset, NULL, &tv);
+
+    if(res <= 0) {
+      LOG_ERROR(
+          "connection with the server (%s) failed (timeout)",
+          addr.str().c_str());
+      SOCKFUNC_close(fd);
+      return -1;
+    }
+
+    else {
+#ifdef _WIN32
+      char so_error;
+#else
+      int so_error;
+#endif
+
+      socklen_t len = sizeof(so_error);
+
+      SOCKFUNC(getsockopt)(fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+
+      if(so_error != 0) {
+        LOG_ERROR(
+            "connection with the server (%s) failed (error)",
+            addr.str().c_str());
+        SOCKFUNC_close(fd);
+        return -1;
+      }
+    }
+
+    // Set socket back to blocking
+    set_blocking(fd);
+
     return fd;
   }
 

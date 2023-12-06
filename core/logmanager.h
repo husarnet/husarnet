@@ -13,10 +13,20 @@
 
 // Windows API is broken
 #undef ERROR
-BETTER_ENUM(LogLevel, int, DEBUG, INFO, WARNING, ERROR, CRITICAL)
+BETTER_ENUM(
+    LogLevel,
+    int,
+    CRITICAL /* 0 */,
+    ERROR /* 1 */,
+    WARNING /* 2 */,
+    INFO /* 3 */,
+    DEBUG /* 4 */);
 
 static inline LogLevel logLevelFromInt(int value)
 {
+  if(value > LogLevel::DEBUG)
+    return LogLevel::DEBUG;
+
   return LogLevel::_from_integral(value);
 }
 

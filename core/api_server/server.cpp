@@ -390,7 +390,7 @@ void ApiServer::runThread()
 
           if(req.has_param("verbosity")) {
             if(std::stoi(req.get_param_value("verbosity")) <=
-               logLevelToInt(LogLevel::CRITICAL)) {
+               logLevelToInt(LogLevel::DEBUG)) {
               manager->setLogVerbosity(
                   std::stoi(req.get_param_value("verbosity")));
             }

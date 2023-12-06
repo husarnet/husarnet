@@ -85,19 +85,19 @@ class ConfigStorage {
 
   void updateHostsInSystem();
 
-  json getCurrentData();
+  json getCurrentData() const;
 
   void groupChanges(std::function<void()> f);
 
   void hostTableAdd(std::string hostname, IpAddress address);
   void hostTableRm(std::string hostname);
-  std::map<std::string, IpAddress> getHostTable();
+  std::map<std::string, IpAddress> getHostTable() const;
   void hostTableClear();
 
   void whitelistAdd(IpAddress address);
   void whitelistRm(IpAddress address);
-  bool isOnWhitelist(IpAddress address);
-  std::list<IpAddress> getWhitelist();
+  bool isOnWhitelist(IpAddress address) const;
+  std::list<IpAddress> getWhitelist() const;
   void whitelistClear();
 
   void setInternalSetting(InternalSetting setting, std::string value);
@@ -106,11 +106,11 @@ class ConfigStorage {
   void setInternalSetting(InternalSetting setting, int value);
   void clearInternalSetting(InternalSetting setting);
 
-  std::string getInternalSetting(InternalSetting setting);
-  bool getInternalSettingBool(InternalSetting setting);
-  int getInternalSettingInt(InternalSetting setting);
+  std::string getInternalSetting(InternalSetting setting) const;
+  bool getInternalSettingBool(InternalSetting setting) const;
+  int getInternalSettingInt(InternalSetting setting) const;
 
-  bool isInternalSettingEmpty(InternalSetting setting);
+  bool isInternalSettingEmpty(InternalSetting setting) const;
 
   void setUserSetting(UserSetting setting, std::string value);
   void setUserSetting(UserSetting setting, const char* value);
@@ -119,15 +119,17 @@ class ConfigStorage {
   void setUserSetting(UserSetting setting, InetAddress inet);
   void clearUserSetting(UserSetting setting);
 
-  bool isUserSettingOverriden(UserSetting setting);
-  std::string getPersistentUserSetting(UserSetting setting);
+  bool isUserSettingOverriden(UserSetting setting) const;
+  std::string getPersistentUserSetting(UserSetting setting) const;
   void persistUserSettingOverride(UserSetting setting);
 
-  std::string getUserSetting(UserSetting setting);
-  bool getUserSettingBool(UserSetting setting);
-  int getUserSettingInt(UserSetting setting);
-  InetAddress getUserSettingInet(UserSetting setting);
-  IpAddress getUserSettingIp(UserSetting setting);
+  std::string getUserSetting(UserSetting setting) const;
+  bool getUserSettingBool(UserSetting setting) const;
+  int getUserSettingInt(UserSetting setting) const;
+  InetAddress getUserSettingInet(UserSetting setting) const;
+  IpAddress getUserSettingIp(UserSetting setting) const;
 
-  std::map<std::string, std::string> getUserSettings();
+  std::map<std::string, std::string> getUserSettings() const;
+
+  void printSettings() const;
 };

@@ -545,6 +545,8 @@ void HusarnetManager::stage1()
   Privileged::createConfigDirectories();
   Privileged::start();
 
+  // At this point we have a working privileged interface
+
   configStorage = new ConfigStorage(
       this, Privileged::readConfig, Privileged::writeConfig, userDefaults,
       Port::getEnvironmentOverrides(), internalDefaults);
@@ -561,6 +563,12 @@ void HusarnetManager::stage1()
 
   getGlobalLogManager()->setVerbosity(logLevelFromInt(this->getLogVerbosity()));
   LOG_INFO("Running %s", getUserAgent().c_str());
+  LOG_DEBUG(
+      "Running a nightly/debugging build");  // This macro has all the logic for
+                                             // detecting build type internally
+  configStorage->printSettings();
+
+  // At this point we have working settings/configuration and logs
 
   selfFlags = new PeerFlags();
 
