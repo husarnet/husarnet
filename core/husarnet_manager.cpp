@@ -282,6 +282,11 @@ std::string HusarnetManager::getApiInterface()
   return configStorage->getUserSetting(UserSetting::daemonApiInterface);
 }
 
+IpAddress HusarnetManager::getApiInterfaceAddress()
+{
+  return Port::getIpAddressFromInterfaceName(this->getApiInterface());
+}
+
 int HusarnetManager::getLogVerbosity()
 {
   return configStorage->getUserSettingInt(UserSetting::logVerbosity);
@@ -387,7 +392,7 @@ std::list<std::string> HusarnetManager::getNotifications()
 
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
-  if(!id == deviceIdFromIpAddress(IpAddress::parse(multicastDestination))) {
+  if(!id == deviceIdFromIpAddress(multicastDestination)) {
     return {};
   }
 
