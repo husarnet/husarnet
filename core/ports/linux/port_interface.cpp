@@ -6,8 +6,10 @@
 #include <condition_variable>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <map>
 #include <mutex>
+#include <sstream>
 #include <thread>
 
 #include <ares.h>
@@ -394,17 +396,33 @@ namespace Port {
       return;
     }
 
-    LOG_INFO(("running hooks under path " + path).c_str());
+    LOG_DEBUG(("running hooks under path " + path).c_str());
     for(auto& scriptPath : scriptPaths) {
-      pid_t pid = fork();
-      if(pid == 0) {
-        LOG_INFO(("running " + scriptPath + " as a hook").c_str());
-        std::system((char*)scriptPath.c_str());
-      } else {
-        int status;
-        waitpid(pid, &status, 0);
+      LOG_INFO(("running " + scriptPath + " as a hook").c_str());
+
+      FILE* pipe = popen((scriptPath + " 2>&1").c_str(), "r");
+      if(!pipe) {
+        LOG_ERROR(("failed to run " + scriptPath).c_str());
+        continue;
+      }
+
+      char buffer[1024];
+      std::string output;
+
+      // nullptr here is a delimiter of subprocess end
+      while(fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        output += buffer;
+      }
+
+      pclose(pipe);
+
+      std::istringstream iss(output);
+      std::string line;
+      while(std::getline(iss, line)) {
+        LOG_INFO((scriptPath + " returned: " + line).c_str());
       }
     }
+    LOG_DEBUG(("running hooks under path " + path + " done").c_str());
   }
 
   bool checkScriptsExist(const std::string& path)
