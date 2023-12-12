@@ -3,6 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <list>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
@@ -60,6 +61,7 @@ class Peer {
 
   DeviceId getDeviceId();
   IpAddress getIpAddress();
+  std::string getIpAddressString();
 
   auto const& getSourceAddresses()
   {

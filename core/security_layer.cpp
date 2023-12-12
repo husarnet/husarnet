@@ -101,7 +101,8 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
 
 void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 {
-  LOG_DEBUG("received data packet from peer: %s", std::string(peerId).c_str())
+  LOG_DEBUG(
+      "received data packet from peer: %s", deviceIdToString(peerId).c_str())
   const int headerSize = 1 + 24 + 16;
   if(data.size() <= headerSize + 8)
     return;
@@ -114,7 +115,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
     sendHelloPacket(peer);
     LOG_WARNING(
         "received data packet before hello from peer: %s",
-        std::string(peerId).c_str());
+        deviceIdToString(peerId).c_str());
     return;
   }
 
@@ -138,7 +139,8 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
     sendToUpperLayer(peerId, decryptedData);
   } else {
     LOG_INFO(
-        "received forged message from peer: %s", encodeHex(peerId).c_str());
+        "received forged message from peer: %s",
+        deviceIdToString(peerId).c_str());
   }
 }
 
@@ -166,7 +168,7 @@ void SecurityLayer::handleHelloPacket(
   constexpr int dataLen = 65 + 16 + 16;
   if(data.size() < dataLen + 64)
     return;
-  LOG_INFO("hello %d from %s", helloNum, encodeHex(target).c_str());
+  LOG_INFO("hello %d from %s", helloNum, deviceIdToString(target).c_str());
 
   Peer* peer = peerContainer->getOrCreatePeer(target);
   if(peer == nullptr)
@@ -182,7 +184,8 @@ void SecurityLayer::handleHelloPacket(
   if(data.size() >= 64 + 65 + 32 + 8) {
     flags_bin = unpack<uint64_t>(substr<65 + 32, 8>(data));
   }
-  LOG_DEBUG("peer flags: %llx", (unsigned long long)flags_bin);
+  LOG_DEBUG(
+      "peer flags: %llx (bits, not count)", (unsigned long long)flags_bin);
 
   if(targetId != manager->getIdentity()->getDeviceId()) {
     LOG_INFO(
@@ -215,7 +218,7 @@ void SecurityLayer::handleHelloPacket(
   if(myHelloseq != this->helloseq) {  // prevents replay DoS
     // this will occur under normal operation, if both sides attempt to
     // initialize at once or two handshakes are interleaved
-    LOG_DEBUG("invalid helloseq from %s", std::string(peer->id).c_str());
+    LOG_DEBUG("invalid helloseq from %s", peer->getIpAddressString().c_str());
     return;
   }
 
@@ -249,7 +252,7 @@ void SecurityLayer::handleHelloPacket(
         encodeHex(peer->txKey.substr(0, 6)).c_str());
     finishNegotiation(peer);
   } else {
-    LOG_INFO("key exchange failed with %s", std::string(peer->id).c_str());
+    LOG_INFO("key exchange failed with %s", peer->getIpAddressString().c_str());
     return;
   }
 
@@ -261,7 +264,9 @@ void SecurityLayer::handleHelloPacket(
 
 void SecurityLayer::finishNegotiation(Peer* peer)
 {
-  LOG_INFO("established secure connection to %s", encodeHex(peer->id).c_str());
+  LOG_INFO(
+      "established secure connection to %s",
+      peer->getIpAddressString().c_str());
   peer->negotiated = true;
   for(auto& packet : peer->packetQueue) {
     queuedPackets--;

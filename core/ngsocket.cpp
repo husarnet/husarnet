@@ -166,7 +166,9 @@ void NgSocket::periodicPeer(Peer* peer)
     if(peer->reestablishing && peer->connected &&
        Port::getCurrentTime() - peer->lastReestablish > REESTABLISH_TIMEOUT) {
       peer->connected = false;
-      LOG_WARNING("falling back to relay (peer: %s)", IDSTR(peer->id));
+      LOG_WARNING(
+          "falling back to relay (peer: %s)",
+          peer->getIpAddressString().c_str());
     }
 
     attemptReestablish(peer);
@@ -201,7 +203,7 @@ void NgSocket::sendDataToPeer(Peer* peer, string_view data)
         peer->failedEstablishments <= MAX_FAILED_ESTABLISHMENTS))
       attemptReestablish(peer);
 
-    LOG_DEBUG("send to peer %s tunnelled", std::string(peer->id).c_str());
+    LOG_DEBUG("send to peer %s tunnelled", peer->getIpAddressString().c_str());
     // Not (yet) connected, relay via base.
     PeerToBaseMessage msg = {
         .kind = PeerToBaseMessageKind::DATA,
@@ -236,8 +238,7 @@ void NgSocket::attemptReestablish(Peer* peer)
   peer->helloCookie = generateRandomString(16);
 
   LOG_INFO(
-      "reestablish connection to [%s]",
-      IpAddress::fromBinary(peer->id).str().c_str());
+      "reestablish connection to [%s]", peer->getIpAddressString().c_str());
 
   std::vector<InetAddress> addresses = peer->targetAddresses;
   if(peer->linkLocalAddress)
@@ -270,7 +271,9 @@ void NgSocket::attemptReestablish(Peer* peer)
       // send the heartbeat twice to the active address
       sendToPeer(address, response);
   }
-  LOG_DEBUG("addresses: %s", msg.c_str());
+  LOG_DEBUG(
+      "attempt reestablish %s addresses: %s",
+      peer->getIpAddressString().c_str(), msg.c_str());
 }
 
 void NgSocket::peerMessageReceived(
@@ -335,7 +338,7 @@ void NgSocket::helloReplyReceived(
 
   LOG_DEBUG(
       "HELLO-REPLY from %s (%s)", source.str().c_str(),
-      encodeHex(msg.myId).c_str());
+      deviceIdToString(msg.myId).c_str());
   Peer* peer = peerContainer->getPeer(msg.myId);
   if(peer == nullptr)
     return;
