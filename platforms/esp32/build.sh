@@ -3,25 +3,47 @@
 # Authors: listed in project_root/README.md
 # License: specified in project_root/LICENSE.txt
 source $(dirname "$0")/../../util/bash-base.sh
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 (stable/nightly)"
+  exit 1
+fi
 
-pushd ${base_dir}/platforms/esp32
+build_type=$1
+
+build_dir="${base_dir}/build/esp32/"
+source_dir="${base_dir}/platforms/esp32/"
 
 set +u # ESP-IDF is "slightly broken"
 . /esp/esp-idf/export.sh
 set -u
 
-rm -rf build && mkdir -p build
-pushd build
+if [[ ${build_type} = nightly ]]; then
+  debug_flags="-DCMAKE_BUILD_TYPE=Debug"
+elif [[ ${build_type} = stable ]]; then
+  debug_flags="-DCMAKE_BUILD_TYPE=Release"
+else
+  echo "Unknown build type: ${build_type}, supported values: stable/nightly"
+  exit 1
+fi
+
+# Prepare required directories
+mkdir -p ${build_dir}
+cp ${source_dir}/sdkconfig ${build_dir}
+
+pushd ${build_dir}
 
 TARGET=esp32
-cmake .. -DCMAKE_TOOLCHAIN_FILE=$IDF_PATH/tools/cmake/toolchain-${TARGET}.cmake -DTARGET=${TARGET} -GNinja
-cmake --build .
+cmake ${source_dir} \
+  -DCMAKE_TOOLCHAIN_FILE=$IDF_PATH/tools/cmake/toolchain-clang-${TARGET}.cmake \
+  -DTARGET=${TARGET} \
+  -DSDKCONFIG=${build_dir}/sdkconfig \
+  -GNinja ${debug_flags} \
 
-popd
+cmake --build ${build_dir}
 
-cp build/libhusarnet_core.a demo/
-pushd demo
-pio run
-popd
+# cp build/libhusarnet_core.a demo/
+# pushd demo
+# pio run
+# popd
 
 popd

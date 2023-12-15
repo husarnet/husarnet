@@ -1,6 +1,11 @@
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if (${CMAKE_SYSTEM_NAME} STREQUAL ESP32)
+  # Register component
+  idf_component_register(REQUIRES nvs_flash freertos)
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g -fsanitize=undefined -fsanitize=undefined") # -fsanitize=thread
 
@@ -86,10 +91,6 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/ports)
 file(GLOB husarnet_ports_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_ports_SRC})
 
-include_directories(${CMAKE_CURRENT_LIST_DIR}/privileged)
-file(GLOB husarnet_privileged_SRC "${CMAKE_CURRENT_LIST_DIR}/privileged/*.cpp")
-list(APPEND husarnet_core_SRC ${husarnet_privileged_SRC})
-
 if(${BUILD_HTTP_CONTROL_API})
   include_directories(${CMAKE_CURRENT_LIST_DIR}/api_server)
   file(GLOB api_server_SRC "${CMAKE_CURRENT_LIST_DIR}/api_server/*.cpp")
@@ -113,6 +114,10 @@ add_library(husarnet_core STATIC ${husarnet_core_SRC})
 target_include_directories(husarnet_core PUBLIC ${TEMP_INCLUDE_DIR})
 target_compile_definitions(husarnet_core PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PROCESSOR}")
 
+if (${CMAKE_SYSTEM_NAME} STREQUAL ESP32)
+  target_link_libraries(husarnet_core idf::nvs_flash idf::freertos)
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(husarnet_core PRIVATE DEBUG_BUILD=1)
 endif()
@@ -131,6 +136,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Android)
   target_link_libraries(husarnet_core log)
 endif()
 
+#TODO: during ESP32 build use native ESP32 libsodium component
 FetchContent_Declare(
   libsodium
   GIT_REPOSITORY https://github.com/jedisct1/libsodium.git

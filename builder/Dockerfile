@@ -9,6 +9,7 @@ RUN apt-get update \
     bison \
     ca-certificates \
     ccache \
+    clang \
     clang-format \
     cmake \
     cppcheck \
@@ -69,16 +70,16 @@ ENV GOFLAGS="-buildvcs=false"
 
 # RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
 # RUN pip3 install platformio
-# WORKDIR /esp
-# RUN chown 1000:1000 /esp
-# USER 1000
-# RUN git clone --recursive -b v4.4.3 https://github.com/espressif/esp-idf.git
-# ENV IDF_PATH=/esp/esp-idf
-# ENV IDF_TOOLS_PATH=/esp
-# ENV IDF_PYTHON_CHECK_CONSTRAINTS=no
-# RUN ./esp-idf/tools/idf_tools.py --non-interactive install required --targets=all
-# RUN ./esp-idf/tools/idf_tools.py --non-interactive install-python-env
-# RUN rm -rf /esp/dist
+WORKDIR /esp
+RUN chown 1000:1000 /esp
+# ESP-IDF calls expects python to be python3
+RUN ln -s /usr/bin/python3 /usr/bin/python
+USER 1000
+RUN git clone --recursive -b v5.1.2 https://github.com/espressif/esp-idf.git
+ENV IDF_PATH="/esp/esp-idf"
+RUN ./esp-idf/install.sh all
+RUN ./esp-idf/tools/idf_tools.py install esp-clang
+RUN ./esp-idf/tools/idf_tools.py export
 
 USER 0
 WORKDIR /app

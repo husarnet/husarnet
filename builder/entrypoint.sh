@@ -14,4 +14,6 @@ fix_perms ${build_base}
 fix_perms ${base_dir}/cli/generated
 fix_perms ${base_dir}/tests/integration
 
+git config --global --add safe.directory ${build_base}
+
 su -w "CGO_ENABLED,GOCACHE,GOPATH,GOFLAGS,IDF_PATH,IDF_TOOLS_PATH,IDF_PYTHON_CHECK_CONSTRAINTS" -l -P builder -c "/usr/bin/bash ${*}"
