@@ -178,7 +178,7 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
 
   std::string dashboardHostname;
   if(newHostname.empty()) {
-    dashboardHostname = Privileged::getSelfHostname();
+    dashboardHostname = this->getSelfHostname();
   } else {
     this->setSelfHostname(newHostname);
     dashboardHostname = newHostname;

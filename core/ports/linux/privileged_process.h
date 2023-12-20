@@ -25,6 +25,7 @@ class PrivilegedProcess {
   int fd = -1;
 
   json handleUpdateHostsFile(json data);
+  bool hasHostnameFile();
   json handleGetSelfHostname(json data);
   json handleSetSelfHostname(json data);
   json handleNotifyReady(json data);
