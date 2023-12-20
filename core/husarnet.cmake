@@ -137,13 +137,20 @@ FetchContent_Declare(
   GIT_TAG 1.0.19
 )
 FetchContent_MakeAvailable(libsodium)
+
+# Generate compile-time version header
+# Needs to be populated manually from libsodium's configure.ac
+set(SODIUM_LIBRARY_VERSION_STRING "1.0.19")
+
+set(SODIUM_LIBRARY_VERSION_MAJOR 28)
+set(SODIUM_LIBRARY_VERSION_MINOR  0)
+include(${CMAKE_CURRENT_LIST_DIR}/lib-config/libsodium/generate.cmake)
+
 include_directories(${libsodium_SOURCE_DIR}/src/libsodium/include)
 file(GLOB_RECURSE sodium_SRC ${libsodium_SOURCE_DIR}/src/libsodium/*.c)
 add_library(sodium STATIC ${sodium_SRC})
 target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include)
 target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include/sodium)
-target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config)
-target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config/sodium)
 target_compile_options(sodium PRIVATE -DCONFIGURED=1 -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
