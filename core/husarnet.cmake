@@ -1,16 +1,9 @@
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL ESP32)
-  # Register component
-  idf_component_register(REQUIRES nvs_flash freertos)
-endif()
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g -fsanitize=undefined -fsanitize=undefined") # -fsanitize=thread
-
-# set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
-# set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "include-what-you-use")
+  #TODO: -fsanitize=undefined in clang
+  set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g")
 else()
   set(COMMONFLAGS "${COMMONFLAGS} -O3 -ffunction-sections -fdata-sections")
 endif()
@@ -54,6 +47,18 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
   set(BUILD_HTTP_CONTROL_API TRUE)
 endif()
 
+# Build IDF framework libraries
+# TODO: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/kconfig.html#config-spiram-cache-workaround
+if (DEFINED IDF_TARGET)
+  include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+  idf_build_process("${IDF_TARGET}"
+                    COMPONENTS lwip nvs_flash freertos esp_netif esp_timer
+                    SDKCONFIG ${SDKCONFIG}
+                    #SDKCONFIG_DEFAULTS ${SDKCONFIG}.default
+                    BUILD_DIR ${CMAKE_BINARY_DIR})
+endif()
+
 # Add all required headers and source files
 list(APPEND husarnet_core_SRC) # This is more of a define rather than an append
 
@@ -81,7 +86,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
   list(APPEND husarnet_core_SRC ${port_macos_SRC} ${port_shared_unix_windows_SRC})
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL ESP32)
+if (DEFINED IDF_TARGET)
   include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/esp32)
   file(GLOB port_esp32_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/esp32/*.cpp")
   list(APPEND husarnet_core_SRC ${port_esp32_SRC})
@@ -113,10 +118,6 @@ file(CREATE_LINK ${CMAKE_CURRENT_LIST_DIR}/ ${TEMP_INCLUDE_DIR}/husarnet SYMBOLI
 add_library(husarnet_core STATIC ${husarnet_core_SRC})
 target_include_directories(husarnet_core PUBLIC ${TEMP_INCLUDE_DIR})
 target_compile_definitions(husarnet_core PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PROCESSOR}")
-
-if (${CMAKE_SYSTEM_NAME} STREQUAL ESP32)
-  target_link_libraries(husarnet_core idf::nvs_flash idf::freertos)
-endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(husarnet_core PRIVATE DEBUG_BUILD=1)
@@ -232,4 +233,15 @@ if(${BUILD_HTTP_CONTROL_API})
   if(IS_DIRECTORY "${httplib_SOURCE_DIR}")
     set_property(DIRECTORY ${httplib_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
   endif()
+endif()
+
+if (DEFINED IDF_TARGET)
+  target_link_libraries(husarnet_core idf::lwip idf::nvs_flash idf::freertos idf::esp_netif idf::esp_timer)
+  target_compile_definitions(husarnet_core PRIVATE IDF_TARGET=${IDF_TARGET})
+
+  # Add dummy target to make the ESP-IDF build system happy
+  add_executable(${CMAKE_PROJECT_NAME}.elf ${CMAKE_CURRENT_LIST_DIR}/ports/esp32/main.c)
+  target_link_libraries(${CMAKE_PROJECT_NAME}.elf idf::newlib husarnet_core)
+  idf_build_executable(${CMAKE_PROJECT_NAME}.elf)
+  # idf_build_executable(husarnet_core)
 endif()

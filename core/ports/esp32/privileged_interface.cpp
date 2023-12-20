@@ -94,6 +94,8 @@ namespace Privileged {
 
   std::vector<IpAddress> getLocalAddresses()
   {
+    esp_netif_get_all_ip6
+
     std::vector<IpAddress> ret;
     for(tcpip_adapter_if_t ifid : {TCPIP_ADAPTER_IF_STA, TCPIP_ADAPTER_IF_AP}) {
       tcpip_adapter_ip_info_t info;

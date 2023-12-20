@@ -5,7 +5,7 @@
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/privileged_interface.h"
 
-#ifdef ESP_PLATFORM
+#ifdef IDF_TARGET
 #define PORT_ESP32
 #define PORT_NAME "ESP32"
 #include "husarnet/ports/esp32/port.h"

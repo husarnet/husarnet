@@ -1,3 +1,8 @@
+// Copyright (c) 2024 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
+
+// This is a dummy file, just to make linker happy
 /*
  * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
  *

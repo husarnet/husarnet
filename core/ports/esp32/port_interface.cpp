@@ -40,6 +40,7 @@
 #include "lwip/sys.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "esp_timer.h"
 
 namespace Port {
   static nvs_handle nvsHandle;

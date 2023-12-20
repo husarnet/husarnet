@@ -10,8 +10,8 @@ fi
 
 build_type=$1
 
-build_dir="${base_dir}/build/esp32/"
-source_dir="${base_dir}/platforms/esp32/"
+build_dir="${base_dir}/build/esp32"
+source_dir="${base_dir}/platforms/esp32"
 
 set +u # ESP-IDF is "slightly broken"
 . /esp/esp-idf/export.sh
@@ -28,14 +28,17 @@ fi
 
 # Prepare required directories
 mkdir -p ${build_dir}
-cp ${source_dir}/sdkconfig ${build_dir}
+cp ${source_dir}/sdkconfig ${build_dir}/sdkconfig
 
 pushd ${build_dir}
 
 TARGET=esp32
+
+# Build husarnet_core with GCC compiler
+# TODO: when the clang will be officially supported by ESP-IDF, switch to it
 cmake ${source_dir} \
-  -DCMAKE_TOOLCHAIN_FILE=$IDF_PATH/tools/cmake/toolchain-clang-${TARGET}.cmake \
-  -DTARGET=${TARGET} \
+  -DCMAKE_TOOLCHAIN_FILE=$IDF_PATH/tools/cmake/toolchain-${TARGET}.cmake \
+  -DIDF_TARGET=${TARGET} \
   -DSDKCONFIG=${build_dir}/sdkconfig \
   -GNinja ${debug_flags} \
 
