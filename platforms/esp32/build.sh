@@ -3,12 +3,13 @@
 # Authors: listed in project_root/README.md
 # License: specified in project_root/LICENSE.txt
 source $(dirname "$0")/../../util/bash-base.sh
-if [ $# -ne 1 ]; then
-  echo "Usage: $0 (stable/nightly)"
+if [ $# -ne 2 ]; then
+  echo "Usage: $0 <idf_target> (stable/nightly)"
   exit 1
 fi
 
-build_type=$1
+TARGET=$1
+build_type=$2
 
 build_dir="${base_dir}/build/esp32"
 source_dir="${base_dir}/platforms/esp32"
@@ -31,8 +32,6 @@ mkdir -p ${build_dir}
 cp ${source_dir}/sdkconfig ${build_dir}/sdkconfig
 
 pushd ${build_dir}
-
-TARGET=esp32
 
 # Build husarnet_core with GCC compiler
 # TODO: when the clang will be officially supported by ESP-IDF, switch to it

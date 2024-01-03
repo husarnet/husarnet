@@ -18,7 +18,7 @@ source $(dirname "$0")/bash-base.sh
 #docker_builder /app/platforms/windows/build.sh nightly
 
 # ESP32
-docker_builder /app/platforms/esp32/build.sh nightly
+docker_builder /app/platforms/esp32/build.sh esp32s3 stable
 
 # macOS
 # We are currently NOT cross-compiling for macOS. Reenable when resolved.
