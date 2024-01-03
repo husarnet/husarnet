@@ -16,7 +16,8 @@ HooksManager::HooksManager(HusarnetManager* manager)
       std::lock_guard lk(this->m);
       hookConditionalVariables[val]->notify_all();
     };
-    hookTimers.insert({value, new Timer(timespan, interval, callback)});
+    // TODO: fix pthreads error
+    //hookTimers.insert({value, new Timer(timespan, interval, callback)});
   }
 };
 
@@ -35,7 +36,8 @@ void HooksManager::runHook(HookType hookType)
     return;
   }
 
-  hookTimers[hookDirNames[hookType]]->Reset();
+  // TODO: fix pthreads error
+  //hookTimers[hookDirNames[hookType]]->Reset();
 }
 
 void HooksManager::waitHook(HookType hookType)

@@ -33,14 +33,18 @@
 #include "husarnet/util.h"
 
 #include "enum.h"
+
 #include "esp_system.h"
+#include "esp_timer.h"
+#include "esp_log.h"
+#include "nvs_flash.h"
+
 #include "lwip/dns.h"
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
-#include "nvs.h"
-#include "nvs_flash.h"
-#include "esp_timer.h"
+
+static const char* LOG_TAG = "husarnet";
 
 namespace Port {
   static nvs_handle nvsHandle;
@@ -49,7 +53,7 @@ namespace Port {
   {
     int ok = nvs_open("husarnet", NVS_READWRITE, &nvsHandle);
     if(ok != ESP_OK) {
-      LOG("Unable to access non volatile memory. This will result in corrupted "
+      LOG_ERROR("Unable to access non volatile memory. This will result in corrupted "
           "operations!");
     }
   }
@@ -175,8 +179,33 @@ namespace Port {
     // No-op as we won't be using it on this platform
   }
 
-  void log(const std::string& message)
+  void log(const LogLevel level, const std::string& message)
   {
-    // @TODO
+    esp_log_level_t esp_level;
+
+    switch (level)
+    {
+      case +LogLevel::DEBUG:
+        esp_level = ESP_LOG_DEBUG;
+        break;
+      case +LogLevel::INFO:
+        esp_level = ESP_LOG_INFO;
+        break;
+      case +LogLevel::WARNING:
+        esp_level = ESP_LOG_WARN;
+        break;
+      case +LogLevel::ERROR:
+        esp_level = ESP_LOG_ERROR;
+        break;
+      default:
+        esp_level = ESP_LOG_INFO;
+        break;
+    }
+
+    ESP_LOG_LEVEL(esp_level, LOG_TAG, "%s", message.c_str());
+  }
+
+  const std::string getHumanTime() {
+    return "NOT IMPLEMENTED"; //TODO: implement
   }
 }  // namespace Port

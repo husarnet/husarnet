@@ -3,7 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #include <husarnet/husarnet_manager.h>
 
-void run_husarnet()
+extern "C" void run_husarnet()
 {
   auto* manager = new HusarnetManager();
   manager->runHusarnet();

@@ -5,7 +5,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   #TODO: -fsanitize=undefined in clang
   set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g")
 else()
-  set(COMMONFLAGS "${COMMONFLAGS} -O3 -ffunction-sections -fdata-sections")
+  set(COMMONFLAGS "${COMMONFLAGS} -Os -ffunction-sections -fdata-sections")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
@@ -53,7 +53,7 @@ if (DEFINED IDF_TARGET)
   include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
   idf_build_process("${IDF_TARGET}"
-                    COMPONENTS lwip nvs_flash freertos esp_netif esp_timer
+                    COMPONENTS lwip nvs_flash freertos esp_netif esp_timer cxx
                     SDKCONFIG ${SDKCONFIG}
                     #SDKCONFIG_DEFAULTS ${SDKCONFIG}.default
                     BUILD_DIR ${CMAKE_BINARY_DIR})
@@ -236,12 +236,12 @@ if(${BUILD_HTTP_CONTROL_API})
 endif()
 
 if (DEFINED IDF_TARGET)
-  target_link_libraries(husarnet_core idf::lwip idf::nvs_flash idf::freertos idf::esp_netif idf::esp_timer)
+  target_link_libraries(husarnet_core idf::lwip idf::nvs_flash idf::freertos idf::esp_netif idf::esp_timer idf::cxx)
   target_compile_definitions(husarnet_core PRIVATE IDF_TARGET=${IDF_TARGET})
 
   # Add dummy target to make the ESP-IDF build system happy
   add_executable(${CMAKE_PROJECT_NAME}.elf ${CMAKE_CURRENT_LIST_DIR}/ports/esp32/main.c)
-  target_link_libraries(${CMAKE_PROJECT_NAME}.elf idf::newlib husarnet_core)
+  target_link_libraries(${CMAKE_PROJECT_NAME}.elf husarnet_core)
   idf_build_executable(${CMAKE_PROJECT_NAME}.elf)
   # idf_build_executable(husarnet_core)
 endif()

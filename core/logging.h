@@ -39,8 +39,14 @@ static inline void log(
     userMessage += " " + extra;
   }
 
-  std::string message = Port::getHumanTime();
+  // TODO: this is not a cleanest solution, but it works for now
+
+  std::string message;
+
+#ifndef PORT_ESP32
+  message = Port::getHumanTime();
   message += " " + padRight(8, level._to_string());
+#endif
 
 #ifdef DEBUG_BUILD
   message += " " + padRight(80, userMessage);
@@ -50,7 +56,7 @@ static inline void log(
   message += " " + userMessage;
 #endif
 
-  Port::log(message);
+  Port::log(level, message);
   getGlobalLogManager()->insert(message);
 }
 

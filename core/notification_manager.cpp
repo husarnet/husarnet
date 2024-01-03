@@ -14,8 +14,9 @@ NotificationManager::NotificationManager(
   dashboardHostname = dashboardHostname_;
   husarnetManager = husarnetManager_;
   refreshNotificationFile();
-  this->timer = new PeriodicTimer(interval, refreshNotificationFile);
-  this->timer->Start();
+  // TODO: fix pthreads error
+  //this->timer = new PeriodicTimer(interval, refreshNotificationFile);
+  //this->timer->Start();
 };
 NotificationManager::~NotificationManager()
 {

@@ -13,8 +13,6 @@
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-#include "esp_netif.h"
-
 static std::string configDir;
 
 namespace Privileged {
@@ -27,11 +25,16 @@ namespace Privileged {
   {
   }
 
+  void createConfigDirectories()
+  {
+  }
+
   void dropCapabilities()
   {
     // Technically this port will always be running as privileged
   }
 
+  // Following functions return keys for the NVS storage
   std::string getConfigPath()
   {
     return "husarnet_config";
@@ -47,9 +50,32 @@ namespace Privileged {
     return "husarnet_api_secret";
   }
 
+  // std::string getLegacyConfigPath()
+  // {
+  //   return "husarnet_config_legacy"; // not used
+  // }
+
   std::string getLicenseJsonPath()
   {
     return "husarnet_license";
+  }
+
+  // TODO: Notifications are not implemented yet,
+  // decide if we want to keep them in the ESP32 port
+  std::string getNotificationFilePath()
+  {
+    return "husarnet_notifications";
+  }
+
+  std::string readNotificationFile()
+  {
+    LOG_WARNING("readNotificationFile not implemented");
+    return "";
+  }
+
+  void writeNotificationFile(std::string data)
+  {
+    LOG_WARNING("writeNotificationFile not implemented");
   }
 
   std::string readLicenseJson()
@@ -77,9 +103,32 @@ namespace Privileged {
     return Identity::deserialize(Port::readFile(Privileged::getIdentityPath()));
   }
 
+  Identity createIdentity() {
+    auto identity = Identity::create();
+    Privileged::writeIdentity(identity);
+    return identity;
+  }
+
+  bool checkValidIdentityExists() {
+    auto identity = readIdentity();
+
+    if(!identity.isValid()) {
+      return false;
+    }
+
+    return true;
+  }
+
   void writeIdentity(Identity identity)
   {
     Port::writeFile(Privileged::getIdentityPath(), identity.serialize());
+  }
+
+  // TODO: implement hostname resolution
+  IpAddress resolveToIp(const std::string& hostname)
+  {
+    LOG_WARNING("resolveToIp not implemented");
+    return IpAddress{};
   }
 
   std::string readApiSecret()
@@ -92,24 +141,39 @@ namespace Privileged {
     Port::writeFile(Privileged::getApiSecretPath(), generateRandomString(32));
   }
 
+  // TODO: Notifications are not implemented yet,
+  // decide if we want to keep them in the ESP32 port
+  std::vector<std::pair<std::time_t, std::string>> readNotifications()
+  {
+    LOG_WARNING("readNotifications not implemented");
+    return {};
+  }
+
+  void writeNotifications(std::vector<std::pair<std::time_t, std::string>> list)
+  {
+    LOG_WARNING("writeNotifications not implemented");
+  }
+
+  // TODO: important: implement local addresses
   std::vector<IpAddress> getLocalAddresses()
   {
-    esp_netif_get_all_ip6
+    // esp_netif_get_all_ip6
 
-    std::vector<IpAddress> ret;
-    for(tcpip_adapter_if_t ifid : {TCPIP_ADAPTER_IF_STA, TCPIP_ADAPTER_IF_AP}) {
-      tcpip_adapter_ip_info_t info;
-      if(tcpip_adapter_get_ip_info(ifid, &info) == ESP_OK) {
-        IpAddress addr = IpAddress::fromBinary4(info.ip.addr);
-        ret.push_back(addr);
-      }
-    }
+         std::vector<IpAddress>
+             ret;
+    // for(tcpip_adapter_if_t ifid : {TCPIP_ADAPTER_IF_STA, TCPIP_ADAPTER_IF_AP}) {
+    //   tcpip_adapter_ip_info_t info;
+    //   if(tcpip_adapter_get_ip_info(ifid, &info) == ESP_OK) {
+    //     IpAddress addr = IpAddress::fromBinary4(info.ip.addr);
+    //     ret.push_back(addr);
+    //   }
+    // }
     return ret;
   }
 
   std::string getSelfHostname()
   {
-    return "";  // @TODO
+    return "husarnet-esp32";  // @TODO
   }
 
   bool setSelfHostname(const std::string& newHostname)
@@ -125,5 +189,14 @@ namespace Privileged {
   void notifyReady()
   {
     // @TODO
+  }
+
+  void runScripts(const std::string& path) {
+    LOG_ERROR("runScripts not supported on ESP32");
+    // TODO
+  }
+
+  bool checkScriptsExist(const std::string& path) {
+    return false;
   }
 }  // namespace Privileged

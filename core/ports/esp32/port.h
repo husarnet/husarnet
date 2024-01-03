@@ -9,6 +9,7 @@
 // #include <lwip/sockets.h>
 
 #include <lwip/inet.h>
+#include "user_interface.h"
 // #define SOCKFUNC(name) ::lwip_##name##_r
 
 #define SOCKFUNC(name) ::name
