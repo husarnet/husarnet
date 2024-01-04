@@ -38,6 +38,7 @@
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "nvs_handle.hpp"
 
 #include "lwip/dns.h"
 #include "lwip/netdb.h"
@@ -47,14 +48,16 @@
 static const char* LOG_TAG = "husarnet";
 
 namespace Port {
-  static nvs_handle nvsHandle;
+  std::unique_ptr<nvs::NVSHandle> nvsHandle;
 
   void init()
   {
-    int ok = nvs_open("husarnet", NVS_READWRITE, &nvsHandle);
-    if(ok != ESP_OK) {
-      LOG_ERROR("Unable to access non volatile memory. This will result in corrupted "
-          "operations!");
+    esp_err_t err;
+    nvsHandle = nvs::open_nvs_handle("husarnet", NVS_READWRITE, &err);
+
+    if(err != ESP_OK) {
+      LOG_ERROR("Unable to open NVS. This will result in corrupted "
+          "operations! (Error: %s)", esp_err_to_name(err));
     }
   }
 
@@ -75,7 +78,7 @@ namespace Port {
     TaskHandle_t handle;
     std::function<void()>* func1 = new std::function<void()>;
     *func1 = std::move(func);
-    int coreId = strcmp(name, "ngsocket") == 0 ? 1 : 0;
+    int coreId = strcmp(name, "ngsocket") == 0 ? 1 : 0; //TODO: refactor
     if(xTaskCreatePinnedToCore(
            taskProc, name, stack, func1, priority, &handle, coreId) != pdTRUE) {
       abort();
@@ -127,37 +130,43 @@ namespace Port {
 
   std::string readFile(const std::string& path)
   {
-    size_t requiredSize = 0;
-    int ok = nvs_get_blob(nvsHandle, path.c_str(), NULL, &requiredSize);
-    if(ok != ESP_OK) {
-      LOG("Unable to access non volatile memory. This will result in "
-          "corrupted "
-          "operations!");
+    size_t len;
+    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), len);
+
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
       return "";
     }
-    std::string s;
-    s.resize(requiredSize);
-    ok = nvs_get_blob(nvsHandle, path.c_str(), &s[0], &requiredSize);
-    if(ok != ESP_OK) {
-      LOG("Unable to access non volatile memory. This will result in "
-          "corrupted "
-          "operations!");
+
+    if(err != ESP_OK) {
+      LOG_ERROR("Unable to access NVS. (Error: %s)", esp_err_to_name(err));
       return "";
     }
-    return s;
+
+    std::string value;
+    value.resize(len);
+
+    err = nvsHandle->get_string(path.c_str(), value.data(), len);
+
+    if(err != ESP_OK) {
+      LOG_ERROR("Unable to access NVS. (Error: %s)", esp_err_to_name(err));
+      return "";
+    }
+
+    return value;
   }
 
   bool writeFile(const std::string& path, const std::string& data)
   {
     LOG("write %s (len: %d)", path.c_str(), (int)data.size());
 
-    if(nvs_set_blob(nvsHandle, path.c_str(), &data[0], data.size()) != ESP_OK) {
-      LOG("failed to update key %s", path.c_str());
+    esp_err_t err = nvsHandle->set_string(path.c_str(), data.c_str());
+    if (err != ESP_OK) {
+      LOG_ERROR("Unable to update NVS. (Error: %s)", esp_err_to_name(err));
       return false;
     }
 
-    if(nvs_commit(nvsHandle) != ESP_OK) {
-      LOG("failed to commit key %s", path.c_str());
+    if(nvsHandle->commit() != ESP_OK) {
+      LOG_ERROR("Unable to commit NVS. (Error: %s)", esp_err_to_name(err));
       return false;
     }
 
@@ -166,11 +175,24 @@ namespace Port {
 
   bool isFile(const std::string& path)
   {
-    return false;  // @TODO
+    size_t value;
+    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), value);
+
+    if (err == ESP_OK) {
+      return true;
+    }
+
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
+      return false;
+    }
+
+    LOG_ERROR("Unable to access NVS. (Error: %s)", esp_err_to_name(err));
+    return false;
   }
 
   bool renameFile(const std::string& src, const std::string& dst)
   {
+    LOG_ERROR("renameFile not implemented");
     return false;  // @TODO
   }
 

@@ -43,7 +43,7 @@ static inline void log(
 
   std::string message;
 
-#ifndef PORT_ESP32
+#ifndef IDF_TARGET
   message = Port::getHumanTime();
   message += " " + padRight(8, level._to_string());
 #endif

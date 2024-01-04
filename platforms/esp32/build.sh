@@ -30,6 +30,7 @@ fi
 # Prepare required directories
 mkdir -p ${build_dir}
 cp ${source_dir}/sdkconfig ${build_dir}/sdkconfig
+cp ${source_dir}/partitions.csv ${build_dir}/partitions.csv
 
 pushd ${build_dir}
 
