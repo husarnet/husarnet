@@ -27,7 +27,13 @@ static inline LogLevel logLevelFromInt(int value)
   if(value > LogLevel::DEBUG)
     return LogLevel::DEBUG;
 
-  return LogLevel::_from_integral(value);
+  auto level = LogLevel::_from_integral_nothrow(value);
+
+  if(level)
+    return level.value();
+  else {
+    return LogLevel::CRITICAL;
+  }
 }
 
 static inline int logLevelToInt(LogLevel value)

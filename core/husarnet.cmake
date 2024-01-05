@@ -40,6 +40,10 @@ if(DEFINED FAIL_ON_WARNING)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wconversion")
 endif()
 
+if (DEFINED IDF_TARGET)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
+endif()
+
 # Configure the build
 set(BUILD_HTTP_CONTROL_API FALSE)
 

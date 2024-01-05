@@ -124,11 +124,9 @@ namespace Privileged {
     Port::writeFile(Privileged::getIdentityPath(), identity.serialize());
   }
 
-  // TODO: implement hostname resolution
   IpAddress resolveToIp(const std::string& hostname)
   {
-    LOG_WARNING("resolveToIp not implemented");
-    return IpAddress{};
+    return Port::resolveToIp(hostname);
   }
 
   std::string readApiSecret()

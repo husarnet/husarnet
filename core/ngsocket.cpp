@@ -749,7 +749,14 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
     return msg;
   }
 
-  msg.kind = BaseToPeerMessageKind::_from_integral(data[0]);
+  //TODO: refactor, dead code?
+  auto msgKind = BaseToPeerMessageKind::_from_integral_nothrow(data[0]);
+  if (msgKind) {
+    msg.kind = msgKind.value();
+  } else {
+    LOG_ERROR("invalid message kind: %d", data[0]);
+  }
+
   return msg;
 }
 
@@ -785,12 +792,12 @@ PeerToPeerMessage NgSocket::parsePeerToPeerMessage(string_view data)
       LOG_ERROR("invalid signature: %s", signature.c_str());
       return msg;
     }
-    msg.kind = PeerToPeerMessageKind::_from_integral(data[0]);
+    msg.kind = PeerToPeerMessageKind::_from_index_unchecked(data[0]);    
     return msg;
   }
 
   if(data[0] == (char)PeerToPeerMessageKind::DATA) {
-    msg.kind = PeerToPeerMessageKind::_from_integral(data[0]);
+    msg.kind = PeerToPeerMessageKind::_from_integral_unchecked(data[0]);
     msg.data = data.substr(1);
     return msg;
   }

@@ -64,7 +64,8 @@ json retrieveLicenseJson(
 
 json retrieveCachedLicenseJson()
 {
-  return json::parse(Privileged::readLicenseJson());
+  // Don't throw an error on parse failure
+  return json::parse(Privileged::readLicenseJson(), nullptr, false);
 }
 
 static const unsigned char* const PUBLIC_KEY[] = {
@@ -155,7 +156,7 @@ License::License(std::string dashboardHostname)
   if(licenseJson.empty() || licenseJson.is_discarded()) {
     licenseJson = retrieveCachedLicenseJson();
 
-    if(licenseJson.empty()) {
+    if(licenseJson.empty() || licenseJson.is_discarded()) {
       LOG_CRITICAL(
           "No license! Husarnet Daemon can't start without license.json. "
           "License not found on local disk and download from %s was not "

@@ -90,19 +90,19 @@ namespace Port {
     struct addrinfo* result = nullptr;
     int error;
 
-    error = getaddrinfo(hostname.c_str(), "", NULL, &result);
+    error = getaddrinfo(hostname.c_str(), NULL, NULL, &result);
     if(error != 0) {
       return IpAddress();
     }
 
     for(struct addrinfo* res = result; res != NULL; res = res->ai_next) {
       if(res->ai_family == AF_INET) {
-        auto addr = IpAddress::fromBinary4(res->ai_addr->sa_data);
+        auto addr = IpAddress::fromBinary4((uint32_t)((struct sockaddr_in*)res->ai_addr)->sin_addr.s_addr);
         freeaddrinfo(result);
         return addr;
       }
       if(res->ai_family == AF_INET6) {
-        auto addr = IpAddress::fromBinary(res->ai_addr->sa_data);
+        auto addr = IpAddress::fromBinary((char*)((struct sockaddr_in6*)res->ai_addr)->sin6_addr.s6_addr);
         freeaddrinfo(result);
         return addr;
       }
@@ -128,10 +128,22 @@ namespace Port {
     return std::map<UserSetting, std::string>();  // @TODO
   }
 
+  // TODO: this is a temporary fix for file names being too long for NVS key
+  //       one approach would be to remove husarion prefix before truncating
+  static std::string truncatePath(std::string path)
+  {
+    if(path.size() > 15) {
+      path = path.substr(0, 15);
+    }
+    return path;
+  }
+
   std::string readFile(const std::string& path)
   {
     size_t len;
-    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), len);
+    std::string truncatedPath = truncatePath(path);
+    
+    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, truncatedPath.c_str(), len);
 
     if (err == ESP_ERR_NVS_NOT_FOUND) {
       return "";
@@ -145,7 +157,7 @@ namespace Port {
     std::string value;
     value.resize(len);
 
-    err = nvsHandle->get_string(path.c_str(), value.data(), len);
+    err = nvsHandle->get_string(truncatedPath.c_str(), value.data(), len);
 
     if(err != ESP_OK) {
       LOG_ERROR("Unable to access NVS. (Error: %s)", esp_err_to_name(err));
@@ -158,8 +170,9 @@ namespace Port {
   bool writeFile(const std::string& path, const std::string& data)
   {
     LOG("write %s (len: %d)", path.c_str(), (int)data.size());
+    std::string truncatedPath = truncatePath(path);
 
-    esp_err_t err = nvsHandle->set_string(path.c_str(), data.c_str());
+    esp_err_t err = nvsHandle->set_string(truncatedPath.c_str(), data.c_str());
     if (err != ESP_OK) {
       LOG_ERROR("Unable to update NVS. (Error: %s)", esp_err_to_name(err));
       return false;
@@ -176,7 +189,9 @@ namespace Port {
   bool isFile(const std::string& path)
   {
     size_t value;
-    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), value);
+    std::string truncatedPath = truncatePath(path);
+
+    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, truncatedPath.c_str(), value);
 
     if (err == ESP_OK) {
       return true;
@@ -217,6 +232,9 @@ namespace Port {
         esp_level = ESP_LOG_WARN;
         break;
       case +LogLevel::ERROR:
+        esp_level = ESP_LOG_ERROR;
+        break;
+      case +LogLevel::CRITICAL:
         esp_level = ESP_LOG_ERROR;
         break;
       default:
