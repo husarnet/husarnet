@@ -1,6 +1,8 @@
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   #TODO: -fsanitize=undefined in clang
   set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g")
@@ -53,62 +55,63 @@ endif()
 
 # Build IDF framework libraries
 # TODO: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/kconfig.html#config-spiram-cache-workaround
-if (DEFINED IDF_TARGET)
-  include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
-  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-  set(CMAKE_COLOR_DIAGNOSTICS ON)
-  idf_build_process("${IDF_TARGET}"
-                    COMPONENTS lwip nvs_flash freertos esp_netif esp_timer cxx esp_hw_support esp_wifi
-                    SDKCONFIG ${SDKCONFIG}
-                    #SDKCONFIG_DEFAULTS ${SDKCONFIG}.default
-                    BUILD_DIR ${CMAKE_BINARY_DIR})
-endif()
+# if (DEFINED IDF_TARGET)
+#   #include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
+#   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#   set(CMAKE_COLOR_DIAGNOSTICS ON)
+#   idf_build_process("${IDF_TARGET}"
+#                     COMPONENTS lwip nvs_flash freertos esp_netif esp_timer cxx esp_hw_support esp_wifi
+#                     SDKCONFIG ${SDKCONFIG}
+#                     #SDKCONFIG_DEFAULTS ${SDKCONFIG}.default
+#                     BUILD_DIR ${CMAKE_BINARY_DIR})
+# endif()
 
 # Add all required headers and source files
-list(APPEND husarnet_core_SRC) # This is more of a define rather than an append
+list(APPEND husarnet_core_SRC) # This is more of a define rather than an append)
+list(APPEND husarnet_core_include_DIRS) # This is more of a define rather than an append)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/linux)
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/linux)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows)
   file(GLOB port_linux_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/linux/*.cpp")
   file(GLOB port_shared_unix_windows_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows/*.cpp")
   list(APPEND husarnet_core_SRC ${port_linux_SRC} ${port_shared_unix_windows_SRC})
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/windows)
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/windows)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows)
   file(GLOB port_windows_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/windows/*.cpp")
   file(GLOB port_shared_unix_windows_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows/*.cpp")
   list(APPEND husarnet_core_SRC ${port_windows_SRC} ${port_shared_unix_windows_SRC})
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/macos)
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/macos)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows)
   file(GLOB port_macos_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/macos/*.cpp")
   file(GLOB port_shared_unix_windows_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows/*.cpp")
   list(APPEND husarnet_core_SRC ${port_macos_SRC} ${port_shared_unix_windows_SRC})
 endif()
 
 if (DEFINED IDF_TARGET)
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/ports/esp32)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/esp32)
   file(GLOB port_esp32_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/esp32/*.cpp")
   list(APPEND husarnet_core_SRC ${port_esp32_SRC})
 endif()
 
-include_directories(${CMAKE_CURRENT_LIST_DIR}/ports)
+list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports)
 file(GLOB husarnet_ports_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_ports_SRC})
 
 if(${BUILD_HTTP_CONTROL_API})
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/api_server)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/api_server)
   file(GLOB api_server_SRC "${CMAKE_CURRENT_LIST_DIR}/api_server/*.cpp")
   list(APPEND husarnet_core_SRC ${api_server_SRC})
 endif()
 
 # Top level project files
-include_directories(${CMAKE_CURRENT_LIST_DIR})
+list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR})
 
 file(GLOB core_SRC "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
 list(APPEND husarnet_core_SRC ${core_SRC})
@@ -120,12 +123,36 @@ file(MAKE_DIRECTORY ${TEMP_INCLUDE_DIR})
 file(CREATE_LINK ${CMAKE_CURRENT_LIST_DIR}/ ${TEMP_INCLUDE_DIR}/husarnet SYMBOLIC)
 
 # Join all of the above
-add_library(husarnet_core STATIC ${husarnet_core_SRC})
-target_include_directories(husarnet_core PUBLIC ${TEMP_INCLUDE_DIR})
-target_compile_definitions(husarnet_core PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PROCESSOR}")
+if(DEFINED IDF_TARGET)
+  idf_component_register(
+    SRCS ${husarnet_core_SRC}
+    INCLUDE_DIRS ${husarnet_core_include_DIRS}
+    REQUIRES lwip nvs_flash freertos esp_netif esp_timer cxx esp_hw_support esp_wifi libsodium)
+elseif()
+  add_library(husarnet_core STATIC ${husarnet_core_SRC})
+  include_directories(${husarnet_core_include_DIRS})
+endif()
+
+# IDF (ESP32) build system doesn't allow us to change 
+# component/library name and adds "idf::" prefix to it
+if(DEFINED IDF_TARGET)
+  set(husarnet_core ${COMPONENT_LIB})
+elseif()
+  set(husarnet_core "husarnet_core")
+endif()
+
+target_include_directories(${husarnet_core} PUBLIC ${TEMP_INCLUDE_DIR})
+target_compile_definitions(${husarnet_core} PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PROCESSOR}")
+
+# Propagate selected ESP32 target for compile time checks
+# Disable unknown pragmas warning as we are not using clang in ESP32 builds for now
+if (DEFINED IDF_TARGET)
+  target_compile_definitions(${husarnet_core} PRIVATE IDF_TARGET=${IDF_TARGET})
+  target_compile_options(${husarnet_core} PRIVATE -Wno-unknown-pragmas -Wno-missing-field-initializers)
+endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  target_compile_definitions(husarnet_core PRIVATE DEBUG_BUILD=1)
+  target_compile_definitions(${husarnet_core} PRIVATE DEBUG_BUILD=1)
 endif()
 
 # Configure dependencies
@@ -135,34 +162,36 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
-  target_link_libraries(husarnet_core iphlpapi shlwapi ws2_32)
+  target_link_libraries(${husarnet_core} iphlpapi shlwapi ws2_32)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Android)
-  target_link_libraries(husarnet_core log)
+  target_link_libraries(${husarnet_core} log)
 endif()
 
 #TODO: during ESP32 build use native ESP32 libsodium component
-FetchContent_Declare(
-  libsodium
-  GIT_REPOSITORY https://github.com/jedisct1/libsodium.git
-  GIT_TAG 1.0.19
-)
-FetchContent_MakeAvailable(libsodium)
-include_directories(${libsodium_SOURCE_DIR}/src/libsodium/include)
-file(GLOB_RECURSE sodium_SRC ${libsodium_SOURCE_DIR}/src/libsodium/*.c)
-add_library(sodium STATIC ${sodium_SRC})
-target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include)
-target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include/sodium)
-target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config)
-target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config/sodium)
-target_compile_options(sodium PRIVATE -DCONFIGURED=1)
+if (NOT DEFINED IDF_TARGET)
+  FetchContent_Declare(
+    libsodium
+    GIT_REPOSITORY https://github.com/jedisct1/libsodium.git
+    GIT_TAG 1.0.19
+  )
+  FetchContent_MakeAvailable(libsodium)
+  include_directories(${libsodium_SOURCE_DIR}/src/libsodium/include)
+  file(GLOB_RECURSE sodium_SRC ${libsodium_SOURCE_DIR}/src/libsodium/*.c)
+  add_library(sodium STATIC ${sodium_SRC})
+  target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include)
+  target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include/sodium)
+  target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config)
+  target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config/sodium)
+  target_compile_options(sodium PRIVATE -DCONFIGURED=1)
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
-  target_link_libraries(husarnet_core stdc++)
+  target_link_libraries(${husarnet_core} sodium)
 endif()
 
-target_link_libraries(husarnet_core sodium)
+if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
+  target_link_libraries(${husarnet_core} stdc++)
+endif()
 
 FetchContent_Declare(
   nlohmann_json
@@ -171,8 +200,8 @@ FetchContent_Declare(
 )
 set(JSON_BuildTests OFF)
 FetchContent_MakeAvailable(nlohmann_json)
-target_include_directories(husarnet_core PUBLIC ${nlohmann_json_SOURCE_DIR}/include)
-target_link_libraries(husarnet_core nlohmann_json)
+target_include_directories(${husarnet_core} PUBLIC ${nlohmann_json_SOURCE_DIR}/include)
+target_link_libraries(${husarnet_core} nlohmann_json)
 
 FetchContent_Declare(
   better_enums
@@ -180,8 +209,8 @@ FetchContent_Declare(
   GIT_TAG 0.11.3
 )
 FetchContent_MakeAvailable(better_enums)
-target_include_directories(husarnet_core PUBLIC ${better_enums_SOURCE_DIR})
-target_compile_options(husarnet_core PUBLIC -DBETTER_ENUMS_STRICT_CONVERSION=1)
+target_include_directories(${husarnet_core} PUBLIC ${better_enums_SOURCE_DIR})
+target_compile_options(${husarnet_core} PUBLIC -DBETTER_ENUMS_STRICT_CONVERSION=1)
 
 if((${CMAKE_SYSTEM_NAME} STREQUAL Linux) OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows))
   FetchContent_Declare(
@@ -191,8 +220,8 @@ if((${CMAKE_SYSTEM_NAME} STREQUAL Linux) OR(${CMAKE_SYSTEM_NAME} STREQUAL Window
   FetchContent_MakeAvailable(sqlite3)
   include_directories(${sqlite3_SOURCE_DIR})
   add_library(sqlite3 STATIC ${sqlite3_SOURCE_DIR}/sqlite3.c)
-  target_link_libraries(husarnet_core sqlite3 ${CMAKE_DL_LIBS})
-  target_compile_options(husarnet_core PUBLIC -DENABLE_LEGACY_CONFIG=1)
+  target_link_libraries(${husarnet_core} sqlite3 ${CMAKE_DL_LIBS})
+  target_compile_options(${husarnet_core} PUBLIC -DENABLE_LEGACY_CONFIG=1)
 endif()
 
 # Include linux port libraries
@@ -211,7 +240,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   set(CARES_BUILD_TOOLS OFF)
   add_compile_definitions(CARES_STATICLIB)
   FetchContent_MakeAvailable(c-ares)
-  target_link_libraries(husarnet_core c-ares)
+  target_link_libraries(${husarnet_core} c-ares)
 endif()
 
 # Enable HTTP control API
@@ -232,7 +261,7 @@ if(${BUILD_HTTP_CONTROL_API})
   set(HTTPLIB_REQUIRE_BROTLI OFF)
   set(HTTPLIB_COMPILE OFF)
   FetchContent_MakeAvailable(httplib)
-  target_link_libraries(husarnet_core httplib)
+  target_link_libraries(${husarnet_core} httplib)
 
   # include_directories(${httplib_SOURCE_DIR})
   if(IS_DIRECTORY "${httplib_SOURCE_DIR}")
@@ -240,13 +269,13 @@ if(${BUILD_HTTP_CONTROL_API})
   endif()
 endif()
 
-if (DEFINED IDF_TARGET)
-  target_link_libraries(husarnet_core
-    idf::lwip idf::nvs_flash idf::freertos idf::esp_netif idf::esp_timer idf::cxx idf::esp_hw_support idf::esp_wifi)
-  target_compile_definitions(husarnet_core PRIVATE IDF_TARGET=${IDF_TARGET})
+# if (DEFINED IDF_TARGET)
+#   target_link_libraries(husarnet_core
+#     idf::lwip idf::nvs_flash idf::freertos idf::esp_netif idf::esp_timer idf::cxx idf::esp_hw_support idf::esp_wifi)
+#   target_compile_definitions(husarnet_core PRIVATE IDF_TARGET=${IDF_TARGET})
 
-  # Add dummy target to make the ESP-IDF build system happy
-  add_executable(${CMAKE_PROJECT_NAME}.elf ${CMAKE_CURRENT_LIST_DIR}/ports/esp32/main.c)
-  target_link_libraries(${CMAKE_PROJECT_NAME}.elf husarnet_core)
-  idf_build_executable(${CMAKE_PROJECT_NAME}.elf)
-endif()
+#   # Add dummy target to make the ESP-IDF build system happy
+#   add_executable(${CMAKE_PROJECT_NAME}.elf ${CMAKE_CURRENT_LIST_DIR}/ports/esp32/main.c)
+#   target_link_libraries(${CMAKE_PROJECT_NAME}.elf husarnet_core)
+#   idf_build_executable(${CMAKE_PROJECT_NAME}.elf)
+# endif()

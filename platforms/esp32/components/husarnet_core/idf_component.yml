@@ -1,0 +1,5 @@
+## IDF Component Manager Manifest File
+dependencies:
+  espressif/libsodium: "^1.0.20~1"
+  idf:
+    version: ">=4.1.0"
