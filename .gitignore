@@ -9,6 +9,8 @@ __pycache__/
 /id?
 /build-win
 /build-gui-*
+platforms/esp32/managed_components
+platforms/esp32/dependencies.lock
 
 # Visual Studio Code
 .vscode/*
