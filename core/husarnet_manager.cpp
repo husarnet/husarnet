@@ -35,6 +35,10 @@
 #include "husarnet/api_server/server.h"
 #endif
 
+#include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 ConfigStorage& HusarnetManager::getConfigStorage()
 {
   return *configStorage;
@@ -43,6 +47,11 @@ ConfigStorage& HusarnetManager::getConfigStorage()
 PeerContainer* HusarnetManager::getPeerContainer()
 {
   return peerContainer;
+}
+
+TunTap* HusarnetManager::getTunTap()
+{
+  return tunTap;  
 }
 
 HooksManagerInterface* HusarnetManager::getHooksManager()
@@ -500,6 +509,7 @@ void HusarnetManager::startNetworkingStack()
   peerContainer = new PeerContainer(this);
 
   auto tunTap = Port::startTunTap(this);
+  this->tunTap = static_cast<TunTap*>(tunTap); //TODO: cleanup
 
   Privileged::dropCapabilities();
 
@@ -624,6 +634,6 @@ void HusarnetManager::runHusarnet()
 
   while(true) {
     ngsocket->periodic();
-    OsSocket::runOnce(1000);  // process socket events for at most so many ms
+    Port::processSocketEvents(this);
   }
 }

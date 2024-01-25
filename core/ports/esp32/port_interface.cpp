@@ -23,6 +23,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "husarnet/ports/esp32/tun.h"
+#include "husarnet/ports/sockets.h"
+
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
@@ -120,7 +123,8 @@ namespace Port {
 
   UpperLayer* startTunTap(HusarnetManager* manager)
   {
-    return NULL;  // @TODO
+    auto tunTap = new TunTap(32);
+    return tunTap;
   }
 
   std::map<UserSetting, std::string> getEnvironmentOverrides()
@@ -247,5 +251,11 @@ namespace Port {
 
   const std::string getHumanTime() {
     return "NOT IMPLEMENTED"; //TODO: implement
+  }
+
+  void processSocketEvents(HusarnetManager* manager)
+  {
+    OsSocket::runOnce(10);  // process socket events for at most so many ms
+    manager->getTunTap()->processQueuedPackets();
   }
 }  // namespace Port

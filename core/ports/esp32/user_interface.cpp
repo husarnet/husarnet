@@ -6,13 +6,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-TaskHandle_t husarnet_task_handle = NULL;
-
-extern "C" void run_husarnet()
+extern "C" void run_husarnet(TaskHandle_t* husarnet_task_handle)
 {
   auto* manager = new HusarnetManager();
 
   xTaskCreate([](void* manager) {
     ((HusarnetManager*)manager)->runHusarnet();
-  }, "husarnet_task", 16384 * 4, manager, 5, &husarnet_task_handle);
+  }, "husarnet_task", 16384 * 8, manager, 5, husarnet_task_handle);
 }

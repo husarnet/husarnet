@@ -49,6 +49,7 @@ class HusarnetManager {
   SecurityLayer* securityLayer = nullptr;
   ConfigStorage* configStorage = nullptr;
   PeerContainer* peerContainer = nullptr;
+  TunTap* tunTap = nullptr;
 
   WebsetupConnection* websetup = nullptr;
   HooksManagerInterface* hooksManager = nullptr;
@@ -79,6 +80,7 @@ class HusarnetManager {
   ConfigStorage& getConfigStorage();
   void setConfigStorage(ConfigStorage* cs);
   PeerContainer* getPeerContainer();
+  TunTap* getTunTap();
 
   std::string getVersion();
   std::string getUserAgent();

@@ -30,8 +30,9 @@ extern "C" {
 }
 
 static struct netif husarnet_netif = {0};
-static void* husarnet_state;
-static const char* TAG = "HusarnetTun";
+
+// TODO: switch to husarnet logger
+static const char* TAG = "husarnet-tun";
 
 err_t husarnet_netif_init(struct netif *netif) {
     esp_err_t err;
@@ -79,7 +80,6 @@ err_t husarnet_netif_init(struct netif *netif) {
     netif->output_ip6 = husarnet_netif_output;
 
     // Misc
-    netif->state = husarnet_state;
     NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_ENABLE_ALL);
 
     ESP_LOGI(TAG, "Husarnet TUN interface initialized");
@@ -97,8 +97,21 @@ err_t husarnet_netif_input(struct pbuf *p, struct netif *inp) {
 err_t husarnet_netif_output(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr) {
     ESP_LOGE(TAG, "Husarnet TUN interface sending packet");
 
+    if (p->next != NULL) {
+        ESP_LOGE(TAG, "Packet chain is not supported");
+        return ESP_FAIL;
+    }
+
+    // Send packet to be processed by the Husarnet stack
+    if (xQueueSend(((TunTap*)netif->state)->tunTapMsgQueue, &p, 0) != pdPASS) {
+        ESP_LOGE(TAG, "Failed to send packet to the Husarnet stack");
+        return ESP_FAIL;
+    }
+
+    // Increase packet's refcounter to prevent it from being freed
+    pbuf_ref(p);
+
     return ESP_OK;
-    //return ip6_output(p, &netif->ip6_addr[1].u_addr.ip6, ipaddr, IP6_HLEN, 0, IP6_NEXTH_UDP);
 }
 
 // External LwIP hook to route packets to the Husarnet interface
@@ -113,11 +126,45 @@ extern "C" struct netif* lwip_hook_ip6_route(const ip6_addr_t *src, const ip6_ad
     return NULL;
 }
 
-TunTap::TunTap()
+TunTap::TunTap(size_t queueSize)
 {
+    // Create message queue for pbuf packets
+    tunTapMsgQueue = xQueueCreate(queueSize, sizeof(pbuf*));
+    if (tunTapMsgQueue == NULL) {
+        ESP_LOGE(TAG, "Failed to create message queue");
+        abort();
+    }
 
+    // Create and setup Husarnet network interface
+    if (netif_add_noaddr(&husarnet_netif, (void*) this, husarnet_netif_init, husarnet_netif_input) == NULL) {
+        ESP_LOGE(TAG, "Failed to add Husarnet TUN interface");
+        abort();
+    }
+    
+    // Bring up the interface
+    netif_set_up(&husarnet_netif);
 }
 
 void TunTap::onLowerLayerData(DeviceId source, string_view data)
 {
+    ESP_LOGI(TAG, "Received %d bytes from %s", data.str().length(), ((std::string)source).c_str());
+}
+
+// bool TunTap::isRunning() {
+
+void TunTap::close() {
+    // TODO: implement
+}
+
+void TunTap::processQueuedPackets() {
+    pbuf* p;
+
+    while (xQueueReceive(tunTapMsgQueue, &p, 0) == pdPASS) {
+        // Send packet to the Husarnet stack
+        string_view packet((char*)p->payload, p->len);
+        LOG_WARNING("packet: %d", p->len);
+        sendToLowerLayer(BadDeviceId, packet);
+
+        pbuf_free(p);
+    }
 }

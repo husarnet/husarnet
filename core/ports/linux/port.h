@@ -10,6 +10,7 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "tun.h"
 
 #define SOCKFUNC(name) ::name
 #define SOCKFUNC_close SOCKFUNC(close)

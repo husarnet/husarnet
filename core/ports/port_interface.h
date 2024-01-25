@@ -51,4 +51,6 @@ namespace Port {
 
   void runScripts(const std::string& path);
   bool checkScriptsExist(const std::string& path);
+
+  void processSocketEvents(HusarnetManager* manager);
 }  // namespace Port

@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "husarnet/ports/macos/tun.h"
+#include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
@@ -325,5 +326,10 @@ namespace Port {
   {
     fprintf(stderr, "%s\n", message.c_str());
     fflush(stderr);
+  }
+
+  void Port::processSocketEvents(HusarnetManager* manager)
+  {
+    OsSocket::runOnce(1000);  // process socket events for at most so many ms
   }
 }  // namespace Port

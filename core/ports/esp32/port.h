@@ -10,6 +10,7 @@
 
 #include <lwip/inet.h>
 #include "user_interface.h"
+#include "tun.h"
 // #define SOCKFUNC(name) ::lwip_##name##_r
 
 #define SOCKFUNC(name) ::name

@@ -10,17 +10,20 @@ NotificationManager::NotificationManager(
     std::string dashboardHostname_,
     HusarnetManager* husarnetManager_)
 {
+#ifndef IDF_TARGET
   this->interval = std::chrono::hours{12};
   dashboardHostname = dashboardHostname_;
   husarnetManager = husarnetManager_;
   refreshNotificationFile();
-  // TODO: fix pthreads error
-  //this->timer = new PeriodicTimer(interval, refreshNotificationFile);
-  //this->timer->Start();
+  this->timer = new PeriodicTimer(interval, refreshNotificationFile);
+  this->timer->Start();
+#endif
 };
 NotificationManager::~NotificationManager()
 {
+#ifndef IDF_TARGET
   delete this->timer;
+#endif
 }
 
 void NotificationManager::refreshNotificationFile()
@@ -44,6 +47,7 @@ void NotificationManager::refreshNotificationFile()
   // server side. The id mechanism also ensures that individual announcements
   // will be displayed to users for the same time spans independently of the
   // time client received announcement.
+#ifndef IDF_TARGET
   auto new_notifications = retrieveNotificationJson(dashboardHostname);
   auto cached = Privileged::readNotificationFile();
   json merged;
@@ -105,10 +109,12 @@ void NotificationManager::refreshNotificationFile()
   // Merged cached and requested notifications
   husarnetManager->getHooksManager()->withRw(
       [&]() { Privileged::writeNotificationFile(merged.dump()); });
+#endif
 };
 
 std::list<std::string> NotificationManager::getNotifications()
 {
+#ifndef IDF_TARGET
   auto cached = Privileged::readNotificationFile();
   if(cached == "{}")
     return {};
@@ -125,11 +131,15 @@ std::list<std::string> NotificationManager::getNotifications()
   }
 
   return ls;
+#else
+  return {};
+#endif
 };
 
 json NotificationManager::retrieveNotificationJson(
     std::string dashboardHostname)
 {
+#ifndef IDF_TARGET
   IpAddress ip = Privileged::resolveToIp(dashboardHostname);
   InetAddress address{ip, 80};
   int sockfd = OsSocket::connectTcpSocket(address);
@@ -162,4 +172,7 @@ json NotificationManager::retrieveNotificationJson(
   }
   pos += 4;
   return json::parse(readBuffer.substr(pos, len - pos));
+#else
+  return {};
+#endif
 }
