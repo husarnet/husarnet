@@ -18,7 +18,6 @@
 #include "husarnet/ports/port.h"
 
 #include "husarnet/device_id.h"
-#include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
@@ -72,7 +71,7 @@ void WebsetupConnection::start()
   Port::startThread(
       [this]() { this->periodicThread(); }, "websetupPeriodic", 6000);
 
-  GIL::startThread(
+  Port::startThread(
       [this]() { this->handleConnectionThread(); }, "websetupConnection", 6000);
 }
 
@@ -173,11 +172,10 @@ void WebsetupConnection::handleConnectionThread()
     buffer.resize(1024);
     sockaddr_in6 addr{};
     socklen_t addrsize = sizeof(addr);
-    int ret = GIL::unlocked<int>([&]() {
-      return SOCKFUNC(recvfrom)(
+    
+    int ret = SOCKFUNC(recvfrom)(
           websetupFd, &buffer[0], buffer.size(), 0, (sockaddr*)&addr,
           &addrsize);
-    });
 
     // Async handling
 #ifdef _WIN32

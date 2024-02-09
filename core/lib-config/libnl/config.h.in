@@ -1,0 +1,9 @@
+// This file used to contain a bunch of feature flag #defines
+// that were populated at the compile time. Since cmake sets
+// them for us we can omit them.
+
+// Library-wide include workaround for missing types
+// that are included in the upstream via pthread.h
+// Since we don't use pthreads, we need to patch it in manually
+#include <time.h>
+

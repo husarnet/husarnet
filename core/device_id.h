@@ -5,7 +5,7 @@
 #include "husarnet/fstring.h"
 #include "husarnet/ipaddress.h"
 
-using DeviceId = fstring<16>;
+using DeviceId = fstring<16>;  // This is **binary** data, **not** a string!
 
 static const DeviceId BadDeviceId =
     DeviceId("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");  //__attribute__((unused));
@@ -20,7 +20,7 @@ inline DeviceId deviceIdFromIpAddress(IpAddress ip)
   return ip.toBinary();
 }
 
-inline const char* deviceIdToCStr(DeviceId id)
+inline std::string deviceIdToString(DeviceId id)
 {
-  return reinterpret_cast<char*>(id.data());
+  return deviceIdToIpAddress(id).toString();
 }

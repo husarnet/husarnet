@@ -264,4 +264,10 @@ namespace Port {
     OsSocket::runOnce(10);  // process socket events for at most so many ms
     manager->getTunTap()->processQueuedPackets();
   }
+
+  IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName)
+  {
+    LOG_ERROR("getIpAddressFromInterfaceName is not implemented");
+    return IpAddress();
+  }
 }  // namespace Port

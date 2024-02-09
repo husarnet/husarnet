@@ -41,6 +41,11 @@ IpAddress Peer::getIpAddress()
   return deviceIdToIpAddress(id);
 }
 
+std::string Peer::getIpAddressString()
+{
+  return getIpAddress().toString();
+}
+
 InetAddress Peer::getUsedTargetAddress()
 {
   return targetAddress;

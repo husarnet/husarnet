@@ -12,7 +12,6 @@
 #include "husarnet/ports/sockets.h"
 #include "husarnet/ports/windows/tun.h"
 
-#include "husarnet/gil.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
@@ -133,8 +132,6 @@ namespace Port {
 
   void init()
   {
-    // GIL is inited on (stage1)
-    // GIL::init();
     WSADATA wsaData;
     WSAStartup(0x202, &wsaData);
   }
@@ -268,5 +265,11 @@ namespace Port {
   {
     fprintf(stderr, "%s\n", message.c_str());
     fflush(stderr);
+  }
+
+  IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName)
+  {
+    LOG_ERROR("getIpAddressFromInterfaceName is not implemented");
+    return IpAddress();
   }
 }  // namespace Port

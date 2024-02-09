@@ -177,16 +177,21 @@ if (NOT DEFINED IDF_TARGET)
     GIT_TAG 1.0.19
   )
   FetchContent_MakeAvailable(libsodium)
+
+  # Generate compile-time version header
+  # Needs to be populated manually from libsodium's configure.ac
+  set(SODIUM_LIBRARY_VERSION_STRING "1.0.19")
+
+  set(SODIUM_LIBRARY_VERSION_MAJOR 28)
+  set(SODIUM_LIBRARY_VERSION_MINOR  0)
+  include(${CMAKE_CURRENT_LIST_DIR}/lib-config/libsodium/generate.cmake)
+
   include_directories(${libsodium_SOURCE_DIR}/src/libsodium/include)
   file(GLOB_RECURSE sodium_SRC ${libsodium_SOURCE_DIR}/src/libsodium/*.c)
   add_library(sodium STATIC ${sodium_SRC})
   target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include)
   target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include/sodium)
-  target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config)
-  target_include_directories(sodium PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-config/sodium)
-  target_compile_options(sodium PRIVATE -DCONFIGURED=1)
-
-  target_link_libraries(${husarnet_core} sodium)
+  target_compile_options(sodium PRIVATE -DCONFIGURED=1 -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
@@ -241,6 +246,110 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   add_compile_definitions(CARES_STATICLIB)
   FetchContent_MakeAvailable(c-ares)
   target_link_libraries(${husarnet_core} c-ares)
+endif()
+
+# Build libnl without its build system to prevent autoconf madness
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+  FetchContent_Declare(
+    libnl
+    GIT_REPOSITORY https://github.com/thom311/libnl.git
+    GIT_TAG libnl3_9_0
+
+    # Patch specific to the build system (only applies to zig v0.9)
+    # More details are in the patch file
+    PATCH_COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/lib-config/libnl/socket.c.patch
+    UPDATE_DISCONNECTED TRUE
+  )
+
+  FetchContent_MakeAvailable(libnl)
+
+  # Locking is handled by a port-wide mutex around libnl calls. Pthread
+  # rwlock unlock sometimes caused UB traps being triggered on zig v0.9
+  set(LIBNL_ENABLE_PTHREADS OFF) 
+  set(LIBNL_ENABLE_DEBUG OFF)
+
+  # Generate compile-time version header
+  # Needs to be populated manually from libnl's configure.ac
+  set(LIBNL_VER_MAJ 3)
+  set(LIBNL_VER_MIN 9)
+  set(LIBNL_VER_MIC 0)
+
+  set(LIBNL_CURRENT  226)
+  set(LIBNL_REVISION 0)
+  set(LIBNL_AGE      26)
+  include(${CMAKE_CURRENT_LIST_DIR}/lib-config/libnl/generate.cmake)
+
+  # Generate Bison/Flex files
+  find_package(BISON)
+  find_package(FLEX)
+
+  set(BISON_FLAGS "-Wno-deprecated -Wno-other")
+
+  bison_target(
+    libnl_ematch_syntax ${libnl_SOURCE_DIR}/lib/route/cls/ematch_syntax.y
+    ${libnl_SOURCE_DIR}/lib/route/cls/ematch_syntax.c
+    DEFINES_FILE ${libnl_SOURCE_DIR}/lib/route/cls/ematch_syntax.h
+    COMPILE_FLAGS ${BISON_FLAGS}
+  )
+  bison_target(
+    libnl_pktloc_syntax ${libnl_SOURCE_DIR}/lib/route/pktloc_syntax.y
+    ${libnl_SOURCE_DIR}/lib/route/pktloc_syntax.c
+    DEFINES_FILE ${libnl_SOURCE_DIR}/lib/route/pktloc_syntax.h
+    COMPILE_FLAGS ${BISON_FLAGS}
+  )
+  flex_target(
+    libnl_ematch_grammar ${libnl_SOURCE_DIR}/lib/route/cls/ematch_grammar.l
+    ${libnl_SOURCE_DIR}/lib/route/cls/ematch_grammar.c
+    DEFINES_FILE ${libnl_SOURCE_DIR}/lib/route/cls/ematch_grammar.h
+  )
+  flex_target(
+    libnl_pkloc_grammar ${libnl_SOURCE_DIR}/lib/route/pktloc_grammar.l
+    ${libnl_SOURCE_DIR}/lib/route/pktloc_grammar.c
+    DEFINES_FILE ${libnl_SOURCE_DIR}/lib/route/pktloc_grammar.h
+  )
+
+  add_flex_bison_dependency(libnl_ematch_grammar libnl_ematch_syntax)
+  add_flex_bison_dependency(libnl_pkloc_grammar libnl_pktloc_syntax)
+
+  # Alias version.h file to make the library happy
+  file(CREATE_LINK ${libnl_SOURCE_DIR}/include/netlink/version.h ${libnl_SOURCE_DIR}/include/version.h SYMBOLIC)
+
+  file(GLOB_RECURSE libnl_SOURCES "${libnl_SOURCE_DIR}/lib/*.c")
+  
+  include_directories(
+    ${libnl_SOURCE_DIR}/include
+    ${libnl_SOURCE_DIR}/lib/genl
+    ${libnl_SOURCE_DIR}/lib/idiag
+    ${libnl_SOURCE_DIR}/lib/netfilter
+    ${libnl_SOURCE_DIR}/lib/route
+    ${libnl_SOURCE_DIR}/lib/xfrm)
+
+  add_library(libnl STATIC
+    ${libnl_SOURCES}
+    ${BISON_libnl_ematch_syntax_OUTPUTS}
+    ${BISON_libnl_pktloc_syntax_OUTPUTS}
+    ${FLEX_libnl_ematch_grammar_OUTPUTS}
+    ${FLEX_libnl_pkloc_grammar_OUTPUTS}
+  )
+  #target_link_libraries(libnl STATIC ${FLEX_LIBRARIES})
+
+  if(NOT ${LIBNL_ENABLE_PTHREADS})
+    add_compile_definitions(DISABLE_PTHREADS)
+    message(STATUS "Disabling pthreads in libnl")
+  else()
+    target_compile_options(libnl PRIVATE -lpthread)
+    message(STATUS "Enabling pthreads in libnl")
+  endif()
+
+  if(${LIBNL_ENABLE_DEBUG})
+    add_compile_definitions(LIBNL_NL_DEBUG)
+    message(STATUS "Enabling debug in libnl")
+  endif()
+  
+  target_compile_definitions(libnl PRIVATE SYSCONFDIR="/etc/libnl" _GNU_SOURCE)
+  target_compile_options(libnl PRIVATE -Wno-unused-variable)
+
+  target_link_libraries(husarnet_core libnl)
 endif()
 
 # Enable HTTP control API

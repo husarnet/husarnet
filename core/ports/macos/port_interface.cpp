@@ -328,6 +328,12 @@ namespace Port {
     fflush(stderr);
   }
 
+  IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName)
+  {
+    LOG_ERROR("getIpAddressFromInterfaceName is not implemented");
+    return IpAddress();
+  }
+
   void Port::processSocketEvents(HusarnetManager* manager)
   {
     OsSocket::runOnce(1000);  // process socket events for at most so many ms

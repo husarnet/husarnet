@@ -142,6 +142,7 @@ class HusarnetManager {
   int getApiPort();
   IpAddress getApiAddress();
   std::string getApiInterface();
+  IpAddress getApiInterfaceAddress();
   std::string getApiSecret();
   std::string rotateApiSecret();
 

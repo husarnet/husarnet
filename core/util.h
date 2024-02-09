@@ -70,12 +70,39 @@ T unpack(fstring<sizeof(T)> s)
 
 static const char* hexLetters = "0123456789abcdef";
 
+inline std::string encodeHex(std::vector<unsigned char> s)
+{
+  std::string ret;
+  for(unsigned char ch : s) {
+    ret.push_back(hexLetters[(ch >> 4) & 0xF]);
+    ret.push_back(hexLetters[ch & 0xF]);
+  }
+  return ret;
+}
+
 inline std::string encodeHex(std::string s)
 {
   std::string ret;
   for(unsigned char ch : s) {
     ret.push_back(hexLetters[(ch >> 4) & 0xF]);
     ret.push_back(hexLetters[ch & 0xF]);
+  }
+  return ret;
+}
+
+inline std::string decodeHex(std::vector<unsigned char> s)
+{
+  if(s.size() % 2 != 0)
+    return "";
+
+  std::string ret;
+  for(int i = 0; i + 1 < (int)s.size(); i += 2) {
+    int a = (int)(std::find(hexLetters, hexLetters + 16, s[i]) - hexLetters);
+    int b =
+        (int)(std::find(hexLetters, hexLetters + 16, s[i + 1]) - hexLetters);
+    if(a == 16 || b == 16)
+      return "";
+    ret.push_back((char)((a << 4) | b));
   }
   return ret;
 }

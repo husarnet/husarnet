@@ -18,7 +18,6 @@
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
-#include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
@@ -134,25 +133,19 @@ void NgSocket::workerLoop()
 {
   while(true) {
     std::function<void()> f = workerQueue.pop_blocking();
-    GIL::lock();
     f();
-    GIL::unlock();
   }
 }
 
 void NgSocket::refresh()
 {
-  // release the lock around every operation to reduce latency
   lastRefresh = Port::getCurrentTime();
   sendLocalAddressesToBase();
-
-  GIL::yield();
 
   sendNatInitToBase();
   sendMulticast();
 
   for(Peer* peer : iteratePeers()) {
-    GIL::yield();
     periodicPeer(peer);
   }
 }
@@ -166,7 +159,9 @@ void NgSocket::periodicPeer(Peer* peer)
     if(peer->reestablishing && peer->connected &&
        Port::getCurrentTime() - peer->lastReestablish > REESTABLISH_TIMEOUT) {
       peer->connected = false;
-      LOG_WARNING("falling back to relay (peer: %s)", IDSTR(peer->id));
+      LOG_WARNING(
+          "falling back to relay (peer: %s)",
+          peer->getIpAddressString().c_str());
     }
 
     attemptReestablish(peer);
@@ -201,7 +196,7 @@ void NgSocket::sendDataToPeer(Peer* peer, string_view data)
         peer->failedEstablishments <= MAX_FAILED_ESTABLISHMENTS))
       attemptReestablish(peer);
 
-    LOG_DEBUG("send to peer %s tunnelled", std::string(peer->id).c_str());
+    LOG_DEBUG("send to peer %s tunnelled", peer->getIpAddressString().c_str());
     // Not (yet) connected, relay via base.
     PeerToBaseMessage msg = {
         .kind = PeerToBaseMessageKind::DATA,
@@ -236,8 +231,7 @@ void NgSocket::attemptReestablish(Peer* peer)
   peer->helloCookie = generateRandomString(16);
 
   LOG_INFO(
-      "reestablish connection to [%s]",
-      IpAddress::fromBinary(peer->id).str().c_str());
+      "reestablish connection to [%s]", peer->getIpAddressString().c_str());
 
   std::vector<InetAddress> addresses = peer->targetAddresses;
   if(peer->linkLocalAddress)
@@ -270,7 +264,9 @@ void NgSocket::attemptReestablish(Peer* peer)
       // send the heartbeat twice to the active address
       sendToPeer(address, response);
   }
-  LOG_DEBUG("addresses: %s", msg.c_str());
+  LOG_DEBUG(
+      "attempt reestablish %s addresses: %s",
+      peer->getIpAddressString().c_str(), msg.c_str());
 }
 
 void NgSocket::peerMessageReceived(
@@ -335,7 +331,7 @@ void NgSocket::helloReplyReceived(
 
   LOG_DEBUG(
       "HELLO-REPLY from %s (%s)", source.str().c_str(),
-      encodeHex(msg.myId).c_str());
+      deviceIdToString(msg.myId).c_str());
   Peer* peer = peerContainer->getPeer(msg.myId);
   if(peer == nullptr)
     return;
@@ -783,10 +779,8 @@ PeerToPeerMessage NgSocket::parsePeerToPeerMessage(string_view data)
       return msg;
     }
 
-    bool ok = GIL::unlocked<bool>([&]() {
-      return NgSocketCrypto::verifySignature(
+    bool ok = NgSocketCrypto::verifySignature(
           data.substr(0, 17 + 64), "ng-p2p-msg", pubkey, signature);
-    });
 
     if(!ok) {
       LOG_ERROR("invalid signature: %s", signature.c_str());
@@ -817,8 +811,7 @@ std::string NgSocket::serializePeerToPeerMessage(const PeerToPeerMessage& msg)
           msg.helloCookie.size() == 16 && pubkey.size() == 32);
       data = pack((uint8_t)msg.kind._value) + deviceId + pubkey + msg.yourId +
              msg.helloCookie;
-      data += GIL::unlocked<std::string>(
-          [&]() { return sign(data, "ng-p2p-msg"); });
+      data += sign(data, "ng-p2p-msg");
       break;
     case +PeerToPeerMessageKind::DATA:
       data = pack((uint8_t)msg.kind._value) + msg.data.str();

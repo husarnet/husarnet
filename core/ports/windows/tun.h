@@ -3,6 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <string>
+#include <mutex>
 
 #include "husarnet/device_id.h"
 #include "husarnet/layer_interfaces.h"
@@ -16,6 +17,7 @@ class TunTap : public UpperLayer {
   HANDLE tap_fd;
   std::string tunBuffer;
   std::string selfMacAddr;
+  std::mutex threadMutex;
 
   void close();
   bool isRunning();

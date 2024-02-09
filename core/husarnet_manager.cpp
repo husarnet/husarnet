@@ -14,7 +14,6 @@
 #include "husarnet/compression_layer.h"
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
-#include "husarnet/gil.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
@@ -188,7 +187,7 @@ void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
 
   std::string dashboardHostname;
   if(newHostname.empty()) {
-    dashboardHostname = Privileged::getSelfHostname();
+    dashboardHostname = this->getSelfHostname();
   } else {
     this->setSelfHostname(newHostname);
     dashboardHostname = newHostname;
@@ -289,6 +288,11 @@ IpAddress HusarnetManager::getApiAddress()
 std::string HusarnetManager::getApiInterface()
 {
   return configStorage->getUserSetting(UserSetting::daemonApiInterface);
+}
+
+IpAddress HusarnetManager::getApiInterfaceAddress()
+{
+  return Port::getIpAddressFromInterfaceName(this->getApiInterface());
 }
 
 int HusarnetManager::getLogVerbosity()
@@ -396,7 +400,7 @@ std::list<std::string> HusarnetManager::getNotifications()
 
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
-  if(!id == deviceIdFromIpAddress(IpAddress::parse(multicastDestination))) {
+  if(!id == deviceIdFromIpAddress(multicastDestination)) {
     return {};
   }
 
@@ -546,7 +550,6 @@ void HusarnetManager::stage1()
     return;
   }
 
-  GIL::init();
   Privileged::createConfigDirectories();
   Privileged::start();
 

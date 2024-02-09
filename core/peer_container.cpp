@@ -16,7 +16,7 @@ PeerContainer::PeerContainer(HusarnetManager* manager) : manager(manager)
 Peer* PeerContainer::createPeer(DeviceId id)
 {
   if(!manager->isPeerAddressAllowed(deviceIdToIpAddress(id))) {
-    LOG_INFO("peer %s is not on the whitelist", encodeHex(id).c_str());
+    LOG_INFO("peer %s is not on the whitelist", deviceIdToString(id).c_str());
     return nullptr;
   }
   Peer* peer = new Peer;
@@ -33,7 +33,7 @@ Peer* PeerContainer::getPeer(DeviceId id)
     return cachedPeer;
 
   if(!manager->isPeerAddressAllowed(deviceIdToIpAddress(id))) {
-    LOG_INFO("peer %s is not on the whitelist", encodeHex(id).c_str());
+    LOG_INFO("peer %s is not on the whitelist", deviceIdToString(id).c_str());
     return nullptr;
   }
 

@@ -4,9 +4,9 @@ ARG DEBCONF_NONINTERACTIVE_SEEN=true
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --yes \
+    bison \
     bind9-host \
     binutils \
-    bison \
     ca-certificates \
     ccache \
     clang \
@@ -23,8 +23,10 @@ RUN apt-get update \
     gperf \
     libarchive-tools \
     libffi-dev \
+    libfl-dev \
     libssl-dev \
     libusb-1.0-0 \
+    lldb \
     mc \
     ninja-build \
     openssl \

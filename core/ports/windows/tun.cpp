@@ -17,7 +17,6 @@
 #include "husarnet/ports/sockets.h"
 #include "husarnet/ports/windows/networking.h"
 
-#include "husarnet/gil.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
@@ -76,10 +75,12 @@ void TunTap::onTunTapData()
 
 void TunTap::startReaderThread()
 {
-  GIL::startThread(
+  Port::startThread(
       [&] {
         std::string buf;
         buf.resize(4096);
+
+        threadMutex.lock();
 
         while(true) {
           string_view packet = read(buf);
@@ -112,41 +113,45 @@ TunTap::TunTap(std::string name, bool isTap)
 
 string_view TunTap::read(std::string& buffer)
 {
-  return GIL::unlocked<string_view>([&] {
-    OVERLAPPED overlapped = {0, 0, {{0}}, 0};
-    overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+  threadMutex.unlock();
 
-    if(ReadFile(tap_fd, &buffer[0], (DWORD)buffer.size(), NULL, &overlapped) ==
-       0) {
-      if(GetLastError() != ERROR_IO_PENDING) {
-        LOG_ERROR("tap read failed %d", (int)GetLastError());
-        assert(false);
-      }
+  OVERLAPPED overlapped = {0, 0, {{0}}, 0};
+  overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+  if(ReadFile(tap_fd, &buffer[0], (DWORD)buffer.size(), NULL, &overlapped) ==
+      0) {
+    if(GetLastError() != ERROR_IO_PENDING) {
+      LOG_ERROR("tap read failed %d", (int)GetLastError());
+      assert(false);
     }
+  }
 
-    WaitForSingleObject(overlapped.hEvent, INFINITE);
-    CloseHandle(overlapped.hEvent);
+  WaitForSingleObject(overlapped.hEvent, INFINITE);
+  CloseHandle(overlapped.hEvent);
 
-    int len = overlapped.InternalHigh;
-    return string_view(buffer).substr(0, len);
-  });
+  threadMutex.lock();
+
+  int len = overlapped.InternalHigh;
+  return string_view(buffer).substr(0, len);
 }
 
 void TunTap::write(string_view data)
 {
-  GIL::unlocked<void>([&] {
-    OVERLAPPED overlapped = {0, 0, {{0}}, 0};
-    overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if(WriteFile(tap_fd, data.data(), (DWORD)data.size(), NULL, &overlapped)) {
-      auto error = GetLastError();
-      if(error != ERROR_IO_PENDING) {
-        LOG_ERROR("tap write failed");
-      }
-    }
+  threadMutex.unlock();
 
-    WaitForSingleObject(overlapped.hEvent, INFINITE);
-    CloseHandle(overlapped.hEvent);
-  });
+  OVERLAPPED overlapped = {0, 0, {{0}}, 0};
+  overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+  if(WriteFile(tap_fd, data.data(), (DWORD)data.size(), NULL, &overlapped)) {
+    auto error = GetLastError();
+    if(error != ERROR_IO_PENDING) {
+      LOG_ERROR("tap write failed");
+    }
+  }
+
+  WaitForSingleObject(overlapped.hEvent, INFINITE);
+  CloseHandle(overlapped.hEvent);
+
+  threadMutex.lock();
 }
 
 void TunTap::bringUp()

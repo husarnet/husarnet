@@ -58,7 +58,6 @@ var daemonStartCommand = &cli.Command{
 
 var daemonRestartCommand = &cli.Command{
 	Name:      "restart",
-	Aliases:   []string{"down"},
 	Usage:     "restart husarnet daemon",
 	ArgsUsage: " ", // No arguments needed
 	Flags: []cli.Flag{
@@ -629,7 +628,10 @@ var daemonGenIdCommand = &cli.Command{
 			}
 
 			printInfo("Saved! In order to apply it you need to restart Husarnet Daemon!")
-			restartDaemonWithConfirmationPrompt()
+
+			if !ctx.Bool("silent") {
+				restartDaemonWithConfirmationPrompt()
+			}
 		} else {
 			pterm.Printf(newId)
 

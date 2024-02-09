@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <sys/prctl.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/shared_unix_windows/hosts_file_manipulation.h"
@@ -45,14 +46,44 @@ json PrivilegedProcess::handleUpdateHostsFile(json data)
   return updateHostsFileInternal(dataMap);
 }
 
+bool PrivilegedProcess::hasHostnameFile()
+{
+  return Port::isFile(hostnamePath);
+}
+
 json PrivilegedProcess::handleGetSelfHostname(json data)
 {
-  return rtrim(Port::readFile(hostnamePath));
+  if(hasHostnameFile())
+    return rtrim(Port::readFile(hostnamePath));
+
+  // On some platforms (i.e. OpenWRT) the hostname file does not exist
+  LOG_WARNING(
+      "hostname file does not exist on this system, derriving one from the "
+      "host id");
+
+  // Use unique hostid as a hostname
+  long hostid = gethostid();
+  std::vector<unsigned char> hostid_bytes = {
+      (unsigned char)(hostid >> 24),
+      (unsigned char)(hostid >> 16),
+      (unsigned char)(hostid >> 8),
+      (unsigned char)(hostid >> 0),
+  };
+
+  std::string hostid_str = encodeHex(hostid_bytes);
+
+  return "device-" + hostid_str;
 }
 
 json PrivilegedProcess::handleSetSelfHostname(json data)
 {
   auto newHostname = data.get<std::string>();
+
+  if(!hasHostnameFile()) {
+    LOG_ERROR(
+        "cannot set hostname, hostname file does not exist on this system");
+    return false;
+  }
 
   if(!validateHostname(newHostname)) {
     return false;

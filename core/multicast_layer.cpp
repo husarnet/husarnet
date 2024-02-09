@@ -52,7 +52,7 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
     packet += mcastAddr;
     packet += data.substr(19);
 
-    LOG_INFO("received multicast from %s", encodeHex(source).c_str());
+    LOG_INFO("received multicast from %s", deviceIdToString(source).c_str());
 
     sendToUpperLayer(BadDeviceId, packet);
   } else {

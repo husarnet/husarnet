@@ -231,7 +231,7 @@ struct DnsSocketWrapper : NgSocket, NgSocketDelegate {
 
   void dnsReply(InetAddress src, string_view data)
   {
-    LOG("dns reply: %s", encodeHex(data).c_str());
+    LOG_DEBUG("dns reply: %s", encodeHex(data).c_str());
     if(src != recursiveDnsServer)
       return;
 
@@ -301,7 +301,8 @@ struct DnsSocketWrapper : NgSocket, NgSocketDelegate {
             htons(htons(unpack<uint16_t>(packet.substr(3, 2))) - 256));
         response += packet.substr(5);
 
-        LOG("ping %s -> %s", encodeHex(packet).c_str(),
+        LOG_DEBUG(
+            "ping %s -> %s", encodeHex(packet).c_str(),
             encodeHex(response).c_str());
         delegate->onDataPacket(dnsServerAddress, response);
         return;
