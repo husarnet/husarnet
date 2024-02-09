@@ -140,22 +140,10 @@ namespace Port {
     return map;// @TODO
   }
 
-  // TODO: this is a temporary fix for file names being too long for NVS key
-  //       one approach would be to remove husarion prefix before truncating
-  static std::string truncatePath(std::string path)
-  {
-    if(path.size() > 15) {
-      path = path.substr(0, 15);
-    }
-    return path;
-  }
-
   std::string readFile(const std::string& path)
   {
-    size_t len;
-    std::string truncatedPath = truncatePath(path);
-    
-    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, truncatedPath.c_str(), len);
+    size_t len;    
+    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), len);
 
     if (err == ESP_ERR_NVS_NOT_FOUND) {
       return "";
@@ -169,7 +157,7 @@ namespace Port {
     std::string value;
     value.resize(len);
 
-    err = nvsHandle->get_string(truncatedPath.c_str(), value.data(), len);
+    err = nvsHandle->get_string(path.c_str(), value.data(), len);
 
     if(err != ESP_OK) {
       LOG_ERROR("Unable to access NVS. (Error: %s)", esp_err_to_name(err));
@@ -182,9 +170,8 @@ namespace Port {
   bool writeFile(const std::string& path, const std::string& data)
   {
     LOG("write %s (len: %d)", path.c_str(), (int)data.size());
-    std::string truncatedPath = truncatePath(path);
 
-    esp_err_t err = nvsHandle->set_string(truncatedPath.c_str(), data.c_str());
+    esp_err_t err = nvsHandle->set_string(path.c_str(), data.c_str());
     if (err != ESP_OK) {
       LOG_ERROR("Unable to update NVS. (Error: %s)", esp_err_to_name(err));
       return false;
@@ -201,9 +188,7 @@ namespace Port {
   bool isFile(const std::string& path)
   {
     size_t value;
-    std::string truncatedPath = truncatePath(path);
-
-    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, truncatedPath.c_str(), value);
+    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), value);
 
     if (err == ESP_OK) {
       return true;

@@ -39,34 +39,29 @@ namespace Privileged {
   // Following functions return keys for the NVS storage
   std::string getConfigPath()
   {
-    return "husarnet_config";
+    return "config";
   }
 
   std::string getIdentityPath()
   {
-    return "husarnet_id";
+    return "id";
   }
 
   std::string getApiSecretPath()
   {
-    return "husarnet_api_secret";
+    return "api_secret";
   }
-
-  // std::string getLegacyConfigPath()
-  // {
-  //   return "husarnet_config_legacy"; // not used
-  // }
 
   std::string getLicenseJsonPath()
   {
-    return "husarnet_license";
+    return "license";
   }
 
   // TODO: Notifications are not implemented yet,
   // decide if we want to keep them in the ESP32 port
   std::string getNotificationFilePath()
   {
-    return "husarnet_notifications";
+    return "notifications";
   }
 
   std::string readNotificationFile()
