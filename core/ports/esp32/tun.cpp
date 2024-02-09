@@ -190,6 +190,7 @@ void TunTap::processQueuedPackets() {
         string_view packet((char*)p->payload, p->len);
         LOG_WARNING("packet: %d", p->len);
         sendToLowerLayer(BadDeviceId, packet);
+        LOG_WARNING("packet sent");
 
         pbuf_free(p);
     }

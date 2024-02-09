@@ -134,7 +134,6 @@ namespace Port {
   std::map<UserSetting, std::string> getEnvironmentOverrides()
   {
     auto map = std::map<UserSetting, std::string>();
-    map.insert({UserSetting::joinCode, "xxxx"}); //TODO: create join api
     map.insert({UserSetting::logVerbosity, "3"});
     
     return map;// @TODO
@@ -248,7 +247,7 @@ namespace Port {
 
   void processSocketEvents(HusarnetManager* manager)
   {
-    OsSocket::runOnce(10);  // process socket events for at most so many ms
+    OsSocket::runOnce(20);  // process socket events for at most so many ms
     manager->getTunTap()->processQueuedPackets();
   }
 
