@@ -69,10 +69,10 @@ void WebsetupConnection::start()
   }
 
   Port::startThread(
-      [this]() { this->periodicThread(); }, "websetupPeriodic", 6000);
+      [this]() { this->periodicThread(); }, "websetupPeriodic", 6000, 5);
 
   Port::startThread(
-      [this]() { this->handleConnectionThread(); }, "websetupConnection", 6000);
+      [this]() { this->handleConnectionThread(); }, "websetupConnection", 6000, 5);
 }
 
 void WebsetupConnection::send(

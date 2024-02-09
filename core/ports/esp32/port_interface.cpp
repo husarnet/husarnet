@@ -38,7 +38,6 @@
 #include "enum.h"
 
 #include "esp_system.h"
-#include "esp_timer.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "nvs_handle.hpp"
@@ -78,12 +77,14 @@ namespace Port {
       int stack,
       int priority)
   {
-    TaskHandle_t handle;
     std::function<void()>* func1 = new std::function<void()>;
     *func1 = std::move(func);
-    int coreId = strcmp(name, "ngsocket") == 0 ? 1 : 0; //TODO: refactor
-    if(xTaskCreatePinnedToCore(
-           taskProc, name, stack, func1, priority, &handle, coreId) != pdTRUE) {
+    // int coreId = strcmp(name, "ngsocket") == 0 ? 1 : 0; //TODO: refactor
+    // if(xTaskCreatePinnedToCore(
+    //        taskProc, name, stack, func1, priority, &handle, coreId) != pdTRUE) {
+    //   abort();
+    // }
+    if (xTaskCreate(taskProc, name, stack, func1, priority, NULL) != pdTRUE) {
       abort();
     }
   }
@@ -118,7 +119,7 @@ namespace Port {
 
   int64_t getCurrentTime()
   {
-    return esp_timer_get_time() / 1000 + 10000000ul;
+    return xTaskGetTickCount() * portTICK_PERIOD_MS;
   }
 
   UpperLayer* startTunTap(HusarnetManager* manager)
@@ -134,6 +135,7 @@ namespace Port {
   {
     auto map = std::map<UserSetting, std::string>();
     map.insert({UserSetting::joinCode, "xxxx"}); //TODO: create join api
+    map.insert({UserSetting::logVerbosity, "3"});
     
     return map;// @TODO
   }

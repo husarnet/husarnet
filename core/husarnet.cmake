@@ -1,8 +1,6 @@
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   #TODO: -fsanitize=undefined in clang
   set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g")
@@ -127,7 +125,7 @@ if(DEFINED IDF_TARGET)
   idf_component_register(
     SRCS ${husarnet_core_SRC}
     INCLUDE_DIRS ${husarnet_core_include_DIRS}
-    REQUIRES lwip nvs_flash freertos esp_netif esp_timer cxx esp_hw_support esp_wifi libsodium)
+    REQUIRES lwip nvs_flash freertos esp_netif cxx esp_hw_support esp_wifi libsodium)
 elseif()
   add_library(husarnet_core STATIC ${husarnet_core_SRC})
   include_directories(${husarnet_core_include_DIRS})

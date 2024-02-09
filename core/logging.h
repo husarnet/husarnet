@@ -48,7 +48,7 @@ static inline void log(
   message += " " + padRight(8, level._to_string());
 #endif
 
-#ifdef DEBUG_BUILD
+#if defined(DEBUG_BUILD) && not defined(IDF_TARGET)
   message += " " + padRight(80, userMessage);
   message +=
       " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
