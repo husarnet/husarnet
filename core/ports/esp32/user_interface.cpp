@@ -12,5 +12,5 @@ extern "C" void run_husarnet(TaskHandle_t* husarnet_task_handle)
 
   xTaskCreate([](void* manager) {
     ((HusarnetManager*)manager)->runHusarnet();
-  }, "husarnet_task", 16384 * 8, manager, 5, husarnet_task_handle);
+  }, "husarnet_task", 16384, manager, 5, husarnet_task_handle);
 }

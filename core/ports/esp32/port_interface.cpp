@@ -123,13 +123,19 @@ namespace Port {
 
   UpperLayer* startTunTap(HusarnetManager* manager)
   {
-    auto tunTap = new TunTap(32);
+    ip6_addr_t ip;
+    memcpy(ip.addr, manager->getIdentity()->getDeviceId().data(), 16);
+    
+    auto tunTap = new TunTap(ip, 32);
     return tunTap;
   }
 
   std::map<UserSetting, std::string> getEnvironmentOverrides()
   {
-    return std::map<UserSetting, std::string>();  // @TODO
+    auto map = std::map<UserSetting, std::string>();
+    map.insert({UserSetting::joinCode, "xxxx"}); //TODO: create join api
+    
+    return map;// @TODO
   }
 
   // TODO: this is a temporary fix for file names being too long for NVS key

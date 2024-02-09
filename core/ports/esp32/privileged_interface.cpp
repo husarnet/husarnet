@@ -13,6 +13,8 @@
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
+#include "lwip/netif.h"
+
 static std::string configDir;
 
 namespace Privileged {
@@ -152,20 +154,48 @@ namespace Privileged {
     LOG_WARNING("writeNotifications not implemented");
   }
 
-  // TODO: important: implement local addresses
   std::vector<IpAddress> getLocalAddresses()
   {
-    // esp_netif_get_all_ip6
+    std::vector<IpAddress> ret;
+    netif* netif;
 
-         std::vector<IpAddress>
-             ret;
-    // for(tcpip_adapter_if_t ifid : {TCPIP_ADAPTER_IF_STA, TCPIP_ADAPTER_IF_AP}) {
-    //   tcpip_adapter_ip_info_t info;
-    //   if(tcpip_adapter_get_ip_info(ifid, &info) == ESP_OK) {
-    //     IpAddress addr = IpAddress::fromBinary4(info.ip.addr);
-    //     ret.push_back(addr);
-    //   }
-    // }
+    for (u8_t idx = 1; (netif = netif_get_by_index(idx)) != NULL; idx++) {
+      char buf[IP6ADDR_STRLEN_MAX];
+      const ip6_addr_t* ipv6;
+      // Iterate over all IPv6 addresses and validate them
+      for (int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+        ipv6 = netif_ip6_addr(netif, i);
+        if (ipv6 == NULL) {
+          continue;
+        }
+
+        if (ip6_addr_isany(ipv6) || ip6_addr_isloopback(ipv6)) {
+          continue;
+        }
+
+        // Append to valid addresses
+        ip6addr_ntoa_r(ipv6, buf, IP6ADDR_STRLEN_MAX);
+        LOG_DEBUG("netif: %s, ip6: %s", netif->name, buf);
+        ret.push_back(IpAddress::fromBinary(buf));
+      }
+
+      // LwIP can have only one IPv4 address per interface
+      // Validate address
+      const ip4_addr_t* ipv4 = netif_ip4_addr(netif);
+      if (ipv4 == NULL) {
+        continue;
+      }
+
+      if (ip4_addr_isany(ipv4) || ip4_addr_isloopback(ipv4)) {
+        continue;
+      }
+
+      // Append to valid addresses
+      ip4addr_ntoa_r(ipv4, buf, IP4ADDR_STRLEN_MAX);
+      LOG_DEBUG("netif: %s, ip4: %s", netif->name, buf);
+      ret.push_back(IpAddress::fromBinary4(buf));
+    }
+
     return ret;
   }
 
