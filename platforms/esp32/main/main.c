@@ -11,6 +11,7 @@
 #include "esp_netif.h"
 #include "esp_wifi.h"
 #include "wifi.h"
+#include "webserver.h"
 
 #include "user_interface.h"
 
@@ -39,6 +40,8 @@ void app_main(void) {
     
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    
     wifi_init();
     esp_wifi_set_ps(WIFI_PS_NONE);
 
@@ -47,6 +50,10 @@ void app_main(void) {
     HusarnetClient* client = husarnet_init();
     husarnet_start(client);
     husarnet_task_handle = xTaskGetHandle("husarnet_task");
+
+    // TODO: attached to the Husarnet network callback
+    //vTaskDelay(5000 / portTICK_PERIOD_MS);
+    start_webserver();
 
     while(1) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
