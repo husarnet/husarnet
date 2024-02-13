@@ -15,6 +15,7 @@
 const std::string stripLogPathPrefix(const std::string& filename);
 
 // Do not use this function directly - instead use the macros below
+// TODO: replace buffer with std::string
 static inline void log(
     LogLevel level,
     const std::string& filename,
@@ -57,7 +58,10 @@ static inline void log(
 #endif
 
   Port::log(level, message);
+
+#ifndef IDF_TARGET
   getGlobalLogManager()->insert(message);
+#endif
 }
 
 // Legacy compatibility alias
