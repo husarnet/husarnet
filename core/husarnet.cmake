@@ -94,6 +94,7 @@ endif()
 
 if (DEFINED IDF_TARGET)
   list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/esp32)
+  list(APPEND husarnet_core_include_DIRS ${COMPONENT_DIR})
   file(GLOB port_esp32_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/esp32/*.cpp")
   list(APPEND husarnet_core_SRC ${port_esp32_SRC})
 endif()
@@ -125,7 +126,7 @@ if(DEFINED IDF_TARGET)
   idf_component_register(
     SRCS ${husarnet_core_SRC}
     INCLUDE_DIRS ${husarnet_core_include_DIRS}
-    REQUIRES lwip nvs_flash freertos esp_netif cxx esp_hw_support esp_wifi libsodium)
+    REQUIRES lwip nvs_flash esp_netif esp_wifi libsodium)
 elseif()
   add_library(husarnet_core STATIC ${husarnet_core_SRC})
   include_directories(${husarnet_core_include_DIRS})
