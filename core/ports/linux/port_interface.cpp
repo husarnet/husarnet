@@ -632,6 +632,9 @@ namespace Port {
       std::string filePath = path + "/" + fileName;
       if(access(filePath.c_str(), X_OK) == 0) {
         result.push_back(filePath);
+      } else {
+        LOG_WARNING(
+            "%s is not executable, skipping it as a hook", filePath.c_str());
       }
     }
     closedir(dir);

@@ -352,13 +352,12 @@ bool HusarnetManager::areHooksEnabled()
 
 void HusarnetManager::hooksEnable()
 {
-  bool werentEnabled = !areHooksEnabled();
+  if(areHooksEnabled()) {
+    return;
+  }
 
   configStorage->setUserSetting(UserSetting::enableHooks, trueValue);
-
-  if(werentEnabled) {
-    hooksManager = new HooksManager(this);
-  }
+  hooksManager = new HooksManager(this);
 }
 
 void HusarnetManager::hooksDisable()
@@ -551,6 +550,10 @@ void HusarnetManager::stage1()
 
   readLegacyConfig();
 
+  if(configStorage->getUserSettingBool(UserSetting::enableHooks)) {
+    this->hooksManager = new HooksManager(this);
+  }
+
   // This checks whether the dashboard URL was recently changed using an
   // environment variable and makes sure it's saved to a persistent storage (as
   // other values like websetup secret) depend on it.
@@ -589,10 +592,6 @@ void HusarnetManager::stage3()
 {
   if(stage3Started) {
     return;
-  }
-
-  if(configStorage->getUserSettingBool(UserSetting::enableHooks)) {
-    this->hooksManager = new HooksManager(this);
   }
 
   startNetworkingStack();

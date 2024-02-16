@@ -53,9 +53,11 @@ class HooksManager : public HooksManagerInterface {
   std::map<std::string, Timer*> hookTimers;
   std::map<std::string, std::condition_variable*> hookConditionalVariables;
   std::mutex m;
-  std::chrono::milliseconds timespan{500};
-  std::chrono::milliseconds interval{10};
-  std::chrono::milliseconds waitspan{5000};
+  std::chrono::milliseconds timespan{
+      1000};  // Time to postpone the hook execution on every runHook
+  std::chrono::milliseconds interval{100};  // How often to re-check the timers
+  std::chrono::milliseconds waitspan{
+      5000};  // How long to wait for a script using waitHook
 };
 
 class DummyHooksManager : public HooksManagerInterface {
