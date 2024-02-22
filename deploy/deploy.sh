@@ -98,7 +98,7 @@ for arch in ${linux_archs}; do
 done
 
 aptly snapshot create husarnet-${package_version} from repo install-${deploy_target}
-aptly publish switch -component=husarnet -batch all husarnet-${package_version}
+aptly publish switch -force-overwrite -component=husarnet -batch all husarnet-${package_version}
 
 echo "[==] Building new repo"
 rm -rf ${working_path}/* || true
