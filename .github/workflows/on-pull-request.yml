@@ -67,7 +67,7 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} nightly"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} nightly"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} nightly"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -140,7 +140,7 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh nightly"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh nightly"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh nightly"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -208,9 +208,9 @@ jobs:
       - name: "Save a password for unlocking a shared secrets repository in a known place"
         run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/integration/secrets-password.bin"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/integration/secrets-tool.sh decrypt"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/integration/secrets-tool.sh decrypt"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/integration/secrets-tool.sh decrypt"
       - name: "Docker run ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}"
-        run: "docker run --rm --privileged --volume $(pwd):/app ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}"
     strategy:
       fail-fast: false
       matrix:
@@ -246,6 +246,8 @@ jobs:
         test_file:
           - "functional-basic"
           - "join-workflow"
+          - "hooks-basic"
+          - "hooks-rw"
   run_tests:
     needs: []
     runs-on: "ubuntu-latest"
@@ -261,9 +263,9 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/daemon/format.sh"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/daemon/format.sh"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/daemon/format.sh"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/test.sh"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/test.sh"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/test.sh"
 name: "Pull request workflow"
 "on":
   pull_request:

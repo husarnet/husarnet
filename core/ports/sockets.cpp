@@ -517,9 +517,7 @@ namespace OsSocket {
 
     errno = 0;
 
-    SOCKFUNC(select)(
-        maxfd + 1, &readset, &writeset, &errorset,
-        &timeoutval);
+    SOCKFUNC(select)(maxfd + 1, &readset, &writeset, &errorset, &timeoutval);
 
     for(auto& conn : udpSockets) {
       if(conn.fd == -1)

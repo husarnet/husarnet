@@ -119,7 +119,7 @@ string_view TunTap::read(std::string& buffer)
   overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
   if(ReadFile(tap_fd, &buffer[0], (DWORD)buffer.size(), NULL, &overlapped) ==
-      0) {
+     0) {
     if(GetLastError() != ERROR_IO_PENDING) {
       LOG_ERROR("tap read failed %d", (int)GetLastError());
       assert(false);

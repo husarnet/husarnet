@@ -5,51 +5,75 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <mutex>
 #include <thread>
+
 class Timer {
  public:
+  // Interval is the time between evaluations of the call conditions
+  // Timespan is the time that each Reset call uses to postpone the execution
+  // Callback willl be called **in the timer's thread** after the timer expires
   Timer(
       std::chrono::milliseconds interval,
       std::chrono::milliseconds timespan,
       std::function<void()> callback)
       : interval(interval), timespan(timespan), callback(callback)
   {
+    expiration_time = std::chrono::time_point<std::chrono::steady_clock>::max();
   }
 
   ~Timer()
   {
-    this->Stop();
+    Stop();
   }
 
+  // Start the timer in the background
   void Start()
   {
-    running = true;
-    expiration_time = std::chrono::steady_clock::now() + timespan;
     thread = std::thread([this] {
-      while(running) {
+      while(true) {
+        std::this_thread::sleep_for(interval);
+
+        mutex.lock();
+
+        bool should_run = false;
         auto now = std::chrono::steady_clock::now();
         if(now >= expiration_time) {
-          callback();
-          running = false;
+          should_run = true;
+
+          expiration_time =
+              std::chrono::time_point<std::chrono::steady_clock>::max();
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+        mutex.unlock();
+
+        if(should_run) {
+          callback();
+        }
       }
     });
   }
 
+  // Stop the timer and prevent it from execution
+  // Also - cleanup the thread
   void Stop()
   {
-    running = false;
-    if(thread.joinable()) {
-      thread.join();
-    }
+    std::lock_guard waitLock(mutex);
+    expiration_time = std::chrono::time_point<std::chrono::steady_clock>::max();
   }
 
+  // Reset the timer, postponing the execution to at least timespan from now
   void Reset()
   {
-    Stop();
+    std::lock_guard waitLock(mutex);
     expiration_time = std::chrono::steady_clock::now() + timespan;
-    Start();
+  }
+
+  // Fire the callback immediately
+  void Fire()
+  {
+    std::lock_guard waitLock(mutex);
+    expiration_time =
+        std::chrono::steady_clock::now() - std::chrono::seconds(1);
   }
 
  private:
@@ -57,6 +81,6 @@ class Timer {
   std::chrono::milliseconds timespan;
   std::function<void()> callback;
   std::thread thread;
-  std::atomic<bool> running;
   std::chrono::time_point<std::chrono::steady_clock> expiration_time;
+  std::mutex mutex;
 };

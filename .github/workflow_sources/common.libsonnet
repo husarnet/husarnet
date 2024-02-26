@@ -55,7 +55,7 @@
 
     docker:: function(container, command) {
       name: 'Docker run ' + container + ' ' + command,
-      run: 'docker run --rm --privileged --volume $(pwd):/app ' + container + ' ' + command,
+      run: 'docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ' + container + ' ' + command,
     },
 
     build_macos_daemon:: function(build_type, arch) {
@@ -300,6 +300,8 @@
           test_file: [
             'functional-basic',
             'join-workflow',
+            'hooks-basic',
+            'hooks-rw',
           ],
           include: [
             { container_name: docker_project + ':amd64', test_platform: 'docker' },

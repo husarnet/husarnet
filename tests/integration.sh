@@ -9,25 +9,20 @@ ${tests_base}/integration/secrets-tool.sh decrypt
 
 pushd ${base_dir}
 
-# This is for development of the tests itself
-# echo "Test the test engine itself I guess"
-# docker run --rm --privileged --volume ${base_dir}:/app ubuntu:22.04 /app/tests/integration/runner.sh ubuntu functional-basic
+parallel --progress --eta --halt soon,fail=1 docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume ${base_dir}:/app {1} /app/tests/integration/runner.sh {2} {3} {1} \
+::: \
+husarnet:dev \
+ubuntu:18.04 ubuntu:20.04 ubuntu:22.04 \
+debian:oldstable debian:stable debian:testing \
+fedora:38 fedora:39 fedora:40 fedora:41 \
+:::+ \
+docker \
+ubuntu ubuntu ubuntu \
+debian debian debian \
+fedora fedora fedora fedora \
+::: \
+functional-basic join-workflow hooks-basic hooks-rw
 
-if [ $(man parallel | grep color-failed | wc -l) -gt 1 ]; then
-    parallel_cmd="parallel --color-failed"
-else
-    parallel_cmd="parallel"
-fi
-
-$parallel_cmd docker run --rm --privileged --volume ${base_dir}:/app {1} /app/tests/integration/runner.sh {2} {3} \
-    ::: husarnet:dev \
-    ubuntu:18.04 ubuntu:20.04 ubuntu:22.04 \
-    debian:oldstable debian:stable debian:testing \
-    fedora:37 fedora:38 \
-    :::+ docker \
-    ubuntu ubuntu ubuntu \
-    debian debian debian \
-    fedora fedora fedora \
-    ::: functional-basic join-workflow
+# Remember to keep those ^ in sync with GH actions!
 
 popd

@@ -444,10 +444,18 @@ void ApiServer::runThread()
         bindAddress.toString().c_str(), manager->getApiPort());
   }
 
+  cv.notify_all();
+
   if(!svr.listen_after_bind()) {
     LOG_CRITICAL("HTTP thread finished unexpectedly. Exiting!");
     exit(1);
   }
+}
+
+void ApiServer::waitStarted()
+{
+  std::unique_lock<std::mutex> lk(mutex);
+  cv.wait(lk);
 }
 
 json ApiServer::getStandardReply()

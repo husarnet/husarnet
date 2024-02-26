@@ -773,7 +773,7 @@ PeerToPeerMessage NgSocket::parsePeerToPeerMessage(string_view data)
     }
 
     bool ok = NgSocketCrypto::verifySignature(
-          data.substr(0, 17 + 64), "ng-p2p-msg", pubkey, signature);
+        data.substr(0, 17 + 64), "ng-p2p-msg", pubkey, signature);
 
     if(!ok) {
       LOG_ERROR("invalid signature: %s", signature.c_str());

@@ -172,10 +172,9 @@ void WebsetupConnection::handleConnectionThread()
     buffer.resize(1024);
     sockaddr_in6 addr{};
     socklen_t addrsize = sizeof(addr);
-    
+
     int ret = SOCKFUNC(recvfrom)(
-          websetupFd, &buffer[0], buffer.size(), 0, (sockaddr*)&addr,
-          &addrsize);
+        websetupFd, &buffer[0], buffer.size(), 0, (sockaddr*)&addr, &addrsize);
 
     // Async handling
 #ifdef _WIN32

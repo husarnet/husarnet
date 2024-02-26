@@ -672,8 +672,10 @@ namespace Port {
       std::istringstream iss(output);
       std::string line;
       while(std::getline(iss, line)) {
-        LOG_INFO((scriptPath + " returned: " + line).c_str());
+        LOG_INFO((scriptPath + ": " + line).c_str());
       }
+
+      LOG_INFO(("running " + scriptPath + " as a hook done").c_str());
     }
     LOG_DEBUG(("running hooks under path " + path + " done").c_str());
   }

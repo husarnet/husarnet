@@ -49,10 +49,6 @@ namespace Privileged {
   // TODO would be nice to move this somewhere else - like HusarnetManager
   void rotateApiSecret();
 
-  std::vector<std::pair<std::time_t, std::string>> readNotifications();
-  void writeNotifications(
-      std::vector<std::pair<std::time_t, std::string>> list);
-
   std::vector<IpAddress> getLocalAddresses();
 
   std::string getSelfHostname();

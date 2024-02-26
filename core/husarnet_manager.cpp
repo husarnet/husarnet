@@ -526,10 +526,11 @@ void HusarnetManager::startWebsetup()
 void HusarnetManager::startHTTPServer()
 {
 #ifdef HTTP_CONTROL_API
-  threadpool.push_back(new std::thread([this]() {
-    auto server = new ApiServer(this);
-    server->runThread();
-  }));
+  auto server = new ApiServer(this);
+
+  threadpool.push_back(new std::thread([=]() { server->runThread(); }));
+
+  server->waitStarted();
 #endif
 }
 
@@ -597,6 +598,21 @@ void HusarnetManager::stage3()
   startNetworkingStack();
   startWebsetup();
 
+  this->notificationManager = new NotificationManager(
+      configStorage->getUserSetting(UserSetting::dashboardFqdn), this);
+
+  startHTTPServer();
+
+  whitelistAdd(getWebsetupAddress());
+
+  // TODO move this to websetup
+  this->hostTableAdd("husarnet-local", this->getSelfAddress());
+
+  stage3Started = true;
+}
+
+void HusarnetManager::stage4()
+{
   if(configStorage->isUserSettingOverriden(UserSetting::joinCode)) {
     if(configStorage->isUserSettingOverriden(UserSetting::hostname)) {
       joinNetwork(
@@ -606,14 +622,6 @@ void HusarnetManager::stage3()
       joinNetwork(configStorage->getUserSetting(UserSetting::joinCode));
     }
   }
-
-  this->hostTableAdd("husarnet-local", this->getSelfAddress());
-  this->notificationManager = new NotificationManager(
-      configStorage->getUserSetting(UserSetting::dashboardFqdn), this);
-
-  startHTTPServer();
-
-  stage3Started = true;
 }
 
 void HusarnetManager::runHusarnet()
@@ -621,6 +629,7 @@ void HusarnetManager::runHusarnet()
   stage1();
   stage2();
   stage3();
+  stage4();
 
   Privileged::notifyReady();
 

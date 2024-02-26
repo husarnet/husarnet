@@ -2,6 +2,9 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
 #include <string>
 
 #include "httplib.h"
@@ -17,6 +20,8 @@ namespace httplib {
 class ApiServer {
  private:
   HusarnetManager* manager;
+  std::mutex mutex;
+  std::condition_variable cv;
 
   void returnSuccess(
       const httplib::Request& req,
@@ -46,4 +51,5 @@ class ApiServer {
   ApiServer(HusarnetManager* manager);
 
   void runThread();
+  void waitStarted();
 };

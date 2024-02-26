@@ -2,8 +2,8 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include <string>
 #include <mutex>
+#include <string>
 
 #include "husarnet/device_id.h"
 #include "husarnet/layer_interfaces.h"
