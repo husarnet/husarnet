@@ -365,8 +365,8 @@ jobs:
         run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/integration/secrets-password.bin"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/integration/secrets-tool.sh decrypt"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/integration/secrets-tool.sh decrypt"
-      - name: "Docker run ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}"
-        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}"
+      - name: "Docker run ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}} ${{matrix.container_name}}"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}} ${{matrix.container_name}}"
     strategy:
       fail-fast: false
       matrix:
@@ -378,8 +378,10 @@ jobs:
           - "debian:oldstable"
           - "debian:stable"
           - "debian:testing"
-          - "fedora:37"
           - "fedora:38"
+          - "fedora:39"
+          - "fedora:40"
+          - "fedora:41"
         include:
           - container_name: "husarnet/husarnet-nightly:amd64"
             test_platform: "docker"
@@ -395,9 +397,13 @@ jobs:
             test_platform: "debian"
           - container_name: "debian:testing"
             test_platform: "debian"
-          - container_name: "fedora:37"
-            test_platform: "fedora"
           - container_name: "fedora:38"
+            test_platform: "fedora"
+          - container_name: "fedora:39"
+            test_platform: "fedora"
+          - container_name: "fedora:40"
+            test_platform: "fedora"
+          - container_name: "fedora:41"
             test_platform: "fedora"
         test_file:
           - "functional-basic"
