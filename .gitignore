@@ -11,6 +11,8 @@ __pycache__/
 /build-gui-*
 platforms/esp32/managed_components
 platforms/esp32/dependencies.lock
+platforms/esp32/sdkconfig
+platforms/esp32/sdkconfig.old
 
 # Visual Studio Code
 .vscode/*

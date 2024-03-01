@@ -9,8 +9,8 @@
 #include "esp_check.h"
 #include "nvs_flash.h"
 #include "esp_netif.h"
+#include "protocol_examples_common.h"
 #include "esp_wifi.h"
-#include "wifi.h"
 #include "webserver.h"
 
 #include "husarnet.h"
@@ -19,7 +19,7 @@ static const char *TAG = "main";
 TaskHandle_t husarnet_task_handle = NULL;
 
 void memory_watch_task(void *pvParameters) {
-    char task_list[2048];
+    //char task_list[2048];
 
     while (1) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -30,8 +30,8 @@ void memory_watch_task(void *pvParameters) {
         // vTaskList(task_list);
         // ESP_LOGD(TAG, "Task list:\n%s", task_list);
 
-        vTaskGetRunTimeStats(task_list);
-        ESP_LOGD(TAG, "Task runtime stats:\n%s", task_list);
+        // vTaskGetRunTimeStats(task_list);
+        // ESP_LOGD(TAG, "Task runtime stats:\n%s", task_list);
     }
 }
 
@@ -42,7 +42,9 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     
-    wifi_init();
+    // Initialize WiFi or Ethernet, depending on the menuconfig configuration.
+    ESP_ERROR_CHECK(example_connect());
+    // In order to reduce ping, power saving mode is disabled
     esp_wifi_set_ps(WIFI_PS_NONE);
 
     ESP_LOGI(TAG, "Starting Husarnet client...");
