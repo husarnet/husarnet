@@ -34,6 +34,7 @@ class NotificationManager {
   std::string static dashboardHostname;
   static HusarnetManager* husarnetManager;
   void static refreshNotificationFile();
+  static constexpr int dayTimeout = 86400; /*seconds in day*/
 
  public:
   json static retrieveNotificationJson(std::string dashboardHostname);

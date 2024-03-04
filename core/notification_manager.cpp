@@ -24,76 +24,77 @@ NotificationManager::~NotificationManager()
 
 void NotificationManager::refreshNotificationFile()
 {
-  // This ma look a bit confusing but in order to solve several edge cases with
-  // cutom time and date settings on client systems and in order to handle data
-  // loss as gracefully as possible this kind of solutions was the best apparant
-  // one.
-  //  We expect to get new announcements for dashbaord in a json contatining a
-  //  list of objects, where each object has id,
-  // content of the announcement and a valididty span (in days). On the client
-  // side we store the the latest_id we got (and when looking at announcements
-  // we got from dashbaord we igonre those with lower or equal id to this one),
-  // we also store announcements that are still walid and should be displayed
-  //(we store content of the announcement and a time point casted to int once
-  // the time point is excedeed this announcement will be filtered out on
-  // refresh) we utilze client system clock to calculate the validity time point
-  // adn only specify timespan on the server side this mechanism ensures that
-  // even if client system is configured with a custom date and time,
-  // announcements will work as if the time and date was the same as on the
-  // server side. The id mechanism also ensures that individual announcements
-  // will be displayed to users for the same time spans independently of the
-  // time client received announcement.
+ // This may look a bit confusing but in order to solve several edge cases with
+ // custom time and date settings on client systems and in order to handle data
+ // loss as gracefully as possible this kind of solutions was the best apparent
+ // one.
+ // We expect to get new notifications for dashboard in a json containing a
+ // list of objects, where each object has id,
+ // content of the notification and a validity span (in days). On the client
+ // side we store the the latest_id we got (and when looking at notifications
+ // we got from dashboard we ignore those with lower or equal id to this one),
+ // we also store notifications that are still walid and should be displayed
+ //(we store content of the notification and a time point casted to int once
+ // the time point is exceeded this notification will be filtered out on
+ // refresh) we utilize client system clock to calculate the validity time point
+ // and only specify timespan on the server side this mechanism ensures that
+ // even if client system is configured with a custom date and time,
+ // notifications will work as if the time and date was the same as on the
+ // server side. The id mechanism also ensures that individual notifications
+ // will be displayed to users for the same time spans independently of the
+ // time the client received the notification.
+
   auto new_notifications = retrieveNotificationJson(dashboardHostname);
   auto cached = Privileged::readNotificationFile();
   json merged;
-  merged["announcements"] = json::array();
+  merged["notifications"] = json::array();
   merged["latest_id"] = 0;
   int now = static_cast<int>(
       std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-  if(cached != "{}" and new_notifications.contains("announcements")) {
+  if(cached != "{}" and new_notifications.contains("notifications")) {
     auto notifications = nlohmann::json::parse(cached);
     if(notifications.contains("latest_id") and
-       notifications.contains("announcements")) {
+       notifications.contains("notifications")) {
       merged["latest_id"] = notifications["latest_id"];
-      for(const auto& element : notifications["announcements"]) {
+      for(const auto& element : notifications["notifications"]) {
         if(element["valid_until"].get<int>() >= now) {
-          merged["announcements"].push_back(element);
+          merged["notifications"].push_back(element);
         }
       }
     }
-    for(const auto& element : new_notifications["announcements"]) {
+    for(const auto& element : new_notifications["notifications"]) {
       if(element["id"] > merged["latest_id"]) {
         merged["latest_id"] = element["id"];
         json j;
         j.emplace("content", element["content"]);
         j.emplace(
             "valid_until",
-            now + element["valid_for"].get<int>() * 86400 /*seconds in days*/);
-        merged["announcements"].push_back(j);
+            now + element["valid_for"].get<int>() * dayTimeout);
+        merged["notifications"].push_back(j);
       }
     }
 
-  } else if(new_notifications.contains("announcements")) {
-    for(const auto& element : new_notifications["announcements"]) {
+  } else if(new_notifications.contains("notifications")) {
+    for(const auto& element : new_notifications["notifications"]) {
       if(element["id"] > merged["latest_id"]) {
         merged["latest_id"] = element["id"];
         json j;
         j.emplace("content", element["content"]);
         j.emplace(
             "valid_until",
-            now + element["valid_for"].get<int>() * 86400 /*seconds in days*/);
-        merged["announcements"].push_back(j);
+            now + element["valid_for"].get<int>() * dayTimeout);
+        merged["notifications"].push_back(j);
       }
     }
 
   } else if(cached != "{}") {
     auto notifications = nlohmann::json::parse(cached);
     if(notifications.contains("latest_id") and
-       notifications.contains("announcements")) {
+       notifications.contains("notifications")) {
       merged["latest_id"] = notifications["latest_id"];
-      for(const auto& element : notifications["announcements"]) {
+      for(const auto& element : notifications["notifications"]) {
         if(element["valid_until"].get<int>() >= now) {
-          merged["announcements"].push_back(element);
+          merged["notifications"].push_back(element);
         }
       }
     }
@@ -115,8 +116,8 @@ std::list<std::string> NotificationManager::getNotifications()
   std::list<std::string> ls{};
   int now = static_cast<int>(
       std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-  if(notifications.contains("announcements")) {
-    for(const auto& element : notifications["announcements"]) {
+  if(notifications.contains("notifications")) {
+    for(const auto& element : notifications["notifications"]) {
       if(element["valid_until"].get<int>() >= now) {
         ls.push_back(element["content"].get<std::string>());
       }
@@ -143,12 +144,12 @@ json NotificationManager::retrieveNotificationJson(
   readBuffer.resize(8192);
 
   std::string request =
-      "GET /announcements.json HTTP/1.1\n"
+      "GET /announcements.json HTTP/1.1\r\n"
       "Host: " +
       dashboardHostname +
-      "\n"
-      "User-Agent: husarnet\n"
-      "Accept: */*\n\n";
+      "\r\n"
+      "User-Agent: husarnet\r\n"
+      "Accept: */*\r\n\r\n";
 
   SOCKFUNC(send)(sockfd, request.data(), request.size(), 0);
   size_t len =
