@@ -176,8 +176,6 @@ namespace Port {
 
   bool writeFile(const std::string& path, const std::string& data)
   {
-    LOG("write %s (len: %d)", path.c_str(), (int)data.size());
-
     esp_err_t err = nvsHandle->set_string(path.c_str(), data.c_str());
     if (err != ESP_OK) {
       LOG_ERROR("Unable to update NVS. (Error: %s)", esp_err_to_name(err));
