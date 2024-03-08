@@ -47,10 +47,14 @@
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+
 static const char* LOG_TAG = "husarnet";
 
 namespace Port {
   std::unique_ptr<nvs::NVSHandle> nvsHandle;
+  SemaphoreHandle_t notifyReadySemaphore;
 
   void init()
   {
@@ -60,6 +64,13 @@ namespace Port {
     if(err != ESP_OK) {
       LOG_ERROR("Unable to open NVS. This will result in corrupted "
           "operations! (Error: %s)", esp_err_to_name(err));
+    }
+
+    notifyReadySemaphore = xSemaphoreCreateBinary();
+
+    if(notifyReadySemaphore == NULL) {
+      LOG_CRITICAL("Unable to create semaphore");
+      abort();
     }
   }
 
@@ -133,10 +144,7 @@ namespace Port {
 
   std::map<UserSetting, std::string> getEnvironmentOverrides()
   {
-    auto map = std::map<UserSetting, std::string>();
-    map.insert({UserSetting::logVerbosity, "3"});
-    
-    return map;// @TODO
+    return std::map<UserSetting, std::string>(); // @TODO
   }
 
   std::string readFile(const std::string& path)
@@ -209,7 +217,8 @@ namespace Port {
 
   void notifyReady()
   {
-    // No-op as we won't be using it on this platform
+    // Send a notification to the user task that the networking stack is ready
+    xSemaphoreGive(notifyReadySemaphore);
   }
 
   void log(const LogLevel level, const std::string& message)

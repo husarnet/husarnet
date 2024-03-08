@@ -211,7 +211,7 @@ namespace Privileged {
 
   void notifyReady()
   {
-    // @TODO
+    Port::notifyReady();
   }
 
   void runScripts(const std::string& path) {

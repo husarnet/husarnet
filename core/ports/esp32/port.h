@@ -8,3 +8,7 @@
 
 #define SOCKFUNC(name) ::name
 #define SOCKFUNC_close SOCKFUNC(close)
+
+namespace Port {
+  extern SemaphoreHandle_t notifyReadySemaphore;
+}

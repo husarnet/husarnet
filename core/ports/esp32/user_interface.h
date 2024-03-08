@@ -5,7 +5,12 @@
 
 #ifdef __cplusplus
 
-#include "husarnet/husarnet_manager.h"
+#include <string>
+#include <vector>
+
+using HusarnetPeer = std::pair<std::string, std::string>;
+
+class HusarnetManager;
 
 /*
   HusarnetClient implements Husarnet VPN API. It is a wrapper
@@ -14,14 +19,17 @@
 class HusarnetClient {
 private:
   HusarnetManager* husarnetManager;
+  TaskHandle_t husarnetTaskHandle;
   bool started = false;
 public:
     HusarnetClient();
-    HusarnetClient(const HusarnetManager&) = delete;
+    HusarnetClient(const HusarnetClient&) = delete;
     ~HusarnetClient();
 
-    void start();
     void join(const char* hostname, const char* joinCode);
+    void setDashboardFqdn(const char* fqdn);
+    std::vector<HusarnetPeer> listPeers();
+    bool isJoined();
     HusarnetManager* getManager();
 };
 #else
@@ -33,8 +41,9 @@ extern "C" {
 #endif
 
 HusarnetClient* husarnet_init();
-void husarnet_start(HusarnetClient* client);
 void husarnet_join(HusarnetClient* client, const char* hostname, const char* joinCode);
+void husarnet_set_dashboard_fqdn(HusarnetClient* client, const char* fqdn);
+uint8_t husarnet_is_joined(HusarnetClient* client);
 
 #ifdef __cplusplus
 }

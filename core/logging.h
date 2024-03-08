@@ -24,7 +24,7 @@ static inline void log(
     const char* format,
     ...)
 {
-  if(level > getGlobalLogManager()->getVerbosity()) {
+  if(level > getGlobalLogManager()->getVerbosity() || level == LogLevel::NONE) {
     return;
   }
 

@@ -50,11 +50,9 @@ void app_main(void) {
     ESP_LOGI(TAG, "Starting Husarnet client...");
 
     HusarnetClient* client = husarnet_init();
-    husarnet_start(client);
+    husarnet_join(client, "husarnet-esp32-test", "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a/Wbutp8eJLUNgH7wLML3AMM");
     husarnet_task_handle = xTaskGetHandle("husarnet_task");
 
-    // TODO: attached to the Husarnet network callback
-    //vTaskDelay(5000 / portTICK_PERIOD_MS);
     start_webserver();
 
     while(1) {
