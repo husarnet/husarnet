@@ -80,16 +80,11 @@ err_t husarnet_netif_init(struct netif *netif) {
     return ERR_OK;
 }
 
-err_t husarnet_netif_input(struct pbuf *p, struct netif *inp) {
-    ESP_LOGE(TAG, "Husarnet TUN interface received packet");
-    
+err_t husarnet_netif_input(struct pbuf *p, struct netif *inp) {    
     return ESP_OK;
-    //return ip_input(p, inp);
 }
 
 err_t husarnet_netif_output(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr) {
-    ESP_LOGE(TAG, "Husarnet TUN interface sending packet");
-
     if (p->next != NULL) {
         ESP_LOGE(TAG, "Packet chain is not supported");
         return ESP_FAIL;
@@ -147,8 +142,6 @@ TunTap::TunTap(ip6_addr_t ipAddr, size_t queueSize): ipAddr(ipAddr)
 
 void TunTap::onLowerLayerData(DeviceId source, string_view data)
 {
-    ESP_LOGI(TAG, "Received %d bytes from %s", data.size(), ((std::string)source).c_str());
-
     // Input packet should contain IPv4/IPv6 header
     if (data.size() < 40) {
         ESP_LOGE(TAG, "Packet too short");
@@ -188,9 +181,7 @@ void TunTap::processQueuedPackets() {
     while (xQueueReceive(tunTapMsgQueue, &p, 0) == pdPASS) {
         // Send packet to the Husarnet stack
         string_view packet((char*)p->payload, p->len);
-        LOG_WARNING("packet: %d", p->len);
         sendToLowerLayer(BadDeviceId, packet);
-        LOG_WARNING("packet sent");
 
         pbuf_free(p);
     }
