@@ -31,9 +31,12 @@ HusarnetClient::HusarnetClient()
   // Start HusarnetManager in a separate task
   void* manager = static_cast<void*>(husarnetManager);
 
-  xTaskCreate([](void* manager) {
+  BaseType_t res = xTaskCreate([](void* manager) {
     husarnetTask(manager);
   }, "husarnet_task", 16384, manager, 7, &husarnetTaskHandle);
+
+  if (res != pdPASS)
+    abort();
 }
 
 HusarnetClient::~HusarnetClient()

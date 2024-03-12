@@ -69,10 +69,14 @@ void WebsetupConnection::start()
   }
 
   Port::startThread(
-      [this]() { this->periodicThread(); }, "websetupPeriodic", 6000, 5);
+      [this]() { this->periodicThread(); },
+      "hnet_periodic", 6000,
+      WEBSETUP_PERIODIC_TASK_PRIORITY);
 
   Port::startThread(
-      [this]() { this->handleConnectionThread(); }, "websetupConnection", 6000, 5);
+      [this]() { this->handleConnectionThread(); },
+      "hnet_conn", 6000,
+      WEBSETUP_CONNECTION_TASK_PRIORITY);
 }
 
 void WebsetupConnection::send(

@@ -90,12 +90,8 @@ namespace Port {
   {
     std::function<void()>* func1 = new std::function<void()>;
     *func1 = std::move(func);
-    // int coreId = strcmp(name, "ngsocket") == 0 ? 1 : 0; //TODO: refactor
-    // if(xTaskCreatePinnedToCore(
-    //        taskProc, name, stack, func1, priority, &handle, coreId) != pdTRUE) {
-    //   abort();
-    // }
     if (xTaskCreate(taskProc, name, stack, func1, priority, NULL) != pdTRUE) {
+      LOG_CRITICAL("Unable to create task");
       abort();
     }
   }
