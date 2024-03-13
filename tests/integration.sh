@@ -21,7 +21,7 @@ ubuntu ubuntu ubuntu \
 debian debian debian \
 fedora fedora fedora fedora \
 ::: \
-functional-basic join-workflow hooks-basic hooks-rw
+functional-basic join-workflow hooks-basic hooks-rw hooks-base
 
 # Remember to keep those ^ in sync with GH actions!
 
