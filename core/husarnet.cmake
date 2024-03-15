@@ -1,7 +1,16 @@
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+# ESP-IDF build system doesn't support CMake build configurations
+# This is a compat layer to make it more CMake friendly
+# https://github.com/espressif/esp-idf/issues/4189
+if(DEFINED ESP_PLATFORM AND CONFIG_COMPILER_OPTIMIZATION_DEFAULT)
+  set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
+# ESP-IDF propagates its own CFLAGS and CXXFLAGS
+# Don't set build optimalization flags on ESP32 platform
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT DEFINED ESP_PLATFORM)
   #TODO: -fsanitize=undefined in clang
   set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g")
 else()
@@ -40,7 +49,7 @@ if(DEFINED FAIL_ON_WARNING)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wconversion")
 endif()
 
-if (DEFINED IDF_TARGET)
+if (DEFINED ESP_PLATFORM)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
 endif()
 
@@ -50,19 +59,6 @@ set(BUILD_HTTP_CONTROL_API FALSE)
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows) OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   set(BUILD_HTTP_CONTROL_API TRUE)
 endif()
-
-# Build IDF framework libraries
-# TODO: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/kconfig.html#config-spiram-cache-workaround
-# if (DEFINED IDF_TARGET)
-#   #include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
-#   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-#   set(CMAKE_COLOR_DIAGNOSTICS ON)
-#   idf_build_process("${IDF_TARGET}"
-#                     COMPONENTS lwip nvs_flash freertos esp_netif esp_timer cxx esp_hw_support esp_wifi
-#                     SDKCONFIG ${SDKCONFIG}
-#                     #SDKCONFIG_DEFAULTS ${SDKCONFIG}.default
-#                     BUILD_DIR ${CMAKE_BINARY_DIR})
-# endif()
 
 # Add all required headers and source files
 list(APPEND husarnet_core_SRC) # This is more of a define rather than an append)
@@ -92,7 +88,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
   list(APPEND husarnet_core_SRC ${port_macos_SRC} ${port_shared_unix_windows_SRC})
 endif()
 
-if (DEFINED IDF_TARGET)
+if (DEFINED ESP_PLATFORM)
   list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/esp32)
   list(APPEND husarnet_core_include_DIRS ${COMPONENT_DIR})
   file(GLOB port_esp32_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/esp32/*.cpp")
@@ -122,7 +118,7 @@ file(MAKE_DIRECTORY ${TEMP_INCLUDE_DIR})
 file(CREATE_LINK ${CMAKE_CURRENT_LIST_DIR}/ ${TEMP_INCLUDE_DIR}/husarnet SYMBOLIC)
 
 # Join all of the above
-if(DEFINED IDF_TARGET)
+if(DEFINED ESP_PLATFORM)
   idf_component_register(
     SRCS ${husarnet_core_SRC}
     INCLUDE_DIRS ${husarnet_core_include_DIRS}
@@ -134,7 +130,7 @@ endif()
 
 # IDF (ESP32) build system doesn't allow us to change 
 # component/library name and adds "idf::" prefix to it
-if(DEFINED IDF_TARGET)
+if(DEFINED ESP_PLATFORM)
   set(husarnet_core ${COMPONENT_LIB})
 elseif()
   set(husarnet_core "husarnet_core")
@@ -145,8 +141,9 @@ target_compile_definitions(${husarnet_core} PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PR
 
 # Propagate selected ESP32 target for compile time checks
 # Disable unknown pragmas warning as we are not using clang in ESP32 builds for now
-if (DEFINED IDF_TARGET)
-  target_compile_definitions(${husarnet_core} PRIVATE IDF_TARGET=${IDF_TARGET})
+if (DEFINED ESP_PLATFORM)
+  idf_build_get_property(target IDF_TARGET)
+  target_compile_definitions(${husarnet_core} PRIVATE IDF_TARGET=${target})
   target_compile_options(${husarnet_core} PRIVATE -Wno-unknown-pragmas -Wno-missing-field-initializers)
 endif()
 
@@ -169,7 +166,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Android)
 endif()
 
 #TODO: during ESP32 build use native ESP32 libsodium component
-if (NOT DEFINED IDF_TARGET)
+if (NOT DEFINED ESP_PLATFORM)
   FetchContent_Declare(
     libsodium
     GIT_REPOSITORY https://github.com/jedisct1/libsodium.git
@@ -376,14 +373,3 @@ if(${BUILD_HTTP_CONTROL_API})
     set_property(DIRECTORY ${httplib_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
   endif()
 endif()
-
-# if (DEFINED IDF_TARGET)
-#   target_link_libraries(husarnet_core
-#     idf::lwip idf::nvs_flash idf::freertos idf::esp_netif idf::esp_timer idf::cxx idf::esp_hw_support idf::esp_wifi)
-#   target_compile_definitions(husarnet_core PRIVATE IDF_TARGET=${IDF_TARGET})
-
-#   # Add dummy target to make the ESP-IDF build system happy
-#   add_executable(${CMAKE_PROJECT_NAME}.elf ${CMAKE_CURRENT_LIST_DIR}/ports/esp32/main.c)
-#   target_link_libraries(${CMAKE_PROJECT_NAME}.elf husarnet_core)
-#   idf_build_executable(${CMAKE_PROJECT_NAME}.elf)
-# endif()
