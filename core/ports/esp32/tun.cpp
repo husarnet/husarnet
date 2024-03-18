@@ -43,7 +43,7 @@ err_t husarnet_netif_init(struct netif *netif) {
     // Derrive local MAC address from the universally
     // administered Ethernet interface address
     esp_mac_type_t mac_type = ESP_MAC_ETH;
-    uint8_t mac[6];
+    uint8_t mac[8];
 
     err = esp_read_mac(mac, mac_type);
     if (err != ESP_OK)
@@ -53,7 +53,7 @@ err_t husarnet_netif_init(struct netif *netif) {
     if (err != ESP_OK)
         ESP_RETURN_ON_ERROR(err, TAG, "Failed to derive local MAC address");
 
-    netif->hwaddr_len = esp_mac_addr_len_get(mac_type);
+    netif->hwaddr_len = 6;
 
     // Add IPv6 addresses
     ip6_addr_t ip6_addr = ((TunTap*)netif->state)->getIp6Addr();

@@ -70,15 +70,17 @@ void NgSocket::periodic()
 
   if(reloadLocalAddresses()) {
     // new addresses, accelerate reconnection
-    auto addresses_string = std::transform_reduce(
-        localAddresses.begin(), localAddresses.end(), std::string(""),
-        [](const std::string& a, const std::string& b) {
-          return a + " | " + b;
-        },
-        [](InetAddress addr) { return addr.str(); });
-    LOG_INFO(
-        "Local IP address change detected, new addresses: %s",
-        addresses_string.c_str());
+    {
+      std::string addresses;
+      // Add separator between addresses
+      for (auto iter = localAddresses.begin(); iter != localAddresses.end(); iter++) {
+        if (iter != localAddresses.begin())
+          addresses += " | ";
+        addresses += iter->str();
+      }
+
+      LOG_INFO("Local IP address change detected, new addresses: %s", addresses.c_str());
+    }
     requestRefresh();
     if(Port::getCurrentTime() - lastBaseTcpAction > NAT_INIT_TIMEOUT)
       connectToBase();
