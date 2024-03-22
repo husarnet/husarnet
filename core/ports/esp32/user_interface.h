@@ -30,6 +30,7 @@ public:
     void setDashboardFqdn(const char* fqdn);
     std::vector<HusarnetPeer> listPeers();
     bool isJoined();
+    std::string getIpAddress();
     HusarnetManager* getManager();
 };
 #else
@@ -44,6 +45,7 @@ HusarnetClient* husarnet_init();
 void husarnet_join(HusarnetClient* client, const char* hostname, const char* joinCode);
 void husarnet_set_dashboard_fqdn(HusarnetClient* client, const char* fqdn);
 uint8_t husarnet_is_joined(HusarnetClient* client);
+uint8_t husarnet_get_ip_address(HusarnetClient* client, char* ip, size_t size);
 
 #ifdef __cplusplus
 }

@@ -92,6 +92,11 @@ bool HusarnetClient::isJoined()
   return husarnetManager->isJoined();
 }
 
+std::string HusarnetClient::getIpAddress()
+{
+  return husarnetManager->getSelfAddress().str();
+}
+
 HusarnetManager* HusarnetClient::getManager()
 {
   return husarnetManager;
@@ -117,4 +122,16 @@ void husarnet_set_dashboard_fqdn(HusarnetClient* client, const char* fqdn)
 uint8_t husarnet_is_joined(HusarnetClient* client)
 {
   return client->isJoined();
+}
+
+uint8_t husarnet_get_ip_address(HusarnetClient* client, char* ip, size_t size)
+{
+  std::string ipAddress = client->getIpAddress();
+  if (ipAddress.size() >= size)
+    return 0;
+
+  memcpy(ip, ipAddress.c_str(), ipAddress.size());
+  ip[ipAddress.size()] = '\0';
+
+  return 1;
 }

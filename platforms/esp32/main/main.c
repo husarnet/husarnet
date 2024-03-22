@@ -24,7 +24,9 @@ void memory_watch_task(void *pvParameters) {
     while (1) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         ESP_LOGI(TAG, "Free heap: %.2fKB, lowest %.2fKB", esp_get_free_heap_size()/1024.f, esp_get_minimum_free_heap_size()/1024.f);
-        ESP_LOGI(TAG, "Free stack: %.2fKB", uxTaskGetStackHighWaterMark(husarnet_task_handle)/1024.f);
+        
+        if (husarnet_task_handle != NULL)
+            ESP_LOGI(TAG, "Free stack: %.2fKB", uxTaskGetStackHighWaterMark(husarnet_task_handle)/1024.f);
 
         // Display FreeRTOS task list
         // vTaskList(task_list);
@@ -49,10 +51,24 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Starting Husarnet client...");
 
+    // Initialize Husarnet client
     HusarnetClient* client = husarnet_init();
-    husarnet_join(client, "husarnet-esp32-test", "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a/XXXXXXXXXXXXXXXXXXXXXX");
     husarnet_task_handle = xTaskGetHandle("husarnet_task");
 
+    // Join Husarnet network with the given hostname and join code
+    husarnet_join(client, "husarnet-esp32-test", "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a/XXXXXXXXXXXXXXXXXXXXXX");
+    while (!husarnet_is_joined(client)) {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+
+    ESP_LOGI(TAG, "Husarnet client started");
+
+    // Get Husarnet IP address
+    char ip[40];
+    husarnet_get_ip_address(client, ip, 40);
+    ESP_LOGI(TAG, "IP address: %s", ip);
+
+    // Start simple webserver on husarnet_ip:80
     start_webserver();
 
     while(1) {
