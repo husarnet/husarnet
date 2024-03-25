@@ -165,7 +165,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Android)
   target_link_libraries(${husarnet_core} log)
 endif()
 
-#TODO: during ESP32 build use native ESP32 libsodium component
+# Fetch and build libsodium
+# In ESP32 builds, libsodium is already provided by the ESP-IDF
 if (NOT DEFINED ESP_PLATFORM)
   FetchContent_Declare(
     libsodium
@@ -196,8 +197,7 @@ endif()
 
 FetchContent_Declare(
   nlohmann_json
-  GIT_REPOSITORY https://github.com/nlohmann/json.git
-  GIT_TAG v3.11.2
+  URL https://github.com/nlohmann/json/archive/refs/tags/v3.11.2.zip
 )
 set(JSON_BuildTests OFF)
 FetchContent_MakeAvailable(nlohmann_json)
@@ -206,8 +206,7 @@ target_link_libraries(${husarnet_core} nlohmann_json)
 
 FetchContent_Declare(
   better_enums
-  GIT_REPOSITORY https://github.com/aantron/better-enums.git
-  GIT_TAG 0.11.3
+  URL https://github.com/aantron/better-enums/archive/refs/tags/0.11.3.zip
 )
 FetchContent_MakeAvailable(better_enums)
 target_include_directories(${husarnet_core} PUBLIC ${better_enums_SOURCE_DIR})
@@ -345,7 +344,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   target_compile_definitions(libnl PRIVATE SYSCONFDIR="/etc/libnl" _GNU_SOURCE)
   target_compile_options(libnl PRIVATE -Wno-unused-variable)
 
-  target_link_libraries(husarnet_core libnl)
+  target_link_libraries(${husarnet_core} libnl)
 endif()
 
 # Enable HTTP control API
@@ -354,8 +353,7 @@ if(${BUILD_HTTP_CONTROL_API})
 
   FetchContent_Declare(
     httplib
-    GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
-    GIT_TAG v0.14.1
+    URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.15.3.zip
   )
   set(BUILD_SHARED_LIBS OFF)
   set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF)
