@@ -11,13 +11,14 @@ fi
 TARGET=$1
 build_type=$2
 
-build_dir="${base_dir}/build/esp32"
+build_dir="${base_dir}/build/${TARGET}"
 source_dir="${base_dir}/platforms/esp32"
 
-set +u # ESP-IDF is "slightly broken"
+set +u
 . /esp/esp-idf/export.sh
 set -u
 
+# TODO: select sdkconfig.defaults file based on the build configuration
 if [[ ${build_type} = nightly ]]; then
   debug_flags="-DCMAKE_BUILD_TYPE=Debug"
 elif [[ ${build_type} = stable ]]; then
@@ -27,26 +28,11 @@ else
   exit 1
 fi
 
-# Prepare required directories
-mkdir -p ${build_dir}
-cp ${source_dir}/sdkconfig ${build_dir}/sdkconfig
-cp ${source_dir}/partitions.csv ${build_dir}/partitions.csv
-
-pushd ${build_dir}
+pushd ${base_dir}
 
 # Build husarnet_core with GCC compiler
 # TODO: when the clang will be officially supported by ESP-IDF, switch to it
-cmake ${source_dir} \
-  -DCMAKE_TOOLCHAIN_FILE=$IDF_PATH/tools/cmake/toolchain-${TARGET}.cmake \
-  -DIDF_TARGET=${TARGET} \
-  -DSDKCONFIG=${build_dir}/sdkconfig \
-  -GNinja ${debug_flags} \
-
-cmake --build ${build_dir}
-
-# cp build/libhusarnet_core.a demo/
-# pushd demo
-# pio run
-# popd
+idf.py -B ${build_dir} -C ${source_dir} set-target ${TARGET}
+idf.py -B ${build_dir} -C ${source_dir} build
 
 popd

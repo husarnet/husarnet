@@ -5,20 +5,22 @@
 source $(dirname "$0")/bash-base.sh
 
 # Linux
-#docker_builder /app/platforms/linux/build.sh amd64 nightly
+docker_builder /app/platforms/linux/build.sh amd64 nightly
 # docker_builder /app/platforms/linux/build.sh armhf nightly
 # docker_builder /app/platforms/linux/build.sh arm64 nightly
-#sudo dpkg -r husarnet
-#sudo dpkg -i build/release/husarnet-linux-amd64.deb
 
 # Docker
-#${base_dir}/platforms/docker/build.sh amd64 nightly
+${base_dir}/platforms/docker/build.sh amd64 nightly
 
 # Windows
-#docker_builder /app/platforms/windows/build.sh nightly
+docker_builder /app/platforms/windows/build.sh nightly
 
 # ESP32
+docker_builder /app/platforms/esp32/build.sh esp32 nightly
+#docker_builder /app/platforms/esp32/build.sh esp32s2 nightly
 docker_builder /app/platforms/esp32/build.sh esp32s3 nightly
+#docker_builder /app/platforms/esp32/build.sh esp32c3 nightly
+#ocker_builder /app/platforms/esp32/build.sh esp32c6 nightly
 
 # macOS
 # We are currently NOT cross-compiling for macOS. Reenable when resolved.
