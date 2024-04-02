@@ -169,8 +169,6 @@ void TunTap::onLowerLayerData(DeviceId source, string_view data)
     pbuf_free(p);
 }
 
-// bool TunTap::isRunning() {
-
 void TunTap::close() {
     // TODO: implement
 }

@@ -35,7 +35,7 @@ static inline void log(
   vsnprintf(buffer, buffer_len, format, args);
   va_end(args);
 
-  std::string userMessage = buffer;
+  std::string userMessage{buffer};
   if(extra.length() > 0) {
     userMessage += " " + extra;
   }
@@ -53,7 +53,7 @@ static inline void log(
   message +=
       " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
 #else
-  message += " " + userMessage;
+  message += userMessage;
 #endif
 
   Port::log(level, message);
