@@ -11,12 +11,13 @@
 #include "esp_netif.h"
 #include "protocol_examples_common.h"
 #include "esp_wifi.h"
-#include "webserver.h"
 
 #include "husarnet.h"
 
 static const char *TAG = "main";
 TaskHandle_t husarnet_task_handle = NULL;
+
+void start_webserver();
 
 void memory_watch_task(void *pvParameters) {
     //char task_list[2048];
@@ -56,7 +57,7 @@ void app_main(void) {
     husarnet_task_handle = xTaskGetHandle("husarnet_task");
 
     // Join Husarnet network with the given hostname and join code
-    husarnet_join(client, "husarnet-esp32-test", "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a/XXXXXXXXXXXXXXXXXXXXXX");
+    husarnet_join(client, "husarnet-esp32-test", "XXXXXXXXXXXXXXXXXXXXXX");
     while (!husarnet_is_joined(client)) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
