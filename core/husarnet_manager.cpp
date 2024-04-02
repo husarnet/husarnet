@@ -34,10 +34,6 @@
 #include "husarnet/api_server/server.h"
 #endif
 
-#include "esp_system.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
 ConfigStorage& HusarnetManager::getConfigStorage()
 {
   return *configStorage;
