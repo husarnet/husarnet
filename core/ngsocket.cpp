@@ -73,13 +73,16 @@ void NgSocket::periodic()
     {
       std::string addresses;
       // Add separator between addresses
-      for (auto iter = localAddresses.begin(); iter != localAddresses.end(); iter++) {
-        if (iter != localAddresses.begin())
+      for(auto iter = localAddresses.begin(); iter != localAddresses.end();
+          iter++) {
+        if(iter != localAddresses.begin())
           addresses += " | ";
         addresses += iter->str();
       }
 
-      LOG_INFO("Local IP address change detected, new addresses: %s", addresses.c_str());
+      LOG_INFO(
+          "Local IP address change detected, new addresses: %s",
+          addresses.c_str());
     }
     requestRefresh();
     if(Port::getCurrentTime() - lastBaseTcpAction > NAT_INIT_TIMEOUT)
@@ -747,9 +750,9 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
     return msg;
   }
 
-  //TODO: refactor, dead code?
+  // TODO: refactor, dead code?
   auto msgKind = BaseToPeerMessageKind::_from_integral_nothrow(data[0]);
-  if (msgKind) {
+  if(msgKind) {
     msg.kind = msgKind.value();
   } else {
     LOG_DEBUG("invalid message kind: %d", data[0]);
@@ -782,13 +785,13 @@ PeerToPeerMessage NgSocket::parsePeerToPeerMessage(string_view data)
     }
 
     bool ok = NgSocketCrypto::verifySignature(
-          data.substr(0, 17 + 64), "ng-p2p-msg", pubkey, signature);
+        data.substr(0, 17 + 64), "ng-p2p-msg", pubkey, signature);
 
     if(!ok) {
       LOG_ERROR("invalid signature: %s", signature.c_str());
       return msg;
     }
-    msg.kind = PeerToPeerMessageKind::_from_index_unchecked(data[0]);    
+    msg.kind = PeerToPeerMessageKind::_from_index_unchecked(data[0]);
     return msg;
   }
 

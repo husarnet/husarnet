@@ -32,7 +32,7 @@ class NotificationManager : public NotificationManagerInterface {
       std::string dashboardHostname,
       HusarnetManager* husarnetManager);
   ~NotificationManager();
-  
+
   virtual std::list<std::string> getNotifications();
 
  private:
@@ -46,7 +46,7 @@ class NotificationManager : public NotificationManagerInterface {
 
 class DummyNotificationManager : public NotificationManagerInterface {
  public:
-  DummyNotificationManager() {};
+  DummyNotificationManager(){};
 
   virtual std::list<std::string> getNotifications()
   {

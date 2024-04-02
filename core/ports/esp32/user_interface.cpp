@@ -6,15 +6,16 @@
 #include "husarnet/husarnet_manager.h"
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "freertos/task.h"
 #include "port.h"
 
 // C++ API
 
 void husarnetTask(void* manager)
 {
-  // Init config and logging only to allow configuration before joining the network
+  // Init config and logging only to allow configuration before joining the
+  // network
   ((HusarnetManager*)manager)->stage1();
 
   // Wait for setup to be done
@@ -31,11 +32,11 @@ HusarnetClient::HusarnetClient()
   // Start HusarnetManager in a separate task
   void* manager = static_cast<void*>(husarnetManager);
 
-  BaseType_t res = xTaskCreate([](void* manager) {
-    husarnetTask(manager);
-  }, "husarnet_task", 16384, manager, 7, &husarnetTaskHandle);
+  BaseType_t res = xTaskCreate(
+      [](void* manager) { husarnetTask(manager); }, "husarnet_task", 16384,
+      manager, 7, &husarnetTaskHandle);
 
-  if (res != pdPASS)
+  if(res != pdPASS)
     abort();
 }
 
@@ -46,7 +47,7 @@ HusarnetClient::~HusarnetClient()
 
 void HusarnetClient::join(const char* hostname, const char* joinCode)
 {
-  if (started)
+  if(started)
     return;
 
   started = true;
@@ -64,24 +65,22 @@ void HusarnetClient::join(const char* hostname, const char* joinCode)
 
 void HusarnetClient::setDashboardFqdn(const char* fqdn)
 {
-  if (started)
+  if(started)
     return;
 
-  husarnetManager->getConfigStorage().setUserSetting(UserSetting::dashboardFqdn, fqdn);
+  husarnetManager->getConfigStorage().setUserSetting(
+      UserSetting::dashboardFqdn, fqdn);
 }
 
 std::vector<HusarnetPeer> HusarnetClient::listPeers()
 {
   auto peers = husarnetManager->getConfigStorage().getHostTable();
-  
+
   std::vector<HusarnetPeer> peerList;
   peerList.reserve(peers.size());
-  
-  for (const auto& [hostname, ip]: peers) {
-    peerList.push_back(HusarnetPeer {
-      hostname,
-      ip.str()
-    });
+
+  for(const auto& [hostname, ip] : peers) {
+    peerList.push_back(HusarnetPeer{hostname, ip.str()});
   }
 
   return peerList;
@@ -109,7 +108,10 @@ HusarnetClient* husarnet_init()
   return new HusarnetClient();
 }
 
-void husarnet_join(HusarnetClient* client, const char* hostname, const char* joinCode)
+void husarnet_join(
+    HusarnetClient* client,
+    const char* hostname,
+    const char* joinCode)
 {
   client->join(hostname, joinCode);
 }
@@ -127,7 +129,7 @@ uint8_t husarnet_is_joined(HusarnetClient* client)
 uint8_t husarnet_get_ip_address(HusarnetClient* client, char* ip, size_t size)
 {
   std::string ipAddress = client->getIpAddress();
-  if (ipAddress.size() >= size)
+  if(ipAddress.size() >= size)
     return 0;
 
   memcpy(ip, ipAddress.c_str(), ipAddress.size());

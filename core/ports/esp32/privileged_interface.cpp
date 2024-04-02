@@ -100,13 +100,15 @@ namespace Privileged {
     return Identity::deserialize(Port::readFile(Privileged::getIdentityPath()));
   }
 
-  Identity createIdentity() {
+  Identity createIdentity()
+  {
     auto identity = Identity::create();
     Privileged::writeIdentity(identity);
     return identity;
   }
 
-  bool checkValidIdentityExists() {
+  bool checkValidIdentityExists()
+  {
     auto identity = readIdentity();
 
     if(!identity.isValid()) {
@@ -145,7 +147,6 @@ namespace Privileged {
   // ESP32 port does not support notifications
   void writeNotifications(std::vector<std::pair<std::time_t, std::string>> list)
   {
-
   }
 
   std::vector<IpAddress> getLocalAddresses()
@@ -153,17 +154,17 @@ namespace Privileged {
     std::vector<IpAddress> ret;
     netif* netif;
 
-    for (u8_t idx = 1; (netif = netif_get_by_index(idx)) != NULL; idx++) {
+    for(u8_t idx = 1; (netif = netif_get_by_index(idx)) != NULL; idx++) {
       char buf[IP6ADDR_STRLEN_MAX];
       const ip6_addr_t* ipv6;
       // Iterate over all IPv6 addresses and validate them
-      for (int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+      for(int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
         ipv6 = netif_ip6_addr(netif, i);
-        if (ipv6 == NULL) {
+        if(ipv6 == NULL) {
           continue;
         }
 
-        if (ip6_addr_isany(ipv6) || ip6_addr_isloopback(ipv6)) {
+        if(ip6_addr_isany(ipv6) || ip6_addr_isloopback(ipv6)) {
           continue;
         }
 
@@ -176,11 +177,11 @@ namespace Privileged {
       // LwIP can have only one IPv4 address per interface
       // Validate address
       const ip4_addr_t* ipv4 = netif_ip4_addr(netif);
-      if (ipv4 == NULL) {
+      if(ipv4 == NULL) {
         continue;
       }
 
-      if (ip4_addr_isany(ipv4) || ip4_addr_isloopback(ipv4)) {
+      if(ip4_addr_isany(ipv4) || ip4_addr_isloopback(ipv4)) {
         continue;
       }
 
@@ -213,12 +214,14 @@ namespace Privileged {
     Port::notifyReady();
   }
 
-  //TODO long-term: implement hooks using FreeRTOS notifications
-  void runScripts(const std::string& path) {
+  // TODO long-term: implement hooks using FreeRTOS notifications
+  void runScripts(const std::string& path)
+  {
     LOG_ERROR("runScripts not supported on ESP32");
   }
 
-  bool checkScriptsExist(const std::string& path) {
+  bool checkScriptsExist(const std::string& path)
+  {
     return false;
   }
 }  // namespace Privileged

@@ -16,6 +16,7 @@
 #undef ERROR   // Windows API macro pollution...
 #endif
 #include <string>
+
 #include "husarnet/ports/dummy_task_priorities.h"
 
 extern errno_t rand_s(unsigned int* randomValue);

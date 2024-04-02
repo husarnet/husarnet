@@ -36,19 +36,16 @@
 #include "husarnet/util.h"
 
 #include "enum.h"
-
-#include "esp_system.h"
 #include "esp_log.h"
-#include "nvs_flash.h"
-#include "nvs_handle.hpp"
-
+#include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "lwip/dns.h"
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
+#include "nvs_flash.h"
+#include "nvs_handle.hpp"
 
 static const char* LOG_TAG = "husarnet";
 
@@ -62,8 +59,10 @@ namespace Port {
     nvsHandle = nvs::open_nvs_handle("husarnet", NVS_READWRITE, &err);
 
     if(err != ESP_OK) {
-      LOG_ERROR("Unable to open NVS. This will result in corrupted "
-          "operations! (Error: %s)", esp_err_to_name(err));
+      LOG_ERROR(
+          "Unable to open NVS. This will result in corrupted "
+          "operations! (Error: %s)",
+          esp_err_to_name(err));
     }
 
     notifyReadySemaphore = xSemaphoreCreateBinary();
@@ -90,7 +89,7 @@ namespace Port {
   {
     std::function<void()>* func1 = new std::function<void()>;
     *func1 = std::move(func);
-    if (xTaskCreate(taskProc, name, stack, func1, priority, NULL) != pdTRUE) {
+    if(xTaskCreate(taskProc, name, stack, func1, priority, NULL) != pdTRUE) {
       LOG_CRITICAL("Unable to create task");
       abort();
     }
@@ -108,12 +107,14 @@ namespace Port {
 
     for(struct addrinfo* res = result; res != NULL; res = res->ai_next) {
       if(res->ai_family == AF_INET) {
-        auto addr = IpAddress::fromBinary4((uint32_t)((struct sockaddr_in*)res->ai_addr)->sin_addr.s_addr);
+        auto addr = IpAddress::fromBinary4(
+            (uint32_t)((struct sockaddr_in*)res->ai_addr)->sin_addr.s_addr);
         freeaddrinfo(result);
         return addr;
       }
       if(res->ai_family == AF_INET6) {
-        auto addr = IpAddress::fromBinary((char*)((struct sockaddr_in6*)res->ai_addr)->sin6_addr.s6_addr);
+        auto addr = IpAddress::fromBinary(
+            (char*)((struct sockaddr_in6*)res->ai_addr)->sin6_addr.s6_addr);
         freeaddrinfo(result);
         return addr;
       }
@@ -133,7 +134,7 @@ namespace Port {
   {
     ip6_addr_t ip;
     memcpy(ip.addr, manager->getIdentity()->getDeviceId().data(), 16);
-    
+
     auto tunTap = new TunTap(ip, 32);
     return tunTap;
   }
@@ -145,10 +146,11 @@ namespace Port {
 
   std::string readFile(const std::string& path)
   {
-    size_t len;    
-    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), len);
+    size_t len;
+    esp_err_t err =
+        nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), len);
 
-    if (err == ESP_ERR_NVS_NOT_FOUND) {
+    if(err == ESP_ERR_NVS_NOT_FOUND) {
       return "";
     }
 
@@ -173,7 +175,7 @@ namespace Port {
   bool writeFile(const std::string& path, const std::string& data)
   {
     esp_err_t err = nvsHandle->set_string(path.c_str(), data.c_str());
-    if (err != ESP_OK) {
+    if(err != ESP_OK) {
       LOG_ERROR("Unable to update NVS. (Error: %s)", esp_err_to_name(err));
       return false;
     }
@@ -189,13 +191,14 @@ namespace Port {
   bool isFile(const std::string& path)
   {
     size_t value;
-    esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), value);
+    esp_err_t err =
+        nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), value);
 
-    if (err == ESP_OK) {
+    if(err == ESP_OK) {
       return true;
     }
 
-    if (err == ESP_ERR_NVS_NOT_FOUND) {
+    if(err == ESP_ERR_NVS_NOT_FOUND) {
       return false;
     }
 
@@ -219,8 +222,7 @@ namespace Port {
   {
     esp_log_level_t esp_level;
 
-    switch (level)
-    {
+    switch(level) {
       case +LogLevel::DEBUG:
         esp_level = ESP_LOG_DEBUG;
         break;
@@ -244,10 +246,11 @@ namespace Port {
     ESP_LOG_LEVEL(esp_level, LOG_TAG, "%s", message.c_str());
   }
 
-  const std::string getHumanTime() {
+  const std::string getHumanTime()
+  {
     // Human time is currently only used in logging
     // As we use ESP_LOG, we don't need to implement this function
-    //TODO long-term: implement this functionality
+    // TODO long-term: implement this functionality
     return "";
   }
 

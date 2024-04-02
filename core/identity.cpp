@@ -85,11 +85,11 @@ Identity Identity::deserialize(std::string data)
 {
   std::stringstream buffer;
   auto identity = new Identity();
-  
-  if (data.empty()) {
+
+  if(data.empty()) {
     return *identity;
   }
-  
+
   buffer << data;
 
   std::string ipStr, pubkeyStr, privkeyStr;

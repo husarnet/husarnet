@@ -69,13 +69,11 @@ void WebsetupConnection::start()
   }
 
   Port::startThread(
-      [this]() { this->periodicThread(); },
-      "hnet_ws_periodic", 6000,
+      [this]() { this->periodicThread(); }, "hnet_ws_periodic", 6000,
       WEBSETUP_PERIODIC_TASK_PRIORITY);
 
   Port::startThread(
-      [this]() { this->handleConnectionThread(); },
-      "hnet_ws_conn", 6000,
+      [this]() { this->handleConnectionThread(); }, "hnet_ws_conn", 6000,
       WEBSETUP_CONNECTION_TASK_PRIORITY);
 }
 
@@ -176,10 +174,9 @@ void WebsetupConnection::handleConnectionThread()
     buffer.resize(1024);
     sockaddr_in6 addr{};
     socklen_t addrsize = sizeof(addr);
-    
+
     int ret = SOCKFUNC(recvfrom)(
-          websetupFd, &buffer[0], buffer.size(), 0, (sockaddr*)&addr,
-          &addrsize);
+        websetupFd, &buffer[0], buffer.size(), 0, (sockaddr*)&addr, &addrsize);
 
     // Async handling
 #ifdef _WIN32

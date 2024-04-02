@@ -16,12 +16,12 @@
 BETTER_ENUM(
     LogLevel,
     int,
-    NONE,    /* 0 */
+    NONE, /* 0 */
     CRITICAL /* 1 */,
-    ERROR    /* 2 */,
-    WARNING  /* 3 */,
-    INFO     /* 4 */,
-    DEBUG    /* 5 */);
+    ERROR /* 2 */,
+    WARNING /* 3 */,
+    INFO /* 4 */,
+    DEBUG /* 5 */);
 
 static inline LogLevel logLevelFromInt(int value)
 {

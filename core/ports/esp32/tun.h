@@ -4,14 +4,13 @@
 #pragma once
 #include <string>
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
-
 #include "husarnet/device_id.h"
 #include "husarnet/layer_interfaces.h"
 #include "husarnet/ngsocket.h"
 #include "husarnet/string_view.h"
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
 #include "lwip/ip6_addr.h"
 #include "lwip/raw.h"
 

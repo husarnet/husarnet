@@ -8,7 +8,7 @@
 // Windows and MacOS ports to provide placeholder values as
 // we don't set invidual thread priorities on these platforms.
 
-#define NGSOCKET_TASK_PRIORITY            0
-#define HUSARNET_TASK_PRIORITY            0
-#define WEBSETUP_PERIODIC_TASK_PRIORITY   0
+#define NGSOCKET_TASK_PRIORITY 0
+#define HUSARNET_TASK_PRIORITY 0
+#define WEBSETUP_PERIODIC_TASK_PRIORITY 0
 #define WEBSETUP_CONNECTION_TASK_PRIORITY 0
