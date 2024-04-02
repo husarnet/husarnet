@@ -9,12 +9,14 @@ if(DEFINED ESP_PLATFORM AND CONFIG_COMPILER_OPTIMIZATION_DEFAULT)
 endif()
 
 # ESP-IDF propagates its own CFLAGS and CXXFLAGS
-# Don't set build optimalization flags on ESP32 platform
-if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT DEFINED ESP_PLATFORM)
-  #TODO: -fsanitize=undefined in clang
-  set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g")
-else()
-  set(COMMONFLAGS "${COMMONFLAGS} -Os -ffunction-sections -fdata-sections")
+# Don't set build optimalization flags on ESP32 platform, they are provided by the ESP-IDF
+if(NOT DEFINED ESP_PLATFORM)
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g -fsanitize=undefined")
+    # set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "include-what-you-use") # TODO: Fix, test and enable
+  else()
+    set(COMMONFLAGS "${COMMONFLAGS} -O3 -ffunction-sections -fdata-sections")
+  endif()
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
@@ -186,6 +188,8 @@ if (NOT DEFINED ESP_PLATFORM)
   target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include)
   target_include_directories(sodium PUBLIC ${libsodium_SOURCE_DIR}/src/libsodium/include/sodium)
   target_compile_options(sodium PRIVATE -DCONFIGURED=1 -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable)
+
+  target_link_libraries(${husarnet_core} sodium)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
@@ -225,8 +229,7 @@ endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   FetchContent_Declare(
     c-ares
-    GIT_REPOSITORY https://github.com/c-ares/c-ares.git
-    GIT_TAG cares-1_22_0
+    URL https://github.com/c-ares/c-ares/releases/download/cares-1_22_0/c-ares-1.22.0.tar.gz
   )
   set(CARES_SHARED OFF)
   set(CARES_STATIC ON)
@@ -244,13 +247,11 @@ endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   FetchContent_Declare(
     libnl
-    GIT_REPOSITORY https://github.com/thom311/libnl.git
-    GIT_TAG libnl3_9_0
+    URL https://github.com/thom311/libnl/releases/download/libnl3_9_0/libnl-3.9.0.tar.gz
 
     # Patch specific to the build system (only applies to zig v0.9)
     # More details are in the patch file
-    PATCH_COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/lib-config/libnl/socket.c.patch
-    UPDATE_DISCONNECTED TRUE
+    PATCH_COMMAND patch -p1 ${CMAKE_CURRENT_LIST_DIR}/lib-config/libnl/socket.c.patch
   )
 
   FetchContent_MakeAvailable(libnl)
