@@ -429,6 +429,9 @@ HusarnetManager::HusarnetManager()
 
   this->hooksManager = new DummyHooksManager();  // This will be no-op at least
                                                  // until we can read settings
+  
+  this->notificationManager = new DummyNotificationManager(); // No-op until the
+                                                              // join operation
 }
 
 HusarnetManager::~HusarnetManager()
@@ -615,8 +618,12 @@ void HusarnetManager::stage3()
   }
 
   this->hostTableAdd("husarnet-local", this->getSelfAddress());
+
+  // Notifications are disabled on ESP32 platform
+  #ifndef ESP_PLATFORM
   this->notificationManager = new NotificationManager(
       configStorage->getUserSetting(UserSetting::dashboardFqdn), this);
+  #endif
 
   startHTTPServer();
 

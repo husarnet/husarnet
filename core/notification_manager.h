@@ -19,13 +19,21 @@
 
 #include "nlohmann/json.hpp"
 
-class NotificationManager {
+class NotificationManagerInterface {
+ public:
+  virtual ~NotificationManagerInterface() = default;
+
+  virtual std::list<std::string> getNotifications() = 0;
+};
+
+class NotificationManager : public NotificationManagerInterface {
  public:
   NotificationManager(
       std::string dashboardHostname,
       HusarnetManager* husarnetManager);
   ~NotificationManager();
-  std::list<std::string> getNotifications();
+  
+  virtual std::list<std::string> getNotifications();
 
  private:
   PeriodicTimer* timer;
@@ -33,7 +41,15 @@ class NotificationManager {
   std::string static dashboardHostname;
   static HusarnetManager* husarnetManager;
   void static refreshNotificationFile();
-
- public:
   json static retrieveNotificationJson(std::string dashboardHostname);
+};
+
+class DummyNotificationManager : public NotificationManagerInterface {
+ public:
+  DummyNotificationManager() {};
+
+  virtual std::list<std::string> getNotifications()
+  {
+    return {};
+  }
 };

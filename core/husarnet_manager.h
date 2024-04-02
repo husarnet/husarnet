@@ -32,7 +32,7 @@ class PeerContainer;
 class PeerFlags;
 class WebsetupConnection;
 class HooksManagerInterface;
-class NotificationManager;
+class NotificationManagerInterface;
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
@@ -53,7 +53,7 @@ class HusarnetManager {
 
   WebsetupConnection* websetup = nullptr;
   HooksManagerInterface* hooksManager = nullptr;
-  NotificationManager* notificationManager = nullptr;
+  NotificationManagerInterface* notificationManager = nullptr;
 
   std::vector<std::thread*> threadpool;
 
