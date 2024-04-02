@@ -3,6 +3,7 @@
 # Authors: listed in project_root/README.md
 # License: specified in project_root/LICENSE.txt
 source $(dirname "$0")/../../util/bash-base.sh
+
 if [ $# -ne 2 ]; then
   echo "Usage: $0 <idf_target> (stable/nightly)"
   exit 1
@@ -14,9 +15,8 @@ build_type=$2
 build_dir="${base_dir}/build/${TARGET}"
 source_dir="${base_dir}/platforms/esp32"
 
-set +u
+# Initialize ESP-IDF environment
 . /esp/esp-idf/export.sh
-set -u
 
 # TODO: select sdkconfig.defaults file based on the build configuration
 if [[ ${build_type} = nightly ]]; then

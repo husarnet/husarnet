@@ -123,17 +123,14 @@ if(DEFINED ESP_PLATFORM)
     SRCS ${husarnet_core_SRC}
     INCLUDE_DIRS ${husarnet_core_include_DIRS}
     REQUIRES lwip nvs_flash esp_netif esp_wifi libsodium)
-elseif()
-  add_library(husarnet_core STATIC ${husarnet_core_SRC})
-  include_directories(${husarnet_core_include_DIRS})
-endif()
 
-# IDF (ESP32) build system doesn't allow us to change 
-# component/library name and adds "idf::" prefix to it
-if(DEFINED ESP_PLATFORM)
+  # IDF (ESP32) build system doesn't allow us to change 
+  # component/library name and adds "idf::" prefix to it
   set(husarnet_core ${COMPONENT_LIB})
-elseif()
+else()
   set(husarnet_core "husarnet_core")
+  add_library(${husarnet_core} STATIC ${husarnet_core_SRC})
+  include_directories(${husarnet_core_include_DIRS})
 endif()
 
 target_include_directories(${husarnet_core} PUBLIC ${TEMP_INCLUDE_DIR})
