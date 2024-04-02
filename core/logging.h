@@ -43,13 +43,12 @@ static inline void log(
   // TODO: this is not a cleanest solution, but it works for now
 
   std::string message;
-
-#ifndef IDF_TARGET
+#ifndef ESP_PLATFORM
   message = Port::getHumanTime();
   message += " " + padRight(8, level._to_string());
 #endif
 
-#if defined(DEBUG_BUILD) && not defined(IDF_TARGET)
+#if defined(DEBUG_BUILD) && not defined(ESP_PLATFORM)
   message += " " + padRight(80, userMessage);
   message +=
       " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
@@ -59,7 +58,7 @@ static inline void log(
 
   Port::log(level, message);
 
-#ifndef IDF_TARGET
+#ifndef ESP_PLATFORM
   getGlobalLogManager()->insert(message);
 #endif
 }

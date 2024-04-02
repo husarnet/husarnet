@@ -5,7 +5,8 @@
 
 // Task priorities are only used on embedded platforms,
 // where the RTOS is used. This file is included by Linux,
-// Windows and MacOS ports to make the preprocessor happy.
+// Windows and MacOS ports to provide placeholder values as
+// we don't set invidual thread priorities on these platforms.
 
 #define NGSOCKET_TASK_PRIORITY            0
 #define HUSARNET_TASK_PRIORITY            0

@@ -752,7 +752,7 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
   if (msgKind) {
     msg.kind = msgKind.value();
   } else {
-    LOG_ERROR("invalid message kind: %d", data[0]);
+    LOG_DEBUG("invalid message kind: %d", data[0]);
   }
 
   return msg;

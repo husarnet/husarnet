@@ -140,7 +140,7 @@ namespace Port {
 
   std::map<UserSetting, std::string> getEnvironmentOverrides()
   {
-    return std::map<UserSetting, std::string>(); // @TODO
+    return std::map<UserSetting, std::string>();
   }
 
   std::string readFile(const std::string& path)
@@ -245,7 +245,10 @@ namespace Port {
   }
 
   const std::string getHumanTime() {
-    return "NOT IMPLEMENTED"; //TODO: implement
+    // Human time is currently only used in logging
+    // As we use ESP_LOG, we don't need to implement this function
+    //TODO long-term: implement this functionality
+    return "";
   }
 
   void processSocketEvents(HusarnetManager* manager)

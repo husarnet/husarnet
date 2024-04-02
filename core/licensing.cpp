@@ -61,7 +61,7 @@ json retrieveLicenseJson(
 
 json retrieveCachedLicenseJson()
 {
-  // Don't throw an error on parse failure
+  // Don't throw an exception on parse failure
   return json::parse(Privileged::readLicenseJson(), nullptr, false);
 }
 

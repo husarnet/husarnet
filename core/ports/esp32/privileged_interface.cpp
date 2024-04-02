@@ -136,8 +136,6 @@ namespace Privileged {
     Port::writeFile(Privileged::getApiSecretPath(), generateRandomString(32));
   }
 
-  // TODO: Notifications are not implemented yet,
-  // decide if we want to keep them in the ESP32 port
   std::vector<std::pair<std::time_t, std::string>> readNotifications()
   {
     LOG_WARNING("readNotifications not implemented");
@@ -196,12 +194,12 @@ namespace Privileged {
 
   std::string getSelfHostname()
   {
-    return "husarnet-esp32";  // @TODO
+    return Port::readFile("hostname");
   }
 
   bool setSelfHostname(const std::string& newHostname)
   {
-    return false;  // @TODO
+    return Port::writeFile("hostname", newHostname);
   }
 
   void updateHostsFile(const std::map<std::string, IpAddress>& data)
