@@ -136,15 +136,16 @@ namespace Privileged {
     Port::writeFile(Privileged::getApiSecretPath(), generateRandomString(32));
   }
 
+  // ESP32 port does not support notifications
   std::vector<std::pair<std::time_t, std::string>> readNotifications()
   {
-    LOG_WARNING("readNotifications not implemented");
     return {};
   }
 
+  // ESP32 port does not support notifications
   void writeNotifications(std::vector<std::pair<std::time_t, std::string>> list)
   {
-    LOG_WARNING("writeNotifications not implemented");
+
   }
 
   std::vector<IpAddress> getLocalAddresses()
@@ -212,9 +213,9 @@ namespace Privileged {
     Port::notifyReady();
   }
 
+  //TODO long-term: implement hooks using FreeRTOS notifications
   void runScripts(const std::string& path) {
     LOG_ERROR("runScripts not supported on ESP32");
-    // TODO
   }
 
   bool checkScriptsExist(const std::string& path) {

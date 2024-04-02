@@ -60,6 +60,7 @@ void app_main(void) {
     husarnet_join(client, "husarnet-esp32-test", "XXXXXXXXXXXXXXXXXXXXXX");
     while (!husarnet_is_joined(client)) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
+        ESP_LOGI(TAG, "Joining Husarnet network...");
     }
 
     ESP_LOGI(TAG, "Husarnet client started");
