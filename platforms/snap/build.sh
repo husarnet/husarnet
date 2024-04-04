@@ -4,7 +4,7 @@
 # License: specified in project_root/LICENSE.txt
 source $(dirname "$0")/../../util/bash-base.sh
 
-# This file is intended to be run only from inside Docker!
+# This file is intended **not** to be run from inside Docker!
 
 if [ ! "$#" -eq 2 ]; then
     echo "Usage: $0 <architecture> [stable/nightly]"
