@@ -36,6 +36,8 @@ RUN apt-get update \
     rpm \
     ruby \
     rubygems \
+    snap \
+    snapcraft \
     sudo \
     tar \
     tree \
