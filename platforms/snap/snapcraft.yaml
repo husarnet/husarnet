@@ -29,6 +29,13 @@ parts:
     source: husarnet-linux-amd64.tar
     source-type: tar
 
+    organize:
+      usr/bin/husarnet-daemon: husarnet-daemon
+      usr/bin/husarnet: husarnet
+    prime:
+      - -.scripts
+      - -usr
+
 plugs:
   etc-hosts:
     interface: system-files
@@ -38,7 +45,7 @@ plugs:
 
 apps:
   husarnet-daemon:
-    command: /usr/bin/husarnet-daemon
+    command: husarnet-daemon
     daemon: simple
 
     plugs:
@@ -48,7 +55,7 @@ apps:
       - etc-hosts
 
   husarnet:
-    command: /usr/bin/husarnet
+    command: husarnet
 
     plugs:
       - network
