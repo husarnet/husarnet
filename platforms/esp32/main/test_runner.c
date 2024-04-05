@@ -66,8 +66,8 @@ void app_main(void) {
     ESP_LOGI(TAG, "Husarnet client started");
 
     // Get Husarnet IP address
-    char ip[40];
-    husarnet_get_ip_address(client, ip, 40);
+    char ip[HUSARNET_IP_STR_LEN];
+    husarnet_get_ip_address(client, ip, HUSARNET_IP_STR_LEN);
     ESP_LOGI(TAG, "IP address: %s", ip);
 
     // Start simple webserver on husarnet_ip:80

@@ -38,6 +38,8 @@ class HusarnetClient {
 typedef struct HusarnetClient HusarnetClient;
 #endif
 
+#define HUSARNET_IP_STR_LEN 40
+
 #ifdef __cplusplus
 extern "C" {
 #endif
