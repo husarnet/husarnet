@@ -27,11 +27,23 @@ class HusarnetClient {
   HusarnetClient(const HusarnetClient&) = delete;
   ~HusarnetClient();
 
+  // Joins Husarnet network with given hostname and join code.
+  // Network communication is available after a successful join.
   void join(const char* hostname, const char* joinCode);
+
+  // Sets the FQDN of the Husarnet Dashboard. Used for the self-hosted setup.
   void setDashboardFqdn(const char* fqdn);
+
+  // Returns a list of peers connected to the device in Husarnet network.
   std::vector<HusarnetPeer> listPeers();
+  
+  // Returns true if the device is connected to Husarnet network.
   bool isJoined();
+
+  // Returns the IP address of the device in Husarnet network.
   std::string getIpAddress();
+
+  // Returns the internal HusarnetManager instance for advanced usage.
   HusarnetManager* getManager();
 };
 #else
