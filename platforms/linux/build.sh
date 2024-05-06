@@ -16,6 +16,8 @@ arch=$1
 build_type=$2
 platform_base=${base_dir}/platforms/${platform}
 
+echo "[HUSARNET BS] Building Husarnet linux/${arch}"
+
 ${base_dir}/daemon/build.sh ${platform} ${arch} ${build_type}
 ${base_dir}/cli/build.sh ${platform} ${arch}
 

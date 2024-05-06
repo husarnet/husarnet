@@ -4,6 +4,8 @@
 # License: specified in project_root/LICENSE.txt
 source $(dirname "$0")/../../util/bash-base.sh
 
+echo "[HUSARNET BS] Building ESP32 library"
+
 pushd ${base_dir}/platforms/esp32
 
 set +u # ESP-IDF is "slightly broken"

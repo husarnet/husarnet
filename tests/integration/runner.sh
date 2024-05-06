@@ -6,16 +6,8 @@ source $(dirname "$0")/../../util/bash-base.sh
 
 # This file is intended to be run only from inside Docker!
 
-if [ ${#} -ne 3 ]; then
-    echo "Usage: runner.sh [test_platform] [test_file] [test_image]"
-    exit 1
-fi
-
 test_platform=${1}
 test_file=${2}
-test_image=${3}
-
-echo "=== Running integration test === ${test_file} === on ${test_platform} === on ${test_image} ==="
 
 case "${test_platform}" in
     docker)
@@ -45,7 +37,7 @@ case "${test_platform}" in
         
         # Test prerequisites
         yum install -y \
-        jq curl iputils hostname ca-certificates gdb
+        jq curl iputils hostname ca-certificates gdb util-linux
         
     ;;
     
@@ -55,18 +47,5 @@ case "${test_platform}" in
     ;;
 esac
 
-function echo_fail {
-    echo "                           "
-    echo "                           "
-    echo "  ______      _____ _      "
-    echo " |  ____/\   |_   _| |     "
-    echo " | |__ /  \    | | | |     "
-    echo " |  __/ /\ \   | | | |     "
-    echo " | | / ____ \ _| |_| |____ "
-    echo " |_|/_/    \_\_____|______|"
-    echo "                           "
-    echo "                           "
-    exit $1
-}
-
-time ${tests_base}/integration/tests/${test_file}.sh || (echo_fail $?)
+${tests_base}/integration/tests/${test_file}.sh
+exit $?

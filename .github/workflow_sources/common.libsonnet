@@ -133,31 +133,6 @@
       ],
     },
 
-    build_deployers:: function(ref) {
-      needs: [],
-
-      'runs-on': 'ubuntu-latest',
-
-      steps: [
-        $.steps.checkout(ref) + {
-          with+: {
-            'fetch-depth': 22,  // This is a semi-random number. We don't want to fetch the whole repository, we only want "a couple of them"
-          },
-        },
-        $.steps.ghcr_login(),
-        {
-          name: 'If there were any changes to deployers - build them and push to ghcr',
-          run: |||
-            if git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -e "^deploy/"; then
-              ./deploy/update-deployers.sh push
-            else
-              echo "No changes to the deployer found - refusing to rebuild"
-            fi
-          |||,
-        },
-      ],
-    },
-
     build_linux:: function(ref, build_type) {
       needs: [],
 
@@ -291,6 +266,7 @@
             'ubuntu:18.04',
             'ubuntu:20.04',
             'ubuntu:22.04',
+            'ubuntu:24.04',
             'debian:oldstable',
             'debian:stable',
             'debian:testing',
@@ -310,6 +286,7 @@
             { container_name: 'ubuntu:18.04', test_platform: 'ubuntu' },
             { container_name: 'ubuntu:20.04', test_platform: 'ubuntu' },
             { container_name: 'ubuntu:22.04', test_platform: 'ubuntu' },
+            { container_name: 'ubuntu:24.04', test_platform: 'ubuntu' },
             { container_name: 'debian:oldstable', test_platform: 'debian' },
             { container_name: 'debian:stable', test_platform: 'debian' },
             { container_name: 'debian:testing', test_platform: 'debian' },

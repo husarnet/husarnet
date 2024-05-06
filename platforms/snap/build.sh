@@ -26,6 +26,8 @@ if [ "$build_type" != "stable" ] && [ "$build_type" != "nightly" ]; then
     exit 1
 fi
 
+echo "[HUSARNET BS] Building Husarnet snap image for ${arch}"
+
 cp ${platforms_base}/snap/snapcraft.yaml ${release_base}/snapcraft.yaml
 
 pushd ${release_base}

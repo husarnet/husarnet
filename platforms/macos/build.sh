@@ -17,5 +17,7 @@ build_type=$2
 
 platform_base=${base_dir}/platforms/${platform}
 
+echo "[HUSARNET BS] Building Husarnet for MacOS/${arch}"
+
 ${base_dir}/daemon/build.sh ${platform} ${platform}_${arch} ${build_type}
 ${base_dir}/cli/build.sh ${platform} ${arch}
