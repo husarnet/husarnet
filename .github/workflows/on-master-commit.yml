@@ -117,6 +117,8 @@ jobs:
     runs-on:
       - "macos-latest"
     steps:
+      - name: "Set up Go"
+        uses: "actions/setup-go@v5"
       - name: "Check out the repo"
         uses: "actions/checkout@v3"
         with:
@@ -142,6 +144,8 @@ jobs:
       - "macOS"
       - "ARM64"
     steps:
+      - name: "Set up Go"
+        uses: "actions/setup-go@v5"
       - name: "Check out the repo"
         uses: "actions/checkout@v3"
         with:

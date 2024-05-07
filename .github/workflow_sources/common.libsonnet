@@ -58,6 +58,11 @@
       run: 'docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ' + container + ' ' + command,
     },
 
+    setup_go:: {
+      name: 'Set up Go',
+      uses: 'actions/setup-go@v5',
+    },
+
     build_macos_daemon:: function(build_type, arch) {
       name: 'Build daemon natively on MacOS',
       run: './daemon/build.sh macos macos_' + arch + ' ' + build_type,
@@ -169,6 +174,7 @@
       ],
 
       steps: [
+        $.steps.setup_go,
         $.steps.checkout(ref),
         $.steps.build_macos_daemon(build_type, 'arm64'),
         $.steps.build_macos_cli('arm64'),
@@ -184,6 +190,7 @@
       ],
 
       steps: [
+        $.steps.setup_go,
         $.steps.checkout(ref),
         {
           name: 'Install coreutils, as our scripts depend on them and zig + ninja for building',
