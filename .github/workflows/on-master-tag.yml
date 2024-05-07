@@ -122,7 +122,7 @@ jobs:
         with:
           ref: "${{ github.ref }}"
       - name: "Install coreutils, as our scripts depend on them and zig + ninja for building"
-        run: "brew install coreutils zig ninja"
+        run: "arch -arm64 brew install coreutils zig ninja"
       - name: "Build natively on MacOS"
         run: "./platforms/macos/build.sh arm64 stable"
       - name: "Push artifacts"

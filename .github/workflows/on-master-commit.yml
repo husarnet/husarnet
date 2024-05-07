@@ -153,7 +153,7 @@ jobs:
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Install coreutils, as our scripts depend on them and zig + ninja for building"
-        run: "brew install coreutils zig ninja"
+        run: "arch -arm64 brew install coreutils zig ninja"
       - name: "Build natively on MacOS"
         run: "./platforms/macos/build.sh arm64 nightly"
       - name: "Push artifacts"

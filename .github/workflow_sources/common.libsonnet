@@ -176,7 +176,7 @@
         $.steps.checkout(ref),
         {
           name: 'Install coreutils, as our scripts depend on them and zig + ninja for building',
-          run: 'brew install coreutils zig ninja',
+          run: 'arch -arm64 brew install coreutils zig ninja',
         },
         $.steps.build_macos_natively(build_type, 'arm64'),
         $.steps.push_artifacts('*macos*'),
