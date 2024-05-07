@@ -66,14 +66,9 @@
       },
     },
 
-    build_macos_daemon:: function(build_type, arch) {
-      name: 'Build daemon natively on MacOS',
-      run: './daemon/build.sh macos macos_' + arch + ' ' + build_type,
-    },
-
-    build_macos_cli:: function(arch) {
-      name: 'Build CLI natively on MacOS',
-      run: './cli/build.sh macos ' + arch,
+    build_macos_natively:: function(build_type, arch) {
+      name: 'Build natively on MacOS',
+      run: './platforms/macos/build.sh ' + arch + ' ' + build_type,
     },
 
     read_version_to_env:: function() {
@@ -179,8 +174,11 @@
       steps: [
         $.steps.setup_go,
         $.steps.checkout(ref),
-        $.steps.build_macos_daemon(build_type, 'arm64'),
-        $.steps.build_macos_cli('arm64'),
+        {
+          name: 'Install coreutils, as our scripts depend on them and zig + ninja for building',
+          run: 'brew install coreutils zig ninja',
+        },
+        $.steps.build_macos_natively(build_type, 'arm64'),
         $.steps.push_artifacts('*macos*'),
       ],
     },
@@ -199,8 +197,7 @@
           name: 'Install coreutils, as our scripts depend on them and zig + ninja for building',
           run: 'brew install coreutils zig ninja',
         },
-        $.steps.build_macos_daemon(build_type, 'amd64'),
-        $.steps.build_macos_cli('amd64'),
+        $.steps.build_macos_natively(build_type, 'amd64'),
         $.steps.push_artifacts('*macos*'),
       ],
     },
