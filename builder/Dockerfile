@@ -79,7 +79,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 USER 1000
 RUN git clone --recursive -b v5.1.2 https://github.com/espressif/esp-idf.git
 ENV IDF_PATH="/esp/esp-idf"
-RUN ./esp-idf/install.sh all
+RUN ./esp-idf/install.sh all --enable-pytest
 RUN ./esp-idf/tools/idf_tools.py install esp-clang
 RUN ./esp-idf/tools/idf_tools.py export
 
