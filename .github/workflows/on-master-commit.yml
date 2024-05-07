@@ -298,8 +298,6 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"
           registry: "ghcr.io"
           username: "${{ github.actor }}"
-      - name: "Deploy to Husarnet nightly repository"
-        run: "./deploy/deploy.sh nightly"
   run_integration_tests:
     needs:
       - "build_linux"

@@ -332,10 +332,11 @@
         $.steps.checkout(ref),
         $.steps.pull_artifacts(),
         $.steps.ghcr_login(),
-        {
-          name: 'Deploy to Husarnet ' + target + ' repository',
-          run: './deploy/deploy.sh ' + target,
-        },
+        // TODO reenable this in new form
+        // {
+        //   name: 'Deploy to Husarnet ' + target + ' repository',
+        //   run: '/deploy.sh ' + target,
+        // },
       ],
     },
 
