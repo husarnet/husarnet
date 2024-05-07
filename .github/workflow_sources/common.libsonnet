@@ -61,6 +61,9 @@
     setup_go:: {
       name: 'Set up Go',
       uses: 'actions/setup-go@v5',
+      with: {
+        'go-version': '>=1.18.0',
+      },
     },
 
     build_macos_daemon:: function(build_type, arch) {
