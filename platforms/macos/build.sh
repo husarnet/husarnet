@@ -21,3 +21,7 @@ echo "[HUSARNET BS] Building Husarnet for MacOS/${arch}"
 
 ${base_dir}/daemon/build.sh ${platform} ${platform}_${arch} ${build_type}
 ${base_dir}/cli/build.sh ${platform} ${arch}
+
+pushd ${release_base}
+tar -zcf husarnet-macos-${arch}.tgz husarnet-macos-${arch} husarnet-daemon-macos-macos_${arch}
+popd
