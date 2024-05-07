@@ -493,7 +493,7 @@
           with: {
             'tag-name': '${{ env.VERSION }}',
             'homebrew-tap': 'husarnet/homebrew-tap-nightly',
-            'download-url': 'https://nightly.husarnet.com/husarnet-macos-${{ env.VERSION }}-arm64.tar.gz',
+            'download-url': 'https://nightly.husarnet.com/macos/arm64/husarnet-${{ env.VERSION }}-arm64.tgz',
             'commit-message': |||
               Husarnet for MacOS version {{version}}
 

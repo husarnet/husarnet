@@ -426,7 +426,7 @@ jobs:
             Husarnet for MacOS version {{version}}
             
             Automatic commit by https://github.com/mislav/bump-homebrew-formula-action
-          download-url: "https://nightly.husarnet.com/husarnet-macos-${{ env.VERSION }}-arm64.tar.gz"
+          download-url: "https://nightly.husarnet.com/macos/arm64/husarnet-${{ env.VERSION }}-arm64.tgz"
           homebrew-tap: "husarnet/homebrew-tap-nightly"
           tag-name: "${{ env.VERSION }}"
 name: "Release nightly"
