@@ -166,9 +166,7 @@
       needs: [],
 
       'runs-on': [
-        'self-hosted',
-        'macOS',
-        'ARM64',
+        'macos-latest',
       ],
 
       steps: [

@@ -109,9 +109,7 @@ jobs:
   build_macos_arm64_natively:
     needs: []
     runs-on:
-      - "self-hosted"
-      - "macOS"
-      - "ARM64"
+      - "macos-latest"
     steps:
       - name: "Set up Go"
         uses: "actions/setup-go@v5"
