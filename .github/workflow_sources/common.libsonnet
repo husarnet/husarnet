@@ -335,7 +335,7 @@
       'runs-on': [
         'self-hosted',
         'linux',
-        target,
+        'install-' + target,
       ],
 
       steps: [

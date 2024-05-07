@@ -289,7 +289,7 @@ jobs:
     runs-on:
       - "self-hosted"
       - "linux"
-      - "nightly"
+      - "install-nightly"
     steps:
       - name: "Check out the repo"
         uses: "actions/checkout@v3"
