@@ -206,6 +206,8 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"
           registry: "ghcr.io"
           username: "${{ github.actor }}"
+      - name: "Deploy to Husarnet prod repository"
+        run: "/deploy-all.sh prod"
   release_docker:
     needs:
       - "run_tests"
