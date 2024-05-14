@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #pragma once
 
 #include "freertos/FreeRTOS.h"
@@ -36,7 +39,7 @@ class HusarnetClient {
 
   // Returns a list of peers connected to the device in Husarnet network.
   std::vector<HusarnetPeer> listPeers();
-  
+
   // Returns true if the device is connected to Husarnet network.
   bool isJoined();
 

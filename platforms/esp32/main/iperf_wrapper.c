@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
 #include "iperf_wrapper.h"
 #include "iperf.h"
 #include "esp_check.h"
