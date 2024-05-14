@@ -3,6 +3,8 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ports/privileged_interface.h"
 
+#include <chrono>
+#include <condition_variable>
 #include <initializer_list>
 #include <map>
 #include <utility>
@@ -145,6 +147,10 @@ static void getLocalIpv6Addresses(std::vector<IpAddress>& ret)
 static std::string configDir = "/var/lib/husarnet/";
 
 static int privilegedProcessFd = 0;
+static std::condition_variable receiverCV;
+static std::mutex receiverMutex;
+static int receivedQueryId = 0;
+static json receivedQuery;
 
 #ifdef UT
 static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
@@ -159,9 +165,18 @@ static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
 {
   assert(privilegedProcessFd != 0);
 
+  static std::mutex mutex;
+  static int counter = 0;
+
+  mutex.lock();
+  counter++;
+  int myCounter = counter;
+  mutex.unlock();
+
   json frame = {
       {"endpoint", endpoint._to_string()},
       {"data", data},
+      {"query_id", myCounter},
   };
 
   auto frameStr = frame.dump(0);
@@ -170,17 +185,32 @@ static json callPrivilegedProcess(PrivilegedMethod endpoint, json data)
     exit(1);
   }
 
-  char recvBuffer[40000];
+  std::unique_lock<std::mutex> lk(receiverMutex);
+  receiverCV.wait(lk, [=] { return receivedQueryId == myCounter; });
 
-  if(recv(privilegedProcessFd, recvBuffer, sizeof(recvBuffer), 0) < 0) {
-    perror("recv");
-    exit(1);
-  }
-
-  auto response = json::parse(recvBuffer);
-  return response;
+  return receivedQuery;
 }
 #endif
+
+void privilegedThreadReceiver()
+{
+  char recvBuffer[40000];
+
+  while(true) {
+    if(recv(privilegedProcessFd, recvBuffer, sizeof(recvBuffer), 0) < 0) {
+      perror("recv");
+      exit(1);
+    }
+
+    {
+      std::lock_guard<std::mutex> lk(receiverMutex);
+      auto received = json::parse(recvBuffer);
+      receivedQuery = received["data"];
+      receivedQueryId = received["query_id"].get<int>();
+    }
+    receiverCV.notify_all();
+  }
+}
 
 struct cap_header_struct {
   __u32 version;
@@ -207,6 +237,7 @@ namespace Privileged {
     if_inet6 = fopen("/proc/self/net/if_inet6", "r");
   }
 
+  // TODO move this to the other side
   void createConfigDirectories()
   {
     struct stat st;
@@ -241,8 +272,9 @@ namespace Privileged {
 
       // Technically this call should be done here but it makes more sense to do
       // so after interfaces are configured, so it's exposed to upper layers.
-
       // dropCapabilities();
+
+      Port::startThread(privilegedThreadReceiver, "privRecv");
     }
   }
 

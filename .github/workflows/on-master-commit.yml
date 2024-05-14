@@ -22,35 +22,11 @@ jobs:
           else
             echo "No changes to the builder found - refusing to rebuild"
           fi
-  build_deployers:
-    needs:
-      - "bump_version"
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "Check out the repo"
-        uses: "actions/checkout@v3"
-        with:
-          fetch-depth: 22
-          ref: "${{ needs.bump_version.outputs.commit_ref }}"
-      - name: "Login to GHCR"
-        uses: "docker/login-action@v2"
-        with:
-          password: "${{ secrets.GITHUB_TOKEN }}"
-          registry: "ghcr.io"
-          username: "${{ github.actor }}"
-      - name: "If there were any changes to deployers - build them and push to ghcr"
-        run: |
-          if git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -e "^deploy/"; then
-            ./deploy/update-deployers.sh push
-          else
-            echo "No changes to the deployer found - refusing to rebuild"
-          fi
   build_docker:
     needs:
       - "build_linux"
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
@@ -105,7 +81,6 @@ jobs:
     needs:
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
@@ -119,7 +94,7 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} nightly"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} nightly"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} nightly"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -139,20 +114,21 @@ jobs:
     needs:
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on:
       - "macos-latest"
     steps:
+      - name: "Set up Go"
+        uses: "actions/setup-go@v5"
+        with:
+          go-version: ">=1.18.0"
       - name: "Check out the repo"
         uses: "actions/checkout@v3"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Install coreutils, as our scripts depend on them and zig + ninja for building"
         run: "brew install coreutils zig ninja"
-      - name: "Build daemon natively on MacOS"
-        run: "./daemon/build.sh macos macos_amd64 nightly"
-      - name: "Build CLI natively on MacOS"
-        run: "./cli/build.sh macos amd64"
+      - name: "Build natively on MacOS"
+        run: "./platforms/macos/build.sh amd64 nightly"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -163,20 +139,21 @@ jobs:
     needs:
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on:
-      - "self-hosted"
-      - "macOS"
-      - "ARM64"
+      - "macos-latest"
     steps:
+      - name: "Set up Go"
+        uses: "actions/setup-go@v5"
+        with:
+          go-version: ">=1.18.0"
       - name: "Check out the repo"
         uses: "actions/checkout@v3"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
-      - name: "Build daemon natively on MacOS"
-        run: "./daemon/build.sh macos macos_arm64 nightly"
-      - name: "Build CLI natively on MacOS"
-        run: "./cli/build.sh macos arm64"
+      - name: "Install coreutils, as our scripts depend on them and zig + ninja for building"
+        run: "arch -arm64 brew install coreutils zig ninja"
+      - name: "Build natively on MacOS"
+        run: "./platforms/macos/build.sh arm64 nightly"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -187,7 +164,6 @@ jobs:
     needs:
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
@@ -201,7 +177,7 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh nightly"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh nightly"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh nightly"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v3"
         with:
@@ -213,7 +189,6 @@ jobs:
       - "build_windows"
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on: "windows-2019"
     steps:
       - name: "Check out the repo"
@@ -270,7 +245,6 @@ jobs:
       - "build_docker"
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
@@ -308,11 +282,10 @@ jobs:
       - "build_windows_installer"
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on:
       - "self-hosted"
       - "linux"
-      - "nightly"
+      - "install-nightly"
     steps:
       - name: "Check out the repo"
         uses: "actions/checkout@v3"
@@ -330,14 +303,13 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Deploy to Husarnet nightly repository"
-        run: "./deploy/deploy.sh nightly"
+        run: "/deploy-all.sh nightly"
   run_integration_tests:
     needs:
       - "build_linux"
       - "build_docker"
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
@@ -364,9 +336,9 @@ jobs:
       - name: "Save a password for unlocking a shared secrets repository in a known place"
         run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/integration/secrets-password.bin"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/integration/secrets-tool.sh decrypt"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/integration/secrets-tool.sh decrypt"
-      - name: "Docker run ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}"
-        run: "docker run --rm --privileged --volume $(pwd):/app ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/integration/secrets-tool.sh decrypt"
+      - name: "Docker run ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}} ${{matrix.container_name}}"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}} ${{matrix.container_name}}"
     strategy:
       fail-fast: false
       matrix:
@@ -375,11 +347,14 @@ jobs:
           - "ubuntu:18.04"
           - "ubuntu:20.04"
           - "ubuntu:22.04"
+          - "ubuntu:24.04"
           - "debian:oldstable"
           - "debian:stable"
           - "debian:testing"
-          - "fedora:37"
           - "fedora:38"
+          - "fedora:39"
+          - "fedora:40"
+          - "fedora:41"
         include:
           - container_name: "husarnet/husarnet-nightly:amd64"
             test_platform: "docker"
@@ -389,24 +364,31 @@ jobs:
             test_platform: "ubuntu"
           - container_name: "ubuntu:22.04"
             test_platform: "ubuntu"
+          - container_name: "ubuntu:24.04"
+            test_platform: "ubuntu"
           - container_name: "debian:oldstable"
             test_platform: "debian"
           - container_name: "debian:stable"
             test_platform: "debian"
           - container_name: "debian:testing"
             test_platform: "debian"
-          - container_name: "fedora:37"
-            test_platform: "fedora"
           - container_name: "fedora:38"
+            test_platform: "fedora"
+          - container_name: "fedora:39"
+            test_platform: "fedora"
+          - container_name: "fedora:40"
+            test_platform: "fedora"
+          - container_name: "fedora:41"
             test_platform: "fedora"
         test_file:
           - "functional-basic"
           - "join-workflow"
+          - "hooks-basic"
+          - "hooks-rw"
   run_tests:
     needs:
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
@@ -420,15 +402,14 @@ jobs:
           registry: "ghcr.io"
           username: "${{ github.actor }}"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/daemon/format.sh"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/daemon/format.sh"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/daemon/format.sh"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/test.sh"
-        run: "docker run --rm --privileged --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/test.sh"
+        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/test.sh"
   update_in_homebrew_tap:
     needs:
       - "release_nightly"
       - "bump_version"
       - "build_builder"
-      - "build_deployers"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
@@ -445,7 +426,7 @@ jobs:
             Husarnet for MacOS version {{version}}
             
             Automatic commit by https://github.com/mislav/bump-homebrew-formula-action
-          download-url: "https://nightly.husarnet.com/husarnet-macos-${{ env.VERSION }}-arm64.tar.gz"
+          download-url: "https://nightly.husarnet.com/macos/arm64/husarnet-${{ env.VERSION }}-arm64.tgz"
           homebrew-tap: "husarnet/homebrew-tap-nightly"
           tag-name: "${{ env.VERSION }}"
 name: "Release nightly"

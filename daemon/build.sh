@@ -3,6 +3,9 @@
 # Authors: listed in project_root/README.md
 # License: specified in project_root/LICENSE.txt
 source $(dirname "$0")/../util/bash-base.sh
+
+# This file is intended to be run only from inside Docker!
+
 if [ $# -ne 3 ]; then
   echo "Usage: $0 <platform> <architecture> (stable/nightly)"
   exit 1

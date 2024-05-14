@@ -632,6 +632,9 @@ namespace Port {
       std::string filePath = path + "/" + fileName;
       if(access(filePath.c_str(), X_OK) == 0) {
         result.push_back(filePath);
+      } else {
+        LOG_WARNING(
+            "%s is not executable, skipping it as a hook", filePath.c_str());
       }
     }
     closedir(dir);
@@ -669,8 +672,10 @@ namespace Port {
       std::istringstream iss(output);
       std::string line;
       while(std::getline(iss, line)) {
-        LOG_INFO((scriptPath + " returned: " + line).c_str());
+        LOG_INFO((scriptPath + ": " + line).c_str());
       }
+
+      LOG_INFO(("running " + scriptPath + " as a hook done").c_str());
     }
     LOG_DEBUG(("running hooks under path " + path + " done").c_str());
   }

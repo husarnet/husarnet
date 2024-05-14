@@ -42,6 +42,7 @@ build_base="${base_dir}/build"
 release_base="${build_base}/release"
 deploy_base="${base_dir}/deploy"
 builder_base="${base_dir}/builder"
+platforms_base="${base_dir}/platforms"
 
 # Version checking
 # This is done this way so we can update it mid-script and change globally

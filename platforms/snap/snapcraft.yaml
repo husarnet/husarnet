@@ -1,0 +1,61 @@
+name: husarnet # you probably want to 'snapcraft register <name>'
+version: "2.0.231"
+summary: Peer-to-Peer VPN to connect your computers and microcontrollers
+description: |
+  Husarnet is a different kind of VPN - it connects your devices, not your networks.
+  It runs on your computers, servers, Raspberry Pis and even on real tiny microcontrollers!
+  It's a great tool for remote development, out of band access, IoT and robotics.
+  It creates a globe-wide IPv6 network, where addresses are based on your public keys, and access is configured with 1:1 ACLs.
+  You can even share access to your devices with your coworkers with zero configuration on the host itself.
+
+grade: stable # stable/devel
+confinement: strict # strict/devmode
+base: core22
+
+contact: support@husarnet.com
+issues: https://github.com/husarnet/husarnet/issues
+website: https://husarnet.com/
+
+architectures:
+  - build-on: amd64
+
+layout:
+  /var/lib/husarnet:
+    bind: $SNAP_COMMON
+
+parts:
+  tarball:
+    plugin: dump
+    source: husarnet-linux-amd64.tar
+    source-type: tar
+
+    organize:
+      usr/bin/husarnet-daemon: husarnet-daemon
+      usr/bin/husarnet: husarnet
+    prime:
+      - -.scripts
+      - -usr
+
+plugs:
+  etc-hosts:
+    interface: system-files
+    write:
+      - /etc/hosts
+      - /etc/hosts.tmp
+
+apps:
+  husarnet-daemon:
+    command: husarnet-daemon
+    daemon: simple
+
+    plugs:
+      - network
+      - network-bind
+      - network-control
+      - etc-hosts
+
+  husarnet:
+    command: husarnet
+
+    plugs:
+      - network

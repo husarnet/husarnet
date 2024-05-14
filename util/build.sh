@@ -4,25 +4,46 @@
 # License: specified in project_root/LICENSE.txt
 source $(dirname "$0")/bash-base.sh
 
+# Usage: ./build.sh [platform] [architecture] [build_type]
+# Note: All arguments are optional
+
+# Check if the platform argument is provided, default to "all" if it's not
+platform=${1:-all}
+
+# Check if the architecture is provided, default to arm64 if it's not
+architecture=${2:-amd64}
+
+# Check if the build type is provided, default to nightly if it's not
+build_type=${3:-nightly}
+
 # Linux
-docker_builder /app/platforms/linux/build.sh amd64 nightly
-# docker_builder /app/platforms/linux/build.sh armhf nightly
-# docker_builder /app/platforms/linux/build.sh arm64 nightly
+if [ "$platform" == "all" ] || [ "$platform" == "linux" ]; then
+    docker_builder /app/platforms/linux/build.sh ${architecture} ${build_type}
+fi
 
 # Docker
-${base_dir}/platforms/docker/build.sh amd64 nightly
+if [ "$platform" == "all" ] || [ "$platform" == "docker" ]; then
+    ${base_dir}/platforms/docker/build.sh ${architecture} ${build_type}
+fi
+
+# Snap
+if [ "$platform" == "all" ] || [ "$platform" == "snap" ]; then
+    ${base_dir}/platforms/snap/build.sh ${architecture} ${build_type}
+fi
 
 # Windows
-docker_builder /app/platforms/windows/build.sh nightly
+if [ "$platform" == "all" ] || [ "$platform" == "windows" ]; then
+    docker_builder /app/platforms/windows/build.sh ${build_type}
+fi
 
 # ESP32
-docker_builder /app/platforms/esp32/build.sh esp32 nightly
-#docker_builder /app/platforms/esp32/build.sh esp32s2 nightly
-docker_builder /app/platforms/esp32/build.sh esp32s3 nightly
-#docker_builder /app/platforms/esp32/build.sh esp32c3 nightly
-#ocker_builder /app/platforms/esp32/build.sh esp32c6 nightly
+if [ "$platform" == "all" ] || [ "$platform" == "esp32" ]; then
+    docker_builder /app/platforms/esp32/build.sh esp32 ${build_type}
+fi
 
 # macOS
-# We are currently NOT cross-compiling for macOS. Reenable when resolved.
-# docker_builder /app/platforms/macos/build.sh arm64 nightly
-
+if [ "$platform" == "all" ] || [ "$platform" == "macos" ]; then
+    echo "NOT building for macOS"
+    # We are currently NOT cross-compiling for macOS. Reenable when resolved.
+    # docker_builder /app/platforms/macos/build.sh ${architecture} ${build_type}
+fi

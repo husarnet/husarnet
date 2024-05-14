@@ -6,6 +6,7 @@
 #include <initializer_list>
 #include <map>
 #include <string>
+#include <thread>
 
 #include <signal.h>
 #include <stdio.h>
@@ -144,42 +145,49 @@ void PrivilegedProcess::run()
       exit(2);
     }
 
-    auto request = json::parse(recvBuffer);
-    PrivilegedMethod endpoint = *PrivilegedMethod::_from_string_nothrow(
-        request["endpoint"].get<std::string>().c_str());
-    json data = request["data"];
+    Port::startThread(
+        [=]() {
+          auto request = json::parse(recvBuffer);
+          PrivilegedMethod endpoint = *PrivilegedMethod::_from_string_nothrow(
+              request["endpoint"].get<std::string>().c_str());
+          int query_id = request["query_id"].get<int>();
+          json data = request["data"];
 
-    json response;
+          json response = {};
 
-    switch(endpoint) {
-      case +PrivilegedMethod::updateHostsFile:
-        response = handleUpdateHostsFile(data);
-        break;
-      case +PrivilegedMethod::getSelfHostname:
-        response = handleGetSelfHostname(data);
-        break;
-      case +PrivilegedMethod::setSelfHostname:
-        response = handleSetSelfHostname(data);
-        break;
-      case +PrivilegedMethod::notifyReady:
-        response = handleNotifyReady(data);
-        break;
-      case +PrivilegedMethod::runHook:
-        response = handleRunHook(data);
-        break;
-      case +PrivilegedMethod::checkHook:
-        response = handleCheckHookExists(data);
-        break;
-      case +PrivilegedMethod::resolveToIp:
-        response = handleResolveToIp(data);
-        break;
-    }
+          switch(endpoint) {
+            case +PrivilegedMethod::updateHostsFile:
+              response["data"] = handleUpdateHostsFile(data);
+              break;
+            case +PrivilegedMethod::getSelfHostname:
+              response["data"] = handleGetSelfHostname(data);
+              break;
+            case +PrivilegedMethod::setSelfHostname:
+              response["data"] = handleSetSelfHostname(data);
+              break;
+            case +PrivilegedMethod::notifyReady:
+              response["data"] = handleNotifyReady(data);
+              break;
+            case +PrivilegedMethod::runHook:
+              response["data"] = handleRunHook(data);
+              break;
+            case +PrivilegedMethod::checkHook:
+              response["data"] = handleCheckHookExists(data);
+              break;
+            case +PrivilegedMethod::resolveToIp:
+              response["data"] = handleResolveToIp(data);
+              break;
+          }
 
-    std::string txBuffer = response.dump(0);
+          response["query_id"] = query_id;
 
-    if(send(fd, txBuffer.data(), txBuffer.size() + 1, 0) < 0) {
-      perror("send");
-      exit(1);
-    }
+          std::string txBuffer = response.dump(0);
+
+          if(send(fd, txBuffer.data(), txBuffer.size() + 1, 0) < 0) {
+            perror("send");
+            exit(1);
+          }
+        },
+        "privHandler");
   }
 }

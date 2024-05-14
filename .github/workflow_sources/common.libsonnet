@@ -55,17 +55,20 @@
 
     docker:: function(container, command) {
       name: 'Docker run ' + container + ' ' + command,
-      run: 'docker run --rm --privileged --volume $(pwd):/app ' + container + ' ' + command,
+      run: 'docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ' + container + ' ' + command,
     },
 
-    build_macos_daemon:: function(build_type, arch) {
-      name: 'Build daemon natively on MacOS',
-      run: './daemon/build.sh macos macos_' + arch + ' ' + build_type,
+    setup_go:: {
+      name: 'Set up Go',
+      uses: 'actions/setup-go@v5',
+      with: {
+        'go-version': '>=1.18.0',
+      },
     },
 
-    build_macos_cli:: function(arch) {
-      name: 'Build CLI natively on MacOS',
-      run: './cli/build.sh macos ' + arch,
+    build_macos_natively:: function(build_type, arch) {
+      name: 'Build natively on MacOS',
+      run: './platforms/macos/build.sh ' + arch + ' ' + build_type,
     },
 
     read_version_to_env:: function() {
@@ -133,31 +136,6 @@
       ],
     },
 
-    build_deployers:: function(ref) {
-      needs: [],
-
-      'runs-on': 'ubuntu-latest',
-
-      steps: [
-        $.steps.checkout(ref) + {
-          with+: {
-            'fetch-depth': 22,  // This is a semi-random number. We don't want to fetch the whole repository, we only want "a couple of them"
-          },
-        },
-        $.steps.ghcr_login(),
-        {
-          name: 'If there were any changes to deployers - build them and push to ghcr',
-          run: |||
-            if git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -e "^deploy/"; then
-              ./deploy/update-deployers.sh push
-            else
-              echo "No changes to the deployer found - refusing to rebuild"
-            fi
-          |||,
-        },
-      ],
-    },
-
     build_linux:: function(ref, build_type) {
       needs: [],
 
@@ -188,15 +166,17 @@
       needs: [],
 
       'runs-on': [
-        'self-hosted',
-        'macOS',
-        'ARM64',
+        'macos-latest',
       ],
 
       steps: [
+        $.steps.setup_go,
         $.steps.checkout(ref),
-        $.steps.build_macos_daemon(build_type, 'arm64'),
-        $.steps.build_macos_cli('arm64'),
+        {
+          name: 'Install coreutils, as our scripts depend on them and zig + ninja for building',
+          run: 'arch -arm64 brew install coreutils zig ninja',
+        },
+        $.steps.build_macos_natively(build_type, 'arm64'),
         $.steps.push_artifacts('*macos*'),
       ],
     },
@@ -209,13 +189,13 @@
       ],
 
       steps: [
+        $.steps.setup_go,
         $.steps.checkout(ref),
         {
           name: 'Install coreutils, as our scripts depend on them and zig + ninja for building',
           run: 'brew install coreutils zig ninja',
         },
-        $.steps.build_macos_daemon(build_type, 'amd64'),
-        $.steps.build_macos_cli('amd64'),
+        $.steps.build_macos_natively(build_type, 'amd64'),
         $.steps.push_artifacts('*macos*'),
       ],
     },
@@ -291,26 +271,34 @@
             'ubuntu:18.04',
             'ubuntu:20.04',
             'ubuntu:22.04',
+            'ubuntu:24.04',
             'debian:oldstable',
             'debian:stable',
             'debian:testing',
-            'fedora:37',
             'fedora:38',
+            'fedora:39',
+            'fedora:40',
+            'fedora:41',
           ],
           test_file: [
             'functional-basic',
             'join-workflow',
+            'hooks-basic',
+            'hooks-rw',
           ],
           include: [
             { container_name: docker_project + ':amd64', test_platform: 'docker' },
             { container_name: 'ubuntu:18.04', test_platform: 'ubuntu' },
             { container_name: 'ubuntu:20.04', test_platform: 'ubuntu' },
             { container_name: 'ubuntu:22.04', test_platform: 'ubuntu' },
+            { container_name: 'ubuntu:24.04', test_platform: 'ubuntu' },
             { container_name: 'debian:oldstable', test_platform: 'debian' },
             { container_name: 'debian:stable', test_platform: 'debian' },
             { container_name: 'debian:testing', test_platform: 'debian' },
-            { container_name: 'fedora:37', test_platform: 'fedora' },
             { container_name: 'fedora:38', test_platform: 'fedora' },
+            { container_name: 'fedora:39', test_platform: 'fedora' },
+            { container_name: 'fedora:40', test_platform: 'fedora' },
+            { container_name: 'fedora:41', test_platform: 'fedora' },
           ],
         },
       },
@@ -325,7 +313,7 @@
           run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/integration/secrets-password.bin",
         },
         $.steps.builder('/app/tests/integration/secrets-tool.sh decrypt'),
-        $.steps.docker('${{matrix.container_name}}', '/app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}}'),
+        $.steps.docker('${{matrix.container_name}}', '/app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}} ${{matrix.container_name}}'),
       ],
     },
 
@@ -342,7 +330,7 @@
       'runs-on': [
         'self-hosted',
         'linux',
-        target,
+        'install-' + target,
       ],
 
       steps: [
@@ -351,7 +339,7 @@
         $.steps.ghcr_login(),
         {
           name: 'Deploy to Husarnet ' + target + ' repository',
-          run: './deploy/deploy.sh ' + target,
+          run: '/deploy-all.sh ' + target,
         },
       ],
     },
@@ -505,7 +493,7 @@
           with: {
             'tag-name': '${{ env.VERSION }}',
             'homebrew-tap': 'husarnet/homebrew-tap-nightly',
-            'download-url': 'https://nightly.husarnet.com/husarnet-macos-${{ env.VERSION }}-arm64.tar.gz',
+            'download-url': 'https://nightly.husarnet.com/macos/arm64/husarnet-${{ env.VERSION }}-arm64.tgz',
             'commit-message': |||
               Husarnet for MacOS version {{version}}
 

@@ -168,5 +168,6 @@ class HusarnetManager {
   void stage2();  // Read identity, obtain license, etc. Changing user settings
                   // is not allowed after this step
   void stage3();  // Actually connect to the network
+  void stage4();  // Act on config overrides (i.e. environment variables)
   void runHusarnet();
 };

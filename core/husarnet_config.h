@@ -12,7 +12,11 @@
 #include "sdkconfig.h"
 #endif
 
-#define HUSARNET_VERSION "2.0.208"
+#ifdef ESP_PLATFORM
+#include "sdkconfig.h"
+#endif
+
+#define HUSARNET_VERSION "2.0.231"
 #define WEBSETUP_SERVER_PORT 5580
 #define WEBSETUP_CLIENT_PORT 4800
 #define BASESERVER_PORT 443

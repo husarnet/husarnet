@@ -6,49 +6,94 @@
 HooksManager::HooksManager(HusarnetManager* manager)
 {
   this->manager = manager;
-  for(const auto& [key_, value_] : hookDirNames) {
-    hookConditionalVariables.insert({value_, new std::condition_variable()});
+
+  for(const auto& [hookType_, dirName] : hookDirNames) {
+    hookConditionalVariables.insert({dirName, new std::condition_variable()});
   }
 
-  for(const auto& [key, value] : hookDirNames) {
-    std::function<void()> callback = [&, val = value]() {
-      Privileged::runScripts(val);
-      std::lock_guard lk(this->m);
-      hookConditionalVariables[val]->notify_all();
+  for(const auto& [hookType_ref, dirName_ref] : hookDirNames) {
+    auto hookType = hookType_ref;
+    auto dirName = dirName_ref;
+
+    std::function<void()> callback = [this, hookType, dirName]() {
+      if(!Privileged::checkScriptsExist(hookDirNames[hookType])) {
+        return;
+      }
+
+      if(hookType == HookType::rw_request || hookType == HookType::rw_release) {
+        rwMutex.lock();
+      }
+
+      Privileged::runScripts(dirName);
+
+      if(hookType == HookType::rw_request) {
+        isRw = true;
+      }
+      if(hookType == HookType::rw_release) {
+        isRw = false;
+      }
+
+      if(hookType == HookType::rw_request || hookType == HookType::rw_release) {
+        rwMutex.unlock();
+      }
+
+      std::lock_guard waitLock(this->waitMutex);
+      hookConditionalVariables[dirName]->notify_all();
     };
-    hookTimers.insert({value, new Timer(timespan, interval, callback)});
+
+    hookTimers.insert({dirName, new Timer(timespan, interval, callback)});
+    hookTimers[dirName]->Start();
   }
 };
 
 HooksManager::~HooksManager()
 {
-  for(const auto& [key, value] :  // cppcheck-suppress unusedVariable
-      hookDirNames) {
-    delete hookConditionalVariables[value];
-    delete hookTimers[value];
+  // cppcheck-suppress unusedVariable
+  for(const auto& [hookType, dirName] : hookDirNames) {
+    delete hookConditionalVariables[dirName];
+    delete hookTimers[dirName];
   }
 }
 
-void HooksManager::runHook(HookType hookType)
+void HooksManager::runHook(HookType hookType, bool immediate)
 {
-  if(!Privileged::checkScriptsExist(hookDirNames[hookType])) {
-    return;
+  if(immediate) {
+    // This one will execute immediately
+    hookTimers[hookDirNames[hookType]]->Fire();
+  } else {
+    // This one will postpone execution
+    hookTimers[hookDirNames[hookType]]->Reset();
   }
-
-  hookTimers[hookDirNames[hookType]]->Reset();
 }
 
 void HooksManager::waitHook(HookType hookType)
 {
-  if(!manager->areHooksEnabled()) {
-    return;
-  }
-
-  if(!Privileged::checkScriptsExist(hookDirNames[hookType])) {
-    return;
-  }
-
-  std::unique_lock lk(m);
-  hookConditionalVariables[hookDirNames[hookType]]->wait_for(lk, waitspan);
+  std::unique_lock lk(waitMutex);
+  hookConditionalVariables[hookDirNames[hookType]]->wait_for(
+      lk, waitspan);  // This internally does an unlock, wait and lock again
   lk.unlock();
+}
+
+void HooksManager::cancelHook(HookType hookType)
+{
+  hookTimers[hookDirNames[hookType]]->Stop();
+}
+
+void HooksManager::withRw(std::function<void()> f)
+{
+  cancelHook(HookType::rw_release);
+
+  rwMutex.lock();
+
+  if(!isRw) {
+    runHook(HookType::rw_request, true);
+    rwMutex.unlock();
+    waitHook(HookType::rw_request);
+  } else {
+    rwMutex.unlock();
+  }
+
+  f();
+
+  runHook(HookType::rw_release);
 }

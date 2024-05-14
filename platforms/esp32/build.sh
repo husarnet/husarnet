@@ -4,6 +4,10 @@
 # License: specified in project_root/LICENSE.txt
 source $(dirname "$0")/../../util/bash-base.sh
 
+echo "[HUSARNET BS] Building ESP32 library"
+
+echo "[HUSARNET BS] Building ESP32 library"
+
 if [ $# -ne 2 ]; then
   echo "Usage: $0 <idf_target> (stable/nightly)"
   exit 1

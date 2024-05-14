@@ -357,13 +357,12 @@ bool HusarnetManager::areHooksEnabled()
 
 void HusarnetManager::hooksEnable()
 {
-  bool werentEnabled = !areHooksEnabled();
+  if(areHooksEnabled()) {
+    return;
+  }
 
   configStorage->setUserSetting(UserSetting::enableHooks, trueValue);
-
-  if(werentEnabled) {
-    hooksManager = new HooksManager(this);
-  }
+  hooksManager = new HooksManager(this);
 }
 
 void HusarnetManager::hooksDisable()
@@ -536,10 +535,11 @@ void HusarnetManager::startWebsetup()
 void HusarnetManager::startHTTPServer()
 {
 #ifdef HTTP_CONTROL_API
-  threadpool.push_back(new std::thread([this]() {
-    auto server = new ApiServer(this);
-    server->runThread();
-  }));
+  auto server = new ApiServer(this);
+
+  threadpool.push_back(new std::thread([=]() { server->runThread(); }));
+
+  server->waitStarted();
 #endif
 }
 
@@ -559,6 +559,10 @@ void HusarnetManager::stage1()
       Port::getEnvironmentOverrides(), internalDefaults);
 
   readLegacyConfig();
+
+  if(configStorage->getUserSettingBool(UserSetting::enableHooks)) {
+    this->hooksManager = new HooksManager(this);
+  }
 
   // This checks whether the dashboard URL was recently changed using an
   // environment variable and makes sure it's saved to a persistent storage (as
@@ -600,13 +604,24 @@ void HusarnetManager::stage3()
     return;
   }
 
-  if(configStorage->getUserSettingBool(UserSetting::enableHooks)) {
-    this->hooksManager = new HooksManager(this);
-  }
-
   startNetworkingStack();
   startWebsetup();
 
+  this->notificationManager = new NotificationManager(
+      configStorage->getUserSetting(UserSetting::dashboardFqdn), this);
+
+  startHTTPServer();
+
+  whitelistAdd(getWebsetupAddress());
+
+  // TODO move this to websetup
+  this->hostTableAdd("husarnet-local", this->getSelfAddress());
+
+  stage3Started = true;
+}
+
+void HusarnetManager::stage4()
+{
   if(configStorage->isUserSettingOverriden(UserSetting::joinCode)) {
     if(configStorage->isUserSettingOverriden(UserSetting::hostname)) {
       joinNetwork(
@@ -635,6 +650,7 @@ void HusarnetManager::runHusarnet()
   stage1();
   stage2();
   stage3();
+  stage4();
 
   Privileged::notifyReady();
 
