@@ -153,8 +153,7 @@ void WebsetupConnection::periodicThread()
     threadMutex.unlock();
 
     if(sendJoin) {
-      LOG_INFO(
-          "Sending join request to websetup (joincode: %s)", joinCode.c_str());
+      LOG_INFO("Sending join request to websetup");
       send(
           "init-request-join-code",
           {joinTmp, manager->getWebsetupSecret(), hostnameTmp});
