@@ -17,6 +17,7 @@
 #endif
 #include <string>
 
+#include "tun.h"
 #include "husarnet/ports/dummy_task_priorities.h"
 
 extern errno_t rand_s(unsigned int* randomValue);

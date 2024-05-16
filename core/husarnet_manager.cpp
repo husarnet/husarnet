@@ -436,6 +436,7 @@ HusarnetManager::HusarnetManager()
 HusarnetManager::~HusarnetManager()
 {
   delete this->hooksManager;
+  delete this->notificationManager;
 }
 
 void HusarnetManager::enterDummyMode()
