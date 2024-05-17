@@ -38,8 +38,7 @@ fi
 
 # ESP32
 if [ "$platform" == "all" ] || [ "$platform" == "esp32" ]; then
-    echo "NOT building for ESP32"
-    # docker_builder /app/platforms/esp32/build.sh ${build_type}
+    docker_builder /app/platforms/esp32/build.sh esp32 ${build_type}
 fi
 
 # macOS

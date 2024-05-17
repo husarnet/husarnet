@@ -15,6 +15,7 @@
 const std::string stripLogPathPrefix(const std::string& filename);
 
 // Do not use this function directly - instead use the macros below
+// TODO: replace buffer with std::string
 static inline void log(
     LogLevel level,
     const std::string& filename,
@@ -23,7 +24,7 @@ static inline void log(
     const char* format,
     ...)
 {
-  if(level > getGlobalLogManager()->getVerbosity()) {
+  if(level > getGlobalLogManager()->getVerbosity() || level == LogLevel::NONE) {
     return;
   }
 
@@ -34,24 +35,32 @@ static inline void log(
   vsnprintf(buffer, buffer_len, format, args);
   va_end(args);
 
-  std::string userMessage = buffer;
+  std::string userMessage{buffer};
   if(extra.length() > 0) {
     userMessage += " " + extra;
   }
 
-  std::string message = Port::getHumanTime();
-  message += " " + padRight(8, level._to_string());
+  // TODO: this is not a cleanest solution, but it works for now
 
-#ifdef DEBUG_BUILD
+  std::string message;
+#ifndef ESP_PLATFORM
+  message = Port::getHumanTime();
+  message += " " + padRight(8, level._to_string());
+#endif
+
+#if defined(DEBUG_BUILD) && not defined(ESP_PLATFORM)
   message += " " + padRight(80, userMessage);
   message +=
       " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
 #else
-  message += " " + userMessage;
+  message += userMessage;
 #endif
 
-  Port::log(message);
+  Port::log(level, message);
+
+#ifndef ESP_PLATFORM
   getGlobalLogManager()->insert(message);
+#endif
 }
 
 // Legacy compatibility alias

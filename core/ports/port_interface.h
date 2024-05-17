@@ -12,6 +12,7 @@
 #include "husarnet/config_storage.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
+#include "husarnet/logmanager.h"
 
 class HusarnetManager;
 class TunTap;
@@ -47,8 +48,10 @@ namespace Port {
   // TODO why this is doubled into both PortInterface and PrivilegedInterface?
   void notifyReady();
 
-  void log(const std::string& message);
+  void log(const LogLevel level, const std::string& message);
 
   void runScripts(const std::string& path);
   bool checkScriptsExist(const std::string& path);
+
+  void processSocketEvents(HusarnetManager* manager);
 }  // namespace Port

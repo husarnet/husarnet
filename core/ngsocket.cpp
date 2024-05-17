@@ -70,15 +70,20 @@ void NgSocket::periodic()
 
   if(reloadLocalAddresses()) {
     // new addresses, accelerate reconnection
-    auto addresses_string = std::transform_reduce(
-        localAddresses.begin(), localAddresses.end(), std::string(""),
-        [](const std::string& a, const std::string& b) {
-          return a + " | " + b;
-        },
-        [](InetAddress addr) { return addr.str(); });
-    LOG_INFO(
-        "Local IP address change detected, new addresses: %s",
-        addresses_string.c_str());
+    {
+      std::string addresses;
+      // Add separator between addresses
+      for(auto iter = localAddresses.begin(); iter != localAddresses.end();
+          iter++) {
+        if(iter != localAddresses.begin())
+          addresses += " | ";
+        addresses += iter->str();
+      }
+
+      LOG_INFO(
+          "Local IP address change detected, new addresses: %s",
+          addresses.c_str());
+    }
     requestRefresh();
     if(Port::getCurrentTime() - lastBaseTcpAction > NAT_INIT_TIMEOUT)
       connectToBase();
@@ -589,8 +594,8 @@ void NgSocket::init()
 
   // Passing std::bind crashes mingw_thread. The reason is not apparent.
   Port::startThread(
-      [this]() { this->workerLoop(); }, "hworker",
-      /*stack=*/8000);
+      [this]() { this->workerLoop(); }, "hnet_ng",
+      /*stack=*/8000, NGSOCKET_TASK_PRIORITY);
 
   LOG_INFO("ngsocket %s listening on %d", IDSTR(deviceId), sourcePort);
 }
@@ -745,7 +750,14 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
     return msg;
   }
 
-  msg.kind = BaseToPeerMessageKind::_from_integral(data[0]);
+  // TODO: refactor, dead code?
+  auto msgKind = BaseToPeerMessageKind::_from_integral_nothrow(data[0]);
+  if(msgKind) {
+    msg.kind = msgKind.value();
+  } else {
+    LOG_DEBUG("invalid message kind: %d", data[0]);
+  }
+
   return msg;
 }
 
@@ -779,12 +791,12 @@ PeerToPeerMessage NgSocket::parsePeerToPeerMessage(string_view data)
       LOG_ERROR("invalid signature: %s", signature.c_str());
       return msg;
     }
-    msg.kind = PeerToPeerMessageKind::_from_integral(data[0]);
+    msg.kind = PeerToPeerMessageKind::_from_index_unchecked(data[0]);
     return msg;
   }
 
   if(data[0] == (char)PeerToPeerMessageKind::DATA) {
-    msg.kind = PeerToPeerMessageKind::_from_integral(data[0]);
+    msg.kind = PeerToPeerMessageKind::_from_integral_unchecked(data[0]);
     msg.data = data.substr(1);
     return msg;
   }

@@ -84,12 +84,17 @@ std::string Identity::serialize()
 Identity Identity::deserialize(std::string data)
 {
   std::stringstream buffer;
+  auto identity = new Identity();
+
+  if(data.empty()) {
+    return *identity;
+  }
+
   buffer << data;
 
   std::string ipStr, pubkeyStr, privkeyStr;
   buffer >> ipStr >> pubkeyStr >> privkeyStr;
 
-  auto identity = new Identity();
   identity->pubkey = decodeHex(pubkeyStr);
   identity->privkey = decodeHex(privkeyStr);
   identity->deviceId = IpAddress::parse(ipStr.c_str()).toBinary();

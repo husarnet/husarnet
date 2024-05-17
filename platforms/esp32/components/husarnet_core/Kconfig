@@ -1,0 +1,57 @@
+menu "Husarnet"
+    choice HUSARNET_LOG_LEVEL
+        bool "Default Husarnet log verbosity"
+        default HUSARNET_LOG_LEVEL_WARN
+        help
+            Specify how much output to see in logs by default.
+
+        config HUSARNET_LOG_LEVEL_NONE
+            bool "No output"
+        
+        config HUSARNET_LOG_LEVEL_ERROR
+            bool "Error"
+        config HUSARNET_LOG_LEVEL_WARN
+            bool "Warning"
+        config HUSARNET_LOG_LEVEL_INFO
+            bool "Info"
+        config HUSARNET_LOG_LEVEL_DEBUG
+            bool "Debug"
+    endchoice
+
+    # Levels are set according to the "husarnet/logmanager.h" LogLevel values
+    config HUSARNET_LOG_LEVEL
+        string
+        default "0" if HUSARNET_LOG_LEVEL_NONE
+        default "1" if HUSARNET_LOG_LEVEL_ERROR
+        default "3" if HUSARNET_LOG_LEVEL_WARN
+        default "4" if HUSARNET_LOG_LEVEL_INFO
+        default "5" if HUSARNET_LOG_LEVEL_DEBUG
+
+    config HUSARNET_NGSOCKET_TASK_PRIORITY
+        int "NgSocket task priority"
+        range 1 17
+        default 17
+        help
+            Sets packet processing task priority. Should be set higher than websetup and husarnet task priorities.
+
+    config HUSARNET_HUSARNET_TASK_PRIORITY
+        int "Husarnet task priority"
+        range 1 16
+        default 16
+        help
+            Sets scheduling and management task priority. Should be set lower than ngsocket and higher than websetup task priorities.
+
+    config HUSARNET_WEBSETUP_PERIODIC_TASK_PRIORITY
+        int "Websetup periodic task priority"
+        range 1 15
+        default 5
+        help
+            Sets websetup periodic traffic task priority. Should be set lower than ngsocket and husarnet task priorities.
+
+    config HUSARNET_WEBSETUP_CONNECTION_TASK_PRIORITY
+        int "Websetup connection task priority"
+        range 1 15
+        default 5
+        help
+            Sets websetup connection task priority. Should be set lower than ngsocket and husarnet task priorities.
+endmenu

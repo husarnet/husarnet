@@ -1,8 +1,6 @@
 // Copyright (c) 2024 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
+#pragma once
 
-// This is a dummy file, just to make linker happy
-void app_main(void)
-{
-}
+#include "user_interface.h"

@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "husarnet/ports/macos/tun.h"
+#include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
@@ -321,7 +322,7 @@ namespace Port {
     }
   }
 
-  void log(const std::string& message)
+  void log(const LogLevel level, const std::string& message)
   {
     fprintf(stderr, "%s\n", message.c_str());
     fflush(stderr);

@@ -9,6 +9,10 @@ __pycache__/
 /id?
 /build-win
 /build-gui-*
+platforms/esp32/managed_components
+platforms/esp32/dependencies.lock
+platforms/esp32/sdkconfig
+platforms/esp32/sdkconfig.old
 
 # Visual Studio Code
 .vscode/*
@@ -28,3 +32,12 @@ compile_commands.json
 
 # jetbrains
 .idea
+
+# ESP32 testing
+
+platforms/esp32/pytest_embedded_log/
+platforms/esp32/__pychache__/
+platforms/esp32/.pytest_cache/
+platforms/esp32/test.log
+platforms/esp32/.iperf.log
+platforms/esp32/junit.xml

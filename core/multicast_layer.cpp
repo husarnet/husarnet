@@ -70,7 +70,7 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
     packet += deviceId;
     packet += data.substr(1);
 
-    sendToUpperLayer(BadDeviceId, packet);
+    sendToUpperLayer(source, packet);
   }
 }
 

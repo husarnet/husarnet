@@ -16,7 +16,8 @@ NotificationManager::NotificationManager(
   refreshNotificationFile();
   this->timer = new PeriodicTimer(interval, refreshNotificationFile);
   this->timer->Start();
-};
+}
+
 NotificationManager::~NotificationManager()
 {
   delete this->timer;
@@ -104,7 +105,7 @@ void NotificationManager::refreshNotificationFile()
   // Merged cached and requested notifications
   husarnetManager->getHooksManager()->withRw(
       [&]() { Privileged::writeNotificationFile(merged.dump()); });
-};
+}
 
 std::list<std::string> NotificationManager::getNotifications()
 {
@@ -124,7 +125,7 @@ std::list<std::string> NotificationManager::getNotifications()
   }
 
   return ls;
-};
+}
 
 json NotificationManager::retrieveNotificationJson(
     std::string dashboardHostname)

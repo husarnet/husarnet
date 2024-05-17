@@ -32,7 +32,7 @@ class PeerContainer;
 class PeerFlags;
 class WebsetupConnection;
 class HooksManagerInterface;
-class NotificationManager;
+class NotificationManagerInterface;
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
@@ -49,10 +49,11 @@ class HusarnetManager {
   SecurityLayer* securityLayer = nullptr;
   ConfigStorage* configStorage = nullptr;
   PeerContainer* peerContainer = nullptr;
+  TunTap* tunTap = nullptr;
 
   WebsetupConnection* websetup = nullptr;
   HooksManagerInterface* hooksManager = nullptr;
-  NotificationManager* notificationManager = nullptr;
+  NotificationManagerInterface* notificationManager = nullptr;
 
   std::vector<std::thread*> threadpool;
 
@@ -79,6 +80,7 @@ class HusarnetManager {
   ConfigStorage& getConfigStorage();
   void setConfigStorage(ConfigStorage* cs);
   PeerContainer* getPeerContainer();
+  TunTap* getTunTap();
 
   std::string getVersion();
   std::string getUserAgent();

@@ -44,6 +44,11 @@ PeerContainer* HusarnetManager::getPeerContainer()
   return peerContainer;
 }
 
+TunTap* HusarnetManager::getTunTap()
+{
+  return tunTap;
+}
+
 HooksManagerInterface* HusarnetManager::getHooksManager()
 {
   return hooksManager;
@@ -423,11 +428,15 @@ HusarnetManager::HusarnetManager()
 
   this->hooksManager = new DummyHooksManager();  // This will be no-op at least
                                                  // until we can read settings
+
+  this->notificationManager =
+      new DummyNotificationManager();  // No-op until the join operation
 }
 
 HusarnetManager::~HusarnetManager()
 {
   delete this->hooksManager;
+  delete this->notificationManager;
 }
 
 void HusarnetManager::enterDummyMode()
@@ -503,6 +512,7 @@ void HusarnetManager::startNetworkingStack()
   peerContainer = new PeerContainer(this);
 
   auto tunTap = Port::startTunTap(this);
+  this->tunTap = static_cast<TunTap*>(tunTap);
 
   Privileged::dropCapabilities();
 
@@ -622,6 +632,18 @@ void HusarnetManager::stage4()
       joinNetwork(configStorage->getUserSetting(UserSetting::joinCode));
     }
   }
+
+  this->hostTableAdd("husarnet-local", this->getSelfAddress());
+
+// Notifications are disabled on ESP32 platform
+#ifndef ESP_PLATFORM
+  this->notificationManager = new NotificationManager(
+      configStorage->getUserSetting(UserSetting::dashboardFqdn), this);
+#endif
+
+  startHTTPServer();
+
+  stage3Started = true;
 }
 
 void HusarnetManager::runHusarnet()
@@ -635,6 +657,6 @@ void HusarnetManager::runHusarnet()
 
   while(true) {
     ngsocket->periodic();
-    OsSocket::runOnce(1000);  // process socket events for at most so many ms
+    Port::processSocketEvents(this);
   }
 }

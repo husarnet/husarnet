@@ -11,6 +11,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "husarnet/ports/dummy_task_priorities.h"
+
+#include "tun.h"
+
 #define SOCKFUNC(name) ::name
 #define SOCKFUNC_close SOCKFUNC(close)
 

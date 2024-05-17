@@ -9,9 +9,22 @@
 #include "husarnet/ngsocket.h"
 #include "husarnet/string_view.h"
 
-class TunTap : public UpperLayer {
- public:
-  TunTap();
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+#include "lwip/ip6_addr.h"
+#include "lwip/raw.h"
 
+class TunTap : public UpperLayer {
+ private:
+  void close();
+  ip6_addr_t ipAddr;
+  struct raw_pcb* pcb;
+
+ public:
+  QueueHandle_t tunTapMsgQueue;
+
+  TunTap(ip6_addr_t ip, size_t queueSize);
+  void processQueuedPackets();
   void onLowerLayerData(DeviceId source, string_view data) override;
+  ip6_addr_t getIp6Addr();
 };

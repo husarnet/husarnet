@@ -69,10 +69,12 @@ void WebsetupConnection::start()
   }
 
   Port::startThread(
-      [this]() { this->periodicThread(); }, "websetupPeriodic", 6000);
+      [this]() { this->periodicThread(); }, "hnet_ws_periodic", 6000,
+      WEBSETUP_PERIODIC_TASK_PRIORITY);
 
   Port::startThread(
-      [this]() { this->handleConnectionThread(); }, "websetupConnection", 6000);
+      [this]() { this->handleConnectionThread(); }, "hnet_ws_conn", 6000,
+      WEBSETUP_CONNECTION_TASK_PRIORITY);
 }
 
 void WebsetupConnection::send(
@@ -151,8 +153,7 @@ void WebsetupConnection::periodicThread()
     threadMutex.unlock();
 
     if(sendJoin) {
-      LOG_INFO(
-          "Sending join request to websetup (joincode: %s)", joinCode.c_str());
+      LOG_INFO("Sending join request to websetup");
       send(
           "init-request-join-code",
           {joinTmp, manager->getWebsetupSecret(), hostnameTmp});
