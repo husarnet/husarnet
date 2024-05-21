@@ -90,7 +90,7 @@
         },
         $.steps.read_version_to_env(),
         {
-          uses: 'stefanzweifel/git-auto-commit-action@v4',
+          uses: 'stefanzweifel/git-auto-commit-action@v5',
           id: 'autocommit',
           with: {
             commit_message: 'Build version ${{ env.VERSION }}',
@@ -277,6 +277,7 @@
 
       steps: [
         $.steps.checkout(ref),
+        $.steps.pull_artifacts('release-linux-amd64'),
         $.steps.ghcr_login(),
         $.steps.docker_login(),
         {
@@ -391,7 +392,7 @@
         $.steps.ghcr_login(),
         {
           name: 'Build and push',
-          uses: 'docker/build-push-action@v3',
+          uses: 'docker/build-push-action@v5',
           with: {
             context: '.',
             file: './platforms/docker/Dockerfile',
