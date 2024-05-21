@@ -12,12 +12,12 @@ jobs:
         uses: "actions/download-artifact@v4"
         with:
           merge-multiple: true
-          name: "release-linux-${{matrix.arch_alias}}"
-          pattern: "./build/release/"
+          path: "./build/release/"
+          pattern: "release-linux-${{matrix.arch_alias}}"
       - name: "Set up QEMU"
         uses: "docker/setup-qemu-action@v3"
       - name: "Set up Docker Buildx"
-        uses: "docker/setup-buildx-action@v2"
+        uses: "docker/setup-buildx-action@v3"
         with:
           driver-opts: "image=moby/buildkit:v0.10.5"
           version: "latest"
@@ -146,8 +146,8 @@ jobs:
         uses: "actions/download-artifact@v4"
         with:
           merge-multiple: true
-          name: "release-windows-win64"
-          pattern: "./build/release/"
+          path: "./build/release/"
+          pattern: "release-windows-win64"
       - name: "Copy .exe and license to installer dir"
         run: |
           copy build\release\husarnet-daemon-windows-win64.exe platforms\windows\husarnet-daemon.exe

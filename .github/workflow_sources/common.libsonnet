@@ -46,8 +46,8 @@
       name: 'Pull artifacts',
       uses: 'actions/download-artifact@v4',
       with: {
-        name: key_expression,
-        pattern: './build/release/',
+        pattern: key_expression,
+        path: './build/release/',
         'merge-multiple': true,
       },
     },
@@ -79,7 +79,7 @@
       steps: [
         $.steps.checkout(ref),
         {
-          uses: 'actions/setup-python@v4',
+          uses: 'actions/setup-python@v5',
           with: {
             'python-version': '3.x',
           },
@@ -381,7 +381,7 @@
         },
         {
           name: 'Set up Docker Buildx',
-          uses: 'docker/setup-buildx-action@v2',
+          uses: 'docker/setup-buildx-action@v3',
           with: {
             version: 'latest',
             'driver-opts': 'image=moby/buildkit:v0.10.5',
