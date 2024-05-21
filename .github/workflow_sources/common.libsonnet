@@ -374,7 +374,7 @@
 
       steps: [
         $.steps.checkout(ref),
-        $.steps.pull_artifacts('release-linux-${{arch_alias}}'),
+        $.steps.pull_artifacts('release-linux-${{matrix.arch_alias}}'),
         {
           name: 'Set up QEMU',
           uses: 'docker/setup-qemu-action@v3',
