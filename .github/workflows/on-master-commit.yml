@@ -401,7 +401,7 @@ jobs:
         run: "echo \"VERSION=$(cat version.txt)\" >> $GITHUB_ENV"
       - env:
           COMMITTER_TOKEN: "${{ secrets.HOMEBREW_TAP_COMMITER_TOKEN }}"
-        uses: "mislav/bump-homebrew-formula-action@v2.2"
+        uses: "mislav/bump-homebrew-formula-action@v3"
         with:
           commit-message: |
             Husarnet for MacOS version {{version}}
