@@ -10,7 +10,7 @@ source $(dirname "$0")/bash-base.sh
 # Check if the platform argument is provided, default to "all" if it's not
 platform=${1:-all}
 
-# Check if the architecture is provided, default to arm64 if it's not
+# Check if the architecture is provided, default to amd64 if it's not
 architecture=${2:-amd64}
 
 # Check if the build type is provided, default to nightly if it's not
@@ -36,14 +36,17 @@ if [ "$platform" == "all" ] || [ "$platform" == "windows" ]; then
     docker_builder /app/platforms/windows/build.sh ${build_type}
 fi
 
-# ESP32
-if [ "$platform" == "all" ] || [ "$platform" == "esp32" ]; then
-    docker_builder /app/platforms/esp32/build.sh esp32 ${build_type}
-fi
-
 # macOS
 if [ "$platform" == "all" ] || [ "$platform" == "macos" ]; then
-    echo "NOT building for macOS"
-    # We are currently NOT cross-compiling for macOS. Reenable when resolved.
-    # docker_builder /app/platforms/macos/build.sh ${architecture} ${build_type}
+    docker_builder /app/platforms/macos/build.sh ${architecture} ${build_type}
+fi
+
+# ESP32
+if [ "$platform" == "all" ] || [ "$platform" == "esp32" ]; then
+    if [ "$platform" == "all" ]; then
+        esp_architecture=esp32
+    else
+        esp_architecture="${architecture}"
+    fi
+    docker_builder /app/platforms/esp32/build.sh ${esp_architecture} ${build_type}
 fi

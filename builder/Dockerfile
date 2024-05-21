@@ -47,15 +47,13 @@ RUN apt-get update \
 RUN gem install --no-document fpm
 
 WORKDIR /zig
-# https://github.com/ziglang/zig/pull/16109
-# Keeping zig at 0.9.1 temporarily due to this
-RUN wget -O zig.tar.xz "https://ziglang.org/download/0.9.1/zig-linux-x86_64-0.9.1.tar.xz" \
+RUN wget -O zig.tar.xz "https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz" \
     && tar -xf zig.tar.xz \
     && rm -f zig.tar.xz \
-    && ln -s /zig/zig-linux-x86_64-0.9.1/zig /usr/bin/zig
+    && ln -s /zig/zig-linux-x86_64-0.12.0/zig /usr/bin/zig
 
 WORKDIR /jsonnet
-RUN wget -O jsonnet.tar.gz "https://github.com/google/go-jsonnet/releases/download/v0.19.1/go-jsonnet_0.19.1_Linux_x86_64.tar.gz" \
+RUN wget -O jsonnet.tar.gz "https://github.com/google/go-jsonnet/releases/download/v0.20.0/go-jsonnet_0.20.0_Linux_x86_64.tar.gz" \
     && tar -xf jsonnet.tar.gz \
     && rm -f jsonnet.tar.gz \
     && ln -s /jsonnet/jsonnet /usr/bin/ \

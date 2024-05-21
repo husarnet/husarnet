@@ -9,7 +9,7 @@ if(DEFINED ESP_PLATFORM AND CONFIG_COMPILER_OPTIMIZATION_DEFAULT)
 endif()
 
 # ESP-IDF propagates its own CFLAGS and CXXFLAGS
-# Don't set build optimalization flags on ESP32 platform, they are provided by the ESP-IDF
+# Don't set build optimization flags on ESP32 platform, they are provided by the ESP-IDF
 if(NOT DEFINED ESP_PLATFORM)
   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(COMMONFLAGS "${COMMONFLAGS} -D_GLIBCXX_DEBUG -g -fsanitize=undefined")
@@ -126,7 +126,7 @@ if(DEFINED ESP_PLATFORM)
     INCLUDE_DIRS ${husarnet_core_include_DIRS}
     REQUIRES lwip nvs_flash esp_netif esp_wifi libsodium)
 
-  # IDF (ESP32) build system doesn't allow us to change 
+  # IDF (ESP32) build system doesn't allow us to change
   # component/library name and adds "idf::" prefix to it
   set(husarnet_core ${COMPONENT_LIB})
 else()
@@ -247,18 +247,15 @@ endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   FetchContent_Declare(
     libnl
-    URL https://github.com/thom311/libnl/releases/download/libnl3_9_0/libnl-3.9.0.tar.gz
-
-    # Patch specific to the build system (only applies to zig v0.9)
-    # More details are in the patch file
-    PATCH_COMMAND patch -p1 ${CMAKE_CURRENT_LIST_DIR}/lib-config/libnl/socket.c.patch
+    # This is a bit past 3.9.0
+    URL https://github.com/thom311/libnl/archive/46cae1bfc2ee435fed7c73a15d0b6979fe6d43a3.zip
   )
 
   FetchContent_MakeAvailable(libnl)
 
   # Locking is handled by a port-wide mutex around libnl calls. Pthread
   # rwlock unlock sometimes caused UB traps being triggered on zig v0.9
-  set(LIBNL_ENABLE_PTHREADS OFF) 
+  set(LIBNL_ENABLE_PTHREADS OFF)
   set(LIBNL_ENABLE_DEBUG OFF)
 
   # Generate compile-time version header
@@ -308,7 +305,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   file(CREATE_LINK ${libnl_SOURCE_DIR}/include/netlink/version.h ${libnl_SOURCE_DIR}/include/version.h SYMBOLIC)
 
   file(GLOB_RECURSE libnl_SOURCES "${libnl_SOURCE_DIR}/lib/*.c")
-  
+
   include_directories(
     ${libnl_SOURCE_DIR}/include
     ${libnl_SOURCE_DIR}/lib/genl
@@ -335,10 +332,13 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   endif()
 
   if(${LIBNL_ENABLE_DEBUG})
-    add_compile_definitions(LIBNL_NL_DEBUG)
+    target_compile_definitions(libnl PRIVATE NL_DEBUG=1)
     message(STATUS "Enabling debug in libnl")
+  else()
+    target_compile_definitions(libnl PRIVATE NL_DEBUG=0)
+    message(STATUS "Disabling debug in libnl")
   endif()
-  
+
   target_compile_definitions(libnl PRIVATE SYSCONFDIR="/etc/libnl" _GNU_SOURCE)
   target_compile_options(libnl PRIVATE -Wno-unused-variable)
 

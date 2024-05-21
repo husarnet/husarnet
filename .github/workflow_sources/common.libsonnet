@@ -58,19 +58,6 @@
       run: 'docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ' + container + ' ' + command,
     },
 
-    setup_go:: {
-      name: 'Set up Go',
-      uses: 'actions/setup-go@v5',
-      with: {
-        'go-version': '>=1.18.0',
-      },
-    },
-
-    build_macos_natively:: function(build_type, arch) {
-      name: 'Build natively on MacOS',
-      run: './platforms/macos/build.sh ' + arch + ' ' + build_type,
-    },
-
     read_version_to_env:: function() {
       name: 'Read new version',
       run: 'echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV',
@@ -162,41 +149,26 @@
       ],
     },
 
-    build_macos_arm64_natively:: function(ref, build_type) {
+    build_macos:: function(ref, build_type) {
       needs: [],
 
-      'runs-on': [
-        'macos-latest',
-      ],
+      'runs-on': 'ubuntu-latest',
+
+      strategy: {
+        'fail-fast': false,
+        matrix: {
+          arch: [
+            'amd64',
+            'arm64',
+          ],
+        },
+      },
 
       steps: [
-        $.steps.setup_go,
         $.steps.checkout(ref),
-        {
-          name: 'Install coreutils, as our scripts depend on them and zig + ninja for building',
-          run: 'arch -arm64 brew install coreutils zig ninja',
-        },
-        $.steps.build_macos_natively(build_type, 'arm64'),
-        $.steps.push_artifacts('*macos*'),
-      ],
-    },
-
-    build_macos_amd64_natively:: function(ref, build_type) {
-      needs: [],
-
-      'runs-on': [
-        'macos-latest',
-      ],
-
-      steps: [
-        $.steps.setup_go,
-        $.steps.checkout(ref),
-        {
-          name: 'Install coreutils, as our scripts depend on them and zig + ninja for building',
-          run: 'brew install coreutils zig ninja',
-        },
-        $.steps.build_macos_natively(build_type, 'amd64'),
-        $.steps.push_artifacts('*macos*'),
+        $.steps.ghcr_login(),
+        $.steps.builder('/app/platforms/macos/build.sh ${{matrix.arch}} ' + build_type),
+        $.steps.push_artifacts('*${{matrix.arch}}*'),
       ],
     },
 
@@ -322,8 +294,7 @@
         'run_tests',
         'run_integration_tests',
         'build_linux',
-        'build_macos_amd64_natively',
-        'build_macos_arm64_natively',
+        'build_macos',
         'build_windows_installer',
       ],
 
@@ -349,8 +320,7 @@
         'run_tests',
         'run_integration_tests',
         'build_linux',
-        'build_macos_amd64_natively',
-        'build_macos_arm64_natively',
+        'build_macos',
         'build_windows_installer',
       ],
 

@@ -17,8 +17,9 @@
 #endif
 #include <string>
 
-#include "tun.h"
 #include "husarnet/ports/dummy_task_priorities.h"
+
+#include "tun.h"
 
 extern errno_t rand_s(unsigned int* randomValue);
 inline void sleep(int sec)

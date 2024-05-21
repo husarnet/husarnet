@@ -21,11 +21,16 @@ gotools_exception = """//go:build tools
 
 issues_found = False
 
+
 def generate_copyright_shell(copyright):
-    return '\n'.join(map(lambda line: "#" + line.removeprefix("//"), copyright.split('\n')))
+    return "\n".join(
+        map(lambda line: "#" + line.removeprefix("//"), copyright.split("\n"))
+    )
+
 
 old_copyright_shell = generate_copyright_shell(old_copyright)
 new_copyright_shell = generate_copyright_shell(new_copyright)
+
 
 def match_extension(path, allowed):
     _, ext = os.path.splitext(path)
@@ -73,13 +78,14 @@ def analyze_source_cpp_golang(file_path):
     print(top_comment)
     issues_found = True
 
+
 def analyze_source_shell(file_path):
     global issues_found
 
     top_comment = read_top_comment(file_path, "#")
 
-    shebang, *comment = top_comment.split('\n')
-    comment = '\n'.join(comment)
+    shebang, *comment = top_comment.split("\n")
+    comment = "\n".join(comment)
 
     if not shebang.startswith("#!"):
         print(f"{file_path} has no shebang")
@@ -102,6 +108,7 @@ def analyze_source_shell(file_path):
     print(f"{file_path} does not match any expected rules")
     issues_found = True
 
+
 def analyze_source(file_path):
     if match_extension(file_path, {"h", "c", "cpp", "go"}):
         analyze_source_cpp_golang(file_path)
@@ -109,14 +116,20 @@ def analyze_source(file_path):
     elif match_extension(file_path, {"sh"}):
         analyze_source_shell(file_path)
 
+
 def __main__():
     print("[HUSARNET BS] Running copyright checker")
+
     if not os.path.isdir("./.git"):
         print("Please start this program in a project's root directory")
         sys.exit(1)
 
-    for (root, directories, files) in os.walk(".", topdown=True, followlinks=False):
+    for root, directories, files in os.walk(".", topdown=True, followlinks=False):
         root_abs = os.path.abspath(root)
+
+        if "esp32/managed_components" in root_abs:
+            continue  # Ignore some ESP32 files
+
         directories[:] = [d for d in directories if d not in ignore_dirs]
 
         for file in files:

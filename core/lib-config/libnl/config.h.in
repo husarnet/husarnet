@@ -6,4 +6,3 @@
 // that are included in the upstream via pthread.h
 // Since we don't use pthreads, we need to patch it in manually
 #include <time.h>
-

@@ -12,8 +12,8 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Fail if not Ubuntu
-if [ "$(lsb_release -is)" != "Ubuntu" ]; then
+# Fail if not "Ubuntu" in uname -a
+if [ "$(uname -a | grep -o Ubuntu)" != "Ubuntu" ]; then
     echo "This script is intended for Ubuntu"
     exit 2
 fi
