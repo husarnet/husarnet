@@ -13,7 +13,7 @@
 
     docker_login:: function() {
       name: 'Login to Docker Registry',
-      uses: 'docker/login-action@v2',
+      uses: 'docker/login-action@v3',
       with: {
         registry: 'docker.io',
         username: '${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}',
@@ -24,7 +24,7 @@
 
     ghcr_login:: function() {
       name: 'Login to GHCR',
-      uses: 'docker/login-action@v2',
+      uses: 'docker/login-action@v3',
       with: {
         registry: 'ghcr.io',
         username: '${{ github.actor }}',
@@ -374,10 +374,10 @@
 
       steps: [
         $.steps.checkout(ref),
-        $.steps.pull_artifacts('release-linux-amd64'),
+        $.steps.pull_artifacts('release-linux-${{arch_alias}}'),
         {
           name: 'Set up QEMU',
-          uses: 'docker/setup-qemu-action@v2',
+          uses: 'docker/setup-qemu-action@v3',
         },
         {
           name: 'Set up Docker Buildx',
@@ -396,7 +396,7 @@
             context: '.',
             file: './platforms/docker/Dockerfile',
             platforms: '${{matrix.arch}}',
-            build_args: 'HUSARNET_ARCH=${{matrix.arch_alias}}',
+            'build-args': 'HUSARNET_ARCH=${{matrix.arch_alias}}',
             push: push,
             tags: namespace + ':${{matrix.arch_alias}}',
           },
