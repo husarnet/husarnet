@@ -21,6 +21,7 @@ RUN apt-get update \
     git \
     golang \
     gperf \
+    less \
     libarchive-tools \
     libffi-dev \
     libfl-dev \
@@ -41,8 +42,7 @@ RUN apt-get update \
     tar \
     tree \
     wget \
-    xz-utils \
-    && rm -rf /var/lib/apt/lists/*
+    xz-utils
 
 RUN gem install --no-document fpm
 
