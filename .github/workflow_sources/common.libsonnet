@@ -44,7 +44,7 @@
 
     pull_artifacts:: function(key_expression) {
       name: 'Pull artifacts',
-      uses: 'actions/download-artifact@v3',
+      uses: 'actions/download-artifact@v4',
       with: {
         name: key_expression,
         pattern: './build/release/',

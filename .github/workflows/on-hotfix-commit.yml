@@ -9,7 +9,7 @@ jobs:
         with:
           ref: "hotfix"
       - name: "Pull artifacts"
-        uses: "actions/download-artifact@v3"
+        uses: "actions/download-artifact@v4"
         with:
           merge-multiple: true
           name: "release-linux-amd64"
@@ -143,7 +143,7 @@ jobs:
         with:
           ref: "hotfix"
       - name: "Pull artifacts"
-        uses: "actions/download-artifact@v3"
+        uses: "actions/download-artifact@v4"
         with:
           merge-multiple: true
           name: "release-windows-win64"
@@ -182,7 +182,7 @@ jobs:
         with:
           ref: "hotfix"
       - name: "Pull artifacts"
-        uses: "actions/download-artifact@v3"
+        uses: "actions/download-artifact@v4"
         with:
           merge-multiple: true
           name: "release-*"
@@ -237,7 +237,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Pull artifacts"
-        uses: "actions/download-artifact@v3"
+        uses: "actions/download-artifact@v4"
         with:
           merge-multiple: true
           name: "release-*"
