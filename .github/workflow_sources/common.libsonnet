@@ -32,22 +32,23 @@
       },
     },
 
-    push_artifacts:: function(expression) {
+    push_artifacts:: function(expression, key) {
       name: 'Push artifacts',
       uses: 'actions/upload-artifact@v4',
       with: {
-        name: 'packages',
+        name: key,
         path: './build/release/' + expression,
         'if-no-files-found': 'error',
       },
     },
 
-    pull_artifacts:: function() {
+    pull_artifacts:: function(key_expression) {
       name: 'Pull artifacts',
       uses: 'actions/download-artifact@v3',
       with: {
-        name: 'packages',
-        path: './build/release/',
+        name: key_expression,
+        pattern: './build/release/',
+        'merge-multiple': true,
       },
     },
 
@@ -145,7 +146,7 @@
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.builder('/app/platforms/linux/build.sh ${{matrix.arch}} ' + build_type),
-        $.steps.push_artifacts('*${{matrix.arch}}*'),
+        $.steps.push_artifacts('*${{matrix.arch}}*', 'release-linux-${{matrix.arch}}'),
       ],
     },
 
@@ -168,7 +169,7 @@
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.builder('/app/platforms/macos/build.sh ${{matrix.arch}} ' + build_type),
-        $.steps.push_artifacts('*${{matrix.arch}}*'),
+        $.steps.push_artifacts('*${{matrix.arch}}*', 'release-macos-${{matrix.arch}}'),
       ],
     },
 
@@ -181,7 +182,7 @@
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.builder('/app/platforms/windows/build.sh ' + build_type),
-        $.steps.push_artifacts('*win64*'),
+        $.steps.push_artifacts('*win64*', 'release-windows-win64'),
       ],
     },
 
@@ -192,7 +193,7 @@
 
       steps: [
         $.steps.checkout(ref),
-        $.steps.pull_artifacts(),
+        $.steps.pull_artifacts('release-windows-win64'),
         {
           name: 'Copy .exe and license to installer dir',
           shell: 'cmd',
@@ -210,7 +211,7 @@
             copy platforms\windows\Output\husarnet-setup.exe build\release\husarnet-setup.exe
           |||,
         },
-        $.steps.push_artifacts('*setup*'),
+        $.steps.push_artifacts('*setup*', 'release-windows-setup'),
       ],
     },
 
@@ -229,7 +230,6 @@
 
     run_integration_tests:: function(ref, docker_project) {
       needs: [
-        'build_linux',
         'build_docker',
       ],
 
@@ -277,7 +277,6 @@
 
       steps: [
         $.steps.checkout(ref),
-        $.steps.pull_artifacts(),
         $.steps.ghcr_login(),
         $.steps.docker_login(),
         {
@@ -306,7 +305,7 @@
 
       steps: [
         $.steps.checkout(ref),
-        $.steps.pull_artifacts(),
+        $.steps.pull_artifacts('release-*'),
         $.steps.ghcr_login(),
         {
           name: 'Deploy to Husarnet ' + target + ' repository',
@@ -327,7 +326,7 @@
       'runs-on': 'ubuntu-latest',
 
       steps: [
-        $.steps.pull_artifacts(),
+        $.steps.pull_artifacts('release-*'),
         {
           uses: 'marvinpinto/action-automatic-releases@latest',
           with: {
@@ -375,7 +374,7 @@
 
       steps: [
         $.steps.checkout(ref),
-        $.steps.pull_artifacts(),
+        $.steps.pull_artifacts('release-linux-amd64'),
         {
           name: 'Set up QEMU',
           uses: 'docker/setup-qemu-action@v2',
@@ -391,16 +390,13 @@
         $.steps.docker_login(),
         $.steps.ghcr_login(),
         {
-          name: 'Prepare build',
-          run: './platforms/docker/build.sh ${{matrix.arch_alias}} ' + build_type,
-        },
-        {
           name: 'Build and push',
           uses: 'docker/build-push-action@v3',
           with: {
             context: '.',
             file: './platforms/docker/Dockerfile',
             platforms: '${{matrix.arch}}',
+            build_args: 'HUSARNET_ARCH=${{matrix.arch_alias}}',
             push: push,
             tags: namespace + ':${{matrix.arch_alias}}',
           },

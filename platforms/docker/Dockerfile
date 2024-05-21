@@ -1,11 +1,12 @@
 FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
+ARG HUSARNET_ARCH
 
 RUN apt-get update -y
 
-COPY ./build/release/husarnet-linux.deb /tmp
+COPY ./build/release/husarnet-linux-${HUSARNET_ARCH}.deb /tmp/husarnet.deb
 RUN apt install -y --no-install-recommends --no-install-suggests \
-    /tmp/husarnet-linux.deb && rm -f /tmp/husarnet-linux.deb
+    /tmp/husarnet.deb && rm -f /tmp/husarnet.deb
 
 COPY ./platforms/docker/husarnet-docker.sh /usr/bin/husarnet-docker
 COPY ./platforms/docker/husarnet-docker-healthcheck.sh /usr/bin/husarnet-docker-healthcheck
