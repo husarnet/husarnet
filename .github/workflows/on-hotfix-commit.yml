@@ -5,7 +5,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "hotfix"
       - name: "Pull artifacts"
@@ -57,7 +57,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "hotfix"
       - name: "Login to GHCR"
@@ -69,7 +69,7 @@ jobs:
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} stable"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} stable"
       - name: "Push artifacts"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           if-no-files-found: "error"
           name: "packages"
@@ -88,7 +88,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "hotfix"
       - name: "Login to GHCR"
@@ -100,7 +100,7 @@ jobs:
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/macos/build.sh ${{matrix.arch}} stable"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/macos/build.sh ${{matrix.arch}} stable"
       - name: "Push artifacts"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           if-no-files-found: "error"
           name: "packages"
@@ -116,7 +116,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "hotfix"
       - name: "Login to GHCR"
@@ -128,7 +128,7 @@ jobs:
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh stable"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh stable"
       - name: "Push artifacts"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           if-no-files-found: "error"
           name: "packages"
@@ -139,7 +139,7 @@ jobs:
     runs-on: "windows-2019"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "hotfix"
       - name: "Pull artifacts"
@@ -159,7 +159,7 @@ jobs:
           copy platforms\windows\Output\husarnet-setup.exe build\release\husarnet-setup.exe
         shell: "cmd"
       - name: "Push artifacts"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           if-no-files-found: "error"
           name: "packages"
@@ -177,7 +177,7 @@ jobs:
       - "install-prod"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "hotfix"
       - name: "Pull artifacts"
@@ -201,7 +201,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "hotfix"
       - name: "Login to Docker Registry"
@@ -257,7 +257,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "hotfix"
       - name: "Pull artifacts"
@@ -334,7 +334,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "hotfix"
       - name: "Login to GHCR"

@@ -5,7 +5,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           fetch-depth: 22
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
@@ -30,7 +30,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Pull artifacts"
@@ -84,7 +84,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Login to GHCR"
@@ -96,7 +96,7 @@ jobs:
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} nightly"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/linux/build.sh ${{matrix.arch}} nightly"
       - name: "Push artifacts"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           if-no-files-found: "error"
           name: "packages"
@@ -117,7 +117,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Login to GHCR"
@@ -129,7 +129,7 @@ jobs:
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/macos/build.sh ${{matrix.arch}} nightly"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/macos/build.sh ${{matrix.arch}} nightly"
       - name: "Push artifacts"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           if-no-files-found: "error"
           name: "packages"
@@ -147,7 +147,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Login to GHCR"
@@ -159,7 +159,7 @@ jobs:
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh nightly"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/windows/build.sh nightly"
       - name: "Push artifacts"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           if-no-files-found: "error"
           name: "packages"
@@ -172,7 +172,7 @@ jobs:
     runs-on: "windows-2019"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Pull artifacts"
@@ -192,7 +192,7 @@ jobs:
           copy platforms\windows\Output\husarnet-setup.exe build\release\husarnet-setup.exe
         shell: "cmd"
       - name: "Push artifacts"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           if-no-files-found: "error"
           name: "packages"
@@ -204,7 +204,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "master"
       - uses: "actions/setup-python@v4"
@@ -228,7 +228,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Login to Docker Registry"
@@ -267,7 +267,7 @@ jobs:
       - "install-nightly"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Pull artifacts"
@@ -292,7 +292,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Pull artifacts"
@@ -371,7 +371,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Login to GHCR"
@@ -392,7 +392,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           ref: "${{ needs.bump_version.outputs.commit_ref }}"
       - name: "Read new version"

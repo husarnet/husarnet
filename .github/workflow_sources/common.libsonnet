@@ -5,7 +5,7 @@
   steps: {
     checkout:: function(ref) {
       name: 'Check out the repo',
-      uses: 'actions/checkout@v3',
+      uses: 'actions/checkout@v4',
       with: {
         ref: ref,
       },
@@ -34,7 +34,7 @@
 
     push_artifacts:: function(expression) {
       name: 'Push artifacts',
-      uses: 'actions/upload-artifact@v3',
+      uses: 'actions/upload-artifact@v4',
       with: {
         name: 'packages',
         path: './build/release/' + expression,
