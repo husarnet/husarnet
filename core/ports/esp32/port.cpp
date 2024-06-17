@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 #include "husarnet/ports/esp32/tun.h"
-#include "husarnet/ports/port_interface.h"
+#include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_storage.h"

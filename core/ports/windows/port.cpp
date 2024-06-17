@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "husarnet/ports/port.h"
-#include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/sockets.h"
 #include "husarnet/ports/windows/tun.h"
 

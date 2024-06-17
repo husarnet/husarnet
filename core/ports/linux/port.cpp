@@ -39,7 +39,6 @@
 
 #include "husarnet/ports/linux/tun.h"
 #include "husarnet/ports/port.h"
-#include "husarnet/ports/port_interface.h"
 
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"

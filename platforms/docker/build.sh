@@ -26,6 +26,6 @@ docker_builder /app/platforms/linux/build.sh ${arch} $build_type
 docker build --build-arg HUSARNET_ARCH=${arch} --tag husarnet:dev --file platforms/docker/Dockerfile .
 
 echo "In order to start the container run:"
-echo "docker run --privileged --rm -it --env "HUSARNET_JOIN_CODE=your-joincode" husarnet:dev"
+echo 'docker run --privileged --rm -it --env "HUSARNET_JOIN_CODE=your-joincode" husarnet:dev'
 
 popd

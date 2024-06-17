@@ -11,7 +11,7 @@ pushd ${base_dir}
 
 # This is only a list for local-ci (hence a slightly shorter list)
 # GH actions integration tests are defined in .github/workflow_sources/common.jsonnet
-parallel --progress --eta --halt soon,fail=1 docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume ${base_dir}:/app {1} /app/tests/integration/runner-wrapper.sh {2} {3} {1} \
+parallel --progress --eta --halt soon,fail=1 docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume "${base_dir}:/app" {1} /app/tests/integration/runner-wrapper.sh {2} {3} {1} \
     ::: \
     husarnet:dev \
     ubuntu:18.04 ubuntu:24.04 \

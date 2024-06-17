@@ -35,7 +35,6 @@
 #include "husarnet/ports/fat/filesystem_naive.h"
 #include "husarnet/ports/macos/tun.h"
 #include "husarnet/ports/port.h"
-#include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_storage.h"
