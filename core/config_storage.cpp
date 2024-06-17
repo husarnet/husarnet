@@ -163,7 +163,7 @@ void ConfigStorage::whitelistRm(IpAddress address)
     changed = false;
     int i = 0;
     for(const auto& item : currentData[WHITELIST_KEY]) {
-      if(strAddr == item) {
+      if(strAddr.c_str() == item) {
         currentData[WHITELIST_KEY].erase(i);
         changed = true;
         break;
