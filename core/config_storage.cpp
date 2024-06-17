@@ -158,7 +158,7 @@ void ConfigStorage::whitelistRm(IpAddress address)
   auto strAddr = address.toString();
   bool changed = true;
 
-  // This will remove all occurences
+  // This will remove all occurrences
   while(changed) {
     changed = false;
     int i = 0;

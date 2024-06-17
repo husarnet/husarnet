@@ -10,6 +10,7 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
 
+#include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
@@ -35,11 +36,11 @@ int WindowsNetworking::callWindowsCmd(std::string cmd) const
 {
   return system(("\"" + cmd + "\"").c_str());
 }
-void WindowsNetworking::setupNetworkInterface(std::string interfaceName)
-{
-  auto identityPath = std::string(getenv("PROGRAMDATA")) + "\\Husarnet\\id";
-  auto identity = Identity::deserialize(Port::readFile(identityPath));
 
+void WindowsNetworking::setupNetworkInterface(
+    HusarnetManager* manager,
+    std::string interfaceName)
+{
   std::string sourceNetshName = getNetshNameForGuid(interfaceName);
   LOG_WARNING("sourceNetshName: %s", sourceNetshName.c_str());
   if(netshName != sourceNetshName) {
@@ -57,10 +58,13 @@ void WindowsNetworking::setupNetworkInterface(std::string interfaceName)
   callWindowsCmd(
       "netsh interface ipv6 add neighbors " + quotedName +
       " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001 52-54-00-fc-94-4d");
-  std::string myIp = IpAddress::fromBinary(identity.getDeviceId()).str();
-  LOG_INFO("myIp is: %s", myIp.c_str());
+
+  IpAddress myIp = deviceIdToIpAddress(manager->getIdentity()->getDeviceId());
+
+  LOG_INFO("myIp is: %s", myIp.toString().c_str());
   callWindowsCmd(
-      "netsh interface ipv6 add address " + quotedName + " " + myIp + "/128");
+      "netsh interface ipv6 add address " + quotedName + " " + myIp.toString() +
+      "/128");
   callWindowsCmd(
       "netsh interface ipv6 add route "
       "fc94:8385:160b:88d1:c2ec:af1b:06ac:0001/128 " +

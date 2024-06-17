@@ -32,15 +32,15 @@ using mutex_guard = std::lock_guard<std::recursive_mutex>;
 namespace OsSocket {
   struct FramedTcpConnection;
 
-  using PacketCallack = std::function<void(InetAddress, string_view)>;
+  using PacketCallback = std::function<void(InetAddress, string_view)>;
   using TcpDataCallback = std::function<void(const std::string&)>;
   using TcpErrorCallback =
       std::function<void(std::shared_ptr<FramedTcpConnection>)>;
 
   bool
-  udpListenUnicast(int port, PacketCallack callback, bool setAsDefault = true);
+  udpListenUnicast(int port, PacketCallback callback, bool setAsDefault = true);
   void udpSend(InetAddress address, string_view data, int fd = -1);
-  bool udpListenMulticast(InetAddress address, PacketCallack callback);
+  bool udpListenMulticast(InetAddress address, PacketCallback callback);
   void udpSendMulticast(InetAddress address, const std::string& data);
   int bindUdpSocket(InetAddress addr, bool reuse);
   void bindCustomFd(int fd, std::function<void()> readyCallback);

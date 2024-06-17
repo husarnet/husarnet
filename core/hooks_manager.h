@@ -7,8 +7,6 @@
 #include <map>
 #include <mutex>
 
-#include "husarnet/ports/privileged_interface.h"
-
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
 #include "husarnet/timer.h"
@@ -60,7 +58,7 @@ class HooksManager : public HooksManagerInterface {
   std::map<HookType, std::string> hookDirNames{
       {HookType::hosttable_changed, "hook.hosttable_changed.d"},
       {HookType::whitelist_changed, "hook.whitelist_changed.d"},
-      {HookType::joinned, "hook.joined.d"},
+      {HookType::joined, "hook.joined.d"},
       {HookType::reconnected, "hook.reconnected.d"},
       {HookType::rw_request, "hook.rw_request.d"},
       {HookType::rw_release, "hook.rw_release.d"},

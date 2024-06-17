@@ -17,7 +17,7 @@ base_platform=linux
 
 pushd ${base_dir}
 
-# TODO technically this script does not support multiple architectures because it does not use buildx directly. All the provisionings here are just a preparation for such support
+# Technically this script does not support multiple architectures because it does not use buildx directly. All the provisionings here are just a preparation for such support
 
 echo "[HUSARNET BS] Building docker image for ${arch}"
 
@@ -26,6 +26,6 @@ docker_builder /app/platforms/linux/build.sh ${arch} $build_type
 docker build --build-arg HUSARNET_ARCH=${arch} --tag husarnet:dev --file platforms/docker/Dockerfile .
 
 echo "In order to start the container run:"
-echo "docker run --privileged --rm -it --env "HUSARNET_JOIN_CODE=your-joincode" husarnet:dev"
+echo 'docker run --privileged --rm -it --env "HUSARNET_JOIN_CODE=your-joincode" husarnet:dev'
 
 popd

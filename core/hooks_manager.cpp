@@ -16,7 +16,7 @@ HooksManager::HooksManager(HusarnetManager* manager)
     auto dirName = dirName_ref;
 
     std::function<void()> callback = [this, hookType, dirName]() {
-      if(!Privileged::checkScriptsExist(hookDirNames[hookType])) {
+      if(!Port::checkScriptsExist(hookDirNames[hookType])) {
         return;
       }
 
@@ -24,7 +24,7 @@ HooksManager::HooksManager(HusarnetManager* manager)
         rwMutex.lock();
       }
 
-      Privileged::runScripts(dirName);
+      Port::runScripts(dirName);
 
       if(hookType == HookType::rw_request) {
         isRw = true;

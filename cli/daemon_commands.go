@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -138,88 +137,6 @@ var daemonStatusCommand = &cli.Command{
 		}
 		return nil
 
-	},
-}
-
-var daemonLogsCommand = &cli.Command{
-	Name:  "logs",
-	Usage: "Display and manage logs settings",
-	Subcommands: []*cli.Command{
-		{
-			Name:      "settings",
-			Aliases:   []string{"status"},
-			Usage:     "print logs settings",
-			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
-				settings := callDaemonGet[LogsSettings]("/api/logs/settings").Result
-				handleStandardResult(settings.StdResult)
-				printSuccess("Logs verbosity level: " + strconv.Itoa(settings.VerbosityLevel))
-				printSuccess("Logs maximum size: " + strconv.Itoa(settings.Size))
-				printSuccess("Logs current size: " + strconv.Itoa(settings.CurrentSize))
-
-				return nil
-			},
-		},
-		{
-			Name:      "print",
-			Aliases:   []string{"get"},
-			Usage:     "print logs",
-			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
-				logsResponse := callDaemonGet[LogsResponse]("/api/logs/get").Result
-				handleStandardResult(logsResponse.StdResult)
-
-				for _, line := range logsResponse.Logs {
-					pterm.Println(line)
-				}
-
-				return nil
-			},
-		},
-		{
-			Name:      "verbosity",
-			Aliases:   []string{""},
-			Usage:     "change logs verbosity level",
-			ArgsUsage: "[0-4]",
-			Action: func(ctx *cli.Context) error {
-				requiredArgumentsNumber(ctx, 1)
-
-				verbosityStr := ctx.Args().Get(0)
-				verbosity, error := strconv.Atoi(verbosityStr)
-				if error == nil && verbosity <= 4 && verbosity >= 0 {
-					stdResult := callDaemonPost[StandardResult]("/api/logs/settings", url.Values{
-						"verbosity": {verbosityStr},
-					}).Result
-					handleStandardResult(stdResult)
-					printSuccess("Verbosity level changed")
-					return nil
-				}
-				printError("Verbosity provided should belong to range 0-4")
-				return nil
-			},
-		},
-		{
-			Name:      "size",
-			Aliases:   []string{""},
-			Usage:     "change size of in memory stored logs",
-			ArgsUsage: "[10-1000]",
-			Action: func(ctx *cli.Context) error {
-				requiredArgumentsNumber(ctx, 1)
-
-				sizeStr := ctx.Args().Get(0)
-				size, error := strconv.Atoi(sizeStr)
-				if error == nil && size <= 1000 && size >= 10 {
-					stdResult := callDaemonPost[StandardResult]("/api/logs/settings", url.Values{
-						"size": {sizeStr},
-					}).Result
-					handleStandardResult(stdResult)
-					printSuccess("In memory logs size changed")
-					return nil
-				}
-				printError("Size provided should belong to range 10-1000")
-				return nil
-			},
-		},
 	},
 }
 
@@ -382,39 +299,6 @@ var daemonHooksCommand = &cli.Command{
 				status := getDaemonStatus()
 				handleStandardResult(status.StdResult)
 				printHooksStatus(status)
-
-				return nil
-			},
-		},
-	},
-}
-
-var daemonNotificationCommand = &cli.Command{
-	Name:  "notifications",
-	Usage: "Manage notifications on the device.",
-	Subcommands: []*cli.Command{
-		{
-			Name:      "enable",
-			Aliases:   []string{"on"},
-			Usage:     "enable notifications",
-			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
-				stdResult := callDaemonPost[StandardResult]("/api/notifications/enable", url.Values{}).Result
-				handleStandardResult(stdResult)
-				printSuccess("Enabled notifications")
-
-				return nil
-			},
-		},
-		{
-			Name:      "disable",
-			Aliases:   []string{"off"},
-			Usage:     "disable notifications",
-			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
-				stdResult := callDaemonPost[StandardResult]("/api/notifications/disable", url.Values{}).Result
-				handleStandardResult(stdResult)
-				printSuccess("Disabled notifications")
 
 				return nil
 			},
@@ -650,8 +534,6 @@ var daemonCommand = &cli.Command{
 	Subcommands: []*cli.Command{
 		daemonStatusCommand,
 		joinCommand,
-		daemonLogsCommand,
-		daemonNotificationCommand,
 		daemonWaitCommand,
 		daemonStartCommand,
 		daemonStopCommand,

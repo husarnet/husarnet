@@ -188,20 +188,6 @@ func printHooksStatus(status DaemonStatus) {
 	}
 }
 
-func printNotificationsStatus(status StandardResult) {
-	var dot, value string
-
-	if status.NotificationsEnabled {
-		dot = greenDot
-		value = "enabled"
-	} else {
-		dot = redDot
-		value = "disabled"
-	}
-
-	printStatusLine(dot, "Notifications", value)
-}
-
 func printStatus(ctx *cli.Context, status DaemonStatus) {
 
 	verbose := verboseLogs || ctx.Bool("verbose")
@@ -212,7 +198,6 @@ func printStatus(ctx *cli.Context, status DaemonStatus) {
 
 	printStatusHeader("Feature flags")
 	printHooksStatus(status)
-	printNotificationsStatus(status.StdResult)
 	pterm.Println()
 
 	var dashboardDot, dashboardHelp string
@@ -384,18 +369,6 @@ func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 func areStandardResultsEqual(a, b StandardResult) bool {
 	if a.IsDirty != b.IsDirty {
 		return false
-	}
-	if a.NotificationsEnabled != b.NotificationsEnabled {
-		return false
-	}
-	if len(a.Notifications) != len(b.Notifications) {
-		return false
-
-	}
-	for i := range a.Notifications {
-		if a.Notifications[i] != b.Notifications[i] {
-			return false
-		}
 	}
 	return true
 }

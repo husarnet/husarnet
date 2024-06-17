@@ -15,7 +15,7 @@ test_platform=${1}
 test_file=${2}
 test_image=${3}
 
-echo "=== Running integration test === ${test_file} === on ${test_platform} === on ${test_image} ==="
+echo "=== Running integration test === ${test_file} === platform/distro ${test_platform} === image ${test_image} ==="
 
 test_log_path=/tmp/test.log
 

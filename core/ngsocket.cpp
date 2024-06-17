@@ -12,7 +12,6 @@
 #include <stdlib.h>
 
 #include "husarnet/ports/port_interface.h"
-#include "husarnet/ports/privileged_interface.h"
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_storage.h"
@@ -210,10 +209,10 @@ void NgSocket::sendDataToPeer(Peer* peer, string_view data)
     };
 
     if(isBaseUdp() &&
-       configStorage.getUserSettingBool(UserSetting::enableUdpTunelling)) {
+       configStorage.getUserSettingBool(UserSetting::enableUdpTunneling)) {
       sendToBaseUdp(msg);
     } else if(configStorage.getUserSettingBool(
-                  UserSetting::enableTcpTunelling)) {
+                  UserSetting::enableTcpTunneling)) {
       sendToBaseTcp(msg);
     }
   }
@@ -633,7 +632,7 @@ bool NgSocket::reloadLocalAddresses()
 {
   std::vector<InetAddress> newAddresses;
 
-  for(IpAddress address : Privileged::getLocalAddresses()) {
+  for(IpAddress address : Port::getLocalAddresses()) {
     if(address.isFC94()) {
       continue;
     }

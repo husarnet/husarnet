@@ -17,7 +17,6 @@
 #include "husarnet/ipaddress.h"
 #include "husarnet/licensing.h"
 #include "husarnet/ngsocket.h"
-#include "husarnet/notification_manager.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
 #include "husarnet/websetup.h"
@@ -32,7 +31,6 @@ class PeerContainer;
 class PeerFlags;
 class WebsetupConnection;
 class HooksManagerInterface;
-class NotificationManagerInterface;
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
@@ -53,7 +51,6 @@ class HusarnetManager {
 
   WebsetupConnection* websetup = nullptr;
   HooksManagerInterface* hooksManager = nullptr;
-  NotificationManagerInterface* notificationManager = nullptr;
 
   std::vector<std::thread*> threadpool;
 
@@ -84,8 +81,6 @@ class HusarnetManager {
 
   std::string getVersion();
   std::string getUserAgent();
-
-  void readLegacyConfig();
 
   Identity* getIdentity();
   IpAddress getSelfAddress();
@@ -131,13 +126,12 @@ class HusarnetManager {
   bool areHooksEnabled();
   void hooksEnable();
   void hooksDisable();
-  bool areNotificationsEnabled();
-  void notificationsEnable();
-  void notificationsDisable();
-  std::list<std::string> getNotifications();
 
   bool isPeerAddressAllowed(IpAddress id);
   bool isRealAddressAllowed(InetAddress addr);
+
+  LogLevel getVerbosity();
+  void setVerbosity(LogLevel level);
 
   int getApiPort();
   IpAddress getApiAddress();
@@ -145,10 +139,6 @@ class HusarnetManager {
   IpAddress getApiInterfaceAddress();
   std::string getApiSecret();
   std::string rotateApiSecret();
-
-  int getLogVerbosity();
-  void setLogVerbosity(int logLevel);
-
   // Copy of methods from License class
   std::string getDashboardFqdn();
   IpAddress getWebsetupAddress();

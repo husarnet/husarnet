@@ -7,8 +7,6 @@
 #include <vector>
 
 #include "husarnet/ports/port.h"
-#include "husarnet/ports/port_interface.h"
-#include "husarnet/ports/privileged_interface.h"
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/compression_layer.h"
@@ -17,9 +15,6 @@
 #include "husarnet/husarnet_config.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
-#ifdef ENABLE_LEGACY_CONFIG
-#include "husarnet/legacy_config.h"
-#endif
 #include "husarnet/licensing.h"
 #include "husarnet/logging.h"
 #include "husarnet/multicast_layer.h"
@@ -82,7 +77,7 @@ PeerFlags* HusarnetManager::getSelfFlags()
 
 std::string HusarnetManager::getSelfHostname()
 {
-  return Privileged::getSelfHostname();
+  return Port::getSelfHostname();
 }
 
 void HusarnetManager::setConfigStorage(ConfigStorage* cs)
@@ -94,7 +89,7 @@ bool HusarnetManager::setSelfHostname(std::string newHostname)
 {
   bool result = false;
   this->getHooksManager()->withRw(
-      [&]() { result = Privileged::setSelfHostname(newHostname); });
+      [&]() { result = Port::setSelfHostname(newHostname); });
   return result;
 }
 
@@ -105,7 +100,7 @@ void HusarnetManager::updateHosts()
   }
 
   this->getHooksManager()->withRw(
-      [&]() { Privileged::updateHostsFile(configStorage->getHostTable()); });
+      [&]() { Port::updateHostsFile(configStorage->getHostTable()); });
 }
 
 IpAddress HusarnetManager::resolveHostname(std::string hostname)
@@ -271,6 +266,21 @@ bool HusarnetManager::isRealAddressAllowed(InetAddress addr)
   return true;
 }
 
+LogLevel HusarnetManager::getVerbosity()
+{
+  return LogLevel::_from_integral_nothrow(
+             configStorage->getUserSettingInt(UserSetting::logVerbosity))
+      .value();
+}
+
+void HusarnetManager::setVerbosity(LogLevel level)
+{
+  configStorage->setUserSetting(
+      UserSetting::logVerbosity, level._to_integral());
+
+  globalLogLevel = level;
+}
+
 int HusarnetManager::getApiPort()
 {
   return configStorage->getUserSettingInt(UserSetting::daemonApiPort);
@@ -291,26 +301,21 @@ IpAddress HusarnetManager::getApiInterfaceAddress()
   return Port::getIpAddressFromInterfaceName(this->getApiInterface());
 }
 
-int HusarnetManager::getLogVerbosity()
-{
-  return configStorage->getUserSettingInt(UserSetting::logVerbosity);
-}
-
-void HusarnetManager::setLogVerbosity(int logLevel)
-{
-  getGlobalLogManager()->setVerbosity(logLevelFromInt(logLevel));
-
-  configStorage->setUserSetting(UserSetting::logVerbosity, logLevel);
-}
-
 std::string HusarnetManager::getApiSecret()
 {
-  return Privileged::readApiSecret();
+  auto secret = Port::readApiSecret();
+  if(secret.empty()) {
+    rotateApiSecret();
+    secret = Port::readApiSecret();
+  }
+
+  return secret;
 }
 
 std::string HusarnetManager::rotateApiSecret()
 {
-  this->getHooksManager()->withRw([&]() { Privileged::rotateApiSecret(); });
+  this->getHooksManager()->withRw(
+      [&]() { Port::writeApiSecret(generateRandomString(32)); });
   return this->getApiSecret();
 }
 
@@ -370,29 +375,6 @@ void HusarnetManager::hooksDisable()
   configStorage->setUserSetting(UserSetting::enableHooks, falseValue);
 }
 
-bool HusarnetManager::areNotificationsEnabled()
-{
-  return configStorage->getUserSettingBool(UserSetting::enableNotifications);
-}
-
-void HusarnetManager::notificationsEnable()
-{
-  configStorage->setUserSetting(UserSetting::enableNotifications, trueValue);
-}
-
-void HusarnetManager::notificationsDisable()
-{
-  configStorage->setUserSetting(UserSetting::enableNotifications, falseValue);
-}
-
-std::list<std::string> HusarnetManager::getNotifications()
-{
-  if(notificationManager == nullptr) {
-    return {};
-  }
-  return notificationManager->getNotifications();
-}
-
 std::vector<DeviceId> HusarnetManager::getMulticastDestinations(DeviceId id)
 {
   if(!id == deviceIdFromIpAddress(multicastDestination)) {
@@ -424,67 +406,19 @@ void HusarnetManager::cleanup()
 HusarnetManager::HusarnetManager()
 {
   Port::init();
-  Privileged::init();
 
   this->hooksManager = new DummyHooksManager();  // This will be no-op at least
                                                  // until we can read settings
-
-  this->notificationManager =
-      new DummyNotificationManager();  // No-op until the join operation
 }
 
 HusarnetManager::~HusarnetManager()
 {
   delete this->hooksManager;
-  delete this->notificationManager;
 }
 
 void HusarnetManager::enterDummyMode()
 {
   this->dummyMode = true;
-}
-
-void HusarnetManager::readLegacyConfig()
-{
-#ifdef ENABLE_LEGACY_CONFIG
-  const std::string legacyConfigPath = Privileged::getLegacyConfigPath();
-  if(!Port::isFile(legacyConfigPath)) {
-    return;
-  }
-
-  LegacyConfig legacyConfig(legacyConfigPath);
-  if(!legacyConfig.open()) {
-    LOG_WARNING(
-        "Legacy config is present, but couldn't read its contents on path: %s",
-        legacyConfigPath.c_str());
-    return;
-  }
-
-  LOG_WARNING(
-      "Found legacy config on path: %s, will attempt to transfer the values to "
-      "new "
-      "format",
-      legacyConfigPath.c_str());
-
-  auto websetupSecretOld = legacyConfig.getWebsetupSecret();
-  auto whitelistEnabledOld = legacyConfig.getWhitelistEnabled();
-  auto whitelistOld = legacyConfig.getWhitelistEntries();
-
-  configStorage->groupChanges([&]() {
-    setWebsetupSecret(websetupSecretOld);
-    for(auto& entry : whitelistOld) {
-      whitelistAdd(IpAddress::parse(entry));
-    }
-    if(whitelistEnabledOld) {
-      whitelistEnable();
-    } else {
-      whitelistDisable();
-    }
-  });
-
-  this->getHooksManager()->withRw(
-      [&]() { Port::renameFile(legacyConfigPath, legacyConfigPath + ".old"); });
-#endif
 }
 
 void HusarnetManager::getLicenseStage()
@@ -497,13 +431,24 @@ void HusarnetManager::getLicenseStage()
 
 void HusarnetManager::getIdentityStage()
 {
-  // TODO long term - reenable the smartcard support but with proper
-  // multiplatform support
-  if(Privileged::checkValidIdentityExists()) {
-    identity = Privileged::readIdentity();
-  } else {
-    this->getHooksManager()->withRw(
-        [&]() { identity = Privileged::createIdentity(); });
+  auto identityStr = Port::readIdentity();
+  bool invalidIdentity = false;
+
+  if(identityStr.empty()) {
+    invalidIdentity = true;
+  }
+  if(!invalidIdentity) {
+    identity = Identity::deserialize(identityStr);
+    if(!identity.isValid()) {
+      invalidIdentity = true;
+    }
+  }
+
+  if(invalidIdentity) {
+    this->getHooksManager()->withRw([&]() {
+      identity = Identity::create();
+      Port::writeIdentity(identity.serialize());
+    });
   }
 }
 
@@ -513,8 +458,6 @@ void HusarnetManager::startNetworkingStack()
 
   auto tunTap = Port::startTunTap(this);
   this->tunTap = static_cast<TunTap*>(tunTap);
-
-  Privileged::dropCapabilities();
 
   auto multicast = new MulticastLayer(this);
   auto compression = new CompressionLayer(this);
@@ -550,16 +493,11 @@ void HusarnetManager::stage1()
     return;
   }
 
-  Privileged::createConfigDirectories();
-  Privileged::start();
-
   // At this point we have a working privileged interface
 
   configStorage = new ConfigStorage(
-      this, Privileged::readConfig, Privileged::writeConfig, userDefaults,
+      this, Port::readConfig, Port::writeConfig, userDefaults,
       Port::getEnvironmentOverrides(), internalDefaults);
-
-  readLegacyConfig();
 
   if(configStorage->getUserSettingBool(UserSetting::enableHooks)) {
     this->hooksManager = new HooksManager(this);
@@ -573,7 +511,8 @@ void HusarnetManager::stage1()
     configStorage->persistUserSettingOverride(UserSetting::dashboardFqdn);
   }
 
-  getGlobalLogManager()->setVerbosity(logLevelFromInt(this->getLogVerbosity()));
+  globalLogLevel = getVerbosity();
+
   LOG_INFO("Running %s", getUserAgent().c_str());
   LOG_DEBUG(
       "Running a nightly/debugging build");  // This macro has all the logic for
@@ -607,10 +546,6 @@ void HusarnetManager::stage3()
 
   startNetworkingStack();
   startWebsetup();
-
-  this->notificationManager = new NotificationManager(
-      configStorage->getUserSetting(UserSetting::dashboardFqdn), this);
-
   startHTTPServer();
 
   whitelistAdd(getWebsetupAddress());
@@ -635,12 +570,6 @@ void HusarnetManager::stage4()
 
   this->hostTableAdd("husarnet-local", this->getSelfAddress());
 
-// Notifications are disabled on ESP32 platform
-#ifndef ESP_PLATFORM
-  this->notificationManager = new NotificationManager(
-      configStorage->getUserSetting(UserSetting::dashboardFqdn), this);
-#endif
-
   startHTTPServer();
 
   stage3Started = true;
@@ -653,7 +582,7 @@ void HusarnetManager::runHusarnet()
   stage3();
   stage4();
 
-  Privileged::notifyReady();
+  Port::notifyReady();
 
   while(true) {
     ngsocket->periodic();

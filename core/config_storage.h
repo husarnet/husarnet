@@ -31,8 +31,8 @@ BETTER_ENUM(
     interfaceName = 3,            // string
     daemonApiPort = 4,            // int
     enableCompression = 5,        // bool
-    enableUdpTunelling = 6,       // bool
-    enableTcpTunelling = 7,       // bool
+    enableUdpTunneling = 6,       // bool
+    enableTcpTunneling = 7,       // bool
     enableUdp = 8,                // bool
     enableMulticast = 9,          // bool
     overrideBaseAddress = 10,     // inet
@@ -42,7 +42,7 @@ BETTER_ENUM(
     hostname = 14,                // string, this will never be persisted
     enableHooks = 15,             // bool
     logVerbosity = 16,            // int
-    enableNotifications = 17,     // bool
+    enableNotifications = 17,     // bool, orphaned
     daemonApiAddress = 18,        // ip
     daemonApiInterface = 19       // string
 )

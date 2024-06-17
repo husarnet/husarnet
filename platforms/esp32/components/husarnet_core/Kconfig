@@ -7,7 +7,7 @@ menu "Husarnet"
 
         config HUSARNET_LOG_LEVEL_NONE
             bool "No output"
-        
+
         config HUSARNET_LOG_LEVEL_ERROR
             bool "Error"
         config HUSARNET_LOG_LEVEL_WARN
@@ -18,7 +18,7 @@ menu "Husarnet"
             bool "Debug"
     endchoice
 
-    # Levels are set according to the "husarnet/logmanager.h" LogLevel values
+    # Levels are set according to the "husarnet/logging.h" LogLevel values
     config HUSARNET_LOG_LEVEL
         string
         default "0" if HUSARNET_LOG_LEVEL_NONE

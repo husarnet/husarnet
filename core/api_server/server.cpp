@@ -13,7 +13,6 @@
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/logging.h"
-#include "husarnet/logmanager.h"
 #include "husarnet/peer.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/util.h"
@@ -161,10 +160,10 @@ void ApiServer::runThread()
         returnSuccess(
             req, res,
             json::object({
+                {"standard_result", getStandardReply()},
                 {"version", manager->getVersion()},
                 {"local_ip", manager->getSelfAddress().toString()},
                 {"local_hostname", manager->getSelfHostname()},
-                {"standard_result", getStandardReply()},
                 {"hooks_enabled", manager->areHooksEnabled()},
                 {"is_joined", manager->isJoined()},
                 {"is_ready_to_join",
@@ -346,79 +345,6 @@ void ApiServer::runThread()
         returnSuccess(req, res, getStandardReply());
       });
 
-  svr.Post(
-      "/api/notifications/enable",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        if(!validateSecret(req, res)) {
-          return;
-        }
-
-        manager->notificationsEnable();
-        returnSuccess(req, res, getStandardReply());
-      });
-
-  svr.Post(
-      "/api/notifications/disable",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        if(!validateSecret(req, res)) {
-          return;
-        }
-
-        manager->notificationsDisable();
-        returnSuccess(req, res, getStandardReply());
-      });
-
-  svr.Get(
-      "/api/logs/get",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        returnSuccess(
-            req, res,
-            json::object(
-                {{"standard_result", getStandardReply()},
-                 {"logs", getGlobalLogManager()->getLogs()}}));
-      });
-
-  svr.Post(
-      "/api/logs/settings",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        auto logManager = getGlobalLogManager();
-
-        if(req.has_param("verbosity") || req.has_param("size")) {
-          if(!validateSecret(req, res)) {
-            return;
-          }
-
-          if(req.has_param("verbosity")) {
-            if(std::stoi(req.get_param_value("verbosity")) <=
-               logLevelToInt(LogLevel::DEBUG)) {
-              manager->setLogVerbosity(
-                  std::stoi(req.get_param_value("verbosity")));
-            }
-          }
-          if(req.has_param("size")) {
-            if(std::stoi(req.get_param_value("size")) <= 1000 &&
-               std::stoi(req.get_param_value("size")) >= 10) {
-              logManager->setSize(std::stoi(req.get_param_value("size")));
-            }
-          }
-        }
-
-        returnSuccess(req, res, getStandardReply());
-      });
-
-  svr.Get(
-      "/api/logs/settings",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        auto logManager = getGlobalLogManager();
-
-        returnSuccess(
-            req, res,
-            {{"verbosity", logLevelToInt(logManager->getVerbosity())},
-             {"size", logManager->getSize()},
-             {"current_size", logManager->getCurrentSize()},
-             {"standard_result", getStandardReply()}});
-      });
-
   IpAddress bindAddress{};
 
   if(manager->getApiInterface() != "") {
@@ -460,16 +386,7 @@ void ApiServer::waitStarted()
 
 json ApiServer::getStandardReply()
 {
-  auto notifications = manager->getNotifications();
-  bool notifications_to_display = true;
-  if(notifications.size() == 0) {
-    notifications.push_back("No notifications to display");
-    notifications_to_display = false;
-  }
   return json::object({
-      {"notifications", notifications},
-      {"notifications_enabled", manager->areNotificationsEnabled()},
-      {"notifications_to_display", notifications_to_display},
       {"is_dirty", manager->isDirty()},
   });
 }

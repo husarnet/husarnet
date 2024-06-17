@@ -7,7 +7,7 @@
 
 #include <assert.h>
 #include <errno.h>
-#ifndef _WIN32
+#ifndef PORT_WINDOWS
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
@@ -35,7 +35,7 @@ WebsetupConnection::WebsetupConnection(HusarnetManager* manager)
 void WebsetupConnection::start()
 {
   if(manager->getIdentity()->getIpAddress() == manager->getWebsetupAddress()) {
-    LOG("There's no need to contact websetup if we're the websetup");
+    LOG_WARNING("There's no need to contact websetup if we're the websetup");
     return;
   }
 
@@ -51,7 +51,7 @@ void WebsetupConnection::start()
   }
 
   // this timeout is needed, so we can check initResponseReceived
-#ifdef _WIN32
+#ifdef PORT_WINDOWS
   int timeout = 2000;
 #else
   timeval timeout{};
@@ -178,7 +178,7 @@ void WebsetupConnection::handleConnectionThread()
         websetupFd, &buffer[0], buffer.size(), 0, (sockaddr*)&addr, &addrsize);
 
     // Async handling
-#ifdef _WIN32
+#ifdef PORT_WINDOWS
     int err = WSAGetLastError();
     if(ret < 0 && (err == WSAETIMEDOUT || err == WSAECONNRESET))
       continue;
@@ -271,7 +271,7 @@ std::list<std::string> WebsetupConnection::handleWebsetupCommand(
     lastInitReply = Port::getCurrentTime();
     joinCode = "";  // mark that we've already joined
     threadMutex.unlock();
-    manager->getHooksManager()->runHook(HookType::joinned);
+    manager->getHooksManager()->runHook(HookType::joined);
     return {"ok"};
   } else if(command == "whitelist-add") {
     manager->whitelistAdd(IpAddress::fromBinary(decodeHex(payload)));

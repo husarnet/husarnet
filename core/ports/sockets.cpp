@@ -4,7 +4,6 @@
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/ports/port.h"
-#include "husarnet/ports/port_interface.h"
 
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
@@ -76,7 +75,7 @@ namespace OsSocket {
 
   struct UdpSocket {
     int fd;
-    PacketCallack callback;
+    PacketCallback callback;
   };
 
   struct CustomSocket {
@@ -92,7 +91,7 @@ namespace OsSocket {
 
   void set_nonblocking(int fd)
   {
-#ifdef _WIN32
+#ifdef PORT_WINDOWS
     unsigned long mode = 1;
     ioctlsocket(fd, FIONBIO, &mode);
 #else
@@ -104,7 +103,7 @@ namespace OsSocket {
 
   void set_blocking(int fd)
   {
-#ifdef _WIN32
+#ifdef PORT_WINDOWS
     unsigned long mode = 0;
     ioctlsocket(fd, FIONBIO, &mode);
 #else
@@ -148,7 +147,7 @@ namespace OsSocket {
     customSockets.push_back(CustomSocket{fd, readyCallback});
   }
 
-  bool udpListenUnicast(int port, PacketCallack callback, bool setAsDefault)
+  bool udpListenUnicast(int port, PacketCallback callback, bool setAsDefault)
   {
     int fd = bindUdpSocket(InetAddress{IpAddress(), (uint16_t)port}, false);
     if(fd == -1)
@@ -174,7 +173,7 @@ namespace OsSocket {
     SOCKFUNC(sendto)(fd, data.data(), data.size(), 0, (sockaddr*)&sa, socklen);
   }
 
-  bool udpListenMulticast(InetAddress address, PacketCallack callback)
+  bool udpListenMulticast(InetAddress address, PacketCallback callback)
   {
     if(address.ip.isMappedV4()) {
       int fd = bindUdpSocket(
@@ -281,7 +280,7 @@ namespace OsSocket {
     }
 
     else {
-#ifdef _WIN32
+#ifdef PORT_WINDOWS
       char so_error;
 #else
       int so_error;

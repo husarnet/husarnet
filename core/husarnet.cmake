@@ -68,26 +68,30 @@ list(APPEND husarnet_core_include_DIRS) # This is more of a define rather than a
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/linux)
-  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/fat)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/unix)
   file(GLOB port_linux_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/linux/*.cpp")
-  file(GLOB port_shared_unix_windows_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows/*.cpp")
-  list(APPEND husarnet_core_SRC ${port_linux_SRC} ${port_shared_unix_windows_SRC})
-endif()
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
-  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/windows)
-  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows)
-  file(GLOB port_windows_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/windows/*.cpp")
-  file(GLOB port_shared_unix_windows_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows/*.cpp")
-  list(APPEND husarnet_core_SRC ${port_windows_SRC} ${port_shared_unix_windows_SRC})
+  file(GLOB port_fat_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/fat/*.cpp")
+  file(GLOB port_unix_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/unix/*.cpp")
+  list(APPEND husarnet_core_SRC ${port_linux_SRC} ${port_fat_SRC} ${port_unix_SRC})
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
   list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/macos)
-  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/fat)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/unix)
   file(GLOB port_macos_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/macos/*.cpp")
-  file(GLOB port_shared_unix_windows_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/shared_unix_windows/*.cpp")
-  list(APPEND husarnet_core_SRC ${port_macos_SRC} ${port_shared_unix_windows_SRC})
+  file(GLOB port_fat_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/fat/*.cpp")
+  file(GLOB port_unix_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/unix/*.cpp")
+  list(APPEND husarnet_core_SRC ${port_macos_SRC} ${port_fat_SRC} ${port_unix_SRC})
+endif()
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/windows)
+  list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/ports/fat)
+  file(GLOB port_windows_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/windows/*.cpp")
+  file(GLOB port_fat_SRC "${CMAKE_CURRENT_LIST_DIR}/ports/fat/*.cpp")
+  list(APPEND husarnet_core_SRC ${port_windows_SRC} ${port_fat_SRC})
 endif()
 
 if (DEFINED ESP_PLATFORM)
@@ -213,20 +217,8 @@ FetchContent_MakeAvailable(better_enums)
 target_include_directories(${husarnet_core} PUBLIC ${better_enums_SOURCE_DIR})
 target_compile_options(${husarnet_core} PUBLIC -DBETTER_ENUMS_STRICT_CONVERSION=1)
 
-if((${CMAKE_SYSTEM_NAME} STREQUAL Linux) OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows))
-  FetchContent_Declare(
-    sqlite3
-    URL https://sqlite.org/2023/sqlite-amalgamation-3440000.zip
-  )
-  FetchContent_MakeAvailable(sqlite3)
-  include_directories(${sqlite3_SOURCE_DIR})
-  add_library(sqlite3 STATIC ${sqlite3_SOURCE_DIR}/sqlite3.c)
-  target_link_libraries(${husarnet_core} sqlite3 ${CMAKE_DL_LIBS})
-  target_compile_options(${husarnet_core} PUBLIC -DENABLE_LEGACY_CONFIG=1)
-endif()
-
 # Include linux port libraries
-if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows)))
   FetchContent_Declare(
     c-ares
     URL https://github.com/c-ares/c-ares/releases/download/cares-1_22_0/c-ares-1.22.0.tar.gz
