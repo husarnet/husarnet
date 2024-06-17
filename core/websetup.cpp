@@ -35,7 +35,7 @@ WebsetupConnection::WebsetupConnection(HusarnetManager* manager)
 void WebsetupConnection::start()
 {
   if(manager->getIdentity()->getIpAddress() == manager->getWebsetupAddress()) {
-    LOG("There's no need to contact websetup if we're the websetup");
+    LOG_WARNING("There's no need to contact websetup if we're the websetup");
     return;
   }
 

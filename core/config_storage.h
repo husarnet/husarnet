@@ -41,7 +41,7 @@ BETTER_ENUM(
     joinCode = 13,                // string, this will never be persisted
     hostname = 14,                // string, this will never be persisted
     enableHooks = 15,             // bool
-    logVerbosity = 16,            // int, orphaned
+    logVerbosity = 16,            // int
     enableNotifications = 17,     // bool, orphaned
     daemonApiAddress = 18,        // ip
     daemonApiInterface = 19       // string

@@ -266,6 +266,21 @@ bool HusarnetManager::isRealAddressAllowed(InetAddress addr)
   return true;
 }
 
+LogLevel HusarnetManager::getVerbosity()
+{
+  return LogLevel::_from_integral_nothrow(
+             configStorage->getUserSettingInt(UserSetting::logVerbosity))
+      .value();
+}
+
+void HusarnetManager::setVerbosity(LogLevel level)
+{
+  configStorage->setUserSetting(
+      UserSetting::logVerbosity, level._to_integral());
+
+  globalLogLevel = level;
+}
+
 int HusarnetManager::getApiPort()
 {
   return configStorage->getUserSettingInt(UserSetting::daemonApiPort);
@@ -495,6 +510,8 @@ void HusarnetManager::stage1()
   if(configStorage->isUserSettingOverriden(UserSetting::dashboardFqdn)) {
     configStorage->persistUserSettingOverride(UserSetting::dashboardFqdn);
   }
+
+  globalLogLevel = getVerbosity();
 
   LOG_INFO("Running %s", getUserAgent().c_str());
   LOG_DEBUG(

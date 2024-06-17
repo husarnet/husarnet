@@ -130,6 +130,9 @@ class HusarnetManager {
   bool isPeerAddressAllowed(IpAddress id);
   bool isRealAddressAllowed(InetAddress addr);
 
+  LogLevel getVerbosity();
+  void setVerbosity(LogLevel level);
+
   int getApiPort();
   IpAddress getApiAddress();
   std::string getApiInterface();

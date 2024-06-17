@@ -221,7 +221,6 @@ namespace Port {
 
   std::vector<IpAddress> getLocalAddresses()
   {
-    // this takes 18 ms on a test system
     std::vector<IpAddress> result;
 
     PIP_ADAPTER_ADDRESSES buffer;
@@ -252,7 +251,6 @@ namespace Port {
         auto ss =
             reinterpret_cast<sockaddr_storage*>(current->Address.lpSockaddr);
         InetAddress addr = OsSocket::ipFromSockaddr(*ss);
-        // LOG("detected IP: %s", addr.str().c_str());
         result.push_back(addr.ip);
         current = current->Next;
       }
@@ -289,13 +287,15 @@ namespace Port {
     DWORD size = _countof(buf);
     bool result =
         GetComputerNameEx(ComputerNamePhysicalDnsHostname, buf, &size);
-    if(!result) {
-      LOG_WARNING("Cant retrieve hostname");
-      return "windows-pc";
+    if(result) {
+      return std::string(buf);
     }
+    LOG_WARNING("Cant retrieve hostname");
 
-    std::string s(buf);
-    return s;
+    // TODO long-term: implement some sort of a fallback based on hardware
+    // numbers
+
+    return "windows-pc";
   }
 
   bool setSelfHostname(const std::string& newHostname)

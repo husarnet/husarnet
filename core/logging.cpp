@@ -5,6 +5,14 @@
 
 #include "husarnet/ports/port_interface.h"
 
+// This is merely a starting/bootstrap log level. As soon as the config is
+// loaded, proper one will be set
+#ifdef DEBUG_BUILD
+LogLevel globalLogLevel = LogLevel::DEBUG;
+#else
+LogLevel globalLogLevel = LogLevel::INFO;
+#endif
+
 // This needs to live in a .cpp file due to __FILE__ macro usage and the way we
 // handle tempIncludes in CMake
 // cppcheck-suppress unusedFunction
@@ -25,6 +33,10 @@ void log(
     const char* format,
     ...)
 {
+  if(globalLogLevel < level) {
+    return;
+  }
+
   int buffer_len = 256;
   char buffer[buffer_len];
   va_list args;
@@ -40,6 +52,9 @@ void log(
   // TODO: this is not a cleanest solution, but it works for now
 
   std::string message;
+
+  // ESP-IDF exposes human readable time internally so there's no point in
+  // duplicating it
 #ifndef ESP_PLATFORM
   message = Port::getHumanTime();
   message += " " + padRight(8, level._to_string());

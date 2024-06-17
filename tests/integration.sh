@@ -14,12 +14,12 @@ pushd ${base_dir}
 parallel --progress --eta --halt soon,fail=1 docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume "${base_dir}:/app" {1} /app/tests/integration/runner-wrapper.sh {2} {3} {1} \
     ::: \
     husarnet:dev \
-    ubuntu:18.04 ubuntu:24.04 \
+    ubuntu:18.04 ubuntu:22.04 ubuntu:24.04 \
     debian:stable \
     fedora:41 \
     :::+ \
     docker \
-    ubuntu ubuntu \
+    ubuntu ubuntu ubuntu \
     debian \
     fedora \
     ::: \

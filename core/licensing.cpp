@@ -135,7 +135,7 @@ static bool verifySignature(
   }
 
   if(!signatureValid) {
-    LOG("license file is invalid");
+    LOG_CRITICAL("license file is invalid");
 
     if(abortOnFailure) {
       abort();
