@@ -35,7 +35,7 @@ require (
 	github.com/gookit/color v1.5.2 // indirect
 	github.com/mattn/go-runewidth v0.0.13
 	github.com/rivo/uniseg v0.3.4 // indirect
-	github.com/vektah/gqlparser/v2 v2.5.0 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.14 // indirect
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
 )
