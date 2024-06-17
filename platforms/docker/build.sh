@@ -17,7 +17,7 @@ base_platform=linux
 
 pushd ${base_dir}
 
-# TODO technically this script does not support multiple architectures because it does not use buildx directly. All the provisionings here are just a preparation for such support
+# Technically this script does not support multiple architectures because it does not use buildx directly. All the provisionings here are just a preparation for such support
 
 echo "[HUSARNET BS] Building docker image for ${arch}"
 

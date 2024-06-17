@@ -95,7 +95,7 @@ void TunTap::startReaderThread()
       "wintap-read");
 }
 
-TunTap::TunTap(std::string name, bool isTap)
+TunTap::TunTap(HusarnetManager* manager, std::string name, bool isTap)
 {
   (void)isTap;
   tap_fd = openTun(name);
@@ -104,7 +104,7 @@ TunTap::TunTap(std::string name, bool isTap)
   bringUp();
 
   WindowsNetworking windowsNetworking;
-  windowsNetworking.setupNetworkInterface(name);
+  windowsNetworking.setupNetworkInterface(manager, name);
   windowsNetworking.allowHusarnetThroughWindowsFirewall("AllowHusarnet");
 
   selfMacAddr = getMac();

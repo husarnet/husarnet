@@ -12,7 +12,6 @@
 #include <stdlib.h>
 
 #include "husarnet/ports/port_interface.h"
-#include "husarnet/ports/privileged_interface.h"
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_storage.h"
@@ -633,7 +632,7 @@ bool NgSocket::reloadLocalAddresses()
 {
   std::vector<InetAddress> newAddresses;
 
-  for(IpAddress address : Privileged::getLocalAddresses()) {
+  for(IpAddress address : Port::getLocalAddresses()) {
     if(address.isFC94()) {
       continue;
     }

@@ -4,6 +4,8 @@
 #pragma once
 #include <string>
 
+class HusarnetManager;
+
 class WindowsNetworking {
  private:
   std::string netshName;
@@ -17,6 +19,8 @@ class WindowsNetworking {
   WindowsNetworking() : netshName("Husarnet")
   {
   }
-  void setupNetworkInterface(const std::string interfaceName);
+  void setupNetworkInterface(
+      HusarnetManager* manager,
+      const std::string interfaceName);
   void allowHusarnetThroughWindowsFirewall(const std::string firewallRuleName);
 };

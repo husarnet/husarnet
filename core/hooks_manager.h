@@ -7,8 +7,6 @@
 #include <map>
 #include <mutex>
 
-#include "husarnet/ports/privileged_interface.h"
-
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
 #include "husarnet/timer.h"

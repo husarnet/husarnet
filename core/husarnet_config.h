@@ -47,14 +47,6 @@ const std::map<UserSetting, std::string> userDefaults = {
     {UserSetting::joinCode, ""},
     {UserSetting::hostname, ""},
     {UserSetting::enableHooks, falseValue},
-#if defined(ESP_PLATFORM)
-    {UserSetting::logVerbosity, CONFIG_HUSARNET_LOG_LEVEL},
-#elif defined(DEBUG_BUILD)
-    {UserSetting::logVerbosity, "5"},  // DEBUG
-#else
-    {UserSetting::logVerbosity, "4"},  // INFO
-#endif
-    {UserSetting::enableNotifications, trueValue},
     {UserSetting::daemonApiAddress, "127.0.0.1"},
     {UserSetting::daemonApiInterface, ""},
 };

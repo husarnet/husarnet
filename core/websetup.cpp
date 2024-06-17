@@ -7,7 +7,7 @@
 
 #include <assert.h>
 #include <errno.h>
-#ifndef _WIN32
+#ifndef PORT_WINDOWS
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
@@ -51,7 +51,7 @@ void WebsetupConnection::start()
   }
 
   // this timeout is needed, so we can check initResponseReceived
-#ifdef _WIN32
+#ifdef PORT_WINDOWS
   int timeout = 2000;
 #else
   timeval timeout{};
@@ -178,7 +178,7 @@ void WebsetupConnection::handleConnectionThread()
         websetupFd, &buffer[0], buffer.size(), 0, (sockaddr*)&addr, &addrsize);
 
     // Async handling
-#ifdef _WIN32
+#ifdef PORT_WINDOWS
     int err = WSAGetLastError();
     if(ret < 0 && (err == WSAETIMEDOUT || err == WSAECONNRESET))
       continue;

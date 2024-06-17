@@ -12,6 +12,8 @@
 
 #include "windef.h"
 
+class HusarnetManager;
+
 class TunTap : public UpperLayer {
  private:
   HANDLE tap_fd;
@@ -31,7 +33,7 @@ class TunTap : public UpperLayer {
   void onTunTapData();
 
  public:
-  TunTap(std::string name, bool isTap = false);
+  TunTap(HusarnetManager* manager, std::string name, bool isTap = false);
 
   void onLowerLayerData(DeviceId source, string_view data) override;
 };

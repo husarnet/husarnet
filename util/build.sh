@@ -17,7 +17,7 @@ architecture=${2:-amd64}
 build_type=${3:-nightly}
 
 # Linux
-if [ "$platform" == "all" ] || [ "$platform" == "linux" ]; then
+if [ "$platform" == "all" ] || [ "$platform" == "linux" ] || [ "$platform" == "docker" ]; then
     docker_builder /app/platforms/linux/build.sh ${architecture} ${build_type}
 fi
 
@@ -43,7 +43,7 @@ fi
 
 # ESP32
 if [ "$platform" == "all" ] || [ "$platform" == "esp32" ]; then
-    if [ "$platform" == "all" ]; then
+    if [ "$architecture" == "amd64" ]; then
         esp_architecture=esp32
     else
         esp_architecture="${architecture}"

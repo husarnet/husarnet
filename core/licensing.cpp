@@ -5,8 +5,7 @@
 
 #include <sodium.h>
 
-#include "husarnet/ports/port_interface.h"
-#include "husarnet/ports/privileged_interface.h"
+#include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/husarnet_config.h"
@@ -19,7 +18,7 @@ json retrieveLicenseJson(
     std::string dashboardHostname,
     bool abortOnFailure = true)
 {
-  IpAddress ip = Privileged::resolveToIp(dashboardHostname);
+  IpAddress ip = Port::resolveToIp(dashboardHostname);
   InetAddress address{ip, 80};
   int sockfd = OsSocket::connectTcpSocket(address);
   if(sockfd < 0) {
@@ -62,7 +61,7 @@ json retrieveLicenseJson(
 json retrieveCachedLicenseJson()
 {
   // Don't throw an exception on parse failure
-  return json::parse(Privileged::readLicenseJson(), nullptr, false);
+  return json::parse(Port::readLicenseJson(), nullptr, false);
 }
 
 static const unsigned char* const PUBLIC_KEY[] = {
@@ -180,7 +179,7 @@ License::License(std::string dashboardHostname)
         IpAddress::parse(baseAddress.get<std::string>()));
   }
 
-  Privileged::writeLicenseJson(licenseJson.dump());
+  Port::writeLicenseJson(licenseJson.dump());
 }
 
 std::string License::getDashboardFqdn()
