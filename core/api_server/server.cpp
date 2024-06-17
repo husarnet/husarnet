@@ -160,10 +160,10 @@ void ApiServer::runThread()
         returnSuccess(
             req, res,
             json::object({
+                {"standard_result", getStandardReply()},
                 {"version", manager->getVersion()},
                 {"local_ip", manager->getSelfAddress().toString()},
                 {"local_hostname", manager->getSelfHostname()},
-                {"standard_result", getStandardReply()},
                 {"hooks_enabled", manager->areHooksEnabled()},
                 {"is_joined", manager->isJoined()},
                 {"is_ready_to_join",

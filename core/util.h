@@ -19,7 +19,7 @@ BETTER_ENUM(
     int,
     hosttable_changed = 1,
     whitelist_changed = 2,
-    joinned = 3,
+    joined = 3,
     reconnected = 4,
     rw_request = 5,
     rw_release = 6)

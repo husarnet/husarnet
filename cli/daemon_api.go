@@ -58,10 +58,11 @@ type PeerStatus struct {
 }
 
 type DaemonStatus struct {
+	StdResult StandardResult `json:"standard_result"`
+
 	Version       string
-	DashboardFQDN string         `json:"dashboard_fqdn"`
-	StdResult     StandardResult `json:"standard_result"`
-	HooksEnabled  bool           `json:"hooks_enabled"`
+	DashboardFQDN string `json:"dashboard_fqdn"`
+	HooksEnabled  bool   `json:"hooks_enabled"`
 
 	WebsetupAddress netip.Addr           `json:"websetup_address"`
 	BaseConnection  BaseConnectionStatus `json:"base_connection"`

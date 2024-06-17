@@ -31,8 +31,8 @@ BETTER_ENUM(
     interfaceName = 3,            // string
     daemonApiPort = 4,            // int
     enableCompression = 5,        // bool
-    enableUdpTunelling = 6,       // bool
-    enableTcpTunelling = 7,       // bool
+    enableUdpTunneling = 6,       // bool
+    enableTcpTunneling = 7,       // bool
     enableUdp = 8,                // bool
     enableMulticast = 9,          // bool
     overrideBaseAddress = 10,     // inet

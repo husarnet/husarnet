@@ -209,7 +209,7 @@ void NgSocket::sendDataToPeer(Peer* peer, string_view data)
     };
 
     if(isBaseUdp() &&
-       configStorage.getUserSettingBool(UserSetting::enableUdpTunelling)) {
+       configStorage.getUserSettingBool(UserSetting::enableUdpTunneling)) {
       sendToBaseUdp(msg);
     } else if(configStorage.getUserSettingBool(
                   UserSetting::enableTcpTunelling)) {
