@@ -281,42 +281,42 @@ void HusarnetManager::setVerbosity(LogLevel level)
   globalLogLevel = level;
 }
 
-int HusarnetManager::getApiPort()
+int HusarnetManager::getDaemonApiPort()
 {
   return configStorage->getUserSettingInt(UserSetting::daemonApiPort);
 }
 
-IpAddress HusarnetManager::getApiAddress()
+IpAddress HusarnetManager::getDaemonApiAddress()
 {
   return configStorage->getUserSettingIp(UserSetting::daemonApiAddress);
 }
 
-std::string HusarnetManager::getApiInterface()
+std::string HusarnetManager::getDaemonApiInterface()
 {
   return configStorage->getUserSetting(UserSetting::daemonApiInterface);
 }
 
-IpAddress HusarnetManager::getApiInterfaceAddress()
+IpAddress HusarnetManager::getDaemonApiInterfaceAddress()
 {
-  return Port::getIpAddressFromInterfaceName(this->getApiInterface());
+  return Port::getIpAddressFromInterfaceName(this->getDaemonApiInterface());
 }
 
-std::string HusarnetManager::getApiSecret()
+std::string HusarnetManager::getDaemonApiSecret()
 {
   auto secret = Port::readApiSecret();
   if(secret.empty()) {
-    rotateApiSecret();
+    rotateDaemonApiSecret();
     secret = Port::readApiSecret();
   }
 
   return secret;
 }
 
-std::string HusarnetManager::rotateApiSecret()
+std::string HusarnetManager::rotateDaemonApiSecret()
 {
   this->getHooksManager()->withRw(
       [&]() { Port::writeApiSecret(generateRandomString(32)); });
-  return this->getApiSecret();
+  return this->getDaemonApiSecret();
 }
 
 std::string HusarnetManager::getDashboardFqdn()
