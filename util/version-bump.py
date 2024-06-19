@@ -6,7 +6,7 @@ version_file_path = os.path.realpath(
 )
 
 husarnet_config_path = os.path.realpath(
-    os.path.join(os.path.realpath(__file__), "..", "..", "core", "husarnet_config.h")
+    os.path.join(os.path.realpath(__file__), "..", "..", "core", "husarnet", "husarnet_config.h")
 )
 windows_installer_script_path = os.path.realpath(
     os.path.join(
