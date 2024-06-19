@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 
+#include "husarnet/api_server/dashboard_api_proxy.h"
 #include "husarnet/config_storage.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
@@ -22,7 +23,8 @@
 
 using namespace nlohmann;  // json
 
-ApiServer::ApiServer(HusarnetManager* manager) : manager(manager)
+ApiServer::ApiServer(HusarnetManager* manager, DashboardApiProxy* proxy)
+    : manager(manager), proxy(proxy)
 {
   manager->rotateDaemonApiSecret();
 }
@@ -207,6 +209,21 @@ void ApiServer::runThread()
 
         manager->joinNetwork(code, hostname);
         returnSuccess(req, res);
+      });
+
+  svr.Post(
+      "/api/claim", [&](const httplib::Request& req, httplib::Response& res) {
+        if(!validateSecret(req, res)) {
+          return;
+        }
+
+        if(proxy->isValid()) {
+          proxy->signAndForward(req, res, "/device/rw/claim");
+        } else {
+          LOG_WARNING(
+              "Not forwarding the request, as proxy does not have valid "
+              "Dashboard API address");
+        }
       });
 
   svr.Post(

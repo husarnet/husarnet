@@ -331,6 +331,10 @@ std::vector<IpAddress> HusarnetManager::getBaseServerAddresses()
 {
   return license->getBaseServerAddresses();
 }
+std::vector<IpAddress> HusarnetManager::getDashboardApiAddresses()
+{
+  return license->getDashboardApiAddresses();
+}
 
 NgSocket* HusarnetManager::getNGSocket()
 {
@@ -479,10 +483,15 @@ void HusarnetManager::startWebsetup()
 void HusarnetManager::startHTTPServer()
 {
 #ifdef HTTP_CONTROL_API
-  auto server = new ApiServer(this);
+  std::string dashboardApiAddress{};
+  auto dashboardApiAddresses = getDashboardApiAddresses();
+  if(!dashboardApiAddresses.empty() && dashboardApiAddresses[0].isFC94()) {
+    dashboardApiAddress = dashboardApiAddresses[0].toString();
+  }
+  auto proxy = new DashboardApiProxy(getIdentity(), dashboardApiAddress);
+  auto server = new ApiServer(this, proxy);
 
   threadpool.push_back(new std::thread([=]() { server->runThread(); }));
-
   server->waitStarted();
 #endif
 }

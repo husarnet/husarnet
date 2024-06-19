@@ -143,6 +143,7 @@ class HusarnetManager {
   std::string getDashboardFqdn();
   IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
+  std::vector<IpAddress> getDashboardApiAddresses();
 
   NgSocket* getNGSocket();
   SecurityLayer* getSecurityLayer();

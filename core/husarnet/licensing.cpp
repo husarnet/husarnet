@@ -186,7 +186,8 @@ License::License(std::string dashboardHostname)
   this->websetupAddress = IpAddress::parse(
       licenseJson[LICENSE_WEBSETUP_HOST_KEY].get<std::string>());
 
-  for(const auto& baseAddress : licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]) {
+  for(const auto& baseAddress :
+      licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]) {
     this->baseServerAddresses.emplace_back(
         IpAddress::parse(baseAddress.get<std::string>()));
   }

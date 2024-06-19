@@ -7,6 +7,8 @@
 #include <mutex>
 #include <string>
 
+#include "husarnet/api_server/dashboard_api_proxy.h"
+
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 
@@ -20,6 +22,7 @@ namespace httplib {
 class ApiServer {
  private:
   HusarnetManager* manager;
+  DashboardApiProxy* proxy;
   std::mutex mutex;
   std::condition_variable cv;
 
@@ -48,7 +51,7 @@ class ApiServer {
       std::list<std::string> paramNames);
 
  public:
-  ApiServer(HusarnetManager* manager);
+  ApiServer(HusarnetManager* manager, DashboardApiProxy* proxy);
 
   void runThread();
   void waitStarted();
