@@ -20,7 +20,8 @@ const std::string stripLogPathPrefix(const std::string& filename)
 {
   auto loggingFile = std::string(__FILE__);
   auto prefix = loggingFile.substr(
-      0, loggingFile.length() - std::string("/core/logging.cpp").length() + 1);
+      0, loggingFile.length() -
+             std::string("/core/husarnet/logging.cpp").length() + 1);
   return filename.substr(prefix.length());
 }
 

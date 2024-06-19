@@ -12,12 +12,6 @@ add_executable(husarnet_tests ${husarnet_tests_SRC})
 target_compile_definitions(husarnet_core PRIVATE UT=1)
 target_link_libraries(husarnet_tests husarnet_core)
 
-# "Aliasing" (copying) core folder as "husarnet"
-# So includes like "husarnet/something.h" do work too
-set(TEMP_INCLUDE_DIR ${CMAKE_BINARY_DIR}/tempIncludes)
-file(MAKE_DIRECTORY ${TEMP_INCLUDE_DIR})
-file(COPY ../core/ DESTINATION ${TEMP_INCLUDE_DIR}/husarnet/ FILES_MATCHING PATTERN "*.h")
-
 target_include_directories(husarnet_tests PUBLIC ${TEMP_INCLUDE_DIR})
 
 if(IS_DIRECTORY "${husarnet_core_SOURCE_DIR}")
