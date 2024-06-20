@@ -15,16 +15,34 @@ void DashboardApiProxy::signAndForward(
     httplib::Response& res,
     const std::string& path)
 {
-  nlohmann::json payload = nlohmann::json::parse(req.body, nullptr, false);
-  if(payload.is_discarded()) {
+  if(!isValid()) {
+    LOG_WARNING(
+        "Not forwarding the request, as proxy does not have valid "
+        "Dashboard API address");
+
+    // construct response of the same shape as Dashboard API uses
+    nlohmann::json jsonResponse{
+        {"type", "server_error"},
+        {"errors",
+         nlohmann::json::array({"claim request received but dashboard API "
+                                "address is not known"})},
+        {"warnings", nlohmann::json::array()},
+        {"message", "error"}};
+
+    res.set_content(jsonResponse.dump(4), "application/json");
+  }
+
+  nlohmann::json payloadJSON = nlohmann::json::parse(req.body, nullptr, false);
+  if(payloadJSON.is_discarded()) {
     LOG_INFO("HTTP request body is not a valid JSON");
     return;
   }
 
   auto pk = httplib::detail::base64_encode(identity->getPubkey());
-  auto sig = httplib::detail::base64_encode(identity->sign(payload.dump()));
-  nlohmann::json signedBody = {{"pk", pk}, {"sig", sig}, {"payload", payload}};
+  auto sig = httplib::detail::base64_encode(identity->sign(req.body));
+  auto payload = httplib::detail::base64_encode(req.body);
 
+  nlohmann::json signedBody = {{"pk", pk}, {"sig", sig}, {"payload", payload}};
   if(auto result =
          httpClient.Post(path, signedBody.dump(), "application/json")) {
     res.set_content(

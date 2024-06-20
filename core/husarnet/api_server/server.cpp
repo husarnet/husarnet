@@ -217,17 +217,7 @@ void ApiServer::runThread()
           return;
         }
 
-        if(proxy->isValid()) {
-          proxy->signAndForward(req, res, "/device/rw/claim");
-        } else {
-          LOG_WARNING(
-              "Not forwarding the request, as proxy does not have valid "
-              "Dashboard API address");
-          returnError(
-              req, res,
-              "claim request registered but dashboard API address is not "
-              "known");
-        }
+        proxy->signAndForward(req, res, "/device/manage/claim");
       });
 
   svr.Post(
