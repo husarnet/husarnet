@@ -223,6 +223,10 @@ void ApiServer::runThread()
           LOG_WARNING(
               "Not forwarding the request, as proxy does not have valid "
               "Dashboard API address");
+          returnError(
+              req, res,
+              "claim request registered but dashboard API address is not "
+              "known");
         }
       });
 
