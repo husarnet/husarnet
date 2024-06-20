@@ -36,8 +36,10 @@ HusarnetClient::HusarnetClient()
       [](void* manager) { husarnetTask(manager); }, "husarnet_task", 16384,
       manager, 7, &husarnetTaskHandle);
 
-  if(res != pdPASS)
+  if(res != pdPASS) {
+    LOG_ERROR("Failed to create Husarnet task");
     abort();
+  }
 }
 
 HusarnetClient::~HusarnetClient()
@@ -47,8 +49,10 @@ HusarnetClient::~HusarnetClient()
 
 void HusarnetClient::join(const char* hostname, const char* joinCode)
 {
-  if(started)
+  if(started) {
+    LOG_ERROR("Cannot join the network twice");
     return;
+  }
 
   started = true;
 
@@ -65,8 +69,10 @@ void HusarnetClient::join(const char* hostname, const char* joinCode)
 
 void HusarnetClient::setDashboardFqdn(const char* fqdn)
 {
-  if(started)
+  if(started) {
+    LOG_ERROR("Cannot set dashboard FQDN after joining the network");
     return;
+  }
 
   husarnetManager->getConfigStorage().setUserSetting(
       UserSetting::dashboardFqdn, fqdn);
