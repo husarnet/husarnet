@@ -133,16 +133,17 @@ class HusarnetManager {
   LogLevel getVerbosity();
   void setVerbosity(LogLevel level);
 
-  int getApiPort();
-  IpAddress getApiAddress();
-  std::string getApiInterface();
-  IpAddress getApiInterfaceAddress();
-  std::string getApiSecret();
-  std::string rotateApiSecret();
+  int getDaemonApiPort();
+  IpAddress getDaemonApiAddress();
+  std::string getDaemonApiInterface();
+  IpAddress getDaemonApiInterfaceAddress();
+  std::string getDaemonApiSecret();
+  std::string rotateDaemonApiSecret();
   // Copy of methods from License class
   std::string getDashboardFqdn();
   IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
+  std::vector<IpAddress> getDashboardApiAddresses();
 
   NgSocket* getNGSocket();
   SecurityLayer* getSecurityLayer();

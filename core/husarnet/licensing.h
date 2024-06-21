@@ -18,11 +18,13 @@ class License {
   std::string dashboardFqdn;
   IpAddress websetupAddress;
   std::vector<IpAddress> baseServerAddresses;
+  std::vector<IpAddress> dashboardApiAddresses;
 
  public:
   License(std::string dashboardHostname);
   std::string getDashboardFqdn();
   IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
+  std::vector<IpAddress> getDashboardApiAddresses();
   static bool validateDashboard(std::string dashboardHostname);
 };

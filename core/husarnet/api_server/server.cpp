@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 
+#include "husarnet/api_server/dashboard_api_proxy.h"
 #include "husarnet/config_storage.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
@@ -22,9 +23,10 @@
 
 using namespace nlohmann;  // json
 
-ApiServer::ApiServer(HusarnetManager* manager) : manager(manager)
+ApiServer::ApiServer(HusarnetManager* manager, DashboardApiProxy* proxy)
+    : manager(manager), proxy(proxy)
 {
-  manager->rotateApiSecret();
+  manager->rotateDaemonApiSecret();
 }
 
 void ApiServer::returnSuccess(
@@ -80,7 +82,7 @@ bool ApiServer::validateSecret(
     httplib::Response& res)
 {
   if(!req.has_param("secret") ||
-     req.get_param_value("secret") != manager->getApiSecret()) {
+     req.get_param_value("secret") != manager->getDaemonApiSecret()) {
     returnInvalidQuery(req, res, "invalid control secret");
     return false;
   }
@@ -207,6 +209,15 @@ void ApiServer::runThread()
 
         manager->joinNetwork(code, hostname);
         returnSuccess(req, res);
+      });
+
+  svr.Post(
+      "/api/claim", [&](const httplib::Request& req, httplib::Response& res) {
+        if(!validateSecret(req, res)) {
+          return;
+        }
+
+        proxy->signAndForward(req, res, "/device/manage/claim");
       });
 
   svr.Post(
@@ -347,27 +358,29 @@ void ApiServer::runThread()
 
   IpAddress bindAddress{};
 
-  if(manager->getApiInterface() != "") {
+  if(manager->getDaemonApiInterface() != "") {
     // Deduce bind address from the provided interface
-    bindAddress = manager->getApiInterfaceAddress();
+    bindAddress = manager->getDaemonApiInterfaceAddress();
     LOG_INFO(
         "Deducing bind address %s from the provided interface: %s",
-        bindAddress.toString().c_str(), manager->getApiInterface().c_str());
+        bindAddress.toString().c_str(),
+        manager->getDaemonApiInterface().c_str());
   } else {
     // Use provided/default bind address
-    bindAddress = manager->getApiAddress();
+    bindAddress = manager->getDaemonApiAddress();
   }
 
-  if(!svr.bind_to_port(bindAddress.toString().c_str(), manager->getApiPort())) {
+  if(!svr.bind_to_port(
+         bindAddress.toString().c_str(), manager->getDaemonApiPort())) {
     LOG_CRITICAL(
         "Unable to bind HTTP thread to port %s:%d. Exiting!",
-        bindAddress.toString().c_str(), manager->getApiPort());
+        bindAddress.toString().c_str(), manager->getDaemonApiPort());
     exit(1);
   } else {
     LOG_INFO(
         "HTTP thread bound to %s:%d. Will start handling the "
         "connections.",
-        bindAddress.toString().c_str(), manager->getApiPort());
+        bindAddress.toString().c_str(), manager->getDaemonApiPort());
   }
 
   cv.notify_all();
