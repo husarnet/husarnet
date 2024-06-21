@@ -16,7 +16,9 @@ class DashboardApiProxy {
   HusarnetManager* manager;
 
  public:
-  DashboardApiProxy(HusarnetManager* manager) : manager(manager) {}
+  DashboardApiProxy(HusarnetManager* manager) : manager(manager)
+  {
+  }
 
   void signAndForward(
       const httplib::Request& req,

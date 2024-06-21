@@ -30,7 +30,8 @@ void DashboardApiProxy::signAndForward(
     return;
   }
 
-  // Note: always taking first address. Will need new logic at the point we want multiple addresses support
+  // Note: always taking first address. Will need new logic at the point we want
+  // multiple addresses support
   httplib::Client httpClient(dashboardApiAddresses[0].toString());
 
   nlohmann::json payloadJSON = nlohmann::json::parse(req.body, nullptr, false);
