@@ -4,6 +4,8 @@
 #pragma once
 #include <string>
 
+#include <husarnet/husarnet_manager.h>
+
 #include "husarnet/identity.h"
 
 #include "httplib.h"
@@ -11,16 +13,11 @@
 
 class DashboardApiProxy {
  private:
-  Identity* identity;
-  const std::string apiAddress;
-  httplib::Client httpClient;
+  HusarnetManager* manager;
 
  public:
-  DashboardApiProxy(Identity* identityPtr, const std::string& addr)
-      : identity(identityPtr), apiAddress(addr), httpClient(addr)
-  {
-  }
-  bool isValid();
+  DashboardApiProxy(HusarnetManager* manager) : manager(manager) {}
+
   void signAndForward(
       const httplib::Request& req,
       httplib::Response& res,

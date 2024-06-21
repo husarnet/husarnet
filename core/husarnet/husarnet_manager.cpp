@@ -483,12 +483,7 @@ void HusarnetManager::startWebsetup()
 void HusarnetManager::startHTTPServer()
 {
 #ifdef HTTP_CONTROL_API
-  std::string dashboardApiAddress{};
-  auto dashboardApiAddresses = getDashboardApiAddresses();
-  if(!dashboardApiAddresses.empty() && dashboardApiAddresses[0].isFC94()) {
-    dashboardApiAddress = dashboardApiAddresses[0].toString();
-  }
-  auto proxy = new DashboardApiProxy(getIdentity(), dashboardApiAddress);
+  auto proxy = new DashboardApiProxy(this);
   auto server = new ApiServer(this, proxy);
 
   threadpool.push_back(new std::thread([=]() { server->runThread(); }));

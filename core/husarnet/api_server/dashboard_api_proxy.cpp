@@ -5,17 +5,14 @@
 
 #include "husarnet/logging.h"
 
-bool DashboardApiProxy::isValid()
-{
-  return !apiAddress.empty();
-}
-
 void DashboardApiProxy::signAndForward(
     const httplib::Request& req,
     httplib::Response& res,
     const std::string& path)
 {
-  if(!isValid()) {
+  auto identity = manager->getIdentity();
+  auto dashboardApiAddresses = manager->getDashboardApiAddresses();
+  if(dashboardApiAddresses.empty() || !dashboardApiAddresses[0].isFC94()) {
     LOG_WARNING(
         "Not forwarding the request, as proxy does not have valid "
         "Dashboard API address");
@@ -30,7 +27,11 @@ void DashboardApiProxy::signAndForward(
         {"message", "error"}};
 
     res.set_content(jsonResponse.dump(4), "application/json");
+    return;
   }
+
+  // Note: always taking first address. Will need new logic at the point we want multiple addresses support
+  httplib::Client httpClient(dashboardApiAddresses[0].toString());
 
   nlohmann::json payloadJSON = nlohmann::json::parse(req.body, nullptr, false);
   if(payloadJSON.is_discarded()) {
