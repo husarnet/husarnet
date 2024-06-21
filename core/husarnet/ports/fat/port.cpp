@@ -26,7 +26,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "husarnet/ports/fat/filesystem_naive.h"
+#include "husarnet/ports/fat/filesystem.h"
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
@@ -344,7 +344,11 @@ namespace Port {
       return true;
     }
 
-    writeFile(hostnamePath, newHostname);
+    // Using transform instead of simple write as it's writing to /etc and
+    // transform has already all the necessary mechanisms for making it safe
+    transformFile(hostnamePath, [newHostname](const std::string& oldContent) {
+      return newHostname;
+    });
 
     if(system("hostname -F /etc/hostname") != 0) {
       LOG_ERROR("cannot update hostname to %s", newHostname.c_str());
@@ -364,8 +368,9 @@ namespace Port {
     const std::string hostsFilePath = "/etc/hosts";
 #endif
 
-    writeFile(
-        hostsFilePath, updateHostsFileInternal(data, readFile(hostsFilePath)));
+    transformFile(hostsFilePath, [data](const std::string& oldContent) {
+      return updateHostsFileInternal(data, oldContent);
+    });
   }
 
   __attribute__((weak)) IpAddress resolveToIp(const std::string& hostname)

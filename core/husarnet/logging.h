@@ -69,6 +69,13 @@ void log(
     log(LogLevel::ERROR, __FILE__, __LINE__, strerror(errno), fmt, ##x); \
   }
 
+#define LOG_NEGATIVE(ret, fmt, x...)                                       \
+  {                                                                        \
+    if(ret < 0) {                                                          \
+      log(LogLevel::ERROR, __FILE__, __LINE__, strerror(errno), fmt, ##x); \
+    }                                                                      \
+  }
+
 #define error_negative(ret, fmt, x...)                                   \
   {                                                                      \
     if(ret == 0)                                                         \
