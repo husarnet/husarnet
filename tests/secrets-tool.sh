@@ -2,7 +2,7 @@
 # Copyright (c) 2024 Husarnet sp. z o.o.
 # Authors: listed in project_root/README.md
 # License: specified in project_root/LICENSE.txt
-source $(dirname "$0")/../../util/bash-base.sh
+source $(dirname "$0")/../util/bash-base.sh
 
 function usage() {
     echo "Usage: secrets-tool.sh [encrypt|decrypt]"
@@ -15,10 +15,10 @@ fi
 
 mode=${1}
 
-password_path=${tests_base}/integration/secrets-password.bin
-encrypted_path=${tests_base}/integration/secrets-encrypted.bin
-decrypted_path=${tests_base}/integration/secrets-decrypted.sh
-tmp_decrypted_path=${tests_base}/integration/secrets-decrypted-tmp.sh
+password_path=${tests_base}/secrets-password.bin
+encrypted_path=${tests_base}/secrets-encrypted.bin
+decrypted_path=${tests_base}/secrets-decrypted.sh
+tmp_decrypted_path=${tests_base}/secrets-decrypted-tmp.sh
 
 openssl_options="-aes-256-cbc -pbkdf2"
 

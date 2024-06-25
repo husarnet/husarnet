@@ -37,7 +37,7 @@
       uses: 'actions/upload-artifact@v4',
       with: {
         name: key,
-        path: './build/release/' + expression,
+        path: expression,
         'if-no-files-found': 'error',
       },
     },
@@ -63,6 +63,14 @@
       name: 'Read new version',
       run: 'echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV',
     },
+
+    secrets_prepare:: function() {
+      name: 'Save a password for unlocking a shared secrets repository in a known place',
+      run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/secrets-password.bin",
+    },
+
+    secrets_decrypt:: function()
+      $.steps.builder('/app/tests/secrets-tool.sh decrypt'),
 
   },
 
@@ -146,7 +154,7 @@
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.builder('/app/platforms/linux/build.sh ${{matrix.arch}} ' + build_type),
-        $.steps.push_artifacts('*${{matrix.arch}}*', 'release-linux-${{matrix.arch}}'),
+        $.steps.push_artifacts('./build/release/' + '*${{matrix.arch}}*', 'release-linux-${{matrix.arch}}'),
       ],
     },
 
@@ -169,7 +177,7 @@
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.builder('/app/platforms/macos/build.sh ${{matrix.arch}} ' + build_type),
-        $.steps.push_artifacts('*${{matrix.arch}}*', 'release-macos-${{matrix.arch}}'),
+        $.steps.push_artifacts('./build/release/' + '*${{matrix.arch}}*', 'release-macos-${{matrix.arch}}'),
       ],
     },
 
@@ -182,7 +190,7 @@
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.builder('/app/platforms/windows/build.sh ' + build_type),
-        $.steps.push_artifacts('*win64*', 'release-windows-win64'),
+        $.steps.push_artifacts('./build/release/' + '*win64*', 'release-windows-win64'),
       ],
     },
 
@@ -211,7 +219,7 @@
             copy platforms\windows\Output\husarnet-setup.exe build\release\husarnet-setup.exe
           |||,
         },
-        $.steps.push_artifacts('*setup*', 'release-windows-setup'),
+        $.steps.push_artifacts('./build/release/' + '*setup*', 'release-windows-setup'),
       ],
     },
 
@@ -280,12 +288,24 @@
         $.steps.pull_artifacts('release-linux-amd64'),
         $.steps.ghcr_login(),
         $.steps.docker_login(),
-        {
-          name: 'Save a password for unlocking a shared secrets repository in a known place',
-          run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/integration/secrets-password.bin",
-        },
-        $.steps.builder('/app/tests/integration/secrets-tool.sh decrypt'),
+        $.steps.secrets_prepare(),
+        $.steps.secrets_decrypt(),
         $.steps.docker('${{matrix.container_name}}', '/app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}} ${{matrix.container_name}}'),
+      ],
+    },
+
+    build_and_test_esp32:: function(ref) {
+      needs: [],
+
+      'runs-on': 'esp32',
+
+      steps: [
+        $.steps.checkout(ref),
+        $.steps.ghcr_login(),
+        $.steps.secrets_prepare(),
+        $.steps.secrets_decrypt(),
+        $.steps.builder('/app/platforms/esp32/ci.sh'),
+        $.steps.push_artifacts('./platforms/esp32/junit.xml', 'esp32-test-results.xml'),
       ],
     },
 

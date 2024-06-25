@@ -5,7 +5,7 @@
 source $(dirname "$0")/../util/bash-base.sh
 
 # We'll need to decrypt the secrets first
-${tests_base}/integration/secrets-tool.sh decrypt
+${tests_base}/secrets-tool.sh decrypt
 
 pushd ${base_dir}
 
