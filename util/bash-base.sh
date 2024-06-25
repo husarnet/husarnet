@@ -36,7 +36,7 @@ popd() {
 }
 
 util_base="$(realpath $(dirname "$BASH_SOURCE[0]"))"
-base_dir="${util_base}/.."
+base_dir="$(realpath ${util_base}/..)"
 tests_base="${base_dir}/tests"
 build_base="${base_dir}/build"
 release_base="${build_base}/release"

@@ -302,6 +302,7 @@
       steps: [
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
+        $.steps.docker_login(),
         $.steps.secrets_prepare(),
         $.steps.secrets_decrypt(),
         $.steps.builder('/app/platforms/esp32/ci.sh'),
