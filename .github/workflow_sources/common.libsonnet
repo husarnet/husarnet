@@ -304,6 +304,10 @@
       'runs-on': 'esp32',
 
       steps: [
+        {
+          name: 'Cleanup workdir',  // As self-hosted runners are not always clean
+          run: 'sudo rm -rf ./*',  // I know but I haven't found any sane way of deleting contents **without** the directory itself, when I can't rally cd out of it
+        },
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.docker_login(),
@@ -318,6 +322,7 @@
       needs: [
         'run_tests',
         'run_integration_tests',
+        'build_and_test_esp32',
         'build_linux',
         'build_macos',
         'build_windows_installer',
@@ -344,6 +349,7 @@
       needs: [
         'run_tests',
         'run_integration_tests',
+        'build_and_test_esp32',
         'build_linux',
         'build_macos',
         'build_windows_installer',
@@ -434,6 +440,7 @@
       needs: [
         'run_tests',
         'run_integration_tests',
+        'build_and_test_esp32',
         'build_docker',
       ],
 

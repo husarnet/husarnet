@@ -3,6 +3,8 @@ jobs:
     needs: []
     runs-on: "esp32"
     steps:
+      - name: "Cleanup workdir"
+        run: "sudo rm -rf ./*"
       - name: "Check out the repo"
         uses: "actions/checkout@v4"
         with:

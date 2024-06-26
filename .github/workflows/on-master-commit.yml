@@ -5,6 +5,8 @@ jobs:
       - "build_builder"
     runs-on: "esp32"
     steps:
+      - name: "Cleanup workdir"
+        run: "sudo rm -rf ./*"
       - name: "Check out the repo"
         uses: "actions/checkout@v4"
         with:
@@ -260,6 +262,7 @@ jobs:
     needs:
       - "run_tests"
       - "run_integration_tests"
+      - "build_and_test_esp32"
       - "build_docker"
       - "bump_version"
       - "build_builder"
@@ -294,6 +297,7 @@ jobs:
     needs:
       - "run_tests"
       - "run_integration_tests"
+      - "build_and_test_esp32"
       - "build_linux"
       - "build_macos"
       - "build_windows_installer"
