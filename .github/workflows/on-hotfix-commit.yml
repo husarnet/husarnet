@@ -20,7 +20,10 @@ jobs:
           registry: "docker.io"
           username: "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
       - name: "Save a password for unlocking a shared secrets repository in a known place"
-        run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/secrets-password.bin"
+        run: |
+          chmod 777 tests # So builder can write to it too
+          rm -f tests/secrets-decrypted.sh
+          echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/secrets-password.bin
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/secrets-tool.sh decrypt"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/secrets-tool.sh decrypt"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/esp32/ci.sh"
@@ -313,7 +316,10 @@ jobs:
           registry: "docker.io"
           username: "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
       - name: "Save a password for unlocking a shared secrets repository in a known place"
-        run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/secrets-password.bin"
+        run: |
+          chmod 777 tests # So builder can write to it too
+          rm -f tests/secrets-decrypted.sh
+          echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/secrets-password.bin
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/secrets-tool.sh decrypt"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/secrets-tool.sh decrypt"
       - name: "Docker run ${{matrix.container_name}} /app/tests/integration/runner.sh ${{matrix.test_platform}} ${{matrix.test_file}} ${{matrix.container_name}}"

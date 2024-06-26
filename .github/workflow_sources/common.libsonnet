@@ -66,7 +66,11 @@
 
     secrets_prepare:: function() {
       name: 'Save a password for unlocking a shared secrets repository in a known place',
-      run: "echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/secrets-password.bin",
+      run: |||
+        chmod 777 tests # So builder can write to it too
+        rm -f tests/secrets-decrypted.sh
+        echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/secrets-password.bin
+      |||,
     },
 
     secrets_decrypt:: function()
