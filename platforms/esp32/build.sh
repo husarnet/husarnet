@@ -8,7 +8,7 @@ echo "[HUSARNET BS] Building ESP32 library"
 
 echo "[HUSARNET BS] Building ESP32 library"
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 1 ]; then
   echo "Usage: $0 <idf_target>"
   exit 1
 fi
