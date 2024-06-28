@@ -9,28 +9,17 @@ echo "[HUSARNET BS] Building ESP32 library"
 echo "[HUSARNET BS] Building ESP32 library"
 
 if [ $# -ne 2 ]; then
-  echo "Usage: $0 <idf_target> (stable/nightly)"
+  echo "Usage: $0 <idf_target>"
   exit 1
 fi
 
 TARGET=$1
-build_type=$2
 
 build_dir="${base_dir}/build/${TARGET}"
 source_dir="${base_dir}/platforms/esp32"
 
 # Initialize ESP-IDF environment
 . /esp/esp-idf/export.sh
-
-# TODO: select sdkconfig.defaults file based on the build configuration
-if [[ ${build_type} = nightly ]]; then
-  debug_flags="-DCMAKE_BUILD_TYPE=Debug"
-elif [[ ${build_type} = stable ]]; then
-  debug_flags="-DCMAKE_BUILD_TYPE=Release"
-else
-  echo "Unknown build type: ${build_type}, supported values: stable/nightly"
-  exit 1
-fi
 
 pushd ${base_dir}
 

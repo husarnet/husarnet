@@ -313,6 +313,7 @@
         $.steps.docker_login(),
         $.steps.secrets_prepare(),
         $.steps.secrets_decrypt(),
+        $.steps.builder('/app/platforms/esp32/build.sh esp32'),  //TODO: matrix build all targets
         $.steps.builder('/app/tests/esp32/ci.sh'),
         $.steps.push_artifacts('./platforms/esp32/junit.xml', 'esp32-test-results.xml'),
       ],
