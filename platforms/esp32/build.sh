@@ -19,7 +19,10 @@ build_dir="${base_dir}/build/${TARGET}"
 source_dir="${base_dir}/platforms/esp32"
 
 # Initialize ESP-IDF environment
-. /esp/esp-idf/export.sh
+if [ -z ${IDF_PATH+x} ]; then
+  echo "ESP-IDF environment is not initialized, initializing..."
+  . /esp/esp-idf/export.sh
+fi
 
 pushd ${base_dir}
 
