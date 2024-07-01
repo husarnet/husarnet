@@ -10,9 +10,10 @@ fix_perms() {
     chmod 777 $1
 }
 
-fix_perms ${build_base}
+fix_perms ${base_dir}/build
 fix_perms ${base_dir}/cli/generated
-fix_perms ${base_dir}/tests/integration
+fix_perms ${base_dir}/tests
+fix_perms ${base_dir}/platforms/esp32
 
 git config --global --add safe.directory ${build_base}
 

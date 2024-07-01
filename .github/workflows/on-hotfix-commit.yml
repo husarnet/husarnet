@@ -23,8 +23,6 @@ jobs:
           username: "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
       - name: "Save a password for unlocking a shared secrets repository in a known place"
         run: |
-          chmod 777 tests # So builder can write to it too
-          rm -f tests/secrets-decrypted.sh
           echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/secrets-password.bin
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/secrets-tool.sh decrypt"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/secrets-tool.sh decrypt"
@@ -324,8 +322,6 @@ jobs:
           username: "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
       - name: "Save a password for unlocking a shared secrets repository in a known place"
         run: |
-          chmod 777 tests # So builder can write to it too
-          rm -f tests/secrets-decrypted.sh
           echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/secrets-password.bin
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/secrets-tool.sh decrypt"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/secrets-tool.sh decrypt"
