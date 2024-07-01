@@ -19,7 +19,7 @@ build_dir="${base_dir}/build/${TARGET}"
 source_dir="${base_dir}/platforms/esp32"
 
 # Initialize ESP-IDF environment
-if [ -z ${IDF_PATH+x} ]; then
+if ! command -v idf.py &> /dev/null; then
   echo "ESP-IDF environment is not initialized, initializing..."
   . /esp/esp-idf/export.sh
 fi
