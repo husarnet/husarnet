@@ -1,6 +1,7 @@
 jobs:
   build_and_test_esp32:
-    needs: []
+    needs:
+      - "build_linux"
     runs-on: "esp32"
     steps:
       - name: "Cleanup workdir"
@@ -21,6 +22,12 @@ jobs:
           password: "${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}"
           registry: "docker.io"
           username: "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
+      - name: "Pull artifacts"
+        uses: "actions/download-artifact@v4"
+        with:
+          merge-multiple: true
+          path: "./build/release/"
+          pattern: "release-linux-amd64"
       - name: "Save a password for unlocking a shared secrets repository in a known place"
         run: |
           echo '${{ secrets.SHARED_SECRETS_PASSWORD }}' > tests/secrets-password.bin

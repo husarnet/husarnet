@@ -297,7 +297,9 @@
     },
 
     build_and_test_esp32:: function(ref) {
-      needs: [],
+      needs: [
+        'build_linux',
+      ],
 
       'runs-on': 'esp32',
 
@@ -309,6 +311,7 @@
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.docker_login(),
+        $.steps.pull_artifacts('release-linux-amd64'),
         $.steps.secrets_prepare(),
         $.steps.secrets_decrypt(),
         $.steps.builder('/app/platforms/esp32/build.sh esp32'),  //TODO: matrix build all targets
