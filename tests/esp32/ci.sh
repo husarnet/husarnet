@@ -12,8 +12,14 @@ if ! command -v idf.py &> /dev/null; then
   . /esp/esp-idf/export.sh
 fi
 
-# Start husarnet daemon
-gdb -batch -ex "catch throw" -ex "run" -ex "bt full" -ex "quit" --args husarnet-daemon 2>&1 | tee /tmp/husarnet-daemon.log &
+# Install husarnet daemon
+if ! command -v husarnet &> /dev/null; then
+  sudo apt install -y --no-install-recommends --no-install-suggests \
+  ${base_dir}/build/release/husarnet-linux-amd64.deb
+
+  # Start husarnet daemon
+  sudo husarnet-daemon &> /tmp/husarnet-daemon.log &
+fi
 
 # Those are reduntant but we want to test as many items as possible
 echo "INFO: Waiting for deamon connectivity"
