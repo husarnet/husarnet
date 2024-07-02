@@ -52,6 +52,11 @@
       },
     },
 
+    docker_pull_builder_image:: function() {
+      name: 'Pull Docker builder image',
+      run: 'docker pull ghcr.io/husarnet/husarnet:builder',
+    },
+
     builder:: function(command) self.docker('ghcr.io/husarnet/husarnet:builder', command),
 
     builder_host_networking:: function(command) self.docker_host_networking('ghcr.io/husarnet/husarnet:builder', command),
@@ -318,6 +323,7 @@
         $.steps.checkout(ref),
         $.steps.ghcr_login(),
         $.steps.docker_login(),
+        $.steps.docker_pull_builder_image(),
         $.steps.pull_artifacts('release-linux-amd64'),
         $.steps.secrets_prepare(),
         $.steps.secrets_decrypt(),

@@ -24,6 +24,8 @@ jobs:
           password: "${{ secrets.HNETUSER_DOCKERHUB_PASSWORD }}"
           registry: "docker.io"
           username: "${{ secrets.HNETUSER_DOCKERHUB_LOGIN }}"
+      - name: "Pull Docker builder image"
+        run: "docker pull ghcr.io/husarnet/husarnet:builder"
       - name: "Pull artifacts"
         uses: "actions/download-artifact@v4"
         with:
