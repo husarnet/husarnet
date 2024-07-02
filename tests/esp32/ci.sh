@@ -24,7 +24,7 @@ if ! command -v husarnet &> /dev/null; then
 
   # Start husarnet daemon
   sudo husarnet-daemon &> /tmp/husarnet-daemon.log &
-  husarnet join ${esp32_join_code}
+  sudo husarnet join ${esp32_join_code} runner-esp32
 fi
 
 # Those are reduntant but we want to test as many items as possible
