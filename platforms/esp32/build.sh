@@ -15,7 +15,7 @@ fi
 
 TARGET=$1
 
-build_dir="${base_dir}/build/${TARGET}"
+build_dir="${base_dir}/build/build_${TARGET}"
 source_dir="${base_dir}/platforms/esp32"
 
 # Initialize ESP-IDF environment
