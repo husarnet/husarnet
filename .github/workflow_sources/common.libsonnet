@@ -54,9 +54,16 @@
 
     builder:: function(command) self.docker('ghcr.io/husarnet/husarnet:builder', command),
 
+    builder_host_networking:: function(command) self.docker_host_networking('ghcr.io/husarnet/husarnet:builder', command),
+
     docker:: function(container, command) {
       name: 'Docker run ' + container + ' ' + command,
       run: 'docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ' + container + ' ' + command,
+    },
+
+    docker_host_networking:: function(container, command) {
+      name: 'Docker run ' + container + ' ' + command,
+      run: 'docker run --rm --privileged --network=host --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ' + container + ' ' + command,
     },
 
     read_version_to_env:: function() {
@@ -315,7 +322,7 @@
         $.steps.secrets_prepare(),
         $.steps.secrets_decrypt(),
         $.steps.builder('/app/platforms/esp32/build.sh esp32'),  //TODO: matrix build all targets
-        $.steps.builder('/app/tests/esp32/ci.sh'),
+        $.steps.builder_host_networking('/app/tests/esp32/ci.sh'),
         $.steps.push_artifacts('./platforms/esp32/junit.xml', 'esp32-test-results.xml'),
       ],
     },

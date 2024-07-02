@@ -36,7 +36,7 @@ jobs:
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/platforms/esp32/build.sh esp32"
         run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/platforms/esp32/build.sh esp32"
       - name: "Docker run ghcr.io/husarnet/husarnet:builder /app/tests/esp32/ci.sh"
-        run: "docker run --rm --privileged --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/esp32/ci.sh"
+        run: "docker run --rm --privileged --network=host --tmpfs /var/lib/husarnet:rw,exec --volume $(pwd):/app ghcr.io/husarnet/husarnet:builder /app/tests/esp32/ci.sh"
       - name: "Push artifacts"
         uses: "actions/upload-artifact@v4"
         with:
