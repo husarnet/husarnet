@@ -12,6 +12,11 @@ if ! command -v idf.py &> /dev/null; then
   . /esp/esp-idf/export.sh
 fi
 
+# Install iperf2
+if ! command -v iperf &> /dev/null; then
+  sudo apt install -y --no-install-recommends --no-install-suggests iperf
+fi
+
 # Install husarnet daemon
 if ! command -v husarnet &> /dev/null; then
   sudo apt install -y --no-install-recommends --no-install-suggests \

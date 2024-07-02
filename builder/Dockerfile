@@ -72,10 +72,11 @@ ENV GOFLAGS="-buildvcs=false"
 # RUN pip3 install platformio
 WORKDIR /esp
 RUN chown 1000:1000 /esp
+RUN usermod -aG dialout builder
 # ESP-IDF calls expects python to be python3
 RUN ln -s /usr/bin/python3 /usr/bin/python
 USER 1000
-RUN git clone --recursive -b v5.1.2 https://github.com/espressif/esp-idf.git
+RUN git clone --recursive -b v5.2.2 https://github.com/espressif/esp-idf.git
 ENV IDF_PATH="/esp/esp-idf"
 RUN ./esp-idf/install.sh all --enable-pytest
 RUN ./esp-idf/tools/idf_tools.py install esp-clang
