@@ -34,7 +34,7 @@ if ! command -v husarnet &> /dev/null; then
   husarnet daemon wait daemon
   echo "INFO: Waiting for Base Server connectivity"
   husarnet daemon wait base
-  sudo husarnet join ${esp32_join_code} runner-esp32
+  sudo husarnet join ${esp32_join_code} ${runner_hostname}
 else
   # Those are reduntant but we want to test as many items as possible
   echo "INFO: Waiting for deamon connectivity"
