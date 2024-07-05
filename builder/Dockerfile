@@ -19,7 +19,7 @@ RUN apt-get update \
     flex \
     gdb \
     git \
-    golang \
+    golang-1.21 \
     gperf \
     less \
     libarchive-tools \
@@ -45,6 +45,8 @@ RUN apt-get update \
     xz-utils \
     && apt-get autoremove -y
 
+RUN update-alternatives --install /usr/bin/go go /usr/lib/go-1.21/bin/go 0
+RUN update-alternatives --install /usr/bin/gofmt gofmt /usr/lib/go-1.21/bin/gofmt 0
 RUN gem install --no-document fpm
 
 WORKDIR /zig

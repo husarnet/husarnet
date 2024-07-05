@@ -529,14 +529,8 @@ func (v *__UnassignDeviceGroupInput) GetDevicedeviceIdFragment() string {
 // GetGroupName returns __UnassignDeviceGroupInput.GroupName, and is useful for accessing the field via an interface.
 func (v *__UnassignDeviceGroupInput) GetGroupName() string { return v.GroupName }
 
-func AssignDeviceGroup(
-	client graphql.Client,
-	devicedeviceIdFragment string,
-	groupName string,
-) (*AssignDeviceGroupResponse, error) {
-	req := &graphql.Request{
-		OpName: "AssignDeviceGroup",
-		Query: `
+// The query or mutation executed by AssignDeviceGroup.
+const AssignDeviceGroup_Operation = `
 mutation AssignDeviceGroup ($devicedeviceIdFragment: String!, $groupName: ID!) {
 	updateDevice(deviceIdFragment: $devicedeviceIdFragment, addGroups: [$groupName]) {
 		device {
@@ -549,33 +543,37 @@ mutation AssignDeviceGroup ($devicedeviceIdFragment: String!, $groupName: ID!) {
 		}
 	}
 }
-`,
+`
+
+func AssignDeviceGroup(
+	client_ graphql.Client,
+	devicedeviceIdFragment string,
+	groupName string,
+) (*AssignDeviceGroupResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "AssignDeviceGroup",
+		Query:  AssignDeviceGroup_Operation,
 		Variables: &__AssignDeviceGroupInput{
 			DevicedeviceIdFragment: devicedeviceIdFragment,
 			GroupName:              groupName,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data AssignDeviceGroupResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ AssignDeviceGroupResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func CreateGroup(
-	client graphql.Client,
-	name string,
-) (*CreateGroupResponse, error) {
-	req := &graphql.Request{
-		OpName: "CreateGroup",
-		Query: `
+// The query or mutation executed by CreateGroup.
+const CreateGroup_Operation = `
 mutation CreateGroup ($name: String!) {
 	createGroup(name: $name) {
 		group {
@@ -584,31 +582,35 @@ mutation CreateGroup ($name: String!) {
 		}
 	}
 }
-`,
+`
+
+func CreateGroup(
+	client_ graphql.Client,
+	name string,
+) (*CreateGroupResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "CreateGroup",
+		Query:  CreateGroup_Operation,
 		Variables: &__CreateGroupInput{
 			Name: name,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data CreateGroupResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ CreateGroupResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func GetDevices(
-	client graphql.Client,
-) (*GetDevicesResponse, error) {
-	req := &graphql.Request{
-		OpName: "GetDevices",
-		Query: `
+// The query or mutation executed by GetDevices.
+const GetDevices_Operation = `
 query GetDevices {
 	devices {
 		deviceId
@@ -625,28 +627,31 @@ query GetDevices {
 		}
 	}
 }
-`,
+`
+
+func GetDevices(
+	client_ graphql.Client,
+) (*GetDevicesResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "GetDevices",
+		Query:  GetDevices_Operation,
 	}
-	var err error
+	var err_ error
 
-	var data GetDevicesResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ GetDevicesResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func GetGroups(
-	client graphql.Client,
-) (*GetGroupsResponse, error) {
-	req := &graphql.Request{
-		OpName: "GetGroups",
-		Query: `
+// The query or mutation executed by GetGroups.
+const GetGroups_Operation = `
 query GetGroups {
 	groups {
 		id
@@ -655,30 +660,31 @@ query GetGroups {
 		deviceCount
 	}
 }
-`,
+`
+
+func GetGroups(
+	client_ graphql.Client,
+) (*GetGroupsResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "GetGroups",
+		Query:  GetGroups_Operation,
 	}
-	var err error
+	var err_ error
 
-	var data GetGroupsResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ GetGroupsResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func ObtainToken(
-	client graphql.Client,
-	username string,
-	password string,
-) (*ObtainTokenResponse, error) {
-	req := &graphql.Request{
-		OpName: "ObtainToken",
-		Query: `
+// The query or mutation executed by ObtainToken.
+const ObtainToken_Operation = `
 mutation ObtainToken ($username: String!, $password: String!) {
 	tokenAuth(username: $username, password: $password) {
 		token
@@ -686,127 +692,139 @@ mutation ObtainToken ($username: String!, $password: String!) {
 		refreshExpiresIn
 	}
 }
-`,
+`
+
+func ObtainToken(
+	client_ graphql.Client,
+	username string,
+	password string,
+) (*ObtainTokenResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "ObtainToken",
+		Query:  ObtainToken_Operation,
 		Variables: &__ObtainTokenInput{
 			Username: username,
 			Password: password,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data ObtainTokenResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ ObtainTokenResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func RefreshToken(
-	client graphql.Client,
-	token string,
-) (*RefreshTokenResponse, error) {
-	req := &graphql.Request{
-		OpName: "RefreshToken",
-		Query: `
+// The query or mutation executed by RefreshToken.
+const RefreshToken_Operation = `
 mutation RefreshToken ($token: String!) {
 	refreshToken(token: $token) {
 		token
 	}
 }
-`,
+`
+
+func RefreshToken(
+	client_ graphql.Client,
+	token string,
+) (*RefreshTokenResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "RefreshToken",
+		Query:  RefreshToken_Operation,
 		Variables: &__RefreshTokenInput{
 			Token: token,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data RefreshTokenResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ RefreshTokenResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func RemoveDevice(
-	client graphql.Client,
-	deviceId string,
-) (*RemoveDeviceResponse, error) {
-	req := &graphql.Request{
-		OpName: "RemoveDevice",
-		Query: `
+// The query or mutation executed by RemoveDevice.
+const RemoveDevice_Operation = `
 mutation RemoveDevice ($deviceId: ID!) {
 	removeDevice(id: $deviceId) {
 		success
 	}
 }
-`,
+`
+
+func RemoveDevice(
+	client_ graphql.Client,
+	deviceId string,
+) (*RemoveDeviceResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "RemoveDevice",
+		Query:  RemoveDevice_Operation,
 		Variables: &__RemoveDeviceInput{
 			DeviceId: deviceId,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data RemoveDeviceResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ RemoveDeviceResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func RemoveGroup(
-	client graphql.Client,
-	id string,
-) (*RemoveGroupResponse, error) {
-	req := &graphql.Request{
-		OpName: "RemoveGroup",
-		Query: `
+// The query or mutation executed by RemoveGroup.
+const RemoveGroup_Operation = `
 mutation RemoveGroup ($id: ID!) {
 	removeGroup(id: $id) {
 		success
 	}
 }
-`,
+`
+
+func RemoveGroup(
+	client_ graphql.Client,
+	id string,
+) (*RemoveGroupResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "RemoveGroup",
+		Query:  RemoveGroup_Operation,
 		Variables: &__RemoveGroupInput{
 			Id: id,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data RemoveGroupResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ RemoveGroupResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func RenameDevice(
-	client graphql.Client,
-	deviceIdFragment string,
-	name string,
-) (*RenameDeviceResponse, error) {
-	req := &graphql.Request{
-		OpName: "RenameDevice",
-		Query: `
+// The query or mutation executed by RenameDevice.
+const RenameDevice_Operation = `
 mutation RenameDevice ($deviceIdFragment: String!, $name: String!) {
 	updateDevice(deviceIdFragment: $deviceIdFragment, name: $name) {
 		device {
@@ -815,34 +833,37 @@ mutation RenameDevice ($deviceIdFragment: String!, $name: String!) {
 		}
 	}
 }
-`,
+`
+
+func RenameDevice(
+	client_ graphql.Client,
+	deviceIdFragment string,
+	name string,
+) (*RenameDeviceResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "RenameDevice",
+		Query:  RenameDevice_Operation,
 		Variables: &__RenameDeviceInput{
 			DeviceIdFragment: deviceIdFragment,
 			Name:             name,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data RenameDeviceResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ RenameDeviceResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func RenameGroup(
-	client graphql.Client,
-	id string,
-	name string,
-) (*RenameGroupResponse, error) {
-	req := &graphql.Request{
-		OpName: "RenameGroup",
-		Query: `
+// The query or mutation executed by RenameGroup.
+const RenameGroup_Operation = `
 mutation RenameGroup ($id: ID!, $name: String!) {
 	updateGroup(id: $id, name: $name) {
 		group {
@@ -851,33 +872,37 @@ mutation RenameGroup ($id: ID!, $name: String!) {
 		}
 	}
 }
-`,
+`
+
+func RenameGroup(
+	client_ graphql.Client,
+	id string,
+	name string,
+) (*RenameGroupResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "RenameGroup",
+		Query:  RenameGroup_Operation,
 		Variables: &__RenameGroupInput{
 			Id:   id,
 			Name: name,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data RenameGroupResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ RenameGroupResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func ShowGroup(
-	client graphql.Client,
-	id string,
-) (*ShowGroupResponse, error) {
-	req := &graphql.Request{
-		OpName: "ShowGroup",
-		Query: `
+// The query or mutation executed by ShowGroup.
+const ShowGroup_Operation = `
 query ShowGroup ($id: ID!) {
 	groupMembersById(id: $id) {
 		deviceId
@@ -886,33 +911,35 @@ query ShowGroup ($id: ID!) {
 		userAgent
 	}
 }
-`,
+`
+
+func ShowGroup(
+	client_ graphql.Client,
+	id string,
+) (*ShowGroupResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "ShowGroup",
+		Query:  ShowGroup_Operation,
 		Variables: &__ShowGroupInput{
 			Id: id,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data ShowGroupResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ ShowGroupResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
-func UnassignDeviceGroup(
-	client graphql.Client,
-	devicedeviceIdFragment string,
-	groupName string,
-) (*UnassignDeviceGroupResponse, error) {
-	req := &graphql.Request{
-		OpName: "UnassignDeviceGroup",
-		Query: `
+// The query or mutation executed by UnassignDeviceGroup.
+const UnassignDeviceGroup_Operation = `
 mutation UnassignDeviceGroup ($devicedeviceIdFragment: String!, $groupName: ID!) {
 	updateDevice(deviceIdFragment: $devicedeviceIdFragment, removeGroups: [$groupName]) {
 		device {
@@ -925,22 +952,31 @@ mutation UnassignDeviceGroup ($devicedeviceIdFragment: String!, $groupName: ID!)
 		}
 	}
 }
-`,
+`
+
+func UnassignDeviceGroup(
+	client_ graphql.Client,
+	devicedeviceIdFragment string,
+	groupName string,
+) (*UnassignDeviceGroupResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "UnassignDeviceGroup",
+		Query:  UnassignDeviceGroup_Operation,
 		Variables: &__UnassignDeviceGroupInput{
 			DevicedeviceIdFragment: devicedeviceIdFragment,
 			GroupName:              groupName,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data UnassignDeviceGroupResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ UnassignDeviceGroupResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
+	err_ = client_.MakeRequest(
 		nil,
-		req,
-		resp,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }

@@ -7,7 +7,7 @@ mutation ObtainToken($username: String!, $password: String!) {
     token
     payload
     refreshExpiresIn
-  },
+  }
 }
 
 mutation RefreshToken($token: String!) {
@@ -56,7 +56,10 @@ mutation RemoveDevice($deviceId: ID!) {
 }
 
 mutation AssignDeviceGroup($devicedeviceIdFragment: String!, $groupName: ID!) {
-  updateDevice(deviceIdFragment: $devicedeviceIdFragment, addGroups: [$groupName]) {
+  updateDevice(
+    deviceIdFragment: $devicedeviceIdFragment
+    addGroups: [$groupName]
+  ) {
     device {
       deviceId
       name
@@ -68,8 +71,14 @@ mutation AssignDeviceGroup($devicedeviceIdFragment: String!, $groupName: ID!) {
   }
 }
 
-mutation UnassignDeviceGroup($devicedeviceIdFragment: String!, $groupName: ID!) {
-  updateDevice(deviceIdFragment: $devicedeviceIdFragment, removeGroups: [$groupName]) {
+mutation UnassignDeviceGroup(
+  $devicedeviceIdFragment: String!
+  $groupName: ID!
+) {
+  updateDevice(
+    deviceIdFragment: $devicedeviceIdFragment
+    removeGroups: [$groupName]
+  ) {
     device {
       deviceId
       name
@@ -81,7 +90,7 @@ mutation UnassignDeviceGroup($devicedeviceIdFragment: String!, $groupName: ID!) 
   }
 }
 
-query GetGroups() {
+query GetGroups {
   groups {
     id
     name
@@ -99,7 +108,7 @@ query ShowGroup($id: ID!) {
   }
 }
 
-query GetDevices() {
+query GetDevices {
   devices {
     deviceId
     name
