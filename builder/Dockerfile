@@ -2,20 +2,11 @@ FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBCONF_NONINTERACTIVE_SEEN=true
 
-# If you need to use a newer cmake version, feel free to use this snippet:
-# RUN apt-get update \
-#     && apt-get install --no-install-recommends --yes \
-#     ca-certificates \
-#     gpg \
-#     wget
-# RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor - > /usr/share/keyrings/kitware-archive-keyring.gpg && \
-#     echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' > /etc/apt/sources.list.d/kitware.list
-
 RUN apt-get update \
     && apt-get install --no-install-recommends --yes \
+    bison \
     bind9-host \
     binutils \
-    bison \
     ca-certificates \
     ccache \
     clang \
@@ -51,7 +42,8 @@ RUN apt-get update \
     tar \
     tree \
     wget \
-    xz-utils
+    xz-utils \
+    && apt-get autoremove -y
 
 RUN gem install --no-document fpm
 
@@ -85,11 +77,20 @@ RUN usermod -aG dialout builder
 # ESP-IDF calls expects python to be python3
 RUN ln -s /usr/bin/python3 /usr/bin/python
 USER 1000
-RUN git clone --recursive -b v5.2.2 https://github.com/espressif/esp-idf.git
+RUN git clone --recursive --depth 1 --shallow-submodules -b v5.2.2 https://github.com/espressif/esp-idf.git
 ENV IDF_PATH="/esp/esp-idf"
-RUN ./esp-idf/install.sh all --enable-pytest
-RUN ./esp-idf/tools/idf_tools.py install esp-clang
+ENV IDF_TOOLS_PATH="/esp/tools"
+RUN ./esp-idf/install.sh all --enable-pytest \
+    && rm -rf $IDF_TOOLS_PATH/dist
+# RUN ./esp-idf/tools/idf_tools.py install esp-clang # Introduce back when clang is fully supported
 RUN ./esp-idf/tools/idf_tools.py export
+
+# The constraint file has been downloaded and the right Python package versions installed. No need to check and
+# download this at every invocation of the container.
+ENV IDF_PYTHON_CHECK_CONSTRAINTS=no
+
+# Ccache is installed, enable it by default
+ENV IDF_CCACHE_ENABLE=1
 
 USER 0
 WORKDIR /app
