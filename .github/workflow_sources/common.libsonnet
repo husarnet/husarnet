@@ -52,6 +52,10 @@
       },
     },
 
+    // To be used only on self-hosted runners to ensure that we are using the
+    // latest builder as docker images persist between runs. Shared/dedicated
+    // GH runners reset entire environment between jobs, pulling the latest
+    // image with the docker run command in docker() function below.
     docker_pull_builder_image:: function() {
       name: 'Pull Docker builder image',
       run: 'docker pull ghcr.io/husarnet/husarnet:builder',
