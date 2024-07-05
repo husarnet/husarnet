@@ -48,6 +48,8 @@ static bool transformTmpFile(
   // This is a best effort operation, as in the worst case tmp file can stay
   std::filesystem::remove(tmpPath);
 
+  LOG_DEBUG("Transformed %s using temporary file", path.c_str());
+
   return true;
 }
 
@@ -134,6 +136,8 @@ static bool transformLockFile(
   ret = close(fd);
   LOG_NEGATIVE(ret, "Failed to close %s", path.c_str());
 
+  LOG_DEBUG("Transformed %s using lock file", path.c_str());
+
   return true;
 
 abort:
@@ -149,6 +153,8 @@ bool transformFile(
     const std::string& path,
     std::function<std::string(const std::string&)> transform)
 {
+  LOG_DEBUG("Transforming %s", path.c_str());
+
   // Simplest case - file does not exist so we can assume nobody's waiting on it
   // and do a naive write
   if(!isFile(path)) {
@@ -161,6 +167,11 @@ bool transformFile(
     return true;
   }
 
-  // This is a complex fallback method using file locks
-  return transformLockFile(path, transform);
+  // This is a complex method using file locks
+  if(transformLockFile(path, transform)) {
+    return true;
+  }
+
+  // This is the most basic method as a fallback
+  return writeFile(path, transform(readFile(path)));
 }

@@ -2,11 +2,20 @@ FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBCONF_NONINTERACTIVE_SEEN=true
 
+# If you need to use a newer cmake version, feel free to use this snippet:
+# RUN apt-get update \
+#     && apt-get install --no-install-recommends --yes \
+#     ca-certificates \
+#     gpg \
+#     wget
+# RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor - > /usr/share/keyrings/kitware-archive-keyring.gpg && \
+#     echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' > /etc/apt/sources.list.d/kitware.list
+
 RUN apt-get update \
     && apt-get install --no-install-recommends --yes \
-    bison \
     bind9-host \
     binutils \
+    bison \
     ca-certificates \
     ccache \
     clang \

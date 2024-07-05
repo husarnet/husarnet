@@ -1,4 +1,4 @@
-name: husarnet # you probably want to 'snapcraft register <name>'
+name: husarnet
 version: "2.0.267"
 summary: Peer-to-Peer VPN to connect your computers and microcontrollers
 description: |
@@ -8,8 +8,8 @@ description: |
   It creates a globe-wide IPv6 network, where addresses are based on your public keys, and access is configured with 1:1 ACLs.
   You can even share access to your devices with your coworkers with zero configuration on the host itself.
 
-grade: stable # stable/devel
-confinement: strict # strict/devmode
+grade: stable
+confinement: strict
 base: core22
 
 contact: support@husarnet.com

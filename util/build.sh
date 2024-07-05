@@ -17,7 +17,7 @@ architecture=${2:-amd64}
 build_type=${3:-nightly}
 
 # Linux
-if [ "$platform" == "all" ] || [ "$platform" == "linux" ] || [ "$platform" == "docker" ]; then
+if [ "$platform" == "all" ] || [ "$platform" == "linux" ] || [ "$platform" == "docker" ] || [ "$platform" == "snap" ]; then
     docker_builder /app/platforms/linux/build.sh ${architecture} ${build_type}
 fi
 

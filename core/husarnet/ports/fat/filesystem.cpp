@@ -41,6 +41,8 @@ __attribute__((weak)) bool writeFile(
   }
 
   f << data;
+
+  LOG_DEBUG("Written to file %s directly", path.c_str());
   return true;
 }
 
@@ -48,6 +50,8 @@ __attribute__((weak)) bool transformFile(
     const std::string& path,
     std::function<std::string(const std::string&)> transform)
 {
+  LOG_DEBUG("Naively transforming %s", path.c_str());
+
   if(!isFile(path)) {
     LOG_ERROR("file %s does not exist", path.c_str());
     return false;
