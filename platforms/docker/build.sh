@@ -21,11 +21,11 @@ pushd ${base_dir}
 
 echo "[HUSARNET BS] Building docker image for ${arch}"
 
-docker_builder /app/platforms/linux/build.sh ${arch} $build_type
+echo "[HUSARNET BS] NOT building the binaries itself. Use './util/build.sh docker' for full workflow"
 
-docker build --build-arg HUSARNET_ARCH=${arch} --tag husarnet:dev --file platforms/docker/Dockerfile .
+docker build --build-arg HUSARNET_ARCH=${arch} --tag husarnet:dev --tag husarnet/husarnet-nightly:dev --file platforms/docker/Dockerfile .
 
 echo "In order to start the container run:"
-echo 'docker run --privileged --rm -it --env "HUSARNET_JOIN_CODE=your-joincode" husarnet:dev'
+echo 'docker run --privileged --rm -it --env "HUSARNET_JOIN_CODE=your-joincode" husarnet/husarnet-nightly:dev'
 
 popd
