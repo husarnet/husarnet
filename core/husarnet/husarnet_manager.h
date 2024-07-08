@@ -54,18 +54,9 @@ class HusarnetManager {
 
   std::vector<std::thread*> threadpool;
 
-  bool stage1Started = false;
-  bool stage2Started = false;
-  bool stage3Started = false;
   bool dirty = false;
 
   bool dummyMode = false;
-
-  void getLicenseStage();
-  void getIdentityStage();
-  void startNetworkingStack();
-  void startWebsetup();
-  void startHTTPServer();
 
  public:
   HusarnetManager();
@@ -154,11 +145,8 @@ class HusarnetManager {
 
   void cleanup();
 
-  void stage1();  // Start privileged interface and config storage so user code
-                  // (on platforms like ESP32) can modify settings
-  void stage2();  // Read identity, obtain license, etc. Changing user settings
-                  // is not allowed after this step
-  void stage3();  // Actually connect to the network
-  void stage4();  // Act on config overrides (i.e. environment variables)
+  void prepareHusarnet();  // Initialize most of the necessary dependencies but
+                           // do not start them yet. You should now be able to
+                           // modify configuration
   void runHusarnet();
 };

@@ -16,7 +16,7 @@ void husarnetTask(void* manager)
 {
   // Init config and logging only to allow configuration before joining the
   // network
-  ((HusarnetManager*)manager)->stage1();
+  ((HusarnetManager*)manager)->prepareHusarnet();
 
   // Wait for setup to be done
   ulTaskNotifyTake(pdTRUE, portMAX_DELAY);

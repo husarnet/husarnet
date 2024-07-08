@@ -18,7 +18,9 @@ int main(int argc, const char* argv[])
 {
   if(argc == 1) {
     auto* manager = new HusarnetManager();
+    manager->prepareHusarnet();
     manager->runHusarnet();
+
     return 0;  // this will technically never happen as runHusarnet is blocking
                // but it looks cleaner
   }

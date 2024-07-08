@@ -425,16 +425,51 @@ void HusarnetManager::enterDummyMode()
   this->dummyMode = true;
 }
 
-void HusarnetManager::getLicenseStage()
+void HusarnetManager::prepareHusarnet()
 {
+  // Initialize config
+  configStorage = new ConfigStorage(
+      this, Port::readConfig, Port::writeConfig, userDefaults,
+      Port::getEnvironmentOverrides(), internalDefaults);
+
+  // Check whether hooks were enabled and initialize them if so
+  if(configStorage->getUserSettingBool(UserSetting::enableHooks)) {
+    this->hooksManager = new HooksManager(this);
+  }
+
+  // This checks whether the dashboard URL was recently changed using an
+  // environment variable and makes sure it's saved to a persistent storage (as
+  // other values like websetup secret) depend on it.
+  // This may be used i.e. in Docker container setup.
+  if(configStorage->isUserSettingOverriden(UserSetting::dashboardFqdn)) {
+    configStorage->persistUserSettingOverride(UserSetting::dashboardFqdn);
+  }
+
+  // Initialize logging and print some essential debugging information
+  globalLogLevel = getVerbosity();
+
+  LOG_INFO("Running %s", getUserAgent().c_str());
+  LOG_DEBUG("Running a nightly/debugging build");  // This macro has all the
+                                                   // logic for not printing if
+                                                   // not a debug build
+
+  configStorage->printSettings();
+
+  // At this point we have working settings/configuration and logs
+
+  // Make our PeerFlags available early if the caller wants to change them
+  selfFlags = new PeerFlags();
+}
+
+void HusarnetManager::runHusarnet()
+{
+  // Get the license (download or use cached)
   this->getHooksManager()->withRw([&]() {
     license =
         new License(configStorage->getUserSetting(UserSetting::dashboardFqdn));
   });
-}
 
-void HusarnetManager::getIdentityStage()
-{
+  // Prepare identity (create a new one if not available)
   auto identityStr = Port::readIdentity();
   bool invalidIdentity = false;
 
@@ -454,10 +489,9 @@ void HusarnetManager::getIdentityStage()
       Port::writeIdentity(identity.serialize());
     });
   }
-}
 
-void HusarnetManager::startNetworkingStack()
-{
+  // Initialize the networking stack (peer container, tun/tap and various
+  // ngsocket layers)
   peerContainer = new PeerContainer(this);
 
   auto tunTap = Port::startTunTap(this);
@@ -472,96 +506,19 @@ void HusarnetManager::startNetworkingStack()
   stackUpperOnLower(multicast, compression);
   stackUpperOnLower(compression, securityLayer);
   stackUpperOnLower(securityLayer, ngsocket);
-}
 
-void HusarnetManager::startWebsetup()
-{
+  // Initialize websetup
   websetup = new WebsetupConnection(this);
   websetup->start();
-}
-
-void HusarnetManager::startHTTPServer()
-{
-#ifdef HTTP_CONTROL_API
-  auto proxy = new DashboardApiProxy(this);
-  auto server = new ApiServer(this, proxy);
-
-  threadpool.push_back(new std::thread([=]() { server->runThread(); }));
-  server->waitStarted();
-#endif
-}
-
-void HusarnetManager::stage1()
-{
-  if(stage1Started) {
-    return;
-  }
-
-  // At this point we have a working privileged interface
-
-  configStorage = new ConfigStorage(
-      this, Port::readConfig, Port::writeConfig, userDefaults,
-      Port::getEnvironmentOverrides(), internalDefaults);
-
-  if(configStorage->getUserSettingBool(UserSetting::enableHooks)) {
-    this->hooksManager = new HooksManager(this);
-  }
-
-  // This checks whether the dashboard URL was recently changed using an
-  // environment variable and makes sure it's saved to a persistent storage (as
-  // other values like websetup secret) depend on it.
-  // This may be used i.e. in Docker container setup.
-  if(configStorage->isUserSettingOverriden(UserSetting::dashboardFqdn)) {
-    configStorage->persistUserSettingOverride(UserSetting::dashboardFqdn);
-  }
-
-  globalLogLevel = getVerbosity();
-
-  LOG_INFO("Running %s", getUserAgent().c_str());
-  LOG_DEBUG(
-      "Running a nightly/debugging build");  // This macro has all the logic for
-                                             // detecting build type internally
-  configStorage->printSettings();
-
-  // At this point we have working settings/configuration and logs
-
-  selfFlags = new PeerFlags();
-
-  stage1Started = true;
-}
-
-void HusarnetManager::stage2()
-{
-  if(stage2Started) {
-    return;
-  }
-
-  getLicenseStage();
-  getIdentityStage();
-
-  stage2Started = true;
-}
-
-void HusarnetManager::stage3()
-{
-  if(stage3Started) {
-    return;
-  }
-
-  startNetworkingStack();
-  startWebsetup();
-  startHTTPServer();
 
   whitelistAdd(getWebsetupAddress());
 
-  // TODO move this to websetup
+  // TODO move this to websetup/dashboard
   this->hostTableAdd("husarnet-local", this->getSelfAddress());
 
-  stage3Started = true;
-}
-
-void HusarnetManager::stage4()
-{
+  // If user provided a joincode via environment variables - now's the point to
+  // use it Note: this case is different from the dashboard URL one as we do not
+  // save it to a persistent storage
   if(configStorage->isUserSettingOverriden(UserSetting::joinCode)) {
     if(configStorage->isUserSettingOverriden(UserSetting::hostname)) {
       joinNetwork(
@@ -572,22 +529,19 @@ void HusarnetManager::stage4()
     }
   }
 
-  this->hostTableAdd("husarnet-local", this->getSelfAddress());
+// In case of a "fat" platform - start the API server
+#ifdef HTTP_CONTROL_API
+  auto proxy = new DashboardApiProxy(this);
+  auto server = new ApiServer(this, proxy);
 
-  startHTTPServer();
+  threadpool.push_back(new std::thread([=]() { server->runThread(); }));
+  server->waitStarted();
+#endif
 
-  stage3Started = true;
-}
-
-void HusarnetManager::runHusarnet()
-{
-  stage1();
-  stage2();
-  stage3();
-  stage4();
-
+  // Now we're pretty much good to go
   Port::notifyReady();
 
+  // This is an actual event loop
   while(true) {
     ngsocket->periodic();
     Port::processSocketEvents(this);
