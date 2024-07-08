@@ -1,0 +1,48 @@
+services:
+  iperf-server:
+    image: networkstatic/iperf3:latest
+    restart: unless-stopped
+
+    command: -s
+
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+
+  husarnet-server:
+    image: husarnet/husarnet-nightly:${HUSARNET_VERSION}
+    restart: unless-stopped
+
+    volumes:
+      - ./husarnet-server:/var/lib/husarnet
+
+    cap_add:
+      - NET_ADMIN
+
+    environment:
+      - HUSARNET_DEBUG=1
+
+    network_mode: service:iperf-server
+
+  iperf-client:
+    image: networkstatic/iperf3:latest
+    restart: unless-stopped
+
+    entrypoint: sleep infinity
+
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+
+  husarnet-client:
+    image: husarnet/husarnet-nightly:${HUSARNET_VERSION}
+    restart: unless-stopped
+
+    volumes:
+      - ./husarnet-client:/var/lib/husarnet
+
+    cap_add:
+      - NET_ADMIN
+
+    environment:
+      - HUSARNET_DEBUG=1
+
+    network_mode: service:iperf-client
