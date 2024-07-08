@@ -306,10 +306,10 @@ namespace Port {
   __attribute__((weak)) std::string getSelfHostname()
   {
 #ifndef PORT_WINDOWS
-    auto hostname = rtrim(readFile(hostnamePath));
+    auto hostname = readFile(hostnamePath);
 
-    if(!hostname.empty())
-      return hostname;
+    if(hostname.has_value())
+      return hostname.value();
 
     // On some platforms (i.e. OpenWRT) the hostname file does not exist
     LOG_WARNING(
@@ -457,11 +457,7 @@ namespace Port {
 
   __attribute__((weak)) std::string readLicenseJson()
   {
-    if(!isFile(licenseJsonPath)) {
-      return "{}";
-    }
-
-    return readFile(licenseJsonPath);
+    return readFile(licenseJsonPath).value_or("{}");
   }
 
   __attribute__((weak)) bool writeLicenseJson(const std::string& data)
@@ -471,11 +467,7 @@ namespace Port {
 
   __attribute__((weak)) std::string readConfig()
   {
-    if(!isFile(configPath)) {
-      return "";
-    }
-
-    return readFile(configPath);
+    return readFile(configPath).value_or("");
   }
 
   __attribute__((weak)) bool writeConfig(const std::string& data)
@@ -485,11 +477,7 @@ namespace Port {
 
   __attribute__((weak)) std::string readIdentity()
   {
-    if(!isFile(identityPath)) {
-      return "";
-    }
-
-    return readFile(identityPath);
+    return readFile(identityPath).value_or("");
   }
 
   __attribute__((weak)) bool writeIdentity(const std::string& identity)
@@ -499,11 +487,7 @@ namespace Port {
 
   __attribute__((weak)) std::string readApiSecret()
   {
-    if(!isFile(apiSecretPath)) {
-      return "";
-    }
-
-    return readFile(apiSecretPath);
+    return readFile(apiSecretPath).value_or("");
   }
 
   __attribute__((weak)) bool writeApiSecret(const std::string& secret)

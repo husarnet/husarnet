@@ -27,8 +27,14 @@ static bool transformTmpFile(
 
   // We assume other writers as as nice as we are and won't leave this file
   // mid-written for a single read operation
-  std::string oldContent = readFile(path);
-  std::string newContent = transform(oldContent);
+  auto oldContent = readFile(path);
+
+  if(!oldContent) {
+    LOG_DEBUG("Failed to read %s", path.c_str());
+    return false;
+  }
+
+  std::string newContent = transform(oldContent.value());
 
   // We assume that there's no traffic on a temporary file
   if(!writeFile(tmpPath, newContent)) {
@@ -172,6 +178,11 @@ bool transformFile(
     return true;
   }
 
+  auto contents = readFile(path);
+  if(!contents) {
+    return false;
+  }
+
   // This is the most basic method as a fallback
-  return writeFile(path, transform(readFile(path)));
+  return writeFile(path, transform(contents.value()));
 }
