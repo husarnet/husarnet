@@ -4,8 +4,7 @@
 # License: specified in project_root/LICENSE.txt
 source $(dirname "$0")/../../util/bash-base.sh
 
-# get version from first argument, fallback to some :dev, write a usage if not provided
-if [ -z "$1" ]; then
+if [ $# -ne 1 ]; then
     echo "Usage: $0 <husarnet_version>"
     echo "Use 'dev' for **local** version"
     echo "Use 'latest' for **remote** version"
