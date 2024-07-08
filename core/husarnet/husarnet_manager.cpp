@@ -77,7 +77,7 @@ PeerFlags* HusarnetManager::getSelfFlags()
 
 std::string HusarnetManager::getSelfHostname()
 {
-  return Port::getSelfHostname();
+  return rtrim(Port::getSelfHostname());
 }
 
 void HusarnetManager::setConfigStorage(ConfigStorage* cs)
