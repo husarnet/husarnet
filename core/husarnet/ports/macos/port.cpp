@@ -166,7 +166,7 @@ namespace Port {
           "macos-device");
       return "macos-device";
     }
-    return readFile(hostnamePath).value_or("macos");
+    return rtrim(readFile(hostnamePath).value_or("macos"));
   }
 
   bool setSelfHostname(const std::string& newHostname)

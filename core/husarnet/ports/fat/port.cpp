@@ -309,7 +309,7 @@ namespace Port {
     auto hostname = readFile(hostnamePath);
 
     if(hostname.has_value())
-      return hostname.value();
+      return rtrim(hostname.value());
 
     // On some platforms (i.e. OpenWRT) the hostname file does not exist
     LOG_WARNING(
@@ -467,7 +467,7 @@ namespace Port {
 
   __attribute__((weak)) std::string readConfig()
   {
-    return readFile(configPath).value_or("");
+    return readFile(configPath).value_or("{}");
   }
 
   __attribute__((weak)) bool writeConfig(const std::string& data)

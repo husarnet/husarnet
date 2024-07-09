@@ -29,7 +29,7 @@ static bool transformTmpFile(
   // mid-written for a single read operation
   auto oldContent = readFile(path);
 
-  if(!oldContent) {
+  if(!oldContent.has_value()) {
     LOG_DEBUG("Failed to read %s", path.c_str());
     return false;
   }
@@ -179,7 +179,7 @@ bool transformFile(
   }
 
   auto contents = readFile(path);
-  if(!contents) {
+  if(!contents.has_value()) {
     return false;
   }
 
