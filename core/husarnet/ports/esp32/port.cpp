@@ -119,13 +119,44 @@ namespace Port {
   void init()
   {
     esp_err_t err;
+
     nvsHandle = nvs::open_nvs_handle("husarnet", NVS_READWRITE, &err);
 
+    // If NVS is not initialized, try to initialize it
+    if(err == ESP_ERR_NVS_NOT_INITIALIZED) {
+      err = nvs_flash_init();
+
+      // NVS partition was truncated and needs to be erased
+      // Erase and retry init
+      if(err == ESP_ERR_NVS_NO_FREE_PAGES ||
+         err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        err = nvs_flash_erase();
+        if(err != ESP_OK) {
+          LOG_CRITICAL(
+              "Unable to erase NVS. (Error: %s)", esp_err_to_name(err));
+          abort();
+        }
+
+        err = nvs_flash_init();
+        if(err != ESP_OK) {
+          LOG_CRITICAL(
+              "Unable to reinitialize NVS. (Error: %s)", esp_err_to_name(err));
+          abort();
+        }
+      }
+
+      else if(err != ESP_OK) {
+        LOG_CRITICAL(
+            "Unable to initialize NVS. (Error: %s)", esp_err_to_name(err));
+        abort();
+      }
+
+      nvsHandle = nvs::open_nvs_handle("husarnet", NVS_READWRITE, &err);
+    }
+
     if(err != ESP_OK) {
-      LOG_ERROR(
-          "Unable to open NVS. This will result in corrupted "
-          "operations! (Error: %s)",
-          esp_err_to_name(err));
+      LOG_ERROR("Unable to open NVS. (Error: %s)", esp_err_to_name(err));
+      abort();
     }
 
     notifyReadySemaphore = xSemaphoreCreateBinary();
