@@ -124,12 +124,14 @@ namespace Port {
 
     // If NVS is not initialized, try to initialize it
     if(err == ESP_ERR_NVS_NOT_INITIALIZED) {
+      LOG_INFO("NVS not initialized. Initializing...");
       err = nvs_flash_init();
 
       // NVS partition was truncated and needs to be erased
       // Erase and retry init
       if(err == ESP_ERR_NVS_NO_FREE_PAGES ||
          err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        LOG_INFO("Erasing NVS partition...");
         err = nvs_flash_erase();
         if(err != ESP_OK) {
           LOG_CRITICAL(
