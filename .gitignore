@@ -36,6 +36,7 @@ compile_commands.json
 # ESP32 testing
 
 platforms/esp32/pytest_embedded_log/
+platforms/esp32/pytest-embedded/
 platforms/esp32/__pychache__/
 platforms/esp32/.pytest_cache/
 platforms/esp32/test.log

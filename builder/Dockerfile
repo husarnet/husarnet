@@ -82,7 +82,7 @@ USER 1000
 RUN git clone --recursive --depth 1 --shallow-submodules -b v5.3 https://github.com/espressif/esp-idf.git
 ENV IDF_PATH="/esp/esp-idf"
 ENV IDF_TOOLS_PATH="/esp/tools"
-RUN ./esp-idf/install.sh all --enable-pytest \
+RUN ./esp-idf/install.sh all --enable-pytest --enable-ci \
     && rm -rf $IDF_TOOLS_PATH/dist
 # RUN ./esp-idf/tools/idf_tools.py install esp-clang # Introduce back when clang is fully supported
 RUN ./esp-idf/tools/idf_tools.py export
