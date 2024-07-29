@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 set(CMAKE_SYSTEM_PROCESSOR "${TARGET}")
 
-set(EXTRA_COMPONENT_DIRS 
-  $ENV{IDF_PATH}/examples/common_components/iperf
+set(EXTRA_COMPONENT_DIRS
   $ENV{IDF_PATH}/tools/unit-test-app/components
 )
 
