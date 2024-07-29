@@ -15,6 +15,7 @@ base: core22
 contact: support@husarnet.com
 issues: https://community.husarnet.com/
 website: https://husarnet.com/
+source-code: https://github.com/husarnet/husarnet
 
 architectures:
   - build-on: amd64
