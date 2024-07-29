@@ -13,7 +13,7 @@ confinement: strict
 base: core22
 
 contact: support@husarnet.com
-issues: https://github.com/husarnet/husarnet/issues
+issues: https://community.husarnet.com/
 website: https://husarnet.com/
 
 architectures:
