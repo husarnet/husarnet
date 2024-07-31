@@ -268,9 +268,20 @@ bool HusarnetManager::isRealAddressAllowed(InetAddress addr)
 
 LogLevel HusarnetManager::getVerbosity()
 {
-  return LogLevel::_from_integral_nothrow(
-             configStorage->getUserSettingInt(UserSetting::logVerbosity))
-      .value();
+  auto rawValue = configStorage->getUserSettingInt(UserSetting::logVerbosity);
+  auto level = LogLevel::_from_integral_nothrow(rawValue);
+
+  // Known and reasonable level
+  if(level) {
+    return level.value();
+  }
+  // Unknown and negative level
+  if(rawValue < 0) {
+    return LogLevel::NONE;
+  }
+
+  // Unknown and large integer (more than 5-ish :D)
+  return LogLevel::DEBUG;
 }
 
 void HusarnetManager::setVerbosity(LogLevel level)
