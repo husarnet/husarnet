@@ -135,6 +135,7 @@ class HusarnetManager {
   IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
   std::vector<IpAddress> getDashboardApiAddresses();
+  std::vector<IpAddress> getEbAddresses();
 
   NgSocket* getNGSocket();
   SecurityLayer* getSecurityLayer();

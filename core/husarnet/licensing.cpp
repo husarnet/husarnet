@@ -96,6 +96,7 @@ const int PUBLIC_KEY_COUNT = sizeof(PUBLIC_KEY) / sizeof(PUBLIC_KEY[0]);
 #define LICENSE_ISSUED_KEY "issued"
 #define LICENSE_VALID_UNTIL_KEY "valid_until"
 #define LICENSE_API_SERVERS_KEY "api_servers"
+#define LICENSE_EB_SERVERS_KEY "eb_servers"
 #define LICENSE_SIGNATURE_KEY "signature"
 #define LICENSE_SIGNATURE_V2_KEY "signature_v2"
 
@@ -117,6 +118,11 @@ static std::string getSignatureData(const json licenseJson)
   s[s.size() - 1] = '\n';  // remove the last comma
   if(hasApiServers) {
     for(auto address : licenseJson[LICENSE_API_SERVERS_KEY]) {
+      s.append(address.get<std::string>() + ",");
+    }
+    s[s.size() - 1] = '\n';
+
+    for(auto address : licenseJson[LICENSE_EB_SERVERS_KEY]) {
       s.append(address.get<std::string>() + ",");
     }
     s[s.size() - 1] = '\n';
@@ -197,6 +203,10 @@ License::License(std::string dashboardHostname)
       this->dashboardApiAddresses.emplace_back(
           IpAddress::parse(addr.get<std::string>()));
     }
+
+    for(const auto& addr : licenseJson[LICENSE_EB_SERVERS_KEY]) {
+      this->ebAddresses.emplace_back(IpAddress::parse(addr.get<std::string>()));
+    }
   }
 
   Port::writeLicenseJson(licenseJson.dump());
@@ -217,6 +227,11 @@ IpAddress License::getWebsetupAddress()
 }
 
 std::vector<IpAddress> License::getDashboardApiAddresses()
+{
+  return this->dashboardApiAddresses;
+}
+
+std::vector<IpAddress> License::getEbAddresses()
 {
   return this->dashboardApiAddresses;
 }

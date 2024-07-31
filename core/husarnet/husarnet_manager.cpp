@@ -335,6 +335,10 @@ std::vector<IpAddress> HusarnetManager::getDashboardApiAddresses()
 {
   return license->getDashboardApiAddresses();
 }
+std::vector<IpAddress> HusarnetManager::getEbAddresses()
+{
+  return license->getEbAddresses();
+}
 
 NgSocket* HusarnetManager::getNGSocket()
 {

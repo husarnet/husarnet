@@ -19,6 +19,7 @@ class License {
   IpAddress websetupAddress;
   std::vector<IpAddress> baseServerAddresses;
   std::vector<IpAddress> dashboardApiAddresses;
+  std::vector<IpAddress> ebAddresses;
 
  public:
   License(std::string dashboardHostname);
@@ -26,5 +27,6 @@ class License {
   IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
   std::vector<IpAddress> getDashboardApiAddresses();
+  std::vector<IpAddress> getEbAddresses();
   static bool validateDashboard(std::string dashboardHostname);
 };
