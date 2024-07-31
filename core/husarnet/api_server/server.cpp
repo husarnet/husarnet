@@ -104,6 +104,23 @@ bool ApiServer::requireParams(
   return true;
 }
 
+void ApiServer::forwardRequestToDashboardApi(
+    const httplib::Request& req,
+    httplib::Response& res)
+{
+  if(!validateSecret(req, res)) {
+    return;
+  }
+
+  std::string route = req.matches[1];
+  if(route.empty()) {
+    returnError(req, res, "Invalid route");
+    return;
+  }
+
+  proxy->signAndForward(req, res, "/" + route);
+}
+
 template <typename iterable_InetAddress_t>
 std::list<std::string> stringifyInetAddressList(
     const iterable_InetAddress_t& source)
@@ -209,15 +226,6 @@ void ApiServer::runThread()
 
         manager->joinNetwork(code, hostname);
         returnSuccess(req, res);
-      });
-
-  svr.Post(
-      "/api/claim", [&](const httplib::Request& req, httplib::Response& res) {
-        if(!validateSecret(req, res)) {
-          return;
-        }
-
-        proxy->signAndForward(req, res, "/device/manage/claim");
       });
 
   svr.Post(
@@ -354,6 +362,30 @@ void ApiServer::runThread()
 
         manager->hooksDisable();
         returnSuccess(req, res, getStandardReply());
+      });
+
+  svr.Get(
+      R"(/api/forward/(.*))",
+      [&](const httplib::Request& req, httplib::Response& res) {
+        forwardRequestToDashboardApi(req, res);
+      });
+
+  svr.Post(
+      R"(/api/forward/(.*))",
+      [&](const httplib::Request& req, httplib::Response& res) {
+        forwardRequestToDashboardApi(req, res);
+      });
+
+  svr.Put(
+      R"(/api/forward/(.*))",
+      [&](const httplib::Request& req, httplib::Response& res) {
+        forwardRequestToDashboardApi(req, res);
+      });
+
+  svr.Delete(
+      R"(/api/forward/(.*))",
+      [&](const httplib::Request& req, httplib::Response& res) {
+        forwardRequestToDashboardApi(req, res);
       });
 
   IpAddress bindAddress{};

@@ -10,6 +10,9 @@ void DashboardApiProxy::signAndForward(
     httplib::Response& res,
     const std::string& path)
 {
+  auto method = req.method;
+  LOG_INFO("Forwarding request %s %s", method.c_str(), path.c_str());
+
   auto identity = manager->getIdentity();
   auto dashboardApiAddresses = manager->getDashboardApiAddresses();
   if(dashboardApiAddresses.empty() || !dashboardApiAddresses[0].isFC94()) {
@@ -20,9 +23,9 @@ void DashboardApiProxy::signAndForward(
     // construct response of the same shape as Dashboard API uses
     nlohmann::json jsonResponse{
         {"type", "server_error"},
-        {"errors",
-         nlohmann::json::array({"claim request received but dashboard API "
-                                "address is not known"})},
+        {"errors", nlohmann::json::array(
+                       {"request received by the daemon, but dashboard API "
+                        "address is not known"})},
         {"warnings", nlohmann::json::array()},
         {"message", "error"}};
 
@@ -30,23 +33,33 @@ void DashboardApiProxy::signAndForward(
     return;
   }
 
+  httplib::Params params;
+  params.emplace("pk", httplib::detail::base64_encode(identity->getPubkey()));
+  params.emplace(
+      "sig", httplib::detail::base64_encode(identity->sign(req.body)));
+
+  std::string query = httplib::detail::params_to_query_str(params);
+  std::string pathWithQuery(path + "?" + query);
+
   // Note: always taking first address. Will need new logic at the point we want
   // multiple addresses support
   httplib::Client httpClient(dashboardApiAddresses[0].toString());
+  httplib::Result result;
 
-  nlohmann::json payloadJSON = nlohmann::json::parse(req.body, nullptr, false);
-  if(payloadJSON.is_discarded()) {
-    LOG_INFO("HTTP request body is not a valid JSON");
+  if(method == "GET") {
+    result = httpClient.Get(pathWithQuery);
+  } else if(method == "POST") {
+    result = httpClient.Post(pathWithQuery, req.body, "application/json");
+  } else if(method == "PUT") {
+    result = httpClient.Put(pathWithQuery, req.body, "application/json");
+  } else if(method == "DELETE") {
+    result = httpClient.Delete(pathWithQuery);
+  } else {
+    LOG_ERROR("Unsupported HTTP method: %s", method.c_str());
     return;
   }
 
-  auto pk = httplib::detail::base64_encode(identity->getPubkey());
-  auto sig = httplib::detail::base64_encode(identity->sign(req.body));
-  auto payload = httplib::detail::base64_encode(req.body);
-
-  nlohmann::json signedBody = {{"pk", pk}, {"sig", sig}, {"payload", payload}};
-  if(auto result =
-         httpClient.Post(path, signedBody.dump(), "application/json")) {
+  if(result) {
     res.set_content(
         result->body,
         "application/json");  // Dashboard API always returns valid JSON

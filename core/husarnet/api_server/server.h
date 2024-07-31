@@ -42,6 +42,9 @@ class ApiServer {
       std::string errorString);
 
   bool validateSecret(const httplib::Request& req, httplib::Response& res);
+  void forwardRequestToDashboardApi(
+      const httplib::Request& req,
+      httplib::Response& res);
 
   nlohmann::json getStandardReply();
 

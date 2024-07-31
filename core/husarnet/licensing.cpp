@@ -233,7 +233,7 @@ std::vector<IpAddress> License::getDashboardApiAddresses()
 
 std::vector<IpAddress> License::getEbAddresses()
 {
-  return this->dashboardApiAddresses;
+  return this->ebAddresses;
 }
 
 std::vector<IpAddress> License::getBaseServerAddresses()
