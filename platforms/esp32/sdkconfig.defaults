@@ -1,10 +1,6 @@
 # Husarnet config
 CONFIG_LWIP_HOOK_IP6_ROUTE_DEFAULT=y
-# This setting ensures that LWIP_ESP_NETIF_DATA is defined and the ESP-NETIF
-# interface structure is not expected in the netif->state field used in the
-# Husarnet TUN adapter to hold internal state.
-# See: https://github.com/espressif/esp-idf/blob/release/v5.3/components/lwip/port/include/lwipopts.h#L738
-CONFIG_LWIP_PPP_SUPPORT=y
+CONFIG_LWIP_CHECK_THREAD_SAFETY=y
 CONFIG_EXAMPLE_CONNECT_IPV6=n
 CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
 CONFIG_HUSARNET_LOG_LEVEL_INFO=y

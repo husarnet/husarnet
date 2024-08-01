@@ -41,6 +41,7 @@
 #include "enum.h"
 #include "esp_log.h"
 #include "esp_system.h"
+#include "esp_netif.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "lwip/dns.h"
@@ -241,46 +242,64 @@ namespace Port {
     return IpAddress();
   }
 
-  std::vector<IpAddress> getLocalAddresses()
-  {
-    std::vector<IpAddress> ret;
-    netif* netif;
+  extern "C" {
+    // Internal wrapper function called from the TCPIP context.
+    // See Port::getLocalAddresses().
+    static esp_err_t _getLocalAddressesTcpipFunc(void* ctx)
+    {
+      std::vector<IpAddress>* result = static_cast<std::vector<IpAddress>*>(ctx);
+      struct netif* netif;
 
-    for(u8_t idx = 1; (netif = netif_get_by_index(idx)) != NULL; idx++) {
-      char buf[IP6ADDR_STRLEN_MAX];
-      const ip6_addr_t* ipv6;
-      // Iterate over all IPv6 addresses and validate them
-      for(int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-        ipv6 = netif_ip6_addr(netif, i);
-        if(ipv6 == NULL) {
+      for(u8_t idx = 1; (netif = netif_get_by_index(idx)) != NULL; idx++) {
+        char buf[IP6ADDR_STRLEN_MAX];
+        const ip6_addr_t* ipv6;
+        // Iterate over all IPv6 addresses and validate them
+        for(int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+          ipv6 = netif_ip6_addr(netif, i);
+          if(ipv6 == NULL) {
+            continue;
+          }
+
+          if(ip6_addr_isany(ipv6) || ip6_addr_isloopback(ipv6)) {
+            continue;
+          }
+
+          // Append to valid addresses
+          ip6addr_ntoa_r(ipv6, buf, IP6ADDR_STRLEN_MAX);
+          LOG_DEBUG("netif: %s, ip6: %s", netif->name, buf);
+          result->push_back(IpAddress::fromBinary(buf));
+        }
+
+        // LwIP can have only one IPv4 address per interface
+        // Validate address
+        const ip4_addr_t* ipv4 = netif_ip4_addr(netif);
+        if(ipv4 == NULL) {
           continue;
         }
 
-        if(ip6_addr_isany(ipv6) || ip6_addr_isloopback(ipv6)) {
+        if(ip4_addr_isany(ipv4) || ip4_addr_isloopback(ipv4)) {
           continue;
         }
 
         // Append to valid addresses
-        ip6addr_ntoa_r(ipv6, buf, IP6ADDR_STRLEN_MAX);
-        LOG_DEBUG("netif: %s, ip6: %s", netif->name, buf);
-        ret.push_back(IpAddress::fromBinary(buf));
+        ip4addr_ntoa_r(ipv4, buf, IP4ADDR_STRLEN_MAX);
+        LOG_DEBUG("netif: %s, ip4: %s", netif->name, buf);
+        result->push_back(IpAddress::fromBinary4(buf));
       }
 
-      // LwIP can have only one IPv4 address per interface
-      // Validate address
-      const ip4_addr_t* ipv4 = netif_ip4_addr(netif);
-      if(ipv4 == NULL) {
-        continue;
-      }
+      return ESP_OK;
+    }
+  }
 
-      if(ip4_addr_isany(ipv4) || ip4_addr_isloopback(ipv4)) {
-        continue;
-      }
+  std::vector<IpAddress> getLocalAddresses()
+  {
+    std::vector<IpAddress> ret;
 
-      // Append to valid addresses
-      ip4addr_ntoa_r(ipv4, buf, IP4ADDR_STRLEN_MAX);
-      LOG_DEBUG("netif: %s, ip4: %s", netif->name, buf);
-      ret.push_back(IpAddress::fromBinary4(buf));
+    // LwIP calls must be performed from the TCPIP context
+    esp_err_t res = esp_netif_tcpip_exec(_getLocalAddressesTcpipFunc, &ret);
+
+    if (res != ESP_OK) {
+      LOG_ERROR("Failed to get local addresses");
     }
 
     return ret;

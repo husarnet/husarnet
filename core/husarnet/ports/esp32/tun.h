@@ -18,7 +18,7 @@ class TunTap : public UpperLayer {
  private:
   void close();
   ip6_addr_t ipAddr;
-  struct raw_pcb* pcb;
+  struct netconn* conn;
 
  public:
   QueueHandle_t tunTapMsgQueue;
