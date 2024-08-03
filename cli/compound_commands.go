@@ -4,45 +4,79 @@
 package main
 
 import (
-	"net/url"
-
+	"encoding/json"
+	"fmt"
 	"github.com/urfave/cli/v2"
+	"strings"
 )
 
-var joinCommand = &cli.Command{
-	Name:      "join",
-	Usage:     "Connect to Husarnet group with given join code and with specified hostname",
-	ArgsUsage: "[join code] [device name]",
+type ClaimParams struct {
+	ClaimToken string   `json:"token" binding:"required"`
+	Hostname   string   `json:"hostname,omitempty"`
+	Aliases    []string `json:"aliases,omitempty"`
+	Comment    string   `json:"comment,omitempty"`
+	Emoji      string   `json:"emoji,omitempty"`
+}
+
+var claimCommand = &cli.Command{
+	Name:      "claim",
+	Usage:     "Assign the device to your Husarnet Dashboard account",
+	ArgsUsage: "token",
+	Aliases:   []string{"join"},
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "hostname",
+			Value: getOwnHostname(),
+			Usage: "how you want the device identified in the dashboard. If not provided, will use the hostname as reported by the operating system",
+		},
+		&cli.StringFlag{
+			Name:  "comment",
+			Usage: "you can add optional comment to the device",
+		},
+		&cli.StringFlag{
+			Name:  "emoji",
+			Usage: "you can add optional emoji to identify the device in the frontend",
+		},
+		&cli.StringSliceFlag{
+			Name:  "alias",
+			Usage: "you can add optional aliases (additional hostnames) you can identify this device with",
+		},
+	},
 	Action: func(ctx *cli.Context) error {
-		requiredArgumentsRange(ctx, 0, 2)
+		minimumArguments(ctx, 1)
+		args := ctx.Args().Slice()
+		token := args[0]
 
-		var joinCode, hostname string
+		if strings.HasPrefix(token, "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a/") {
+			die("Provided claim token is old join code format, which is discontinued. Go to dashboard.husarnet.com to obtain a new one.")
+		}
 
-		if ctx.Args().Len() >= 1 {
-			if isJoinCode(ctx.Args().Get(0)) {
-				joinCode = ctx.Args().Get(0)
-			} else {
-				joinCode = getGroupByName(ctx.Args().Get(0)).JoinCode
+		params := ClaimParams{
+			ClaimToken: args[0],
+			Hostname:   ctx.String("hostname"),
+			Aliases:    ctx.StringSlice("alias"),
+			Comment:    ctx.String("comment"),
+			Emoji:      ctx.String("emoji"),
+		}
+
+		jsonBytes, err := json.Marshal(params)
+		if err != nil {
+			dieE(err)
+		}
+		fmt.Println(string(jsonBytes))
+		resp := callDashboardApiWithInput[ClaimParams, any]("POST", "/device/manage/claim", params)
+		if resp.Type == "success" {
+			printSuccess("Claim request was successful")
+			if len(resp.Warnings) > 0 {
+				for _, warning := range resp.Warnings {
+					printWarning(warning)
+				}
 			}
 		} else {
-			joinCode = interactiveGetGroupByName().JoinCode
+			printError("API request failed. Message: %s", resp.Errors[0])
 		}
 
-		if ctx.Args().Len() >= 2 {
-			hostname = ctx.Args().Get(1)
-		} else {
-			hostname = ""
-		}
-
-		callDaemonPost[EmptyResult]("/api/join", url.Values{
-			"code":     {joinCode},
-			"hostname": {hostname},
-		})
-
-		printSuccess("Successfully registered a join request")
-		waitBaseANY()
-		waitWebsetup()
-		waitJoined()
+		// TODO: optionally add waits, as in the old code
 
 		return nil
 	},

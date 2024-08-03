@@ -170,7 +170,7 @@ func isJoinCode(candidate string) bool {
 }
 
 // parses an IP v4/v6 address and returns it as a string in a full format
-func makeCannonicalAddr(input string) string {
+func makeCanonicalAddr(input string) string {
 	addr, err := netip.ParseAddr(input)
 	if err != nil {
 		dieE(err)
@@ -222,4 +222,13 @@ func replaceLastOccurrence(search string, replacement string, subject string) st
 		return newStr
 	}
 	return subject
+}
+
+func getOwnHostname() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		printWarning("was unable to determine the hostname of the machine")
+		return "unnamed-device"
+	}
+	return hostname
 }

@@ -112,6 +112,11 @@ func getDaemonApiSecretPath() string {
 }
 
 func addDaemonApiSecret(params *url.Values) {
+	if len(secret) > 0 {
+		params.Add("secret", secret)
+		return
+	}
+
 	apiSecret, err := os.ReadFile(getDaemonApiSecretPath())
 	if err != nil {
 		printError("Error reading secret file, are you root/administrator? " + err.Error())
@@ -147,7 +152,7 @@ func handlePotentialDaemonApiRequestError[ResultType any](response DaemonRespons
 	}
 }
 
-func readResponse[ResultType any](resp *http.Response) DaemonResponse[ResultType] {
+func readResponse[ResponseType any](resp *http.Response) ResponseType {
 	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
@@ -156,12 +161,11 @@ func readResponse[ResultType any](resp *http.Response) DaemonResponse[ResultType
 
 	printDebug(string(body))
 
-	var response DaemonResponse[ResultType]
-	err = json.Unmarshal([]byte(body), &response)
+	var response ResponseType
+	err = json.Unmarshal(body, &response)
 	if err != nil {
 		dieE(err)
 	}
-
 	return response
 }
 
@@ -189,7 +193,7 @@ func callDaemonGetRaw[ResultType any](retryable bool, route string) (DaemonRespo
 			return DaemonResponse[ResultType]{}, err
 		}
 
-		return readResponse[ResultType](response), nil
+		return readResponse[DaemonResponse[ResultType]](response), nil
 	})
 }
 
@@ -207,7 +211,7 @@ func callDaemonPostRaw[ResultType any](retryable bool, route string, urlencodedB
 			return DaemonResponse[ResultType]{}, err
 		}
 
-		return readResponse[ResultType](response), nil
+		return readResponse[DaemonResponse[ResultType]](response), nil
 	})
 }
 

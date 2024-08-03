@@ -6,13 +6,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"syscall"
 	"time"
 
 	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/term"
 )
 
 var redFormatter = pterm.Red
@@ -135,11 +133,6 @@ func minimumArguments(ctx *cli.Context, lower int) {
 	}
 }
 
-// Print not implemented yet warning
-func notImplementedYet() {
-	printError("Not implemented yet")
-}
-
 // Print a success message
 func printSuccess(format string, args ...interface{}) {
 	pterm.Success.Printfln(format, args...)
@@ -188,35 +181,6 @@ func dieEmpty() {
 	os.Exit(1)
 }
 
-// Prompts user for username and password and returns them. Password is not visible while typing
-func getUserCredentialsFromStandardInput() (string, string) {
-	printParagraph(credentialsPrompt)
-	input := pterm.DefaultInteractiveTextInput
-
-	pterm.Println()
-	username, err := input.WithMultiLine(false).Show("Username")
-	if err != nil {
-		dieE(err)
-	}
-	pterm.Println()
-
-	password := getPasswordFromStandardInput()
-
-	return trimNewlines(username), trimNewlines(password)
-}
-
-func getPasswordFromStandardInput() string {
-	pterm.ThemeDefault.PrimaryStyle.Print("Password: ")
-	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		dieE(err)
-	}
-	password := string(bytePassword)
-	pterm.Println()
-
-	return trimNewlines(password)
-}
-
 // Prompts user for confirmation and exits the whole program if user does not confirm
 func askForConfirmation(question string) bool {
 	if nonInteractive {
@@ -235,7 +199,7 @@ func askForConfirmation(question string) bool {
 	return result
 }
 
-// Gives your an options to interactively choose from
+// Gives you an options to interactively choose from
 func interactiveChooseFrom(title string, options []string) string {
 	widget := pterm.DefaultInteractiveSelect.WithDefaultText(title)
 
@@ -261,7 +225,7 @@ func interactiveTextInput(title string) string {
 	return response
 }
 
-// Return a string length igoring all utf-8 quirks and terminal formatting
+// Return a string length ignoring all utf-8 quirks and terminal formatting
 func runeLength(s string) int {
 	return runewidth.StringWidth(pterm.RemoveColorFromString(s))
 }

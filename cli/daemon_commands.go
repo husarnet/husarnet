@@ -228,7 +228,7 @@ var daemonWhitelistCommand = &cli.Command{
 			Action: func(ctx *cli.Context) error {
 				requiredArgumentsNumber(ctx, 1)
 
-				addr := makeCannonicalAddr(ctx.Args().Get(0))
+				addr := makeCanonicalAddr(ctx.Args().Get(0))
 
 				stdResult := callDaemonPost[StandardResult]("/api/whitelist/add", url.Values{
 					"address": {addr},
@@ -246,7 +246,7 @@ var daemonWhitelistCommand = &cli.Command{
 			Action: func(ctx *cli.Context) error {
 				requiredArgumentsNumber(ctx, 1)
 
-				addr := makeCannonicalAddr(ctx.Args().Get(0))
+				addr := makeCanonicalAddr(ctx.Args().Get(0))
 
 				stdResult := callDaemonPost[StandardResult]("/api/whitelist/rm", url.Values{
 					"address": {addr},
@@ -530,10 +530,9 @@ var daemonGenIdCommand = &cli.Command{
 
 var daemonCommand = &cli.Command{
 	Name:  "daemon",
-	Usage: "Control the local daemon",
+	Usage: "control the local daemon",
 	Subcommands: []*cli.Command{
 		daemonStatusCommand,
-		joinCommand,
 		daemonWaitCommand,
 		daemonStartCommand,
 		daemonStopCommand,

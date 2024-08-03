@@ -4,43 +4,97 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
-
-	"github.com/Khan/genqlient/graphql"
+	"io"
+	"net/http"
+	"net/url"
+	"syscall"
 )
 
-func getDashboardUrl() string {
-	return fmt.Sprintf("https://%s/graphql", husarnetDashboardFQDN)
+type ApiResponse[PayloadType any] struct {
+	Type     string      `json:"type"`
+	Errors   []string    `json:"errors"`
+	Warnings []string    `json:"warnings"`
+	Message  string      `json:"message"`
+	Payload  PayloadType `json:"payload"`
 }
 
-func callDashboardAPI[responseType any](executeRequest func(client graphql.Client) (responseType, error)) responseType {
-	token := getAuthToken()
+type MaybeError struct {
+	Error string `json:"error"`
+}
 
-	const spinnerMessage = "Executing an API call…"
-	spinner := getSpinner(spinnerMessage, false)
+func buildUrl(apiEndpoint string) string {
+	urlValues := url.Values{}
+	addDaemonApiSecret(&urlValues)
+	return getDaemonApiUrl() + "/api/forward" + apiEndpoint + "?" + urlValues.Encode()
+}
 
-	client := makeAuthenticatedClient(token)
-	response, err := executeRequest(client)
-
-	if isSignatureExpiredOrInvalid(err) {
-		spinner.Fail("Invalid/expired token")
-		username, password := getUserCredentialsFromStandardInput()
-		token = loginAndSaveAuthToken(username, password)
-
-		spinner = getSpinner(spinnerMessage, false)
-		client := makeAuthenticatedClient(token)
-		response, err = executeRequest(client)
-	}
+func performDashboardApiRequest[responsePayloadType any](request *http.Request) ApiResponse[responsePayloadType] {
+	response, err := http.DefaultClient.Do(request)
 
 	if err != nil {
-		spinner.Fail(err)
-		die("GraphQL server at " + getDashboardUrl() + " returned an error: " + err.Error())
+		if errors.Is(err, syscall.ECONNREFUSED) {
+			dieE(errors.New("daemon refused the connection; make sure it is running before trying again"))
+		}
+		dieE(err)
 	}
 
-	spinner.Success()
+	responseBytes, err := io.ReadAll(response.Body)
+	defer response.Body.Close()
+	if err != nil {
+		dieE(err)
+	}
 
-	// after performing any request, we hit API again to refresh token thus prolong the session
-	refreshToken(token)
+	if response.StatusCode != http.StatusOK { // infra error
+		// try figure out better error message
+		var maybeError MaybeError
+		marshalingErr := json.Unmarshal(responseBytes, &maybeError)
+		if marshalingErr != nil {
+			dieE(errors.New("API responded with " + response.Status))
+		} else {
+			dieE(errors.New("API responded with " + response.Status + ": " + maybeError.Error))
+		}
+	}
 
-	return response
+	var apiResponse ApiResponse[responsePayloadType]
+	err = json.Unmarshal(responseBytes, &apiResponse)
+	if err != nil {
+		dieE(err)
+	}
+	return apiResponse
+}
+
+func printJsonOrError(data any) {
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		// we will use this function only with data previously successfully unmarshalled
+		// so this should never happen in practice; checking doesn't hurt though
+		dieE(err)
+	}
+	fmt.Println(string(jsonBytes))
+}
+
+func callDashboardApi[responsePayloadType any](method, endpoint string) ApiResponse[responsePayloadType] {
+	request, err := http.NewRequest(method, buildUrl(endpoint), nil)
+	if err != nil {
+		dieE(err)
+	}
+	return performDashboardApiRequest[responsePayloadType](request)
+}
+
+func callDashboardApiWithInput[requestPayloadType, responsePayloadType any](method, endpoint string, jsonBody requestPayloadType) ApiResponse[responsePayloadType] {
+	jsonBytes, err := json.Marshal(jsonBody)
+	if err != nil {
+		dieE(err)
+	}
+	fwdUrl := buildUrl(endpoint)
+	fmt.Println(fwdUrl)
+	request, err := http.NewRequest(method, fwdUrl, bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		dieE(err)
+	}
+	return performDashboardApiRequest[responsePayloadType](request)
 }

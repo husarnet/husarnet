@@ -3,9 +3,6 @@
 // License: specified in project_root/LICENSE.txt
 package main
 
-// Tag for code generator. Do not delete.
-//go:generate go run github.com/Khan/genqlient
-
 import (
 	"fmt"
 	"log"
@@ -25,12 +22,22 @@ var husarnetDaemonAPIPort = 0
 var verboseLogs bool
 var wait bool
 var nonInteractive bool
+var rawJson bool
+var secret string
 
 func main() {
 	app := &cli.App{
-		Name:                 "Husarnet CLI",
-		HelpName:             "husarnet",
-		Usage:                "Manage your Husarnet groups and devices from your terminal",
+		Name:     "Husarnet CLI",
+		HelpName: "husarnet",
+		Description: `
+This is Husarnet CLI (command-line interface), which is invoked with 'husarnet' command.
+It's primary purpose is to query and manage daemon process ('husarnet-daemon') running 
+on the current machine. Additionally, given sufficient permissions, it can be also be used 
+to manage your other Husarnet devices and even your entire Husarnet network (possibly 
+eliminating the need to ever use the web interface under https://dashboard.husarnet.com). 
+For the details on what can be done with the CLI, visit https://husarnet.com/docs/cli-guide
+You can also simply just explore and play with the commands described below.`,
+		Usage:                "manage your Husarnet network",
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -69,6 +76,14 @@ func main() {
 					return nil
 				},
 			},
+			&cli.StringFlag{
+				Name:        "secret",
+				Aliases:     []string{"s"},
+				Value:       "",
+				Usage:       "swap secret for a different one",
+				EnvVars:     []string{"SECRET"},
+				Destination: &secret,
+			},
 			&cli.BoolFlag{
 				Name:        "verbose",
 				Aliases:     []string{"v"},
@@ -82,14 +97,22 @@ func main() {
 				Destination: &nonInteractive,
 				Value:       false,
 			},
+			&cli.BoolFlag{
+				Name:        "json",
+				Usage:       "return raw json response from the API. This is useful for scripts or piping to other tools",
+				Destination: &rawJson,
+				Value:       false,
+			},
 		},
 		Before: func(ctx *cli.Context) error {
 			initTheme()
-
 			return nil
 		},
 		Commands: []*cli.Command{
-			dashboardCommand,
+			//dashboardCommand,
+			dashboardTokenCommand,
+			dashboardGroupCommand,
+
 			daemonCommand,
 
 			daemonStartCommand,
@@ -97,10 +120,10 @@ func main() {
 			daemonStopCommand,
 
 			daemonStatusCommand,
-			joinCommand,
-			daemonSetupServerCommand,
+			daemonIpCommand,
 
-			dashboardLoginCommand,
+			claimCommand,
+			daemonSetupServerCommand,
 
 			{
 				Name:  "version",
