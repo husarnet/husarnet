@@ -28,5 +28,5 @@ if [ -z "${HUSARNET_DEBUG:-}" ]; then
     HUSARNET_LOG_VERBOSITY=1 husarnet-daemon
 else
     # Basically everything including DEBUG(4) (for nightly builds, stable ones are capped at INFO(3))
-    HUSARNET_LOG_VERBOSITY=100 husarnet-daemon
+    HUSARNET_LOG_VERBOSITY=5 husarnet-daemon
 fi
