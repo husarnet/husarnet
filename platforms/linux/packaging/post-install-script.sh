@@ -2,8 +2,12 @@
 # Copyright (c) 2024 Husarnet sp. z o.o.
 # Authors: listed in project_root/README.md
 # License: specified in project_root/LICENSE.txt
+set -euo pipefail
 if ! grep -q "^husarnet:" /etc/group; then
     groupadd husarnet
+fi
+if [ ! -d "/var/lib/husarnet" ]; then
+  mkdir -p /var/lib/husarnet
 fi
 chgrp husarnet /var/lib/husarnet -R
 chmod g+rwx /var/lib/husarnet -R
