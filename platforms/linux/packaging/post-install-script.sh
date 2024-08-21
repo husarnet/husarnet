@@ -11,6 +11,8 @@ if [ ! -d "/var/lib/husarnet" ]; then
 fi
 chgrp husarnet /var/lib/husarnet -R
 chmod g+rwx /var/lib/husarnet -R
+echo "To use Husarnet without sudo add your user to husarnet group:"
+echo "sudo usermod -aG husarnet $SUDO_USER"
 command -v pidof >/dev/null || exit 0
 command -v systemctl >/dev/null || exit 0
 
