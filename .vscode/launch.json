@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/release/husarnet-unix-amd64",
+            "program": "${workspaceFolder}/build/linux/amd64/husarnet-daemon",
             "args": ["daemon"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
@@ -27,6 +27,41 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+        {
+            "name": "(gdb) Attach",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "${workspaceFolder}/build/linux/amd64/husarnet-daemon",
+            "MIMode": "gdb",
+            "sourceFileMap": {
+                "/app": "${workspaceFolder}"
+            },
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(lldb) Remote launch",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/linux/amd64/husarnet-daemon",
+            "sourceMap": {
+                "/app": "${workspaceFolder}"
+            },
+            "initCommands": [
+                "platform select remote-linux",
+                "platform connect connect://127.0.0.1:62137",
+            ],
         }
     ]
 }

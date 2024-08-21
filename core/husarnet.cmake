@@ -111,7 +111,11 @@ endif()
 # Top level project files
 list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR})
 
-file(GLOB core_SRC "${CMAKE_CURRENT_LIST_DIR}/husarnet/*.cpp")
+file(
+  GLOB core_SRC
+  "${CMAKE_CURRENT_LIST_DIR}/husarnet/*.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/husarnet/*.c"
+)
 list(APPEND husarnet_core_SRC ${core_SRC})
 
 # Join all of the above
@@ -351,3 +355,12 @@ if(${BUILD_HTTP_CONTROL_API})
     set_property(DIRECTORY ${httplib_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL YES)
   endif()
 endif()
+
+FetchContent_Declare(
+  etl
+  URL https://github.com/ETLCPP/etl/archive/refs/tags/20.39.3.zip
+)
+
+FetchContent_MakeAvailable(etl)
+target_compile_definitions(${husarnet_core} PRIVATE ETL_ARRAY_VIEW_IS_MUTABLE=1)
+target_link_libraries(${husarnet_core} etl::etl)
