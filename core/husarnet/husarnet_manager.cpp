@@ -561,9 +561,34 @@ void HusarnetManager::runHusarnet()
   // Now we're pretty much good to go
   Port::notifyReady();
 
+  // WebSocket related code below is just a test setup for now
+  webSocket.setOnMessageCallback([](WebSocket::Message& message) {
+    LOG_DEBUG("Received WS message: %s", message.data.data());
+  });
+
   // This is an actual event loop
   while(true) {
     ngsocket->periodic();
+
+    if(webSocket.getState() == WebSocket::State::SOCK_CLOSED && isJoined()) {
+      webSocket.connect(InetAddress::parse("127.0.0.1:8080"), "/");
+    }
+
+    // if(webSocket.getState() == WebSocket::State::SOCK_CLOSED && isJoined()) {
+    //   InetAddress ebAddress = {
+    //       .ip = getEbAddresses()[0],
+    //       .port = 80,
+    //   };
+
+    //   webSocket.connect(ebAddress, "/device/device_ws");
+    // }
+
+    if(webSocket.getState() == WebSocket::State::WS_OPEN) {
+      webSocket.send("Hello from Husarnet daemon!");
+    }
+
+    webSocket.periodic(10);
+
     Port::processSocketEvents(this);
   }
 }

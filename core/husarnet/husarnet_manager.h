@@ -20,6 +20,7 @@
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
 #include "husarnet/websetup.h"
+#include "husarnet/websocket.h"
 
 #include "ports/port.h"
 
@@ -50,6 +51,7 @@ class HusarnetManager {
   TunTap* tunTap = nullptr;
 
   WebsetupConnection* websetup = nullptr;
+  WebSocket webSocket;
   HooksManagerInterface* hooksManager = nullptr;
 
   std::vector<std::thread*> threadpool;
