@@ -34,9 +34,11 @@ size_t HTTPMessage::encode(etl::ivector<char>& buffer)
   return buffer.size();
 }
 
-bool HTTPMessage::parse(etl::ivector<char>& buffer, HTTPMessage& message)
+bool HTTPMessage::parse(etl::string_view& buffer_view, HTTPMessage& message)
 {
-  etl::string_view buffer_view(buffer.data(), buffer.size());
+  // TODO: Allow for chunked messages
+
+  message.headers.clear();
   message.messageType = Type::UNDEFINED;
 
   // Find header-body separator

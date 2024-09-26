@@ -14,6 +14,8 @@
 
 #include "enum.h"
 
+#include <etl/string.h>
+
 BETTER_ENUM(
     HookType,
     int,
@@ -52,6 +54,16 @@ void packTo(T t, void* dst)
 
 template <typename T>
 T unpack(std::string s)
+{
+  if(s.size() != sizeof(T))
+    abort();
+  T r;
+  memcpy(&r, s.data(), sizeof(T));
+  return r;
+}
+
+template <typename T>
+T unpack(etl::string_view s)
 {
   if(s.size() != sizeof(T))
     abort();

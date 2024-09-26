@@ -14,21 +14,12 @@
 #include "sha1.h"
 #include "sodium.h"
 
-void WebSocket::connect(InetAddress addr, etl::istring endpoint)
+void WebSocket::connect(InetAddress addr, etl::istring& endpoint)
 {
   this->serverAddr = addr;
-  this->serverEndpoint = endpoint;
+  this->serverEndpoint.assign(endpoint);
 
-  assert(this->serverEndpoint.is_truncated() == false);
-
-  this->fd = OsSocket::connectTcpSocket(addr);
-  if(this->fd < 0) {
-    LOG_ERROR("WS connect failed: %s", strerror(errno));
-    return;
-  }
-
-  this->state = WebSocket::State::WS_CONNECTING;
-  this->_sendClientHandshake();
+  this->_connectSocket(addr);
 }
 
 void WebSocket::connect(InetAddress addr, const char* endpoint)
@@ -36,16 +27,37 @@ void WebSocket::connect(InetAddress addr, const char* endpoint)
   this->serverAddr = addr;
   this->serverEndpoint.assign(endpoint);
 
+  this->_connectSocket(addr);
+}
+
+void WebSocket::_connectSocket(InetAddress addr)
+{
+  assert(this->conn == nullptr);
   assert(this->serverEndpoint.is_truncated() == false);
 
-  this->fd = OsSocket::connectTcpSocket(addr);
-  if(this->fd < 0) {
+  auto dataCallback = [this](etl::string_view& data) {
+    this->_handleRead(data);
+  };
+
+  auto errorCallback = [this](std::shared_ptr<OsSocket::TcpConnection> conn) {
+    LOG_ERROR("WS connection error, closing"); //TODO: errno
+    this->close();
+  };
+
+  this->conn = OsSocket::TcpConnection::connect(addr, dataCallback, errorCallback, OsSocket::TcpConnection::Encapsulation::NONE);
+  
+  if (this->conn->getFd() < 0) {
     LOG_ERROR("WS connect failed: %s", strerror(errno));
     return;
   }
 
+  // Try to initiate WebSocket handshake
+  if (!this->_sendClientHandshake()) {
+    this->close();
+    return;
+  }
+
   this->state = WebSocket::State::WS_CONNECTING;
-  this->_sendClientHandshake();
 }
 
 void WebSocket::send(const char* data)
@@ -80,19 +92,23 @@ void WebSocket::setOnMessageCallback(
 
 void WebSocket::close()
 {
-  if(this->fd < 0) {
+  if(this->conn == nullptr) {
     return;
   }
 
-  SOCKFUNC_close(this->fd);
-  this->fd = -1;
+  this->conn->close(conn);
+
+  // Explicitly decrement the reference count
+  // Otherwise connection ptr will be destroyed after connecting to another
+  // socket in WebSocket::_connectSocket(), locking up resources
+  this->conn = nullptr;
 
   this->state = WebSocket::State::SOCK_CLOSED;
 }
 
 // --- Incoming message handling ---
 
-void WebSocket::_handleRead(etl::ivector<char>& buf)
+void WebSocket::_handleRead(etl::string_view& buf)
 {
   switch(this->state) {
     case WebSocket::State::SOCK_CLOSED:
@@ -111,7 +127,7 @@ void WebSocket::_handleRead(etl::ivector<char>& buf)
   }
 }
 
-void WebSocket::_handleData(etl::ivector<char>& buf)
+void WebSocket::_handleData(etl::string_view& buf)
 {
   WebSocket::Message message;
 
@@ -123,7 +139,8 @@ void WebSocket::_handleData(etl::ivector<char>& buf)
       return;
     }
 
-    buf.erase(buf.begin(), buf.begin() + consumed);
+    buf = buf.substr(consumed);
+    //buf.erase(buf.begin(), buf.begin() + consumed);
 
     switch(message.opcode) {
       case WebSocket::Message::Opcode::TEXT:
@@ -162,23 +179,23 @@ void WebSocket::_sendPong(WebSocket::Message& message)
 
   WebSocket::TransportBuffer buf;
 
-  message.encode(buf);
+  assert(message.encode(buf)); // Should not fail
   this->_sendRaw(buf);
 }
 
 void WebSocket::_sendClose()
 {
   WebSocket::Message message(WebSocket::Message::Opcode::CLOSE, true);
-
+  
   WebSocket::TransportBuffer buf;
 
-  message.encode(buf);
+  assert(message.encode(buf)); // Should not fail
   this->_sendRaw(buf);
 }
 
 // --- Handshake ---
 
-void WebSocket::_handleHandshake(etl::ivector<char>& buf)
+void WebSocket::_handleHandshake(etl::string_view& buf)
 {
   HTTPMessage message;
 
@@ -224,9 +241,8 @@ bool WebSocket::_sendClientHandshake()
   // Send handshake to server
   WebSocket::TransportBuffer buffer;
   message.encode(buffer);
-  this->_sendRaw(buffer);
 
-  return true;
+  return this->_sendRaw(buffer);
 }
 
 bool WebSocket::_verifyServerHandshake(HTTPMessage& message)
@@ -284,86 +300,15 @@ bool WebSocket::_verifyServerHandshake(HTTPMessage& message)
 
 // --- Socket operations ---
 
-void WebSocket::_sendRaw(etl::ivector<char>& data)
+bool WebSocket::_sendRaw(etl::ivector<char>& data)
 {
-  assert(this->fd >= 0);
-  ssize_t bytes_written = 0;
-
-  // Send data supporting partial writes
-  do {
-    ssize_t n = SOCKFUNC(send)(this->fd, data.data(), data.size(), 0);
-
-    if(n < 0) {
-      LOG_ERROR("WS send failed: %s", strerror(errno));
-      return;
-    }
-
-    bytes_written += n;
-  } while(bytes_written != data.size());
-}
-
-void WebSocket::_readRaw()
-{
-  assert(this->fd >= 0);
-
-  WebSocket::TransportBuffer buffer;
-
-  // Read data into buffer memory
-  // Buffer must be shrunk from the maximum size to the actual read size
-  // to prevent reinitialization of the buffer underlying data type
-  buffer.uninitialized_resize(buffer.capacity());
-  ssize_t read = SOCKFUNC(recv)(this->fd, buffer.data(), buffer.capacity(), 0);
-  buffer.resize(read);
-
-  if(read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-    LOG_WARNING("WS recv timeout");
-    return;
+  assert(this->conn != nullptr);
+  
+  if(OsSocket::TcpConnection::write(this->conn, data) == false) {
+    LOG_ERROR("WS send failed: %s", strerror(errno));
+    return false;
   }
 
-  if(read <= 0) {
-    LOG_ERROR("WS recv failed: %s", strerror(errno));
-    this->close();
-    return;
-  }
-
-  LOG_INFO("WS received %d bytes", read);
-  this->_handleRead(buffer);
+  return true;
 }
 
-// TODO: this is a temporary solution, should be replaced with a proper
-// integration with sockets.cpp event loop (add TCP socket to the select set)
-void WebSocket::_select(int timeout)
-{
-  // Skip if not connected
-  if(this->fd < 0) {
-    return;
-  }
-
-  fd_set readset;
-  fd_set writeset;
-  fd_set errorset;
-  FD_ZERO(&writeset);
-  FD_ZERO(&readset);
-  FD_ZERO(&errorset);
-
-  FD_SET(this->fd, &readset);
-  FD_SET(this->fd, &errorset);
-
-  struct timeval timeoutval;
-  timeoutval.tv_sec = timeout / 1000;
-  timeoutval.tv_usec = (timeout % 1000) * 1000;
-
-  errno = 0;
-
-  SOCKFUNC(select)(this->fd + 1, &readset, &writeset, &errorset, &timeoutval);
-
-  if(FD_ISSET(this->fd, &readset) || FD_ISSET(this->fd, &errorset)) {
-    this->_readRaw();
-  }
-}
-
-void WebSocket::periodic(int timeout)
-{
-  // Handle incoming data
-  this->_select(timeout);
-}

@@ -9,11 +9,7 @@
 #include "husarnet/util.h"
 
 namespace OsSocket {
-
-  const int UDP_BUFFER_SIZE = 2000;
-  const int QUEUE_SIZE_LIMIT = 3000;
-  const int TCP_READ_BUFFER = 2000;
-
+  
 #ifdef ENABLE_IPV6
 #define AF_INETx AF_INET6
   const bool useV6 = true;
@@ -73,18 +69,9 @@ namespace OsSocket {
     }
   }
 
-  struct UdpSocket {
-    int fd;
-    PacketCallback callback;
-  };
-
-  struct CustomSocket {
-    int fd;
-    std::function<void()> callback;
-  };
-
   std::vector<UdpSocket> udpSockets;
   std::vector<CustomSocket> customSockets;
+  std::vector<std::shared_ptr<TcpConnection>> tcpConnections;
   int unicastUdpFd = -1;
   int multicastUdpFd4 = -1;
   int multicastUdpFd6 = -1;
@@ -113,6 +100,10 @@ namespace OsSocket {
 #endif
   }
 
+  // -----
+  // UDP
+  // -----
+
   int bindUdpSocket(InetAddress addr, bool reuse, bool v6)
   {
     int fd = SOCKFUNC(socket)(useV6 ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
@@ -140,11 +131,6 @@ namespace OsSocket {
   int bindUdpSocket(InetAddress addr, bool reuse)
   {
     return bindUdpSocket(addr, reuse, useV6);
-  }
-
-  void bindCustomFd(int fd, std::function<void()> readyCallback)
-  {
-    customSockets.push_back(CustomSocket{fd, readyCallback});
   }
 
   bool udpListenUnicast(int port, PacketCallback callback, bool setAsDefault)
@@ -237,9 +223,20 @@ namespace OsSocket {
     }
   }
 
-  // TCP
+  // -----
+  // Custom
+  // -----
 
-  int connectTcpSocket(InetAddress addr)
+  void bindCustomFd(int fd, std::function<void()> readyCallback)
+  {
+    customSockets.push_back(CustomSocket{fd, readyCallback});
+  }
+
+  // -----
+  // TCP
+  // -----
+
+  int connectUnmanagedTcpSocket(InetAddress addr)
   {
     int fd = SOCKFUNC(socket)(AF_INETx, SOCK_STREAM, 0);
     if(fd < 0) {
@@ -305,160 +302,177 @@ namespace OsSocket {
     return fd;
   }
 
-  struct FramedTcpConnection {
-    int fd = -1;
-    std::string queue;
-    std::string readBuffer;
-    int readBufferPtr = 0;
-    int queuePtr = 0;
-    bool connected = false;
-
-    TcpDataCallback dataCallback;
-    TcpErrorCallback errorCallback;
-
-    FramedTcpConnection()
-    {
-      readBuffer.resize(TCP_READ_BUFFER);
-    }
-  };
-
-  std::vector<std::shared_ptr<FramedTcpConnection> > tcpConnections;
-  std::vector<std::shared_ptr<FramedTcpConnection> > tcpConnectionsErrored;
-
-  bool write(
-      std::shared_ptr<FramedTcpConnection> conn,
-      const std::string& packet,
-      bool doQueue)
+  bool TcpConnection::write(
+      std::shared_ptr<TcpConnection> conn,
+      std::string& packet)
   {
     if(conn->fd == -1)
       return false;
     assert(packet.size() > 0);
 
-    // Masquerade our stream as SSL.
-    std::string header = "\x17\x03\x03" + pack((uint16_t)packet.size());
-    std::string data = header + packet;
+    if (conn->getEncapsulationType() == Encapsulation::FRAMED_TLS_MASKED) {
+      // Masquerade our stream as SSL.
+      std::string header = "\x17\x03\x03" + pack((uint16_t)packet.size());
+      packet.insert(0, header);
+    }
 
-    if(conn->queue.size() != 0 || !conn->connected) {
-      if(conn->queue.size() + data.size() > QUEUE_SIZE_LIMIT) {
+    ssize_t bytes_written = 0;
+
+    // Send data supporting partial writes
+    do {
+      ssize_t remaining = packet.size() - bytes_written;
+      ssize_t n = SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
+
+      if(n < 0) {
+        LOG_ERROR("WS send failed: %s", strerror(errno));
         return false;
       }
 
-      if(doQueue) {
-        conn->queue += data;
-        return true;
-      } else {
-        return false;
-      }
-    }
+      bytes_written += n;
+    } while(bytes_written != packet.size());
 
-    long wrote = SOCKFUNC(send)(conn->fd, data.data(), data.size(), 0);
-    if(wrote < 0)
-      wrote = 0;
-
-    if(wrote == (long)data.size())
-      return true;
-
-    if(wrote != 0 || doQueue) {
-      conn->queue = data.substr(wrote);
-      return true;
-    }
-
-    return false;
+    return true;
   }
 
-  void writeQueue(std::shared_ptr<FramedTcpConnection> conn)
+  bool TcpConnection::write(
+      std::shared_ptr<TcpConnection> conn,
+      etl::ivector<char>& packet)
   {
     if(conn->fd == -1)
-      return;
+      return false;
+    assert(packet.size() > 0);
 
-    long wrote = SOCKFUNC(send)(
-        conn->fd, conn->queue.data() + conn->queuePtr,
-        (long)conn->queue.size() - conn->queuePtr, 0);
-    if(wrote < 0)
-      wrote = 0;
-    conn->queuePtr += (int)wrote;
+    if (conn->getEncapsulationType() == Encapsulation::FRAMED_TLS_MASKED) {
+      // Masquerade our stream as SSL.
+      std::string header = "\x17\x03\x03" + pack((uint16_t)packet.size());
 
-    if(conn->queuePtr == (int)conn->queue.size()) {
-      conn->queue = "";
-      conn->queuePtr = 0;
+      if (packet.size() + header.size() > packet.capacity()) {
+        LOG_ERROR("TCP message too large (%d, max is %d)", packet.size(), packet.capacity());
+        return false;
+      }
+
+      packet.insert(packet.begin(), header.begin(), header.end());
     }
+
+    ssize_t bytes_written = 0;
+
+    // Send data supporting partial writes
+    do {
+      ssize_t remaining = packet.size() - bytes_written;
+      ssize_t n = SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
+
+      if(n < 0) {
+        LOG_ERROR("TCP send failed: %s", strerror(errno));
+        return false;
+      }
+
+      bytes_written += n;
+    } while(bytes_written != packet.size());
+
+    return true;
   }
 
-  void handleRead(std::shared_ptr<FramedTcpConnection> conn)
+  void TcpConnection::_handleRead(std::shared_ptr<TcpConnection> conn)
   {
     while(true) {
-      long readSize = (long)conn->readBuffer.size() - conn->readBufferPtr;
-      assert(readSize >= 0);
-      long rd = 0;
-      if(readSize != 0) {
-        rd = SOCKFUNC(recv)(
-            conn->fd, (char*)conn->readBuffer.data() + conn->readBufferPtr,
-            readSize, 0);
+      ssize_t read = 0;
 
-        if(rd == 0 || (rd < 0 && errno != EAGAIN)) {
-          close(conn);  // closed
-          return;
-        }
-        if(rd < 0 && errno == EAGAIN)
-          return;
-      }
+      size_t available = conn->readBuffer.available();
+      if(available > 0) {
+        // Read data into buffer memory
+        // Buffer must be shrunk from the maximum size to the actual read size
+        // to prevent reinitialization of the buffer underlying data type
+        size_t size = conn->readBuffer.size();
+        conn->readBuffer.uninitialized_resize(conn->readBuffer.capacity());
+        read = SOCKFUNC(recv)(conn->fd, conn->readBuffer.begin() + size, available, 0);
 
-      conn->readBufferPtr += (int)rd;
+        size_t newSize = (read > 0) ? size + read : size;
+        conn->readBuffer.resize(newSize);
 
-      while(true) {
-        // LOG("read buffer is (%d)", (int)conn->readBufferPtr);
-        if(conn->readBufferPtr <= 5)
-          return;
-
-        if(conn->readBuffer.substr(0, 3) != "\x17\x03\x03") {
-          LOG_ERROR("TCP socket format error (1)");
-          close(conn);  // oops
+        if(read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
           return;
         }
 
-        uint16_t expectedSize = unpack<uint16_t>(conn->readBuffer.substr(3, 2));
-        if(expectedSize + 5 >= (int)conn->readBuffer.size()) {
-          LOG_INFO(
-              "TCP message too large (%d, max is %d)", expectedSize,
-              (int)conn->readBuffer.size());
-          close(conn);  // oops
+        if(read <= 0) {
+          LOG_ERROR("TCP recv failed: %s", strerror(errno));
+          TcpConnection::close(conn);
           return;
-        }
-
-        if(expectedSize + 5 <= conn->readBufferPtr) {
-          std::string packet = conn->readBuffer.substr(5, expectedSize);
-          conn->dataCallback(packet);
-          int newPtr = 5 + expectedSize;
-          memmove(
-              &conn->readBuffer[0], &conn->readBuffer[newPtr],
-              conn->readBufferPtr - newPtr);
-          conn->readBufferPtr -= newPtr;
-        } else {
-          break;
         }
       }
+
+      // Pass data directly to the callback if no encapsulation is used
+      if (this->getEncapsulationType() == Encapsulation::NONE) {
+        auto view = etl::string_view(conn->readBuffer);
+        conn->dataCallback(view);
+        conn->readBuffer.clear();
+      } else {
+        while(true) {
+          //TODO: refactor: packet pool
+
+          // Check if we have a full packet
+          if(conn->readBuffer.size() <= 5)
+            return;
+
+          auto iter = conn->readBuffer.begin();
+
+          // Is packet masquerading as SSL?
+          if(etl::string_view(iter, 3) != conn->TLS_HEADER) {
+            LOG_ERROR("TCP socket format error (1)");
+            TcpConnection::close(conn);
+            return;
+          }
+
+          iter += conn->TLS_HEADER.size();
+
+          // Extract packet size
+          uint16_t expectedSize = unpack<uint16_t>(etl::string_view(iter, 2));
+          iter += 2;
+          
+          size_t packetLen = etl::distance(conn->readBuffer.begin(), iter) + expectedSize;
+          if(packetLen >= conn->readBuffer.capacity()) {
+            LOG_INFO(
+                "TCP message too large (%d, max is %d)", expectedSize,
+                conn->readBuffer.size());
+            TcpConnection::close(conn);
+            return;
+          }
+
+          if(conn->readBuffer.size() >= packetLen) {
+            etl::string_view packet(conn->readBuffer.begin() + 5, expectedSize);
+            conn->dataCallback(packet);
+            
+            // Remove the packet from the buffer
+            conn->readBuffer.erase(0, packetLen);
+          } else {
+            // We don't have the full packet yet
+            break;
+          }
+        }
+      }
+
 #ifdef ESP_PLATFORM
       break;  // nonblocking mode doesn't work on lwIP
 #endif
     }
   }
 
-  void close(std::shared_ptr<FramedTcpConnection> conn)
+  void TcpConnection::close(std::shared_ptr<TcpConnection> conn)
   {
-    if(conn->fd == -1)
-      return;
+    if(conn->fd != -1)
+      SOCKFUNC_close(conn->fd);
 
-    SOCKFUNC_close(conn->fd);
     conn->fd = -1;
-    tcpConnectionsErrored.push_back(conn);
+    conn->_hasErrored = true;
   }
 
-  std::shared_ptr<FramedTcpConnection> tcpConnect(
+  // TODO: change callbacks from func pointers to etl::delegate
+  std::shared_ptr<TcpConnection> TcpConnection::connect(
       InetAddress address,
       TcpDataCallback dataCallback,
-      TcpErrorCallback errorCallback)
+      TcpErrorCallback errorCallback,
+      TcpConnection::Encapsulation transportType)
   {
-    auto conn = std::make_shared<FramedTcpConnection>();
+    auto conn = std::make_shared<TcpConnection>(transportType);
     conn->dataCallback = dataCallback;
     conn->errorCallback = errorCallback;
     conn->fd = SOCKFUNC(socket)(AF_INETx, SOCK_STREAM, 0);
@@ -481,21 +495,13 @@ namespace OsSocket {
   void runOnce(int timeout)
   {
     fd_set readset;
-    fd_set writeset;
-    fd_set errorset;
-    FD_ZERO(&writeset);
     FD_ZERO(&readset);
-    FD_ZERO(&errorset);
     int maxfd = 0;
 
     for(auto conn : tcpConnections) {
       if(conn->fd <= 0)
         continue;
-      if(conn->queue.size() > 0 || !conn->connected) {
-        FD_SET(conn->fd, &writeset);
-      }
       FD_SET(conn->fd, &readset);
-      FD_SET(conn->fd, &errorset);
       maxfd = std::max(conn->fd, maxfd);
     }
 
@@ -506,7 +512,6 @@ namespace OsSocket {
 
     for(auto conn : customSockets) {
       FD_SET(conn.fd, &readset);
-      FD_SET(conn.fd, &errorset);
       maxfd = std::max(conn.fd, maxfd);
     }
 
@@ -516,7 +521,12 @@ namespace OsSocket {
 
     errno = 0;
 
-    SOCKFUNC(select)(maxfd + 1, &readset, &writeset, &errorset, &timeoutval);
+    int res = SOCKFUNC(select)(maxfd + 1, &readset, NULL, NULL, &timeoutval);
+
+    if (res < 0 && errno != EINTR) {
+      LOG_ERROR("select failed: %s", strerror(errno));
+      return;
+    }
 
     for(auto& conn : udpSockets) {
       if(conn.fd == -1)
@@ -541,11 +551,8 @@ namespace OsSocket {
       if(conn.fd == -1)
         continue;
 
-      if(FD_ISSET(conn.fd, &readset) || FD_ISSET(conn.fd, &errorset)) {
+      if(FD_ISSET(conn.fd, &readset)) {
         conn.callback();
-      }
-
-      if(FD_ISSET(conn.fd, &errorset)) {
       }
     }
 
@@ -553,25 +560,26 @@ namespace OsSocket {
       if(conn->fd == -1)
         continue;
 
-      if(FD_ISSET(conn->fd, &writeset)) {
-        conn->connected = true;
-        writeQueue(conn);
-      }
-
-      if(FD_ISSET(conn->fd, &readset) || FD_ISSET(conn->fd, &errorset)) {
-        handleRead(conn);
+      if(FD_ISSET(conn->fd, &readset)) {
+        conn->_handleRead(conn);
       }
     }
 
-    auto tcpConnectionsErroredCopy = tcpConnectionsErrored;
-    for(auto conn : tcpConnectionsErroredCopy) {
-      auto it = std::find(tcpConnections.begin(), tcpConnections.end(), conn);
-      if(it != tcpConnections.end()) {
+    // Execute error callbacks on errored connections
+    for (auto conn : tcpConnections) {
+      if(conn->_hasErrored) {
         conn->errorCallback(conn);
-        tcpConnections.erase(it);
       }
     }
-    tcpConnectionsErrored.clear();
+
+    // Remove errored connection entries as they have been closed
+    tcpConnections.erase(
+        std::remove_if(
+            tcpConnections.begin(), tcpConnections.end(),
+            [](std::shared_ptr<TcpConnection> conn) {
+              return conn->_hasErrored;
+            }),
+        tcpConnections.end());
   }
 
 }  // namespace OsSocket

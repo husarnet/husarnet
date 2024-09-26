@@ -27,43 +27,104 @@
 #include "husarnet/ipaddress.h"
 #include "husarnet/string_view.h"
 
-using mutex_guard = std::lock_guard<std::recursive_mutex>;
+#include <etl/string.h>
+#include <etl/string_view.h>
+#include <etl/vector.h>
 
 namespace OsSocket {
-  struct FramedTcpConnection;
+  constexpr int UDP_BUFFER_SIZE = 2000;
+  constexpr int QUEUE_SIZE_LIMIT = 3000;
+  constexpr int TCP_READ_BUFFER = 2000;
 
   using PacketCallback = std::function<void(InetAddress, string_view)>;
-  using TcpDataCallback = std::function<void(const std::string&)>;
-  using TcpErrorCallback =
-      std::function<void(std::shared_ptr<FramedTcpConnection>)>;
 
+  struct UdpSocket {
+    int fd;
+    PacketCallback callback;
+  };
+
+  struct CustomSocket {
+    int fd;
+    std::function<void()> callback;
+  };
+
+  // Forward declaration
+  class TcpConnection;
+
+  using TcpDataCallback = std::function<void(etl::string_view&)>;
+  using TcpErrorCallback =
+    std::function<void(std::shared_ptr<TcpConnection>)>;
+    
+  class TcpConnection {
+  public:
+    enum class Encapsulation {
+      NONE,               // Raw data
+      FRAMED_TLS_MASKED,  // SSL magic + length + data
+    };
+
+    TcpConnection(Encapsulation transportType = Encapsulation::FRAMED_TLS_MASKED): _encapsulation(transportType) {};
+
+    // Create a new TCP connection
+    static std::shared_ptr<TcpConnection> connect(
+        InetAddress address,
+        TcpDataCallback dataCallback,
+        TcpErrorCallback errorCallback,
+        Encapsulation transportType = TcpConnection::Encapsulation::FRAMED_TLS_MASKED);
+
+
+    // TODO: remove c style static functions, use Packet shared ptr to pass data
+
+    // Write a data packet.
+    // Returns true if the packet was sent.
+    static bool write(std::shared_ptr<TcpConnection> conn, std::string& data);
+    static bool write(std::shared_ptr<TcpConnection> conn, etl::ivector<char>& data);
+
+    // Close the connection
+    static void close(std::shared_ptr<TcpConnection> conn);
+
+    // Get the encapsulation type, 
+    Encapsulation getEncapsulationType() const {
+      return _encapsulation;
+    }
+
+    int getFd() const {
+      return fd;
+    }
+
+  private:
+    int fd = -1;
+    etl::string<TCP_READ_BUFFER> readBuffer;
+    
+    static const inline etl::string<3> TLS_HEADER = "\x17\x03\x03";
+    Encapsulation _encapsulation;
+    
+    // Used for derefered error callback execution
+    bool _hasErrored = false;
+
+    TcpDataCallback dataCallback;
+    TcpErrorCallback errorCallback;
+    
+    void _handleRead(std::shared_ptr<TcpConnection> conn);
+    void _handleTLSRead(std::shared_ptr<TcpConnection> conn);
+
+    friend void runOnce(int);
+  };
+
+  // Connect to a TCP socket not poll-managed by the sockets module
+  // Used for performing simple, one-time calls to various APIs
+  int connectUnmanagedTcpSocket(InetAddress addr);
+  
   bool
   udpListenUnicast(int port, PacketCallback callback, bool setAsDefault = true);
   void udpSend(InetAddress address, string_view data, int fd = -1);
   bool udpListenMulticast(InetAddress address, PacketCallback callback);
   void udpSendMulticast(InetAddress address, const std::string& data);
   int bindUdpSocket(InetAddress addr, bool reuse);
+
   void bindCustomFd(int fd, std::function<void()> readyCallback);
+  
   InetAddress ipFromSockaddr(struct sockaddr_storage st);
-  int connectTcpSocket(InetAddress addr);
 
-  bool write(
-      std::shared_ptr<FramedTcpConnection> conn,
-      const std::string& data,
-      bool queue);
-  // Write a data packet.
-  //
-  // If the socket is not ready and queue is true, queue it anyway.
-  // Otherwise discard it.
-  //
-  // Returns true if the packet was sent.
-
-  void close(std::shared_ptr<FramedTcpConnection> conn);
-
-  std::shared_ptr<FramedTcpConnection> tcpConnect(
-      InetAddress address,
-      TcpDataCallback dataCallback,
-      TcpErrorCallback errorCallback);
 
   void runOnce(int timeout);
 
