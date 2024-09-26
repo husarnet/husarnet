@@ -30,7 +30,7 @@
 #include "husarnet/util.h"
 
 namespace OsSocket {
-  struct FramedTcpConnection;
+  class TcpConnection;
 }  // namespace OsSocket
 
 #if defined(ESP_PLATFORM)
@@ -38,8 +38,6 @@ const int WORKER_QUEUE_SIZE = 16;
 #else
 const int WORKER_QUEUE_SIZE = 256;
 #endif
-
-using mutex_guard = std::lock_guard<std::recursive_mutex>;
 
 using namespace OsSocket;
 
@@ -911,20 +909,20 @@ void NgSocket::connectToBase()
     this->baseMessageReceivedTcp(parseBaseToPeerMessage(data));
   };
 
-  auto errorCallback = [this](std::shared_ptr<FramedTcpConnection> conn) {
+  auto errorCallback = [this](std::shared_ptr<TcpConnection> conn) {
     LOG_CRITICAL("base TCP connection closed");
 
     if(conn == baseConnection) {
-      close(baseConnection);
+      TcpConnection::close(baseConnection);
       baseConnection = nullptr;  // warning: this will destroy us (the lambda)
       lastBaseTcpAction = Port::getCurrentTime();
     }
   };
 
   if(baseConnection)
-    close(baseConnection);
+    TcpConnection::close(baseConnection);
 
-  baseConnection = tcpConnect(baseAddress, dataCallback, errorCallback);
+  baseConnection = TcpConnection::connect(baseAddress, dataCallback, errorCallback);
   lastBaseTcpAction = Port::getCurrentTime();
 
   PeerToBaseMessage userAgentMsg = {
@@ -961,7 +959,7 @@ void NgSocket::sendToBaseTcp(const PeerToBaseMessage& msg)
   if(!baseConnection || cookie.size() == 0)
     return;
   std::string serialized = serializePeerToBaseMessage(msg);
-  write(baseConnection, serialized, msg.kind != +PeerToBaseMessageKind::DATA);
+  TcpConnection::write(baseConnection, serialized);
 }
 
 void NgSocket::sendToPeer(InetAddress dest, const PeerToPeerMessage& msg)

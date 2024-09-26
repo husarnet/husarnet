@@ -32,6 +32,7 @@ class PeerContainer;
 class PeerFlags;
 class WebsetupConnection;
 class HooksManagerInterface;
+class EventBus;
 
 using HostsFileUpdateFunc =
     std::function<void(std::vector<std::pair<IpAddress, std::string>>)>;
@@ -51,10 +52,12 @@ class HusarnetManager {
   TunTap* tunTap = nullptr;
 
   WebsetupConnection* websetup = nullptr;
-  WebSocket webSocket;
+  EventBus* eventBus;
   HooksManagerInterface* hooksManager = nullptr;
 
+  #ifdef HTTP_CONTROL_API
   std::vector<std::thread*> threadpool;
+  #endif
 
   bool dirty = false;
 

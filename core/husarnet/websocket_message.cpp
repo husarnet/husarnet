@@ -7,7 +7,7 @@
 #include "websocket.h"
 
 size_t WebSocket::Message::parse(
-    etl::ivector<char>& buffer,
+    etl::string_view& buffer,
     WebSocket::Message& message)
 {
   // Smallest possible message is 2 bytes long
@@ -85,8 +85,10 @@ size_t WebSocket::Message::parse(
   return std::distance(buffer.begin(), it);
 }
 
-void WebSocket::Message::encode(etl::ivector<char>& buffer)
+bool WebSocket::Message::encode(etl::ivector<char>& buffer)
 {
+  buffer.clear();
+
   char flags = 0;
   flags |= this->flags.fin << 7;
   flags |= this->flags.rsv1 << 6;
@@ -116,9 +118,13 @@ void WebSocket::Message::encode(etl::ivector<char>& buffer)
     buffer.push_back(length & 0xFF);
   }
 
-  if(length == 0 || buffer.available() < length) {
+  if(buffer.available() < length) {
     buffer.clear();
-    return;
+    return false;
+  }
+
+  if (length == 0) {
+    return true;
   }
 
   if(this->masked) {
@@ -134,4 +140,6 @@ void WebSocket::Message::encode(etl::ivector<char>& buffer)
   } else {
     buffer.insert(buffer.end(), this->data.begin(), this->data.end());
   }
+
+  return true;
 }

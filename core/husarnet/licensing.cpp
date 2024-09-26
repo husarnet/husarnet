@@ -20,7 +20,7 @@ json retrieveLicenseJson(
 {
   IpAddress ip = Port::resolveToIp(dashboardHostname);
   InetAddress address{ip, 80};
-  int sockfd = OsSocket::connectTcpSocket(address);
+  int sockfd = OsSocket::connectUnmanagedTcpSocket(address);
   if(sockfd < 0) {
     LOG_ERROR(
         "Can't contact %s - is DNS resolution working properly?",

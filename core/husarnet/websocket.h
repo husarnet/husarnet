@@ -3,12 +3,18 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 
+#include <memory>
+
 #include <etl/delegate.h>
 #include <etl/string.h>
 #include <etl/vector.h>
 
 #include "husarnet/http.h"
 #include "husarnet/ipaddress.h"
+
+namespace OsSocket {
+  class TcpConnection;
+}
 
 class WebSocket {
  public:
@@ -48,10 +54,10 @@ class WebSocket {
 
     // Parse message from buffer to provided message object
     // @returns number of bytes consumed, 0 if parser failure occured
-    static size_t parse(etl::ivector<char>& buffer, Message& message);
+    static size_t parse(etl::string_view& buffer, Message& message);
 
     // Encode message to buffer
-    void encode(etl::ivector<char>& buffer);
+    bool encode(etl::ivector<char>& buffer);
 
     size_t payloadSize() const
     {
@@ -64,17 +70,16 @@ class WebSocket {
     etl::vector<char, 128> data;
   };
 
-  // Buffer used for socket operations and HTTP handshake
   using TransportBuffer = etl::vector<char, 256>;
+  using OnMessageDelegate = etl::delegate<void(WebSocket::Message&)>;
 
   WebSocket(){};
 
-  void connect(InetAddress addr, etl::istring endpoint);
+  void connect(InetAddress addr, etl::istring& endpoint);
   void connect(InetAddress addr, const char* endpoint);
   void send(etl::istring msg);
   void send(const char* msg);
-  void setOnMessageCallback(etl::delegate<void(WebSocket::Message&)> callback);
-  void periodic(int timeout);
+  void setOnMessageCallback(OnMessageDelegate callback);
   void close();
   WebSocket::State getState()
   {
@@ -82,20 +87,19 @@ class WebSocket {
   }
 
  private:
+  void _connectSocket(InetAddress addr);
   bool _sendClientHandshake();
   bool _verifyServerHandshake(HTTPMessage& message);
 
-  void _handleRead(etl::ivector<char>& buf);
-  void _handleHandshake(etl::ivector<char>& buf);
-  void _handleData(etl::ivector<char>& buf);
+  void _handleRead(etl::string_view& buf);
+  void _handleHandshake(etl::string_view& buf);
+  void _handleData(etl::string_view& buf);
   void _sendPong(WebSocket::Message& message);
   void _sendClose();
 
-  void _sendRaw(etl::ivector<char>& buf);
-  void _readRaw();
-  void _select(int timeout);
+  bool _sendRaw(etl::ivector<char>& data);
 
-  int fd = -1;
+  std::shared_ptr<OsSocket::TcpConnection> conn;
 
   InetAddress serverAddr;
   etl::string<32> serverEndpoint;

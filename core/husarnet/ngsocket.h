@@ -38,7 +38,7 @@ class Peer;
 class PeerContainer;
 
 namespace OsSocket {
-  struct FramedTcpConnection;
+  class TcpConnection;
 }  // namespace OsSocket
 
 const int REFRESH_TIMEOUT = 25 * 1000;
@@ -94,7 +94,7 @@ class NgSocket : public LowerLayer {
 
   InetAddress baseUdpAddress;
   std::vector<InetAddress> allBaseUdpAddresses;
-  std::shared_ptr<OsSocket::FramedTcpConnection> baseConnection;
+  std::shared_ptr<OsSocket::TcpConnection> baseConnection;
 
   Queue<std::function<void()>> workerQueue;
 

@@ -11,7 +11,8 @@ class HTTPMessage {
  public:
   HTTPMessage(){};
 
-  static bool parse(etl::ivector<char>& buffer, HTTPMessage& message);
+  static bool parse(etl::string_view& buffer_view, HTTPMessage& message);
+  
   // TODO: overflow check?
   size_t encode(etl::ivector<char>& buffer);
 
