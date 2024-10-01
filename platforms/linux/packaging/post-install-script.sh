@@ -16,7 +16,7 @@ echo '**************************************************************'
 echo "To use Husarnet without sudo add your user to husarnet group:"
 echo "             sudo usermod -aG husarnet <username>            "
 echo "                             OR                              "
-echo "              sudo usermod -aG husarnet '$USER'              "
+echo "               sudo usermod -aG husarnet \$USER              "
 echo '**************************************************************'
 command -v pidof >/dev/null || exit 0
 command -v systemctl >/dev/null || exit 0
