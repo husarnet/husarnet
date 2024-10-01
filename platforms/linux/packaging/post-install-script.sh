@@ -10,7 +10,7 @@ if [ ! -d "/var/lib/husarnet" ]; then
   mkdir -p /var/lib/husarnet
 fi
 chgrp husarnet /var/lib/husarnet -R
-chmod g+rwx /var/lib/husarnet -R
+chmod g+rwx /var/lib/husarnet
 echo "To use Husarnet without sudo add your user to husarnet group:"
 echo "sudo usermod -aG husarnet $SUDO_USER"
 command -v pidof >/dev/null || exit 0
