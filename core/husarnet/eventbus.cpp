@@ -2,14 +2,18 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/eventbus.h"
+
 #include "husarnet/husarnet_manager.h"
-#include "etl/string_view.h"
-#include "etl/delegate.h"
 #include "husarnet/logging.h"
+
+#include "etl/delegate.h"
+#include "etl/string_view.h"
 
 void EventBus::init()
 {
-  auto callback = WebSocket::OnMessageDelegate::create<EventBus, &EventBus::_handleMessage>(*this);
+  auto callback =
+      WebSocket::OnMessageDelegate::create<EventBus, &EventBus::_handleMessage>(
+          *this);
   this->ws.setOnMessageCallback(callback);
 }
 
@@ -24,7 +28,8 @@ void EventBus::periodic()
   if(ws.getState() == WebSocket::State::SOCK_CLOSED) {
     // Throttle connection attempts
     Time currentTime = Port::getCurrentTime();
-    if (currentTime - this->_lastConnectionAttempt < CONNECTION_ATTEMPT_INTERVAL) {
+    if(currentTime - this->_lastConnectionAttempt <
+       CONNECTION_ATTEMPT_INTERVAL) {
       return;
     }
 
@@ -46,15 +51,15 @@ void EventBus::periodic()
 void EventBus::_handleMessage(WebSocket::Message& message)
 {
   // Only text messages are supported
-  if (message.opcode != WebSocket::Message::Opcode::TEXT)
+  if(message.opcode != WebSocket::Message::Opcode::TEXT)
     return;
-  
-  if (message.data.size() == 0)
+
+  if(message.data.size() == 0)
     return;
-  
+
   etl::string_view data(message.data.begin(), message.data.size());
 
-  if (data.compare("getConfig") == 0) {
+  if(data.compare("getConfig") == 0) {
     // Send config
     this->ws.send("Hello from Husarnet daemon!");
   } else {

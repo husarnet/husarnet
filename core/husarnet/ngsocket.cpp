@@ -922,7 +922,8 @@ void NgSocket::connectToBase()
   if(baseConnection)
     TcpConnection::close(baseConnection);
 
-  baseConnection = TcpConnection::connect(baseAddress, dataCallback, errorCallback);
+  baseConnection =
+      TcpConnection::connect(baseAddress, dataCallback, errorCallback);
   lastBaseTcpAction = Port::getCurrentTime();
 
   PeerToBaseMessage userAgentMsg = {

@@ -3,14 +3,15 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 
-#include "husarnet/websocket.h"
 #include "husarnet/ports/port.h"
+
+#include "husarnet/websocket.h"
 
 class HusarnetManager;
 
 class EventBus {
  public:
-  EventBus(HusarnetManager* manager): manager(manager) {};
+  EventBus(HusarnetManager* manager) : manager(manager){};
 
   void init();
   void periodic();

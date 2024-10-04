@@ -12,6 +12,7 @@
 #include "husarnet/compression_layer.h"
 #include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
+#include "husarnet/eventbus.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
@@ -24,7 +25,6 @@
 #include "husarnet/security_layer.h"
 #include "husarnet/util.h"
 #include "husarnet/websetup.h"
-#include "husarnet/eventbus.h"
 
 #ifdef HTTP_CONTROL_API
 #include "husarnet/api_server/server.h"

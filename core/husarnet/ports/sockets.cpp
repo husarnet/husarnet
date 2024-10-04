@@ -9,7 +9,7 @@
 #include "husarnet/util.h"
 
 namespace OsSocket {
-  
+
 #ifdef ENABLE_IPV6
 #define AF_INETx AF_INET6
   const bool useV6 = true;
@@ -310,7 +310,7 @@ namespace OsSocket {
       return false;
     assert(packet.size() > 0);
 
-    if (conn->getEncapsulationType() == Encapsulation::FRAMED_TLS_MASKED) {
+    if(conn->getEncapsulationType() == Encapsulation::FRAMED_TLS_MASKED) {
       // Masquerade our stream as SSL.
       std::string header = "\x17\x03\x03" + pack((uint16_t)packet.size());
       packet.insert(0, header);
@@ -321,7 +321,8 @@ namespace OsSocket {
     // Send data supporting partial writes
     do {
       ssize_t remaining = packet.size() - bytes_written;
-      ssize_t n = SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
+      ssize_t n =
+          SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
 
       if(n < 0) {
         LOG_ERROR("WS send failed: %s", strerror(errno));
@@ -342,12 +343,14 @@ namespace OsSocket {
       return false;
     assert(packet.size() > 0);
 
-    if (conn->getEncapsulationType() == Encapsulation::FRAMED_TLS_MASKED) {
+    if(conn->getEncapsulationType() == Encapsulation::FRAMED_TLS_MASKED) {
       // Masquerade our stream as SSL.
       std::string header = "\x17\x03\x03" + pack((uint16_t)packet.size());
 
-      if (packet.size() + header.size() > packet.capacity()) {
-        LOG_ERROR("TCP message too large (%d, max is %d)", packet.size(), packet.capacity());
+      if(packet.size() + header.size() > packet.capacity()) {
+        LOG_ERROR(
+            "TCP message too large (%d, max is %d)", packet.size(),
+            packet.capacity());
         return false;
       }
 
@@ -359,7 +362,8 @@ namespace OsSocket {
     // Send data supporting partial writes
     do {
       ssize_t remaining = packet.size() - bytes_written;
-      ssize_t n = SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
+      ssize_t n =
+          SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
 
       if(n < 0) {
         LOG_ERROR("TCP send failed: %s", strerror(errno));
@@ -384,7 +388,8 @@ namespace OsSocket {
         // to prevent reinitialization of the buffer underlying data type
         size_t size = conn->readBuffer.size();
         conn->readBuffer.uninitialized_resize(conn->readBuffer.capacity());
-        read = SOCKFUNC(recv)(conn->fd, conn->readBuffer.begin() + size, available, 0);
+        read = SOCKFUNC(recv)(
+            conn->fd, conn->readBuffer.begin() + size, available, 0);
 
         size_t newSize = (read > 0) ? size + read : size;
         conn->readBuffer.resize(newSize);
@@ -401,13 +406,13 @@ namespace OsSocket {
       }
 
       // Pass data directly to the callback if no encapsulation is used
-      if (this->getEncapsulationType() == Encapsulation::NONE) {
+      if(this->getEncapsulationType() == Encapsulation::NONE) {
         auto view = etl::string_view(conn->readBuffer);
         conn->dataCallback(view);
         conn->readBuffer.clear();
       } else {
         while(true) {
-          //TODO: refactor: packet pool
+          // TODO: refactor: packet pool
 
           // Check if we have a full packet
           if(conn->readBuffer.size() <= 5)
@@ -427,8 +432,9 @@ namespace OsSocket {
           // Extract packet size
           uint16_t expectedSize = unpack<uint16_t>(etl::string_view(iter, 2));
           iter += 2;
-          
-          size_t packetLen = etl::distance(conn->readBuffer.begin(), iter) + expectedSize;
+
+          size_t packetLen =
+              etl::distance(conn->readBuffer.begin(), iter) + expectedSize;
           if(packetLen >= conn->readBuffer.capacity()) {
             LOG_INFO(
                 "TCP message too large (%d, max is %d)", expectedSize,
@@ -440,7 +446,7 @@ namespace OsSocket {
           if(conn->readBuffer.size() >= packetLen) {
             etl::string_view packet(conn->readBuffer.begin() + 5, expectedSize);
             conn->dataCallback(packet);
-            
+
             // Remove the packet from the buffer
             conn->readBuffer.erase(0, packetLen);
           } else {
@@ -523,7 +529,7 @@ namespace OsSocket {
 
     int res = SOCKFUNC(select)(maxfd + 1, &readset, NULL, NULL, &timeoutval);
 
-    if (res < 0 && errno != EINTR) {
+    if(res < 0 && errno != EINTR) {
       LOG_ERROR("select failed: %s", strerror(errno));
       return;
     }
@@ -566,7 +572,7 @@ namespace OsSocket {
     }
 
     // Execute error callbacks on errored connections
-    for (auto conn : tcpConnections) {
+    for(auto conn : tcpConnections) {
       if(conn->_hasErrored) {
         conn->errorCallback(conn);
       }

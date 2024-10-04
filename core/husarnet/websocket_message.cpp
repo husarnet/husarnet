@@ -123,7 +123,7 @@ bool WebSocket::Message::encode(etl::ivector<char>& buffer)
     return false;
   }
 
-  if (length == 0) {
+  if(length == 0) {
     return true;
   }
 
