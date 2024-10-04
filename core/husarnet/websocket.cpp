@@ -40,19 +40,21 @@ void WebSocket::_connectSocket(InetAddress addr)
   };
 
   auto errorCallback = [this](std::shared_ptr<OsSocket::TcpConnection> conn) {
-    LOG_ERROR("WS connection error, closing"); //TODO: errno
+    LOG_ERROR("WS connection error, closing");  // TODO: errno
     this->close();
   };
 
-  this->conn = OsSocket::TcpConnection::connect(addr, dataCallback, errorCallback, OsSocket::TcpConnection::Encapsulation::NONE);
-  
-  if (this->conn->getFd() < 0) {
+  this->conn = OsSocket::TcpConnection::connect(
+      addr, dataCallback, errorCallback,
+      OsSocket::TcpConnection::Encapsulation::NONE);
+
+  if(this->conn->getFd() < 0) {
     LOG_ERROR("WS connect failed: %s", strerror(errno));
     return;
   }
 
   // Try to initiate WebSocket handshake
-  if (!this->_sendClientHandshake()) {
+  if(!this->_sendClientHandshake()) {
     this->close();
     return;
   }
@@ -140,7 +142,7 @@ void WebSocket::_handleData(etl::string_view& buf)
     }
 
     buf = buf.substr(consumed);
-    //buf.erase(buf.begin(), buf.begin() + consumed);
+    // buf.erase(buf.begin(), buf.begin() + consumed);
 
     switch(message.opcode) {
       case WebSocket::Message::Opcode::TEXT:
@@ -179,17 +181,17 @@ void WebSocket::_sendPong(WebSocket::Message& message)
 
   WebSocket::TransportBuffer buf;
 
-  assert(message.encode(buf)); // Should not fail
+  assert(message.encode(buf));  // Should not fail
   this->_sendRaw(buf);
 }
 
 void WebSocket::_sendClose()
 {
   WebSocket::Message message(WebSocket::Message::Opcode::CLOSE, true);
-  
+
   WebSocket::TransportBuffer buf;
 
-  assert(message.encode(buf)); // Should not fail
+  assert(message.encode(buf));  // Should not fail
   this->_sendRaw(buf);
 }
 
@@ -198,17 +200,21 @@ void WebSocket::_sendClose()
 void WebSocket::_handleHandshake(etl::string_view& buf)
 {
   HTTPMessage message;
+  auto res = message.parse(buf);
 
-  if(!HTTPMessage::parse(buf, message) ||
+  // TODO: handle partial messages
+  if(res == HTTPMessage::Result::INVALID ||
+     res == HTTPMessage::Result::INCOMPLETE ||
      !this->_verifyServerHandshake(message)) {
     LOG_ERROR("Invalid WS server handshake");
     this->close();
     return;
   }
 
-  LOG_INFO("WS connected to %s", this->serverAddr.str().c_str());
-
-  this->state = WebSocket::State::WS_OPEN;
+  if(res == HTTPMessage::Result::OK) {
+    LOG_INFO("WS connected to %s", this->serverAddr.str().c_str());
+    this->state = WebSocket::State::WS_OPEN;
+  }
 }
 
 bool WebSocket::_sendClientHandshake()
@@ -303,7 +309,7 @@ bool WebSocket::_verifyServerHandshake(HTTPMessage& message)
 bool WebSocket::_sendRaw(etl::ivector<char>& data)
 {
   assert(this->conn != nullptr);
-  
+
   if(OsSocket::TcpConnection::write(this->conn, data) == false) {
     LOG_ERROR("WS send failed: %s", strerror(errno));
     return false;
@@ -311,4 +317,3 @@ bool WebSocket::_sendRaw(etl::ivector<char>& data)
 
   return true;
 }
-
