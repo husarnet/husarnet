@@ -4,48 +4,52 @@
 
 // Static memory pool for packets
 
-#include <etl/pool.h>
-#include <etl/vector.h>
 #include <memory>
 
+#include <etl/pool.h>
+#include <etl/vector.h>
+
 class Packet {
-public:
+ public:
   static constexpr size_t SIZE = 2000;
   etl::vector<char, SIZE> data;
 
-private:
+ private:
   // Packet can only be created by the pool
   friend class etl::ipool;
-  Packet() {}
+  Packet()
+  {
+  }
 };
 
 class PacketPool {
-public:
+ public:
   static constexpr size_t PACKET_POOL_SIZE = 10;
 
   using Pool = etl::pool<Packet, PACKET_POOL_SIZE>;
 
   // Get the singleton instance of the underlying pool
-  static Pool* getPool() {
+  static Pool* getPool()
+  {
     static Pool pool;
     return &pool;
   }
 
   // Allocate a packet from the pool
-  static std::shared_ptr<Packet> allocate() {
+  static std::shared_ptr<Packet> allocate()
+  {
     Pool* pool = PacketPool::getPool();
-    if (pool->available() == 0) {
+    if(pool->available() == 0) {
       return nullptr;
     }
-    
-    return std::shared_ptr<Packet>(pool->create(), [](Packet* p) {
-      PacketPool::getPool()->destroy(p);
-    });
+
+    return std::shared_ptr<Packet>(
+        pool->create(), [](Packet* p) { PacketPool::getPool()->destroy(p); });
   }
 
   PacketPool(const PacketPool&) = delete;
   void operator=(const PacketPool&) = delete;
 
-private:
+ private:
   PacketPool() = default;
 };

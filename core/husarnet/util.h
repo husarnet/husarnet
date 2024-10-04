@@ -9,12 +9,12 @@
 #include <map>
 #include <vector>
 
+#include <etl/string.h>
+
 #include "husarnet/fstring.h"
 #include "husarnet/string_view.h"
 
 #include "enum.h"
-
-#include <etl/string.h>
 
 BETTER_ENUM(
     HookType,

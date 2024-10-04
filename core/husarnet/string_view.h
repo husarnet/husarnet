@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstring>
 #include <string>
+
 #include <etl/string_view.h>
 
 struct string_view {

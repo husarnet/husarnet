@@ -55,9 +55,9 @@ class HusarnetManager {
   EventBus* eventBus;
   HooksManagerInterface* hooksManager = nullptr;
 
-  #ifdef HTTP_CONTROL_API
+#ifdef HTTP_CONTROL_API
   std::vector<std::thread*> threadpool;
-  #endif
+#endif
 
   bool dirty = false;
 
