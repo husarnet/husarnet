@@ -896,27 +896,15 @@ void NgSocket::udpPacketReceived(InetAddress source, string_view data)
 
 void NgSocket::connectToBase()
 {
-  if(configStorage.getUserSettingInet(UserSetting::overrideBaseAddress)) {
-    baseAddress =
-        configStorage.getUserSettingInet(UserSetting::overrideBaseAddress);
-  } else {
-    if(baseConnectRetries > 2) {
-      // failover
-      auto baseTcpAddressesTmp = manager->getBaseServerAddresses();
-      baseAddress = {
-          baseTcpAddressesTmp[baseConnectRetries % baseTcpAddressesTmp.size()],
-          BASESERVER_PORT};
-      LOG_INFO(
-          "retrying with fallback base address: %s", baseAddress.str().c_str());
-    }
-  }
-  baseConnectRetries++;
-  if(!baseAddress) {
-    LOG_DEBUG("waiting until base address is resolved...");
-    return;
-  }
+  auto addresses = manager->getBaseServerAddresses();
+  baseAddress = {
+      addresses[baseConnectRetries % addresses.size()], BASESERVER_PORT};
 
-  LOG_INFO("establishing connection to base %s", baseAddress.str().c_str());
+  baseConnectRetries++;
+
+  LOG_INFO(
+      "establishing connection to base %s (try %d)", baseAddress.str().c_str(),
+      baseConnectRetries);
 
   auto dataCallback = [this](string_view data) {
     lastBaseTcpMessage = Port::getCurrentTime();

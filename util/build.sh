@@ -27,7 +27,7 @@ if [ "$platform" == "all" ] || [ "$platform" == "docker" ]; then
 fi
 
 # Snap
-if [ "$platform" == "all" ] || [ "$platform" == "snap" ]; then
+if [ "$platform" == "snap" ]; then
     ${base_dir}/platforms/snap/build.sh ${architecture} ${build_type}
 fi
 

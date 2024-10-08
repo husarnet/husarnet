@@ -119,9 +119,12 @@ class ConfigStorage {
   void setUserSetting(UserSetting setting, InetAddress inet);
   void clearUserSetting(UserSetting setting);
 
+  // Env variable related methods
   bool isUserSettingOverriden(UserSetting setting) const;
   std::string getPersistentUserSetting(UserSetting setting) const;
   void persistUserSettingOverride(UserSetting setting);
+
+  bool isUserSettingNonDefault(UserSetting setting) const;
 
   std::string getUserSetting(UserSetting setting) const;
   bool getUserSettingBool(UserSetting setting) const;

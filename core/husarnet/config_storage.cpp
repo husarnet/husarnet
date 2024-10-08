@@ -342,6 +342,13 @@ void ConfigStorage::persistUserSettingOverride(UserSetting setting)
   setUserSetting(setting, getUserSetting(setting));
 }
 
+bool ConfigStorage::isUserSettingNonDefault(UserSetting setting) const
+{
+  // Technically all available settings should have defaults so… both sides of
+  // the equation should have enough data
+  return getUserSetting(setting) != userDefaults.at(setting);
+}
+
 std::string ConfigStorage::getUserSetting(UserSetting setting) const
 {
   if(mapContains(userOverrides, setting)) {

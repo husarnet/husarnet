@@ -340,6 +340,11 @@ IpAddress HusarnetManager::getWebsetupAddress()
 }
 std::vector<IpAddress> HusarnetManager::getBaseServerAddresses()
 {
+  if(configStorage->getUserSettingInet(UserSetting::overrideBaseAddress)) {
+    return {
+        configStorage->getUserSettingInet(UserSetting::overrideBaseAddress).ip};
+  }
+
   return license->getBaseServerAddresses();
 }
 std::vector<IpAddress> HusarnetManager::getDashboardApiAddresses()
