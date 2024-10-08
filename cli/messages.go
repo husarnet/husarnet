@@ -3,7 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 package main
 
-const cliVersion string = "2.0.295"
+const cliVersion string = "2.0.296"
 
 const credentialsPrompt string = "Please provide your credentials to Husarnet Dashboard. Please note that those credentials won't be stored locally at all. You will be authenticated and a special token will be generated and saved locally so you won't have to login for the next couple of minutes."
 
