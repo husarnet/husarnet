@@ -70,7 +70,7 @@ class WebSocket {
     etl::vector<char, 128> data;
   };
 
-  using TransportBuffer = etl::vector<char, 256>;
+  using TransportBuffer = etl::vector<char, 1024>;
   using OnMessageDelegate = etl::delegate<void(WebSocket::Message&)>;
 
   WebSocket(){};
@@ -102,7 +102,7 @@ class WebSocket {
   std::shared_ptr<OsSocket::TcpConnection> conn;
 
   InetAddress serverAddr;
-  etl::string<32> serverEndpoint;
+  etl::string<128> serverEndpoint;
   std::array<char, 25> nonce;
 
   WebSocket::State state = WebSocket::State::SOCK_CLOSED;

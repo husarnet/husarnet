@@ -48,7 +48,7 @@ void WebSocket::_connectSocket(InetAddress addr)
       addr, dataCallback, errorCallback,
       OsSocket::TcpConnection::Encapsulation::NONE);
 
-  if(this->conn->getFd() < 0) {
+  if(this->conn == nullptr || this->conn->getFd() < 0) {
     LOG_ERROR("WS connect failed: %s", strerror(errno));
     return;
   }

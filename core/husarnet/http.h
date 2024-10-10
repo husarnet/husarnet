@@ -53,7 +53,7 @@ class HTTPMessage {
 
   struct {
     etl::string<7> method;
-    etl::string<64> endpoint;
+    etl::string<128> endpoint;
   } request;
 
   Type messageType = Type::UNDEFINED;
