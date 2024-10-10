@@ -15,7 +15,9 @@ class EventBus {
 
   void init();
   void periodic();
+
   void _handleMessage(WebSocket::Message& message);
+  void _handleGetConfig();
 
  private:
   WebSocket ws;
