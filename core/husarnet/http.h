@@ -34,6 +34,7 @@ class HTTPMessage {
     START_LINE = 0,
     HEADER,
     BODY,
+    DONE,
   };
 
   HTTPMessage()
@@ -44,24 +45,7 @@ class HTTPMessage {
 
   Result parse(etl::string_view& buffer_view);
 
-  // TODO: overflow check?
   size_t encode(etl::ivector<char>& buffer);
-
-  // union http {
-  //   http() {};
-  //   ~http() {};
-
-  //   struct request {
-  //     request(): method(), endpoint() {};
-  //     etl::string<7> method;
-  //     etl::string<32> endpoint;
-  //   } request;
-
-  //   struct response {
-  //     response() {};
-  //     unsigned int statusCode = 0;
-  //   } response;
-  // } http;
 
   struct {
     unsigned int statusCode = 0;
@@ -74,9 +58,6 @@ class HTTPMessage {
 
   Type messageType = Type::UNDEFINED;
 
-  // TODO: approach to this, maybe use static buf with stringviews
-  // maybe stl::unordered_map with static alloc
-  // anyway, having static allocator to use in stl containers would be nice
   using HeaderMap = std::map<std::string, std::string>;
   HeaderMap headers;
 

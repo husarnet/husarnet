@@ -22,6 +22,10 @@ size_t HTTPMessage::encode(etl::ivector<char>& buffer)
   etl::string<11> version = " HTTP/1.1\r\n";
   buffer.insert(buffer.end(), version.begin(), version.end());
 
+  if(!this->body.empty()) {
+    this->headers["Content-Length"] = std::to_string(this->body.size());
+  }
+
   // Headers ({key}: {value})
   for(auto& [key, value] : headers) {
     buffer.insert(buffer.end(), key.begin(), key.end());
@@ -31,8 +35,11 @@ size_t HTTPMessage::encode(etl::ivector<char>& buffer)
     buffer.insert(buffer.end(), EOL_DELIMITER.begin(), EOL_DELIMITER.end());
   }
 
-  // Header-body separator
-  buffer.insert(buffer.end(), BODY_DELIMITER.begin(), BODY_DELIMITER.end());
+  // Header-body separator (double EOL_DELIMITER)
+  buffer.insert(buffer.end(), EOL_DELIMITER.begin(), EOL_DELIMITER.end());
+
+  // Body
+  buffer.insert(buffer.end(), this->body.begin(), this->body.end());
 
   return buffer.size();
 }
@@ -89,7 +96,7 @@ HTTPMessage::Result HTTPMessage::_parseStartLine()
   }
 
   // Advance iterator to header section
-  this->_it += end + sizeof(EOL_DELIMITER) - 1;
+  this->_it += end + EOL_DELIMITER.size();
 
   return Result::OK;
 }
@@ -100,6 +107,8 @@ HTTPMessage::Result HTTPMessage::_parseHeader()
       &(*this->_it), std::distance(this->_it, this->_buffer.end()));
 
   // Find header-body separator
+  // TODO: something is fucked up here
+  // double checking? does startline set _it in correct offset?
   size_t sep = buffer_view.find(BODY_DELIMITER);
   if(sep == etl::string_view::npos)
     return Result::INCOMPLETE;
@@ -123,14 +132,17 @@ HTTPMessage::Result HTTPMessage::_parseHeader()
       return Result::INVALID;
 
     // Insert key-value pair into the headers map
-    HeaderMap::key_type key(line.substr(0, colon).data());
-    HeaderMap::mapped_type value(line.substr(colon + 2).data());
+    etl::string_view key_view = line.substr(0, colon);
+    std::string key(key_view.data(), key_view.size());
+
+    etl::string_view value_view = line.substr(colon + 2);
+    std::string value(value_view.data(), value_view.size());
 
     this->headers.insert_or_assign(key, value);
   }
 
   // Advance iterator to body section
-  this->_it += sep + sizeof(BODY_DELIMITER) - 1;
+  this->_it += sep + BODY_DELIMITER.size();
 
   this->_parserState = ParseState::BODY;
   return Result::OK;
@@ -144,13 +156,14 @@ HTTPMessage::Result HTTPMessage::_parseBody()
   auto it = this->headers.find("Content-Length");
 
   // Message does not contain explicit body length
+  // Assume it has no body
   if(it == this->headers.end())
-    return Result::INVALID;
+    return Result::OK;
 
   size_t contentLength =
       etl::to_arithmetic<size_t>(etl::string_view(it->second.data()));
 
-  if(std::distance(this->_it, this->_buffer.end()) < contentLength)
+  if(buffer_view.size() < contentLength)
     return Result::INCOMPLETE;
 
   if(contentLength == 0) {
@@ -181,10 +194,10 @@ HTTPMessage::Result HTTPMessage::parse(etl::string_view& buffer_view)
   this->_buffer.insert(
       this->_buffer.end(), buffer_view.begin(), buffer_view.end());
 
-  Result res = Result::INCOMPLETE;
+  Result res = Result::OK;
 
-  // Parse message
-  while(res == Result::INCOMPLETE) {
+  // Try to parse buffer until a complete message is found or an error occurs
+  while(res == Result::OK && this->_parserState != ParseState::DONE) {
     switch(this->_parserState) {
       case ParseState::START_LINE:
         // Erase previous message
@@ -208,6 +221,9 @@ HTTPMessage::Result HTTPMessage::parse(etl::string_view& buffer_view)
 
       case ParseState::BODY:
         res = this->_parseBody();
+
+        if(res == Result::OK)
+          this->_parserState = ParseState::DONE;
         break;
     }
   }
@@ -224,78 +240,4 @@ HTTPMessage::Result HTTPMessage::parse(etl::string_view& buffer_view)
   }
 
   return res;
-
-  // // Find header-body separator
-  // size_t sep = buffer_view.find("\r\n\r\n");
-
-  // // Split by lines
-  // size_t pos = 0;
-  // while(pos < sep) {
-  //   size_t end = buffer_view.find("\r\n", pos);
-  //   if(end == std::string::npos)
-  //     return false;
-
-  //   etl::string_view line = buffer_view.substr(pos, end - pos);
-  //   pos = end + 2;
-
-  //   if(line.empty())
-  //     break;
-
-  //   if(message.messageType == Type::UNDEFINED) {
-  //     // Try to parse start line
-  //     etl::string_view field1, field2, field3;
-  //     size_t space1 = line.find(' ');
-  //     size_t space2 = line.find(' ', space1 + 1);
-
-  //     if(space1 == etl::istring::npos || space2 == etl::istring::npos)
-  //       return false;
-
-  //     field1 = line.substr(0, space1);
-  //     field2 = line.substr(space1 + 1, space2 - space1 - 1);
-  //     field3 = line.substr(space2 + 1);
-
-  //     if(field1.empty() || field2.empty() || field3.empty())
-  //       return false;
-
-  //     // Check if it's a request or response
-  //     if(field1 == "HTTP/1.1")  // Response
-  //     {
-  //       message.messageType = HTTPMessage::Type::RESPONSE;
-
-  //       auto statusCode = etl::to_arithmetic<unsigned int>(field2);
-  //       if(!statusCode.has_value())
-  //         return false;
-
-  //       message.response.statusCode = statusCode.value();
-  //       // message.http.response.statusMessage = field3;
-  //     } else if(field3 == "HTTP/1.1")  // Request
-  //     {
-  //       message.messageType = HTTPMessage::Type::REQUEST;
-  //       message.request.method.assign(field1.begin(), field1.end());
-  //       message.request.endpoint.assign(field2.begin(), field2.end());
-
-  //       if(message.request.method.is_truncated() ||
-  //          message.request.endpoint.is_truncated())
-  //         return false;
-  //     } else {
-  //       return false;
-  //     }
-  //   } else {
-  //     // Parse headers
-  //     size_t colon = line.find(':');
-  //     if(colon == std::string::npos)
-  //       return false;
-
-  //     if(!message.headers.full()) {
-  //       HeaderMap::key_type key(line.substr(0, colon));
-  //       HeaderMap::mapped_type value(line.substr(colon + 2));
-
-  //       message.headers.insert(etl::make_pair(key, value));
-  //     } else {
-  //       LOG_WARNING("HTTPMessage: too many headers");
-  //     }
-  //   }
-  // }
-
-  // return true;
 }
