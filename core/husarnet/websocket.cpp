@@ -224,13 +224,11 @@ bool WebSocket::_sendClientHandshake()
   message.request.endpoint = this->serverEndpoint;
   assert(message.request.endpoint.is_truncated() == false);
 
-  message.headers.insert(
-      etl::make_pair("Host", this->serverAddr.str().c_str()));
-  message.headers.insert(etl::make_pair("Upgrade", "websocket"));
-  message.headers.insert(etl::make_pair("Connection", "Upgrade"));
-  message.headers.insert(etl::make_pair("Sec-WebSocket-Version", "13"));
-  message.headers.insert(
-      etl::make_pair("User-Agent", "husarnet-daemon/" HUSARNET_VERSION));
+  message.headers.emplace("Host", this->serverAddr.str().c_str());
+  message.headers.emplace("Upgrade", "websocket");
+  message.headers.emplace("Connection", "Upgrade");
+  message.headers.emplace("Sec-WebSocket-Version", "13");
+  message.headers.emplace("User-Agent", "husarnet-daemon/" HUSARNET_VERSION);
 
   // Generate random nonce
   etl::array<uint8_t, 16> rawNonce;
@@ -240,9 +238,7 @@ bool WebSocket::_sendClientHandshake()
       this->nonce.data(), this->nonce.size(), rawNonce.data(), rawNonce.size(),
       sodium_base64_VARIANT_ORIGINAL);
 
-  HTTPMessage::HeaderMap::mapped_type value(
-      this->nonce.begin(), this->nonce.end());
-  message.headers.insert(etl::make_pair("Sec-WebSocket-Key", value));
+  message.headers.emplace("Sec-WebSocket-Key", this->nonce.data());
 
   // Send handshake to server
   WebSocket::TransportBuffer buffer;
