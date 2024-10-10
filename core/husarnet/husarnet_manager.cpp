@@ -529,10 +529,12 @@ void HusarnetManager::runHusarnet()
   stackUpperOnLower(securityLayer, ngsocket);
 
   // Initialize websetup
+  whitelistAdd(getWebsetupAddress());
+  whitelistAdd(license->getEbAddresses()[0]);
+  whitelistAdd(license->getDashboardApiAddresses()[0]);
+
   websetup = new WebsetupConnection(this);
   websetup->start();
-
-  whitelistAdd(getWebsetupAddress());
 
   eventBus = new EventBus(this);
   eventBus->init();

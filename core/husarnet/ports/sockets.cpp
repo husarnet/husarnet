@@ -266,6 +266,7 @@ namespace OsSocket {
       .tv_sec = 5, .tv_usec = 0,
     };
 
+    // Wait for the socket to become writable
     res = select(fd + 1, NULL, &fdset, NULL, &tv);
 
     if(res <= 0) {
@@ -483,6 +484,11 @@ namespace OsSocket {
     conn->errorCallback = errorCallback;
     conn->fd = SOCKFUNC(socket)(AF_INETx, SOCK_STREAM, 0);
 
+    if(conn->fd < 0) {
+      LOG_CRITICAL("creating socket failed with %d", (int)errno);
+      return nullptr;
+    }
+
     int val = 1;
     SOCKFUNC(setsockopt)
     (conn->fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&val, sizeof(int));
@@ -490,7 +496,55 @@ namespace OsSocket {
     set_nonblocking(conn->fd);
 
     auto sa = makeSockaddr(address);
-    SOCKFUNC(connect)(conn->fd, (sockaddr*)(&sa), sizeof(sa));  // ignore result
+    socklen_t socklen = sizeof(sa);
+
+    int res = SOCKFUNC(connect)(conn->fd, (sockaddr*)(&sa), socklen);
+
+    if(res < 0 && errno != EINPROGRESS) {
+      LOG_ERROR(
+          "connection with the server (%s) failed", address.str().c_str());
+      SOCKFUNC_close(conn->fd);
+      return nullptr;
+    }
+
+    fd_set fdset;
+    FD_ZERO(&fdset);
+    FD_SET(conn->fd, &fdset);
+
+    struct timeval tv {
+      .tv_sec = 5, .tv_usec = 0,
+    };
+
+    // Wait for the socket to become writable i.e. connect has succeeded
+    res = select(conn->fd + 1, NULL, &fdset, NULL, &tv);
+
+    if(res <= 0) {
+      LOG_ERROR(
+          "connection with the server (%s) failed (timeout)",
+          address.str().c_str());
+      SOCKFUNC_close(conn->fd);
+      return nullptr;
+    }
+
+    else {
+#ifdef PORT_WINDOWS
+      char so_error;
+#else
+      int so_error;
+#endif
+
+      socklen_t len = sizeof(so_error);
+
+      SOCKFUNC(getsockopt)(conn->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+
+      if(so_error != 0) {
+        LOG_ERROR(
+            "connection with the server (%s) failed (error)",
+            address.str().c_str());
+        SOCKFUNC_close(conn->fd);
+        return nullptr;
+      }
+    }
 
     tcpConnections.push_back(conn);
     return conn;

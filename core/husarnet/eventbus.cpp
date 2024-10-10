@@ -46,7 +46,9 @@ void EventBus::periodic()
         .port = 80,
     };
 
-    this->ws.connect(ebAddress, "/device/device_ws");
+    std::string endpoint = "/device/" + this->manager->getSelfAddress().str();
+
+    this->ws.connect(ebAddress, endpoint.data());
     // this->ws.connect(InetAddress::parse("127.0.0.1:8088"), "/");
   }
 }
@@ -81,9 +83,9 @@ void EventBus::_handleGetConfig()
   http.encode(buffer);
 
   // TODO: handle multiple EB addresses
-  assert(this->manager->getEbAddresses().size() > 0);
+  assert(this->manager->getDashboardApiAddresses().size() > 0);
   InetAddress ebAddress = {
-      .ip = this->manager->getEbAddresses()[0],
+      .ip = this->manager->getDashboardApiAddresses()[0],
       .port = 80,
   };
 
