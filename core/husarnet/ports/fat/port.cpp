@@ -397,6 +397,10 @@ namespace Port {
         (void*)&result);
     ares_wait(channel);
 
+    LOG_DEBUG(
+        "DNS resolution for %s done, result: %s", hostname.c_str(),
+        result.address.toString().c_str());
+
     return result.address;
   }
 

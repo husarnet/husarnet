@@ -40,6 +40,8 @@ json retrieveLicenseJson(
       "Accept: */*\n\n";
 
   SOCKFUNC(send)(sockfd, request.data(), request.size(), 0);
+
+  // TODO add a while loop here
   size_t len =
       SOCKFUNC(recv)(sockfd, (char*)readBuffer.data(), readBuffer.size(), 0);
   size_t pos = readBuffer.find("\r\n\r\n");
@@ -54,6 +56,9 @@ json retrieveLicenseJson(
     }
   }
   pos += 4;
+
+  LOG_DEBUG(
+      "License retrieved from %s, size %d", dashboardHostname.c_str(), len);
 
   return json::parse(readBuffer.substr(pos, len - pos), nullptr, false);
 }
