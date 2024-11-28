@@ -1,12 +1,13 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBCONF_NONINTERACTIVE_SEEN=true
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --yes \
-    bison \
     bind9-host \
     binutils \
+    bison \
+    build-essential \
     ca-certificates \
     ccache \
     clang \
@@ -23,8 +24,10 @@ RUN apt-get update \
     gperf \
     less \
     libarchive-tools \
+    libdbus-1-dev \
     libffi-dev \
     libfl-dev \
+    libglib2.0-dev \
     libssl-dev \
     libusb-1.0-0 \
     lldb \
@@ -33,6 +36,7 @@ RUN apt-get update \
     openssl \
     patch \
     python3 \
+    python3-dev \
     python3-pip \
     python3-venv \
     rpm \
@@ -53,7 +57,8 @@ WORKDIR /zig
 RUN wget -O zig.tar.xz "https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz" \
     && tar -xf zig.tar.xz \
     && rm -f zig.tar.xz \
-    && ln -s /zig/zig-linux-x86_64-0.12.0/zig /usr/bin/zig
+    && ln -s /zig/zig-linux-x86_64-0.12.0/zig /usr/bin/zig \
+    && ln -s /zig/zig-linux-x86_64-0.12.0 /zig/current
 
 WORKDIR /jsonnet
 RUN wget -O jsonnet.tar.gz "https://github.com/google/go-jsonnet/releases/download/v0.20.0/go-jsonnet_0.20.0_Linux_x86_64.tar.gz" \
@@ -62,7 +67,7 @@ RUN wget -O jsonnet.tar.gz "https://github.com/google/go-jsonnet/releases/downlo
     && ln -s /jsonnet/jsonnet /usr/bin/ \
     && ln -s /jsonnet/jsonnetfmt /usr/bin/
 
-RUN groupadd builder \
+RUN userdel -r ubuntu && groupadd builder \
     && useradd -m -u 1000 -g 1000 builder \
     && echo "builder ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
 

@@ -19,6 +19,8 @@ gotools_exception = """//go:build tools
 // +build tools"""
 
 
+public_domain_exception = """// Public domain"""
+
 issues_found = False
 
 
@@ -62,6 +64,9 @@ def analyze_source_cpp_golang(file_path):
         return
 
     if top_comment == gotools_exception:
+        return
+
+    if top_comment == public_domain_exception:
         return
 
     if len(top_comment) < 10:

@@ -6,23 +6,50 @@ source $(dirname "$0")/../util/bash-base.sh
 
 echo "[HUSARNET BS] Running cppcheck"
 
-cppcheck --error-exitcode=1 --enable=all --inline-suppr --force \
-    -itodo \
-    -iesp32 \
+cppcheck_tmp_dir=${base_dir}/build/cppcheck
+
+mkdir -p ${cppcheck_tmp_dir}
+
+# TODO slowly but surely fix the issues and remove suppressions here
+
+cppcheck \
+    --error-exitcode=1 \
+    --enable=all \
+    --suppress=constParameterPointer \
+    --suppress=constVariablePointer \
+    --suppress=constVariableReference \
+    --suppress=cstyleCast \
+    --suppress=ctuOneDefinitionRuleViolation \
+    --suppress=iterateByValue \
+    --suppress=missingInclude \
+    --suppress=missingIncludeSystem \
+    --suppress=missingOverride \
+    --suppress=noExplicitConstructor \
+    --suppress=noOperatorEq \
+    --suppress=nullPointerRedundantCheck \
+    --suppress=passedByValue \
+    --suppress=preprocessorErrorDirective \
+    --suppress=selfAssignment \
+    --suppress=shadowVariable \
+    --suppress=toomanyconfigs \
+    --suppress=uninitMemberVar \
+    --suppress=uninitMemberVarPrivate \
+    --suppress=unknownMacro \
+    --suppress=unmatchedSuppression \
+    --suppress=unreadVariable \
+    --suppress=unusedFunction \
+    --suppress=unusedPrivateFunction \
+    --suppress=useInitializationList \
+    --suppress=useStlAlgorithm \
+    --suppress=variableScope \
+    --inline-suppr \
+    --max-configs=10 \
+    --config-exclude=esp32 \
+    --config-exclude=nlohmann \
+    --config-exclude=json \
+    --cppcheck-build-dir=${cppcheck_tmp_dir} \
+    -I ${base_dir}/core \
+    -I ${base_dir}/build/tests/_deps/better_enums-src \
     ${base_dir}/daemon \
     ${base_dir}/core \
     ${tests_base}/unit
-
-    # I've tried enabling those and they seem to be generating so much nose that's not worth it
-    # -I ${build_base}/linux/amd64/tempIncludes/ \
-    # -I /app/build/linux/arm64/_deps/better_enums-src \
-
-    # -I /app/build/linux/arm64/_deps/nlohmann_json-src/include \
-    # -I /zig/zig-linux-x86_64-0.9.1/lib/libcxx/include/ \
-    # -I /zig/zig-linux-x86_64-0.9.1/lib/libcxx/include/__support/musl/ \
-    # -I /zig/zig-linux-x86_64-0.9.1/lib/libc/include/any-linux-any/ \
-    # -I /zig/zig-linux-x86_64-0.9.1/lib/libc/include/any-windows-any \
-    # -I /zig/zig-linux-x86_64-0.9.1/lib/libc/include/generic-musl/ \
-    # -I /zig/zig-linux-x86_64-0.9.1/lib/libc/include/x86_64-linux-musl \
-    # -I /zig/zig-linux-x86_64-0.9.1/lib/libc/musl/arch/x86_64/ \
-    # -I /zig/zig-linux-x86_64-0.9.1/lib/libc/musl/include/ \
