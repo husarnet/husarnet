@@ -143,23 +143,22 @@ extern "C" struct netif* lwip_hook_ip6_route(
 // --- ESP-NETIF layer ---
 
 const esp_netif_inherent_config_t husarnet_esp_netif_base_config = {
-  .flags = ESP_NETIF_FLAG_AUTOUP,
-  .if_key = "hn",
-  .if_desc = "Husarnet",
-  .route_prio = 0,  // Do not route packets through the Husarnet interface
+    .flags = ESP_NETIF_FLAG_AUTOUP,
+    .if_key = "hn",
+    .if_desc = "Husarnet",
+    .route_prio = 0,  // Do not route packets through the Husarnet interface
 };
 
 const struct esp_netif_netstack_config husarnet_esp_netif_netstack_config = {
-  .lwip = {
-      .init_fn = husarnet_netif_init,
-      .input_fn = husarnet_netif_input,
-  }
-};
+    .lwip = {
+        .init_fn = husarnet_netif_init,
+        .input_fn = husarnet_netif_input,
+    }};
 
 const esp_netif_config_t husarnet_netif_config = {
-  .base = &husarnet_esp_netif_base_config,
-  .driver = NULL,
-  .stack = &husarnet_esp_netif_netstack_config,
+    .base = &husarnet_esp_netif_base_config,
+    .driver = NULL,
+    .stack = &husarnet_esp_netif_netstack_config,
 };
 
 // Following IO Driver functions are noops, as this is a virtual interface
@@ -223,8 +222,8 @@ TunTap::TunTap(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
     abort();
   }
 
-  husarnet_netif = static_cast<netif*>(esp_netif_get_netif_impl(husarnet_esp_netif));
-
+  husarnet_netif =
+      static_cast<netif*>(esp_netif_get_netif_impl(husarnet_esp_netif));
 
   husarnet_esp_netif_driver_t* driver = husarnet_esp_netif_driver_init();
   driver->tunTap = this;
@@ -240,27 +239,30 @@ TunTap::TunTap(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
   }
 
   // Add IPv6 address
-  static_assert(sizeof(esp_ip6_addr_t) == sizeof(ip6_addr_t), "ESP-NETIF and LwIP IPv6 address size mismatch");
+  static_assert(
+      sizeof(esp_ip6_addr_t) == sizeof(ip6_addr_t),
+      "ESP-NETIF and LwIP IPv6 address size mismatch");
 
   esp_ip6_addr_t ip6_addr_esp;
   memcpy(&ip6_addr_esp, &(this->ipAddr), sizeof(esp_ip6_addr_t));
-  if(esp_netif_add_ip6_address(husarnet_esp_netif, ip6_addr_esp, true) != ESP_OK) {
+  if(esp_netif_add_ip6_address(husarnet_esp_netif, ip6_addr_esp, true) !=
+     ESP_OK) {
     LOG_ERROR("Failed to add IPv6 address");
     abort();
   }
-  
+
   // Create a netconn connection used to send packets from the Husarnet stack
   this->conn = netconn_new(NETCONN_RAW_IPV6);
 
   ip_addr_t ipSrc = IPADDR6_INIT(0, 0, 0, 0);
   memcpy(ipSrc.u_addr.ip6.addr, this->getIp6Addr().addr, 16);
-  if (netconn_bind(this->conn, &ipSrc, 0) != ERR_OK) {
+  if(netconn_bind(this->conn, &ipSrc, 0) != ERR_OK) {
     LOG_ERROR("Failed to bind netconn");
     abort();
   }
-  
+
   int netifIdx = esp_netif_get_netif_impl_index(husarnet_esp_netif);
-  if (netconn_bind_if(this->conn, static_cast<u8_t>(netifIdx)) != ERR_OK) {
+  if(netconn_bind_if(this->conn, static_cast<u8_t>(netifIdx)) != ERR_OK) {
     LOG_ERROR("Failed to bind netconn");
     abort();
   }
@@ -272,7 +274,7 @@ TunTap::TunTap(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
 void TunTap::onLowerLayerData(DeviceId source, string_view data)
 {
   // Input packet should contain IPv4/IPv6 header
-  if (data.size() < 40) {
+  if(data.size() < 40) {
     LOG_ERROR("Packet too short");
     return;
   }
@@ -280,16 +282,16 @@ void TunTap::onLowerLayerData(DeviceId source, string_view data)
   // Easiest way to sent a packet with IP headers included (format used
   // internally) would be to use BSD style sockets with IPV6_HDRINCL option.
   // This is not supported by LwIP, so we need to use netconn or raw API.
-  struct netbuf *buf = netbuf_new();
+  struct netbuf* buf = netbuf_new();
 
-  if (netbuf_ref(buf, data.data(), data.size()) != ERR_OK) {
+  if(netbuf_ref(buf, data.data(), data.size()) != ERR_OK) {
     LOG_ERROR("Failed to create netbuf");
     return;
   }
 
   ip_addr_t ipDest = IPADDR6_INIT(0, 0, 0, 0);
   memcpy(ipDest.u_addr.ip6.addr, data.data() + 8, 16);
-  if (netconn_sendto(this->conn, buf, &ipDest, 0) != ERR_OK) {
+  if(netconn_sendto(this->conn, buf, &ipDest, 0) != ERR_OK) {
     LOG_ERROR("Failed to send packet");
     return;
   }
