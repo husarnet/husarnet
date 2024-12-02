@@ -54,11 +54,11 @@ RUN update-alternatives --install /usr/bin/gofmt gofmt /usr/lib/go-1.21/bin/gofm
 RUN gem install --no-document fpm
 
 WORKDIR /zig
-RUN wget -O zig.tar.xz "https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz" \
+RUN wget -O zig.tar.xz "https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz" \
     && tar -xf zig.tar.xz \
     && rm -f zig.tar.xz \
-    && ln -s /zig/zig-linux-x86_64-0.13.0/zig /usr/bin/zig \
-    && ln -s /zig/zig-linux-x86_64-0.13.0 /zig/current
+    && ln -s /zig/zig-linux-x86_64-0.12.0/zig /usr/bin/zig \
+    && ln -s /zig/zig-linux-x86_64-0.12.0 /zig/current
 
 WORKDIR /jsonnet
 RUN wget -O jsonnet.tar.gz "https://github.com/google/go-jsonnet/releases/download/v0.20.0/go-jsonnet_0.20.0_Linux_x86_64.tar.gz" \
