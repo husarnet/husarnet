@@ -1,0 +1,31 @@
+name: Self hosted runner heartbeat
+
+'on':
+  schedule:
+    - cron: 42 * * * *
+  workflow_dispatch: {}
+
+jobs:
+  install-nightly:
+    runs-on: install-nightly
+    steps:
+      - name: Send heartbeat
+        uses: tyrrrz/action-http-request@master
+        with:
+          url: https://uptime.monitoring.husarion.com/api/push/sAakP7m1zC?status=up&msg=OK&ping=
+
+  install-prod:
+    runs-on: install-prod
+    steps:
+      - name: Send heartbeat
+        uses: tyrrrz/action-http-request@master
+        with:
+          url: https://uptime.monitoring.husarion.com/api/push/D0Wbn0Kfsa?status=up&msg=OK&ping=
+
+  esp32:
+    runs-on: install-prod
+    steps:
+      - name: Send heartbeat
+        uses: tyrrrz/action-http-request@master
+        with:
+          url: https://uptime.monitoring.husarion.com/api/push/wSE51iXXRx?status=up&msg=OK&ping=
