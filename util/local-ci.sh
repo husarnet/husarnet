@@ -15,6 +15,10 @@ preset=${1:-all}
 # docker - build linux and pack it into docker
 # integration - build linux, docker and run integration tests
 
+if [ "$preset" == "all" ] || [ "$preset" == "builder" ]; then
+    ${base_dir}/builder/build.sh
+fi
+
 if [ "$preset" == "all" ] || [ "$preset" == "format" ]; then
     ${util_base}/format.sh
 fi
