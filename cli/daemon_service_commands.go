@@ -4,11 +4,12 @@
 package main
 
 import (
+	"context"
 	"runtime"
 	"time"
 
 	"github.com/kardianos/service"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 const systemdScriptTemplate = `[Unit]
@@ -143,9 +144,9 @@ var daemonServiceInstallCommand = &cli.Command{
 			Usage: "Don't check if the unit/service file exists already before attempting to write",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		silentFlag := ctx.Bool("silent")
-		forceFlag := ctx.Bool("force")
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		silentFlag := cmd.Bool("silent")
+		forceFlag := cmd.Bool("force")
 
 		if !forceFlag && isHusarnetInstalledInOSServiceManager(silentFlag) {
 			if !silentFlag {
@@ -193,9 +194,9 @@ var daemonServiceUninstallCommand = &cli.Command{
 			Usage: "Don't check if the unit/service file exists already before attempting to write",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		silentFlag := ctx.Bool("silent")
-		forceFlag := ctx.Bool("force")
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		silentFlag := cmd.Bool("silent")
+		forceFlag := cmd.Bool("force")
 
 		if !forceFlag && runtime.GOOS == "linux" && !fileExists(systemdUnitFilePath) {
 			if !silentFlag {

@@ -4,8 +4,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 	"time"
 )
 
@@ -24,7 +25,7 @@ type Devices []Device
 var dashboardDeviceCommand = &cli.Command{
 	Name:  "device",
 	Usage: "Husarnet device management, eg. list devices claimed to your account, update, unclaim",
-	Subcommands: []*cli.Command{
+	Commands: []*cli.Command{
 		dashboardDeviceListCommand,
 		dashboardDeviceShowCommand,
 	},
@@ -35,8 +36,8 @@ var dashboardDeviceListCommand = &cli.Command{
 	Aliases:   []string{"ls"},
 	Usage:     "display a table of all your devices",
 	ArgsUsage: " ", // No arguments needed
-	Action: func(ctx *cli.Context) error {
-		ignoreExtraArguments(ctx)
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		ignoreExtraArguments(cmd)
 		resp := callDashboardApi[Devices]("GET", "/web/devices")
 		if resp.Type != "success" {
 			printError("API request failed. Message: %s", resp.Errors[0])
@@ -59,9 +60,9 @@ var dashboardDeviceShowCommand = &cli.Command{
 	Name:      "show",
 	Usage:     "display device details",
 	ArgsUsage: "<device id>", // No arguments needed
-	Action: func(ctx *cli.Context) error {
-		requiredArgumentsNumber(ctx, 1)
-		resp := callDashboardApi[Device]("GET", "/web/devices/"+ctx.Args().First())
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsNumber(cmd, 1)
+		resp := callDashboardApi[Device]("GET", "/web/devices/"+cmd.Args().First())
 		if resp.Type != "success" {
 			printError("API request failed. Message: %s", resp.Errors[0])
 			return nil
@@ -83,9 +84,9 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 	Name:      "unclaim",
 	Usage:     "unclaim self or some other device in your network",
 	ArgsUsage: "<device id>", // No arguments needed
-	Action: func(ctx *cli.Context) error {
-		requiredArgumentsRange(ctx, 0, 1)
-		resp := callDashboardApi[Device]("GET", "/web/devices/"+ctx.Args().First())
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsRange(cmd, 0, 1)
+		resp := callDashboardApi[Device]("GET", "/web/devices/"+cmd.Args().First())
 		if resp.Type != "success" {
 			printError("API request failed. Message: %s", resp.Errors[0])
 			return nil

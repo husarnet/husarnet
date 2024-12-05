@@ -4,9 +4,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 	"strings"
 )
 
@@ -42,9 +43,9 @@ var claimCommand = &cli.Command{
 			Usage: "you can add optional aliases (additional hostnames) you can identify this device with",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		minimumArguments(ctx, 1)
-		args := ctx.Args().Slice()
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		minimumArguments(cmd, 1)
+		args := cmd.Args().Slice()
 		token := args[0]
 
 		if strings.HasPrefix(token, "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a/") {
@@ -53,10 +54,10 @@ var claimCommand = &cli.Command{
 
 		params := ClaimParams{
 			ClaimToken: args[0],
-			Hostname:   ctx.String("hostname"),
-			Aliases:    ctx.StringSlice("alias"),
-			Comment:    ctx.String("comment"),
-			Emoji:      ctx.String("emoji"),
+			Hostname:   cmd.String("hostname"),
+			Aliases:    cmd.StringSlice("alias"),
+			Comment:    cmd.String("comment"),
+			Emoji:      cmd.String("emoji"),
 		}
 
 		jsonBytes, err := json.Marshal(params)

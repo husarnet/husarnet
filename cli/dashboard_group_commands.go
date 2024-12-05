@@ -4,8 +4,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 type Group struct {
@@ -37,7 +38,7 @@ var dashboardGroupCommand = &cli.Command{
 	Name:    "group",
 	Aliases: []string{"groups"},
 	Usage:   "Husarnet group management, eg. see your groups, create, update, delete",
-	Subcommands: []*cli.Command{
+	Commands: []*cli.Command{
 		dashboardGroupListCommand,
 		dashboardGroupShowCommand,
 		dashboardGroupCreateCommand,
@@ -51,8 +52,8 @@ var dashboardGroupListCommand = &cli.Command{
 	Aliases:   []string{"ls"},
 	Usage:     "display a table of all your groups (with summary information)",
 	ArgsUsage: " ", // No arguments needed
-	Action: func(ctx *cli.Context) error {
-		ignoreExtraArguments(ctx)
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		ignoreExtraArguments(cmd)
 		resp := callDashboardApi[Groups]("GET", "/web/groups")
 		if resp.Type != "success" {
 			printError("API request failed. Message: %s", resp.Errors[0])
@@ -75,9 +76,9 @@ var dashboardGroupShowCommand = &cli.Command{
 	Name:      "show",
 	Usage:     "display group details",
 	ArgsUsage: "<group name or id>",
-	Action: func(ctx *cli.Context) error {
-		requiredArgumentsNumber(ctx, 1)
-		arg := ctx.Args().First()
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsNumber(cmd, 1)
+		arg := cmd.Args().First()
 		uuid := arg
 		if !looksLikeUuidv4(arg) {
 			// maybe code it as fetchgroupsToContainer() or something...
@@ -135,13 +136,13 @@ var dashboardGroupCreateCommand = &cli.Command{
 			Usage: "you can add optional comment to the group",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		requiredArgumentsNumber(ctx, 1)
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsNumber(cmd, 1)
 
 		params := GroupCrudInput{
-			Name:    ctx.Args().First(),
-			Comment: ctx.String("comment"),
-			Emoji:   ctx.String("emoji"),
+			Name:    cmd.Args().First(),
+			Comment: cmd.String("comment"),
+			Emoji:   cmd.String("emoji"),
 		}
 		resp := callDashboardApiWithInput[GroupCrudInput, Group]("POST", "/web/groups", params)
 
@@ -180,15 +181,15 @@ var dashboardGroupUpdateCommand = &cli.Command{
 			Usage: "you can add optional comment to the group",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		requiredArgumentsNumber(ctx, 1)
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsNumber(cmd, 1)
 
 		params := GroupCrudInput{
-			Name:    ctx.String("name"),
-			Comment: ctx.String("comment"),
-			Emoji:   ctx.String("emoji"),
+			Name:    cmd.String("name"),
+			Comment: cmd.String("comment"),
+			Emoji:   cmd.String("emoji"),
 		}
-		resp := callDashboardApiWithInput[GroupCrudInput, Group]("PUT", "/web/groups/"+ctx.Args().First(), params)
+		resp := callDashboardApiWithInput[GroupCrudInput, Group]("PUT", "/web/groups/"+cmd.Args().First(), params)
 
 		if resp.Type != "success" {
 			printError("API request failed. Message: %s", resp.Errors[0])
@@ -217,14 +218,14 @@ var dashboardGroupDeleteCommand = &cli.Command{
 			Usage: "don't ask for confirmation",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		requiredArgumentsNumber(ctx, 1)
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsNumber(cmd, 1)
 
-		if !ctx.Bool("yes") {
+		if !cmd.Bool("yes") {
 			askForConfirmation("Are you sure you want to delete this group?")
 		}
 
-		resp := callDashboardApi[any]("DELETE", "/web/groups/"+ctx.Args().First())
+		resp := callDashboardApi[any]("DELETE", "/web/groups/"+cmd.Args().First())
 
 		if resp.Type != "success" {
 			printError("API request failed. Message: %s", resp.Errors[0])

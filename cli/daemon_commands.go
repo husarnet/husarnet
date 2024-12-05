@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"net/url"
 	"os"
 	"runtime"
@@ -11,7 +12,7 @@ import (
 	"sync"
 
 	"github.com/pterm/pterm"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 var daemonStartCommand = &cli.Command{
@@ -27,7 +28,7 @@ var daemonStartCommand = &cli.Command{
 			Destination: &wait,
 		},
 	},
-	Action: func(ctx *cli.Context) error {
+	Action: func(ctx context.Context, cmd *cli.Command) error {
 		if isDaemonRunning() {
 			printInfo("Husarnet Daemon is already running. If you want to restart it, use `husarnet daemon restart` command.")
 			return nil
@@ -67,7 +68,7 @@ var daemonRestartCommand = &cli.Command{
 			Destination: &wait,
 		},
 	},
-	Action: func(ctx *cli.Context) error {
+	Action: func(ctx context.Context, cmd *cli.Command) error {
 		// Temporary solution for Windows, until we get rid of nssm
 		if onWindows() {
 			runSubcommand(false, "nssm", "restart", "husarnet")
@@ -94,7 +95,7 @@ var daemonStopCommand = &cli.Command{
 	Aliases:   []string{"down"},
 	Usage:     "stop husarnet daemon",
 	ArgsUsage: " ", // No arguments needed
-	Action: func(ctx *cli.Context) error {
+	Action: func(ctx context.Context, cmd *cli.Command) error {
 		if onWindows() {
 			runSubcommand(false, "nssm", "stop", "husarnet")
 			return nil
@@ -128,12 +129,12 @@ var daemonStatusCommand = &cli.Command{
 		},
 	},
 	ArgsUsage: " ", // No arguments needed
-	Action: func(ctx *cli.Context) error {
-		if ctx.Bool("follow") {
-			printStatusFollow(ctx)
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		if cmd.Bool("follow") {
+			printStatusFollow(cmd)
 		} else {
 			status := getDaemonStatus()
-			printStatus(ctx, status)
+			printStatus(cmd, status)
 		}
 		return nil
 
@@ -145,10 +146,10 @@ var daemonSetupServerCommand = &cli.Command{
 	Aliases:   []string{"change-dashboard"},
 	Usage:     "Connect your Husarnet device to different Husarnet infrastructure",
 	ArgsUsage: "[dashboard fqdn]",
-	Action: func(ctx *cli.Context) error {
-		requiredArgumentsNumber(ctx, 1)
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsNumber(cmd, 1)
 
-		domain := ctx.Args().Get(0)
+		domain := cmd.Args().Get(0)
 
 		callDaemonPost[EmptyResult]("/api/change-server", url.Values{
 			"domain": {domain},
@@ -181,13 +182,13 @@ var daemonSetupServerCommand = &cli.Command{
 var daemonWhitelistCommand = &cli.Command{
 	Name:  "whitelist",
 	Usage: "Manage whitelist on the device.",
-	Subcommands: []*cli.Command{
+	Commands: []*cli.Command{
 		{
 			Name:      "enable",
 			Aliases:   []string{"on"},
 			Usage:     "enable whitelist",
 			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
+			Action: func(ctx context.Context, cmd *cli.Command) error {
 				stdResult := callDaemonPost[StandardResult]("/api/whitelist/enable", url.Values{}).Result
 				handleStandardResult(stdResult)
 				printSuccess("Enabled the whitelist")
@@ -200,7 +201,7 @@ var daemonWhitelistCommand = &cli.Command{
 			Aliases:   []string{"off"},
 			Usage:     "disable whitelist",
 			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
+			Action: func(ctx context.Context, cmd *cli.Command) error {
 				stdResult := callDaemonPost[StandardResult]("/api/whitelist/disable", url.Values{}).Result
 				handleStandardResult(stdResult)
 				printSuccess("Disabled the whitelist")
@@ -213,7 +214,7 @@ var daemonWhitelistCommand = &cli.Command{
 			Aliases:   []string{"show", "dir", "get"},
 			Usage:     "list entries on the whitelist",
 			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
+			Action: func(ctx context.Context, cmd *cli.Command) error {
 				status := getDaemonStatus()
 				handleStandardResult(status.StdResult)
 				printWhitelist(status, false)
@@ -225,10 +226,10 @@ var daemonWhitelistCommand = &cli.Command{
 			Name:      "add",
 			Usage:     "Add a device to your whitelist by Husarnet address",
 			ArgsUsage: "[device's ip address]",
-			Action: func(ctx *cli.Context) error {
-				requiredArgumentsNumber(ctx, 1)
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				requiredArgumentsNumber(cmd, 1)
 
-				addr := makeCanonicalAddr(ctx.Args().Get(0))
+				addr := makeCanonicalAddr(cmd.Args().Get(0))
 
 				stdResult := callDaemonPost[StandardResult]("/api/whitelist/add", url.Values{
 					"address": {addr},
@@ -243,10 +244,10 @@ var daemonWhitelistCommand = &cli.Command{
 			Name:      "rm",
 			Usage:     "Remove device from the whitelist",
 			ArgsUsage: "[device's ip address]",
-			Action: func(ctx *cli.Context) error {
-				requiredArgumentsNumber(ctx, 1)
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				requiredArgumentsNumber(cmd, 1)
 
-				addr := makeCanonicalAddr(ctx.Args().Get(0))
+				addr := makeCanonicalAddr(cmd.Args().Get(0))
 
 				stdResult := callDaemonPost[StandardResult]("/api/whitelist/rm", url.Values{
 					"address": {addr},
@@ -263,13 +264,13 @@ var daemonWhitelistCommand = &cli.Command{
 var daemonHooksCommand = &cli.Command{
 	Name:  "hooks",
 	Usage: "Manage hooks on the device.",
-	Subcommands: []*cli.Command{
+	Commands: []*cli.Command{
 		{
 			Name:      "enable",
 			Aliases:   []string{"on"},
 			Usage:     "enable hooks",
 			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
+			Action: func(ctx context.Context, cmd *cli.Command) error {
 				stdResult := callDaemonPost[StandardResult]("/api/hooks/enable", url.Values{}).Result
 				handleStandardResult(stdResult)
 				printSuccess("Enabled hooks")
@@ -282,7 +283,7 @@ var daemonHooksCommand = &cli.Command{
 			Aliases:   []string{"off"},
 			Usage:     "disable hooks",
 			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
+			Action: func(ctx context.Context, cmd *cli.Command) error {
 				stdResult := callDaemonPost[StandardResult]("/api/hooks/disable", url.Values{}).Result
 				handleStandardResult(stdResult)
 				printSuccess("Disabled hooks")
@@ -295,7 +296,7 @@ var daemonHooksCommand = &cli.Command{
 			Aliases:   []string{"check", "ls"},
 			Usage:     "check if hooks are enabled",
 			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
+			Action: func(ctx context.Context, cmd *cli.Command) error {
 				status := getDaemonStatus()
 				handleStandardResult(status.StdResult)
 				printHooksStatus(status)
@@ -309,8 +310,8 @@ var daemonHooksCommand = &cli.Command{
 var daemonWaitCommand = &cli.Command{
 	Name:  "wait",
 	Usage: "Wait until certain events occur. If no events provided will wait for as many elements as it can (the best case scenario). Husarnet will continue working even if some of those elements are unreachable, so consider narrowing your search down a bit.",
-	Action: func(ctx *cli.Context) error {
-		ignoreExtraArguments(ctx)
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		ignoreExtraArguments(cmd)
 		err := waitBaseANY()
 		if err != nil {
 			return err
@@ -323,14 +324,14 @@ var daemonWaitCommand = &cli.Command{
 
 		return waitWebsetup()
 	},
-	Subcommands: []*cli.Command{
+	Commands: []*cli.Command{
 		{
 			Name:      "daemon",
 			Aliases:   []string{"ready"},
 			Usage:     "Wait until the deamon is able to return it's own status",
 			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
-				ignoreExtraArguments(ctx)
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				ignoreExtraArguments(cmd)
 				return waitDaemon()
 			},
 		},
@@ -338,17 +339,17 @@ var daemonWaitCommand = &cli.Command{
 			Name:      "base",
 			Usage:     "Wait until there is a base-server connection established (via any protocol)",
 			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
-				ignoreExtraArguments(ctx)
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				ignoreExtraArguments(cmd)
 				return waitBaseANY()
 			},
-			Subcommands: []*cli.Command{
+			Commands: []*cli.Command{
 				{
 					Name:      "udp",
 					Usage:     "Wait until there is a base-server connection established via UDP. This is the best case scenario. Husarnet will work even without it.",
 					ArgsUsage: " ", // No arguments needed
-					Action: func(ctx *cli.Context) error {
-						ignoreExtraArguments(ctx)
+					Action: func(ctx context.Context, cmd *cli.Command) error {
+						ignoreExtraArguments(cmd)
 						return waitBaseUDP()
 					},
 				},
@@ -358,8 +359,8 @@ var daemonWaitCommand = &cli.Command{
 			Name:      "joinable",
 			Usage:     "Wait until there is enough connectivity to join to a network",
 			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
-				ignoreExtraArguments(ctx)
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				ignoreExtraArguments(cmd)
 
 				err := waitBaseANY()
 				if err != nil {
@@ -373,8 +374,8 @@ var daemonWaitCommand = &cli.Command{
 			Name:      "joined",
 			Usage:     "Wait until there the daemon has joined the network",
 			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
-				ignoreExtraArguments(ctx)
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				ignoreExtraArguments(cmd)
 				return waitJoined()
 			},
 		},
@@ -382,18 +383,18 @@ var daemonWaitCommand = &cli.Command{
 			Name:      "host",
 			Usage:     "Wait until there is an established connection to a given host",
 			ArgsUsage: "[device name or ip]",
-			Action: func(ctx *cli.Context) error {
-				requiredArgumentsNumber(ctx, 1)
-				return waitHost(ctx.Args().First())
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				requiredArgumentsNumber(cmd, 1)
+				return waitHost(cmd.Args().First())
 			},
 		},
 		{
 			Name:      "hostnames",
 			Usage:     "Wait until given hosts are known to the system",
 			ArgsUsage: "[device name] […]",
-			Action: func(ctx *cli.Context) error {
-				minimumArguments(ctx, 1)
-				return waitHostnames(ctx.Args().Slice())
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				minimumArguments(cmd, 1)
+				return waitHostnames(cmd.Args().Slice())
 			},
 		},
 	},
@@ -473,13 +474,13 @@ var daemonGenIdCommand = &cli.Command{
 			Usage: "Save the result in " + getDaemonIdPath(),
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		ignoreExtraArguments(ctx)
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		ignoreExtraArguments(cmd)
 
 		var newId string
 
-		if ctx.String("include") != "" {
-			needle := ctx.String("include")
+		if cmd.String("include") != "" {
+			needle := cmd.String("include")
 			stripHaystack := false
 
 			if strings.Contains(needle, ":") {
@@ -498,7 +499,7 @@ var daemonGenIdCommand = &cli.Command{
 			newId = getDaemonBinaryGenIdOutput()
 		}
 
-		if ctx.Bool("save") {
+		if cmd.Bool("save") {
 			err := os.WriteFile(getDaemonIdPath(), []byte(newId), 0600)
 			if err != nil {
 				printError("Error: could not save new ID: %s", err)
@@ -513,13 +514,13 @@ var daemonGenIdCommand = &cli.Command{
 
 			printInfo("Saved! In order to apply it you need to restart Husarnet Daemon!")
 
-			if !ctx.Bool("silent") {
+			if !cmd.Bool("silent") {
 				restartDaemonWithConfirmationPrompt()
 			}
 		} else {
 			pterm.Printf(newId)
 
-			if !ctx.Bool("silent") {
+			if !cmd.Bool("silent") {
 				printInfo("In order to use it save the line above as " + getDaemonIdPath())
 			}
 		}
@@ -531,7 +532,7 @@ var daemonGenIdCommand = &cli.Command{
 var daemonCommand = &cli.Command{
 	Name:  "daemon",
 	Usage: "control the local daemon",
-	Subcommands: []*cli.Command{
+	Commands: []*cli.Command{
 		daemonStatusCommand,
 		daemonWaitCommand,
 		daemonStartCommand,

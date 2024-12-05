@@ -10,7 +10,7 @@ import (
 
 	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 var redFormatter = pterm.Red
@@ -98,37 +98,37 @@ func initTheme() {
 }
 
 // Throw an error, show help and die if a different number of arguments than specified is provided
-func requiredArgumentsNumber(ctx *cli.Context, number int) {
-	if ctx.Args().Len() != number {
-		printError("Wrong number of arguments provided. Provided " + pterm.Bold.Sprintf("%d", ctx.Args().Len()) + ", required: " + pterm.Bold.Sprintf("%d", number))
-		cli.ShowSubcommandHelp(ctx)
+func requiredArgumentsNumber(cmd *cli.Command, number int) {
+	if cmd.Args().Len() != number {
+		printError("Wrong number of arguments provided. Provided " + pterm.Bold.Sprintf("%d", cmd.Args().Len()) + ", required: " + pterm.Bold.Sprintf("%d", number))
+		cli.ShowSubcommandHelp(cmd)
 		dieEmpty()
 	}
 }
 
 // Throw an error, show help and die if number of arguments provided is not within a given range
-func requiredArgumentsRange(ctx *cli.Context, lower, upper int) {
-	if ctx.Args().Len() < lower || ctx.Args().Len() > upper {
-		printError("Wrong number of arguments provided. Provided " + pterm.Bold.Sprintf("%d", ctx.Args().Len()) + ", required between " + pterm.Bold.Sprintf("%d", lower) + " and " + pterm.Bold.Sprintf("%d", upper))
-		cli.ShowSubcommandHelp(ctx)
+func requiredArgumentsRange(cmd *cli.Command, lower, upper int) {
+	if cmd.Args().Len() < lower || cmd.Args().Len() > upper {
+		printError("Wrong number of arguments provided. Provided " + pterm.Bold.Sprintf("%d", cmd.Args().Len()) + ", required between " + pterm.Bold.Sprintf("%d", lower) + " and " + pterm.Bold.Sprintf("%d", upper))
+		cli.ShowSubcommandHelp(cmd)
 		dieEmpty()
 	}
 }
 
 // Throw an error, show help and die if any arguments are provided
-func ignoreExtraArguments(ctx *cli.Context) {
-	if ctx.Args().Len() > 0 {
+func ignoreExtraArguments(cmd *cli.Command) {
+	if cmd.Args().Len() > 0 {
 		printError("Too many arguments provided!")
-		cli.ShowSubcommandHelp(ctx)
+		cli.ShowSubcommandHelp(cmd)
 		dieEmpty()
 	}
 }
 
 // Throw an error, show help and die if less than `lower` arguments are provided
-func minimumArguments(ctx *cli.Context, lower int) {
-	if ctx.Args().Len() < lower {
+func minimumArguments(cmd *cli.Command, lower int) {
+	if cmd.Args().Len() < lower {
 		printError("Not enough arguments provided!")
-		cli.ShowSubcommandHelp(ctx)
+		cli.ShowSubcommandHelp(cmd)
 		dieEmpty()
 	}
 }
