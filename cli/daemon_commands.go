@@ -114,7 +114,7 @@ var daemonStopCommand = &cli.Command{
 
 var daemonStatusCommand = &cli.Command{
 	Name:  "status",
-	Usage: "Display current connectivity status",
+	Usage: "display current connectivity status",
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:    "verbose",

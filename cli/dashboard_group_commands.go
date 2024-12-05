@@ -19,11 +19,6 @@ type JoinCode struct {
 	Token string `json:"token"`
 }
 
-type Device struct {
-	Id string `json:"id"`
-	Ip string `json:"ip"`
-}
-
 type GroupDetails struct {
 	Group             Group    `json:"group"`
 	AttachableDevices []Device `json:"attachableDevices"`
@@ -39,10 +34,9 @@ type GroupCrudInput struct {
 type Groups []Group
 
 var dashboardGroupCommand = &cli.Command{
-	Name:     "group",
-	Aliases:  []string{"groups"},
-	Usage:    "Husarnet group management, eg. see your groups, create, update, delete",
-	Category: "dashboard",
+	Name:    "group",
+	Aliases: []string{"groups"},
+	Usage:   "Husarnet group management, eg. see your groups, create, update, delete",
 	Subcommands: []*cli.Command{
 		dashboardGroupListCommand,
 		dashboardGroupShowCommand,
@@ -80,10 +74,36 @@ var dashboardGroupListCommand = &cli.Command{
 var dashboardGroupShowCommand = &cli.Command{
 	Name:      "show",
 	Usage:     "display group details",
-	ArgsUsage: "<group id>",
+	ArgsUsage: "<group name or id>",
 	Action: func(ctx *cli.Context) error {
 		requiredArgumentsNumber(ctx, 1)
-		resp := callDashboardApi[GroupDetails]("GET", "/web/groups/"+ctx.Args().First())
+		arg := ctx.Args().First()
+		uuid := arg
+		if !looksLikeUuidv4(arg) {
+			// maybe code it as fetchgroupsToContainer() or something...
+			// but this if for refactoring stage I guess
+			// assume this is group name, make a roundtrip to figure out what it is
+			resp := callDashboardApi[Groups]("GET", "/web/groups")
+			if resp.Type != "success" {
+				printError("API request failed. Message: %s", resp.Errors[0])
+				return nil
+			}
+
+			groups := resp.Payload
+			for _, group := range groups {
+				if group.Name == arg {
+					uuid = group.Id
+					break
+				}
+			}
+
+			if uuid == arg {
+				printError("Group '%s' not found", arg)
+				return nil
+			}
+		}
+
+		resp := callDashboardApi[GroupDetails]("GET", "/web/groups/"+uuid)
 		if resp.Type != "success" {
 			printError("API request failed. Message: %s", resp.Errors[0])
 			return nil

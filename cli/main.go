@@ -109,18 +109,17 @@ You can also simply just explore and play with the commands described below.`,
 			return nil
 		},
 		Commands: []*cli.Command{
-			//dashboardCommand,
-			dashboardTokenCommand,
-			dashboardGroupCommand,
-
 			daemonCommand,
-
 			daemonStartCommand,
 			daemonRestartCommand,
 			daemonStopCommand,
 
 			daemonStatusCommand,
 			daemonIpCommand,
+
+			dashboardTokenCommand,
+			dashboardGroupCommand,
+			dashboardDeviceCommand,
 
 			claimCommand,
 			daemonSetupServerCommand,

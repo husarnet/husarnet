@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -231,4 +232,10 @@ func getOwnHostname() string {
 		return "unnamed-device"
 	}
 	return hostname
+}
+
+var uuidv4Regex = regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+
+func looksLikeUuidv4(uuid string) bool {
+	return uuidv4Regex.MatchString(uuid)
 }

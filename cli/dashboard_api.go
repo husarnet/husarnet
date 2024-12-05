@@ -64,6 +64,7 @@ func performDashboardApiRequest[responsePayloadType any](request *http.Request) 
 	if err != nil {
 		dieE(err)
 	}
+
 	return apiResponse
 }
 
@@ -91,7 +92,6 @@ func callDashboardApiWithInput[requestPayloadType, responsePayloadType any](meth
 		dieE(err)
 	}
 	fwdUrl := buildUrl(endpoint)
-	fmt.Println(fwdUrl)
 	request, err := http.NewRequest(method, fwdUrl, bytes.NewBuffer(jsonBytes))
 	if err != nil {
 		dieE(err)
