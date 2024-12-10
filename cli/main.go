@@ -26,6 +26,8 @@ var nonInteractive bool
 var rawJson bool
 var secret string
 
+var container Container
+
 func main() {
 	cmd := &cli.Command{
 		Name: "Husarnet CLI",
@@ -119,8 +121,8 @@ You can also simply just explore and play with the commands described below.`,
 			daemonIpCommand,
 
 			dashboardTokenCommand,
-			dashboardGroupCommand,
-			dashboardDeviceCommand,
+			groupCommands,
+			deviceCommands,
 
 			claimCommand,
 			daemonSetupServerCommand,

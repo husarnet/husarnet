@@ -9,44 +9,6 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-type Group struct {
-	Id      string `json:"id"`
-	Emoji   string `json:"emoji"`
-	Name    string `json:"name"`
-	Comment string `json:"comment"`
-}
-
-type JoinCode struct {
-	Token string `json:"token"`
-}
-
-type GroupDetails struct {
-	Group             Group    `json:"group"`
-	AttachableDevices []Device `json:"attachableDevices"`
-	JoinCode          JoinCode `json:"joinCode"`
-}
-
-type GroupCrudInput struct {
-	Name    string `json:"name"`
-	Emoji   string `json:"emoji"`
-	Comment string `json:"comment"`
-}
-
-type Groups []Group
-
-var dashboardGroupCommand = &cli.Command{
-	Name:    "group",
-	Aliases: []string{"groups"},
-	Usage:   "Husarnet group management, eg. see your groups, create, update, delete",
-	Commands: []*cli.Command{
-		dashboardGroupListCommand,
-		dashboardGroupShowCommand,
-		dashboardGroupCreateCommand,
-		dashboardGroupUpdateCommand,
-		dashboardGroupDeleteCommand,
-	},
-}
-
 var dashboardGroupListCommand = &cli.Command{
 	Name:      "list",
 	Aliases:   []string{"ls"},
@@ -54,20 +16,19 @@ var dashboardGroupListCommand = &cli.Command{
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		ignoreExtraArguments(cmd)
-		resp := callDashboardApi[Groups]("GET", "/web/groups")
-		if resp.Type != "success" {
-			printError("API request failed. Message: %s", resp.Errors[0])
-			return nil
-		}
 
-		if !rawJson {
-			fmt.Println("pretty print not yet implemented, returning json anyway")
-			rawJson = true
+		resp, err := fetchGroups()
+		if err != nil {
+			printError(err.Error())
+			return nil
 		}
 
 		if rawJson {
 			printJsonOrError(resp)
+			return nil
 		}
+
+		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 	},
 }
@@ -81,43 +42,31 @@ var dashboardGroupShowCommand = &cli.Command{
 		arg := cmd.Args().First()
 		uuid := arg
 		if !looksLikeUuidv4(arg) {
-			// maybe code it as fetchgroupsToContainer() or something...
-			// but this if for refactoring stage I guess
-			// assume this is group name, make a roundtrip to figure out what it is
-			resp := callDashboardApi[Groups]("GET", "/web/groups")
-			if resp.Type != "success" {
-				printError("API request failed. Message: %s", resp.Errors[0])
+			resp, err := fetchGroups()
+			if err != nil {
+				printError(err.Error())
 				return nil
 			}
 
-			groups := resp.Payload
-			for _, group := range groups {
-				if group.Name == arg {
-					uuid = group.Id
-					break
-				}
-			}
-
-			if uuid == arg {
-				printError("Group '%s' not found", arg)
+			uuid, err = findGroupUuidByName(arg, resp.Payload)
+			if err != nil {
+				printError(err.Error())
 				return nil
 			}
 		}
 
-		resp := callDashboardApi[GroupDetails]("GET", "/web/groups/"+uuid)
-		if resp.Type != "success" {
-			printError("API request failed. Message: %s", resp.Errors[0])
+		resp, err := fetchGroupByUuid(uuid)
+		if err != nil {
+			printError(err.Error())
 			return nil
-		}
-
-		if !rawJson {
-			fmt.Println("pretty print not yet implemented, returning json anyway")
-			rawJson = true
 		}
 
 		if rawJson {
 			printJsonOrError(resp)
+			return nil
 		}
+
+		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 	},
 }
@@ -144,21 +93,19 @@ var dashboardGroupCreateCommand = &cli.Command{
 			Comment: cmd.String("comment"),
 			Emoji:   cmd.String("emoji"),
 		}
-		resp := callDashboardApiWithInput[GroupCrudInput, Group]("POST", "/web/groups", params)
 
-		if resp.Type != "success" {
-			printError("API request failed. Message: %s", resp.Errors[0])
+		resp, err := reqCreateGroup(params)
+		if err != nil {
+			printError(err.Error())
 			return nil
-		}
-
-		if !rawJson {
-			fmt.Println("pretty print not yet implemented, returning json anyway")
-			rawJson = true
 		}
 
 		if rawJson {
 			printJsonOrError(resp)
+			return nil
 		}
+
+		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 	},
 }
@@ -166,7 +113,7 @@ var dashboardGroupCreateCommand = &cli.Command{
 var dashboardGroupUpdateCommand = &cli.Command{
 	Name:      "update",
 	Usage:     "update group details",
-	ArgsUsage: "<group id>",
+	ArgsUsage: "<group name or id>",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "name",
@@ -184,26 +131,40 @@ var dashboardGroupUpdateCommand = &cli.Command{
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
 
+		arg := cmd.Args().First()
+		uuid := arg
+		if !looksLikeUuidv4(arg) {
+			resp, err := fetchGroups()
+			if err != nil {
+				printError(err.Error())
+				return nil
+			}
+
+			uuid, err = findGroupUuidByName(arg, resp.Payload)
+			if err != nil {
+				printError(err.Error())
+				return nil
+			}
+		}
+
 		params := GroupCrudInput{
 			Name:    cmd.String("name"),
 			Comment: cmd.String("comment"),
 			Emoji:   cmd.String("emoji"),
 		}
-		resp := callDashboardApiWithInput[GroupCrudInput, Group]("PUT", "/web/groups/"+cmd.Args().First(), params)
 
-		if resp.Type != "success" {
-			printError("API request failed. Message: %s", resp.Errors[0])
+		resp, err := reqUpdateGroup(uuid, params)
+		if err != nil {
+			printError(err.Error())
 			return nil
-		}
-
-		if !rawJson {
-			fmt.Println("pretty print not yet implemented, returning json anyway")
-			rawJson = true
 		}
 
 		if rawJson {
 			printJsonOrError(resp)
+			return nil
 		}
+
+		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 	},
 }
@@ -211,7 +172,7 @@ var dashboardGroupUpdateCommand = &cli.Command{
 var dashboardGroupDeleteCommand = &cli.Command{
 	Name:      "delete",
 	Usage:     "delete group by ID",
-	ArgsUsage: "<group id>",
+	ArgsUsage: "<group name or id>",
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:  "yes",
@@ -221,25 +182,38 @@ var dashboardGroupDeleteCommand = &cli.Command{
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
 
+		arg := cmd.Args().First()
+		uuid := arg
+		if !looksLikeUuidv4(arg) {
+			resp, err := fetchGroups()
+			if err != nil {
+				printError(err.Error())
+				return nil
+			}
+
+			uuid, err = findGroupUuidByName(arg, resp.Payload)
+			if err != nil {
+				printError(err.Error())
+				return nil
+			}
+		}
+
 		if !cmd.Bool("yes") {
 			askForConfirmation("Are you sure you want to delete this group?")
 		}
 
-		resp := callDashboardApi[any]("DELETE", "/web/groups/"+cmd.Args().First())
-
-		if resp.Type != "success" {
-			printError("API request failed. Message: %s", resp.Errors[0])
+		resp, err := reqDeleteGroup(uuid)
+		if err != nil {
+			printError(err.Error())
 			return nil
-		}
-
-		if !rawJson {
-			fmt.Println("pretty print not yet implemented, returning json anyway")
-			rawJson = true
 		}
 
 		if rawJson {
 			printJsonOrError(resp)
+			return nil
 		}
+
+		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 	},
 }

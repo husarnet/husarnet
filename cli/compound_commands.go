@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/urfave/cli/v3"
 	"strings"
@@ -60,25 +59,19 @@ var claimCommand = &cli.Command{
 			Emoji:      cmd.String("emoji"),
 		}
 
-		jsonBytes, err := json.Marshal(params)
+		resp, err := reqClaim(params)
 		if err != nil {
-			dieE(err)
-		}
-		fmt.Println(string(jsonBytes))
-		resp := callDashboardApiWithInput[ClaimParams, any]("POST", "/device/manage/claim", params)
-		if resp.Type == "success" {
-			printSuccess("Claim request was successful")
-			if len(resp.Warnings) > 0 {
-				for _, warning := range resp.Warnings {
-					printWarning(warning)
-				}
-			}
-		} else {
-			printError("API request failed. Message: %s", resp.Errors[0])
+			printError(err.Error())
+			return nil
 		}
 
-		// TODO: optionally add waits, as in the old code
+		if rawJson {
+			printJsonOrError(resp)
+			return nil
+		}
 
+		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
+		// TODO: optionally add waits, as in the old code
 	},
 }

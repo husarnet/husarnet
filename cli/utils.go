@@ -4,6 +4,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/netip"
 	"os"
@@ -238,4 +239,19 @@ var uuidv4Regex = regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a
 
 func looksLikeUuidv4(uuid string) bool {
 	return uuidv4Regex.MatchString(uuid)
+}
+
+var ipv6Regex = regexp.MustCompile("^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$")
+
+func looksLikeIpv6(uuid string) bool {
+	return ipv6Regex.MatchString(uuid)
+}
+
+func findGroupUuidByName(needle string, haystack Groups) (string, error) {
+	for _, group := range haystack {
+		if group.Name == needle {
+			return group.Id, nil
+		}
+	}
+	return "", errors.New(fmt.Sprintf("Couldn't find a group with name '%s'. Check the spelling.", needle))
 }

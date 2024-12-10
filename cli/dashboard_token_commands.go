@@ -8,14 +8,6 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-type UserSettings struct {
-	ClaimToken string `json:"claimToken"`
-}
-
-type UserResponse struct {
-	Settings UserSettings `json:"settings"`
-}
-
 var dashboardTokenCommand = &cli.Command{
 	Name:  "token",
 	Usage: "print or rotate claim token associated with your account",
