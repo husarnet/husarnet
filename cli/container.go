@@ -10,11 +10,13 @@ type Container struct {
 type Device struct {
 	Id          string    `json:"id"`
 	Ip          string    `json:"ip"`
+	Emoji       string    `json:"emoji"`
 	Hostname    string    `json:"hostname"`
-	Comment     string    `json:"comment"`
-	LastContact time.Time `json:"lastContact"`
-	Version     string    `json:"version"`
 	UserAgent   string    `json:"userAgent"`
+	Version     string    `json:"version"`
+	Comment     string    `json:"comment"`
+	Aliases     []string  `json:"aliases"`
+	LastContact time.Time `json:"lastContact"`
 }
 
 type Devices []Device
@@ -48,6 +50,13 @@ type GroupCrudInput struct {
 	Name    string `json:"name"`
 	Emoji   string `json:"emoji"`
 	Comment string `json:"comment"`
+}
+
+type DeviceCrudInput struct {
+	Emoji    string   `json:"emoji"`
+	Hostname string   `json:"hostname"`
+	Comment  string   `json:"comment"`
+	Aliases  []string `json:"aliases"`
 }
 
 type Groups []Group

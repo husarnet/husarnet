@@ -255,3 +255,54 @@ func findGroupUuidByName(needle string, haystack Groups) (string, error) {
 	}
 	return "", errors.New(fmt.Sprintf("Couldn't find a group with name '%s'. Check the spelling.", needle))
 }
+
+func findDeviceUuidByIp(needle string, haystack Devices) (string, error) {
+	for _, dev := range haystack {
+		if dev.Ip == needle {
+			return dev.Id, nil
+		}
+	}
+	return "", errors.New(fmt.Sprintf("Couldn't find device with ip '%s'. Are you sure IP is correct?.", needle))
+}
+
+func findDeviceUuidByHostname(hostname string, haystack Devices) (string, error) {
+	// note this returns the first found match, and does not detect if there is ambiguity (TODO)
+	for _, dev := range haystack {
+		if dev.Hostname == hostname {
+			return dev.Id, nil
+		}
+		for _, alias := range dev.Aliases {
+			if alias == hostname {
+				return dev.Id, nil
+			}
+		}
+	}
+	return "", errors.New(fmt.Sprintf("Couldn't find device named '%s'.", hostname))
+}
+
+func determineDeviceUuid(identifier string) (string, error) {
+	if looksLikeIpv6(identifier) {
+		resp, err := fetchDevices()
+		if err != nil {
+			return "", nil
+		}
+
+		uuid, err := findDeviceUuidByIp(identifier, resp.Payload)
+		if err != nil {
+			return "", nil
+		}
+		return uuid, nil
+	} else if !looksLikeUuidv4(identifier) { // we assume it's a hostname (or hostname alias)
+		resp, err := fetchDevices()
+		if err != nil {
+			return "", nil
+		}
+
+		uuid, err := findDeviceUuidByHostname(identifier, resp.Payload)
+		if err != nil {
+			return "", nil
+		}
+		return uuid, nil
+	}
+	return identifier, nil // yeah, it's probably uuid
+}

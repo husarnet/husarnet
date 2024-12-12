@@ -8,6 +8,8 @@ var deviceCommands = &cli.Command{
 	Commands: []*cli.Command{
 		dashboardDeviceListCommand,
 		dashboardDeviceShowCommand,
+		dashboardDeviceUpdateCommand,
+		dashboardDeviceUnclaimCommand,
 	},
 }
 

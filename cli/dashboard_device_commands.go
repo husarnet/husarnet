@@ -5,8 +5,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/urfave/cli/v3"
+	"slices"
 )
 
 var dashboardDeviceListCommand = &cli.Command{
@@ -16,20 +16,19 @@ var dashboardDeviceListCommand = &cli.Command{
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		ignoreExtraArguments(cmd)
-		resp := callDashboardApi[Devices]("GET", "/web/devices")
-		if resp.Type != "success" {
-			printError("API request failed. Message: %s", resp.Errors[0])
-			return nil
-		}
 
-		if !rawJson {
-			fmt.Println("pretty print not yet implemented, returning json anyway")
-			rawJson = true
+		resp, err := fetchDevices()
+		if err != nil {
+			printError(err.Error())
+			return nil
 		}
 
 		if rawJson {
 			printJsonOrError(resp)
+			return nil
 		}
+
+		prettyPrintDevices(resp)
 		return nil
 	},
 }
@@ -37,22 +36,107 @@ var dashboardDeviceListCommand = &cli.Command{
 var dashboardDeviceShowCommand = &cli.Command{
 	Name:      "show",
 	Usage:     "display device details",
-	ArgsUsage: "<device id>", // No arguments needed
+	ArgsUsage: "<device uuid OR Husarnet IPv6 addr OR hostname>",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
-		resp := callDashboardApi[Device]("GET", "/web/devices/"+cmd.Args().First())
-		if resp.Type != "success" {
-			printError("API request failed. Message: %s", resp.Errors[0])
+		arg := cmd.Args().First()
+		uuid, err := determineDeviceUuid(arg)
+		if err != nil {
+			printError(err.Error())
 			return nil
 		}
 
-		if !rawJson {
-			fmt.Println("pretty print not yet implemented, returning json anyway")
-			rawJson = true
+		resp, err := fetchDeviceByUuid(uuid)
+		if err != nil {
+			printError(err.Error())
+			return nil
 		}
 
 		if rawJson {
 			printJsonOrError(resp)
+		} else {
+			prettyPrintDevice(resp)
+		}
+		return nil
+	},
+}
+
+var dashboardDeviceUpdateCommand = &cli.Command{
+	Name:      "update",
+	Usage:     "update device details",
+	ArgsUsage: "<device uuid OR Husarnet IPv6 addr OR hostname>",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "hostname",
+			Usage: "you can change primary hostname",
+		},
+		&cli.StringFlag{
+			Name:  "emoji",
+			Usage: "you can set custom emoji",
+		},
+		&cli.StringFlag{
+			Name:  "comment",
+			Usage: "you can add optional comment to the device",
+		},
+		&cli.StringSliceFlag{
+			Name:  "add-alias",
+			Usage: "you can add new hostname aliases",
+		},
+		&cli.StringSliceFlag{
+			Name:  "remove-alias",
+			Usage: "you can remove hostname aliases",
+		},
+	},
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsNumber(cmd, 1)
+		arg := cmd.Args().First()
+		uuid, err := determineDeviceUuid(arg)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		deviceResp, err := fetchDeviceByUuid(uuid)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		addAliases := cmd.StringSlice("add-alias")
+		removeAliases := cmd.StringSlice("remove-alias")
+
+		aliases := append([]string{}, deviceResp.Payload.Aliases...)
+		if len(addAliases) != 0 {
+			for _, aliasToAdd := range addAliases {
+				if !slices.Contains(aliases, aliasToAdd) {
+					aliases = append(aliases, aliasToAdd)
+				}
+			}
+		}
+		var updatedAliases []string
+		for _, alias := range aliases {
+			if !slices.Contains(removeAliases, alias) {
+				updatedAliases = append(updatedAliases, alias)
+			}
+		}
+
+		params := DeviceCrudInput{
+			Hostname: cmd.String("hostname"),
+			Comment:  cmd.String("comment"),
+			Emoji:    cmd.String("emoji"),
+			Aliases:  updatedAliases,
+		}
+
+		resp, err := reqUpdateDevice(uuid, params)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		if rawJson {
+			printJsonOrError(resp)
+		} else {
+			prettyPrintDevice(resp)
 		}
 		return nil
 	},
@@ -62,20 +146,23 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 	Name:      "unclaim",
 	Usage:     "unclaim self (no argument) or some other device (single argument) in your network",
 	ArgsUsage: "<device uuid OR Husarnet IPv6 addr OR hostname>",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "yes",
+			Usage: "don't ask for confirmation",
+		},
+	},
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsRange(cmd, 0, 1)
 
 		if cmd.Args().Len() == 0 {
-			// unclaiming self, use device manage route
-			resp := callDashboardApi[any]("POST", "/device/manage/unclaim")
-			if resp.Type != "success" {
-				printError("API request failed. Message: %s", resp.Errors[0])
-				return nil
+			if !cmd.Bool("yes") {
+				askForConfirmation("Are you sure you want to unclaim this device?")
 			}
-
-			if !rawJson {
-				fmt.Println("pretty print not yet implemented, returning json anyway")
-				rawJson = true
+			resp, err := reqUnclaimSelf()
+			if err != nil {
+				printError(err.Error())
+				return nil
 			}
 
 			if rawJson {

@@ -77,3 +77,49 @@ func reqClaim(params ClaimParams) (*ApiResponse[GroupDetails], error) {
 	}
 	return nil, nil
 }
+
+func reqUnclaimSelf() (*ApiResponse[any], error) {
+	resp := callDashboardApi[any]("POST", "/device/manage/unclaim")
+	if resp.Type == "success" {
+		printSuccess("Unclaim request was successful")
+		if len(resp.Warnings) > 0 {
+			for _, warning := range resp.Warnings {
+				printWarning(warning)
+			}
+		}
+	} else {
+		err := createError(&resp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
+
+}
+
+func reqUpdateDevice(uuid string, params DeviceCrudInput) (*ApiResponse[Device], error) {
+	resp := callDashboardApiWithInput[DeviceCrudInput, Device]("PUT", "/web/devices/"+uuid, params)
+	err := createError(&resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func fetchDevices() (*ApiResponse[Devices], error) {
+	resp := callDashboardApi[Devices]("GET", "/web/devices")
+	err := createError(&resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func fetchDeviceByUuid(uuid string) (*ApiResponse[Device], error) {
+	resp := callDashboardApi[Device]("GET", "/web/devices/"+uuid)
+	err := createError(&resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}

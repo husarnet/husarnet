@@ -25,10 +25,9 @@ var dashboardGroupListCommand = &cli.Command{
 
 		if rawJson {
 			printJsonOrError(resp)
-			return nil
+		} else {
+			prettyPrintGroups(resp)
 		}
-
-		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 	},
 }
@@ -63,10 +62,9 @@ var dashboardGroupShowCommand = &cli.Command{
 
 		if rawJson {
 			printJsonOrError(resp)
-			return nil
+		} else {
+			prettyPrintGroupDetails(resp)
 		}
-
-		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 	},
 }
@@ -102,10 +100,9 @@ var dashboardGroupCreateCommand = &cli.Command{
 
 		if rawJson {
 			printJsonOrError(resp)
-			return nil
+		} else {
+			prettyPrintGroup(resp)
 		}
-
-		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 	},
 }
@@ -117,7 +114,7 @@ var dashboardGroupUpdateCommand = &cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "name",
-			Usage: "you rename the group",
+			Usage: "you can rename the group",
 		},
 		&cli.StringFlag{
 			Name:  "emoji",
@@ -161,10 +158,9 @@ var dashboardGroupUpdateCommand = &cli.Command{
 
 		if rawJson {
 			printJsonOrError(resp)
-			return nil
+		} else {
+			prettyPrintGroup(resp)
 		}
-
-		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 	},
 }
@@ -210,10 +206,9 @@ var dashboardGroupDeleteCommand = &cli.Command{
 
 		if rawJson {
 			printJsonOrError(resp)
-			return nil
+		} else {
+			fmt.Println("Group was deleted successfully")
 		}
-
-		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 	},
 }
