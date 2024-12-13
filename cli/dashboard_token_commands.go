@@ -8,9 +8,9 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-var dashboardTokenCommand = &cli.Command{
+var tokenCommand = &cli.Command{
 	Name:  "token",
-	Usage: "print or rotate claim token associated with your account",
+	Usage: "(authorized only) print or rotate claim token associated with your account",
 	Commands: []*cli.Command{
 		dashboardTokenPrintCommand,
 		dashboardTokenRotateCommand,

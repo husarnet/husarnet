@@ -26,11 +26,9 @@ var nonInteractive bool
 var rawJson bool
 var secret string
 
-var container Container
-
 func main() {
 	cmd := &cli.Command{
-		Name: "Husarnet CLI",
+		Name: "husarnet",
 		//HelpName: "husarnet",
 		Description: `
 This is Husarnet CLI (command-line interface), which is invoked with 'husarnet' command.
@@ -38,8 +36,7 @@ It's primary purpose is to query and manage daemon process ('husarnet-daemon') r
 on the current machine. Additionally, given sufficient permissions, it can be also be used 
 to manage your other Husarnet devices and even your entire Husarnet network (possibly 
 eliminating the need to ever use the web interface under https://dashboard.husarnet.com). 
-For the details on what can be done with the CLI, visit https://husarnet.com/docs/cli-guide
-You can also simply just explore and play with the commands described below.`,
+For the details on what can be done with the CLI, visit: https://husarnet.com/docs/cli-guide.`,
 		Usage:                 "manage your Husarnet network",
 		EnableShellCompletion: true,
 		Flags: []cli.Flag{
@@ -112,30 +109,20 @@ You can also simply just explore and play with the commands described below.`,
 			return ctx, nil
 		},
 		Commands: []*cli.Command{
-			daemonCommand,
+			daemonStatusCommand,
 			daemonStartCommand,
 			daemonRestartCommand,
 			daemonStopCommand,
-
-			daemonStatusCommand,
 			daemonIpCommand,
+			daemonCommand,
 
-			dashboardTokenCommand,
+			claimCommand,
+			tokenCommand,
 			groupCommands,
 			deviceCommands,
 
-			claimCommand,
 			daemonSetupServerCommand,
-
-			{
-				Name:  "version",
-				Usage: "print the version of the CLI and also of the daemon, if available",
-				Action: func(ctx context.Context, cmd *cli.Command) error {
-					printVersion(getDaemonRunningVersion())
-
-					return nil
-				},
-			},
+			versionCommand,
 		},
 	}
 

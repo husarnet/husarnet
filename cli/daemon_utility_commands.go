@@ -11,7 +11,7 @@ import (
 
 var daemonIpCommand = &cli.Command{
 	Name:      "ip",
-	Usage:     "print Husarnet ip address of the daemon (no arguments) or known peer (with single argument of peer hostname)",
+	Usage:     "print Husarnet ip address of the daemon (no arguments) or a known peer (with single argument of peer hostname)",
 	ArgsUsage: "[peer hostname]",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsRange(cmd, 0, 1)
@@ -35,6 +35,15 @@ var daemonIpCommand = &cli.Command{
 			}
 		}
 
+		return nil
+	},
+}
+
+var versionCommand = &cli.Command{
+	Name:  "version",
+	Usage: "print the version of the CLI and also of the daemon, if available",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		printVersion(getDaemonRunningVersion())
 		return nil
 	},
 }

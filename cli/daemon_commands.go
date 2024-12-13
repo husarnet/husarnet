@@ -144,7 +144,7 @@ var daemonStatusCommand = &cli.Command{
 var daemonSetupServerCommand = &cli.Command{
 	Name:      "setup-server",
 	Aliases:   []string{"change-dashboard"},
-	Usage:     "Connect your Husarnet device to different Husarnet infrastructure",
+	Usage:     "connect your Husarnet device to different instance of Husarnet infrastructure (eg. self-hosted instances)",
 	ArgsUsage: "[dashboard fqdn]",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)

@@ -20,8 +20,8 @@ type ClaimParams struct {
 
 var claimCommand = &cli.Command{
 	Name:      "claim",
-	Usage:     "Assign the device to your Husarnet Dashboard account",
-	ArgsUsage: "token",
+	Usage:     "assign the device to your Husarnet Dashboard account",
+	ArgsUsage: "<claim token or joincode>",
 	Aliases:   []string{"join"},
 	Flags: []cli.Flag{
 		&cli.StringFlag{

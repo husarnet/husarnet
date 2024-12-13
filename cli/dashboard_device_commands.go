@@ -88,8 +88,15 @@ var dashboardDeviceUpdateCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		requiredArgumentsNumber(cmd, 1)
-		arg := cmd.Args().First()
+		requiredArgumentsRange(cmd, 0, 1)
+		arg := cmd.Args().First() // will be empty string if not provided
+		if arg == "" {
+			// updating self. we can use our own IP as a parameter
+			status := getDaemonStatus()
+			// TODO: error here if we can't contact daemon
+			arg = status.LocalIP.StringExpanded()
+		}
+		
 		uuid, err := determineDeviceUuid(arg)
 		if err != nil {
 			printError(err.Error())
