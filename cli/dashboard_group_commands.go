@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/urfave/cli/v3"
 )
 
@@ -38,20 +37,11 @@ var dashboardGroupShowCommand = &cli.Command{
 	ArgsUsage: "<group name or id>",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
-		arg := cmd.Args().First()
-		uuid := arg
-		if !looksLikeUuidv4(arg) {
-			resp, err := fetchGroups()
-			if err != nil {
-				printError(err.Error())
-				return nil
-			}
 
-			uuid, err = findGroupUuidByName(arg, resp.Payload)
-			if err != nil {
-				printError(err.Error())
-				return nil
-			}
+		uuid, err := determineGroupUuid(cmd.Args().First())
+		if err != nil {
+			printError(err.Error())
+			return nil
 		}
 
 		resp, err := fetchGroupByUuid(uuid)
@@ -128,20 +118,10 @@ var dashboardGroupUpdateCommand = &cli.Command{
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
 
-		arg := cmd.Args().First()
-		uuid := arg
-		if !looksLikeUuidv4(arg) {
-			resp, err := fetchGroups()
-			if err != nil {
-				printError(err.Error())
-				return nil
-			}
-
-			uuid, err = findGroupUuidByName(arg, resp.Payload)
-			if err != nil {
-				printError(err.Error())
-				return nil
-			}
+		uuid, err := determineGroupUuid(cmd.Args().First())
+		if err != nil {
+			printError(err.Error())
+			return nil
 		}
 
 		params := GroupCrudInput{
@@ -178,20 +158,10 @@ var dashboardGroupDeleteCommand = &cli.Command{
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
 
-		arg := cmd.Args().First()
-		uuid := arg
-		if !looksLikeUuidv4(arg) {
-			resp, err := fetchGroups()
-			if err != nil {
-				printError(err.Error())
-				return nil
-			}
-
-			uuid, err = findGroupUuidByName(arg, resp.Payload)
-			if err != nil {
-				printError(err.Error())
-				return nil
-			}
+		uuid, err := determineGroupUuid(cmd.Args().First())
+		if err != nil {
+			printError(err.Error())
+			return nil
 		}
 
 		if !cmd.Bool("yes") {
@@ -207,7 +177,7 @@ var dashboardGroupDeleteCommand = &cli.Command{
 		if rawJson {
 			printJsonOrError(resp)
 		} else {
-			fmt.Println("Group was deleted successfully")
+			printSuccess("Group was deleted successfully")
 		}
 		return nil
 	},

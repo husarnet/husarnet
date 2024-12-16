@@ -83,6 +83,8 @@ func callDashboardApi[responsePayloadType any](method, endpoint string) ApiRespo
 	if err != nil {
 		dieE(err)
 	}
+	// TODO: make cpp part respect this
+	request.Header.Set("User-Agent", "Husarnet CLI version "+cliVersion)
 	return performDashboardApiRequest[responsePayloadType](request)
 }
 

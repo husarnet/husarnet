@@ -11,6 +11,8 @@ var deviceCommands = &cli.Command{
 		dashboardDeviceShowCommand,
 		dashboardDeviceUpdateCommand,
 		dashboardDeviceUnclaimCommand,
+		dashboardDeviceAttachCommand,
+		dashboardDeviceDetachCommand,
 	},
 }
 

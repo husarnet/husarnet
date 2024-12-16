@@ -96,7 +96,7 @@ var dashboardDeviceUpdateCommand = &cli.Command{
 			// TODO: error here if we can't contact daemon
 			arg = status.LocalIP.StringExpanded()
 		}
-		
+
 		uuid, err := determineDeviceUuid(arg)
 		if err != nil {
 			printError(err.Error())
@@ -178,24 +178,108 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 			return nil
 		}
 
-		// here we get the device ip, id or hostname/alias, we will need to query the api
-		arg := cmd.Args().First()
-		if looksLikeUuidv4(arg) {
-			// we can try unclaiming right away
-			resp := callDashboardApi[any]("GET", "/device/manage/unclaim")
-			if resp.Type != "success" {
-				printError("API request failed. Message: %s", resp.Errors[0])
-				return nil
-			}
+		uuid, err := determineDeviceUuid(cmd.Args().First())
+		if err != nil {
+			printError(err.Error())
 			return nil
 		}
 
-		if looksLikeIpv6(arg) {
-			// try a roundtrip
+		resp := callDashboardApi[any]("POST", "/web/devices/unclaim/"+uuid)
+		if resp.Type != "success" {
+			printError("API request failed. Message: %s", resp.Errors[0])
+			return nil
+		}
+		printSuccess("device successfully unclaimed.")
+		return nil
+	},
+}
 
+var dashboardDeviceAttachCommand = &cli.Command{
+	Name:      "attach",
+	Usage:     "attach self or another device to a group",
+	ArgsUsage: "[device uuid OR Husarnet IPv6 addr OR hostname] <group uuid OR name>",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsRange(cmd, 1, 2)
+
+		// determine inputs
+		var paramDevice string
+		var paramGroup string
+		if cmd.Args().Len() == 2 {
+			paramDevice = cmd.Args().Get(0)
+			paramGroup = cmd.Args().Get(1)
+		} else {
+			status := getDaemonStatus()
+			// TODO: error here if we can't contact daemon
+			paramDevice = status.LocalIP.StringExpanded()
+			paramGroup = cmd.Args().First()
+		}
+
+		deviceIP, err := determineDeviceIP(paramDevice)
+		if err != nil {
+			printError(err.Error())
 			return nil
 		}
 
+		groupUuid, err := determineGroupUuid(paramGroup)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		resp := callDashboardApiWithInput[AttachDetachInput, any]("POST", "/web/groups/attach-device", AttachDetachInput{
+			GroupId:  groupUuid,
+			DeviceIp: deviceIP,
+		})
+		if resp.Type != "success" {
+			printError("API request failed. Message: %s", resp.Errors[0])
+			return nil
+		}
+		printSuccess("device successfully attached")
+		return nil
+	},
+}
+
+var dashboardDeviceDetachCommand = &cli.Command{
+	Name:      "detach",
+	Usage:     "detach self or another device from a particular group",
+	ArgsUsage: "[device uuid OR Husarnet IPv6 addr OR hostname] <group uuid OR name>",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsRange(cmd, 1, 2)
+
+		// determine inputs
+		var paramDevice string
+		var paramGroup string
+		if cmd.Args().Len() == 2 {
+			paramDevice = cmd.Args().Get(0)
+			paramGroup = cmd.Args().Get(1)
+		} else {
+			status := getDaemonStatus()
+			// TODO: error here if we can't contact daemon
+			paramDevice = status.LocalIP.StringExpanded()
+			paramGroup = cmd.Args().First()
+		}
+
+		deviceIP, err := determineDeviceIP(paramDevice)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		groupUuid, err := determineGroupUuid(paramGroup)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		resp := callDashboardApiWithInput[AttachDetachInput, any]("POST", "/web/groups/detach-device", AttachDetachInput{
+			GroupId:  groupUuid,
+			DeviceIp: deviceIP,
+		})
+		if resp.Type != "success" {
+			printError("API request failed. Message: %s", resp.Errors[0])
+			return nil
+		}
+		printSuccess("device successfully detached")
 		return nil
 	},
 }

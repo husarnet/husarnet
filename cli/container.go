@@ -60,3 +60,8 @@ type DeviceCrudInput struct {
 }
 
 type Groups []Group
+
+type AttachDetachInput struct {
+	GroupId  string `json:"groupId" binding:"required"`
+	DeviceIp string `json:"deviceIp" binding:"required"`
+}
