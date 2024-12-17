@@ -30,10 +30,12 @@ type UserResponse struct {
 }
 
 type Group struct {
-	Id      string `json:"id"`
-	Emoji   string `json:"emoji"`
-	Name    string `json:"name"`
-	Comment string `json:"comment"`
+	Id        string     `json:"id"`
+	Emoji     string     `json:"emoji"`
+	Name      string     `json:"name"`
+	Comment   string     `json:"comment"`
+	Devices   Devices    `json:"devices"`
+	JoinCodes []JoinCode `json:"joinCodes"`
 }
 
 type JoinCode struct {
