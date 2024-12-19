@@ -4,7 +4,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/netip"
 	"os"
@@ -253,7 +252,7 @@ func findGroupUuidByName(needle string, haystack Groups) (string, error) {
 			return group.Id, nil
 		}
 	}
-	return "", errors.New(fmt.Sprintf("Couldn't find a group with name '%s'. Check the spelling.", needle))
+	return "", fmt.Errorf("Couldn't find a group with name '%s'. Check the spelling.", needle)
 }
 
 func findDeviceUuidByIp(needle string, haystack Devices) (string, error) {
@@ -262,7 +261,7 @@ func findDeviceUuidByIp(needle string, haystack Devices) (string, error) {
 			return dev.Id, nil
 		}
 	}
-	return "", errors.New(fmt.Sprintf("Couldn't find device with ip '%s'. Are you sure IP is correct?.", needle))
+	return "", fmt.Errorf("Couldn't find device with ip '%s'. Are you sure IP is correct?", needle)
 }
 
 func findDeviceUuidByHostname(hostname string, haystack Devices) (string, error) {
@@ -277,7 +276,7 @@ func findDeviceUuidByHostname(hostname string, haystack Devices) (string, error)
 			}
 		}
 	}
-	return "", errors.New(fmt.Sprintf("Couldn't find device named '%s'.", hostname))
+	return "", fmt.Errorf("Couldn't find device named '%s'", hostname)
 }
 
 func determineGroupUuid(identifier string) (string, error) {
@@ -348,5 +347,5 @@ func determineDeviceIP(identifier string) (string, error) {
 		}
 	}
 
-	return "", errors.New(fmt.Sprintf("Couldn't find device identified with '%s'.", identifier))
+	return "", fmt.Errorf("Couldn't find device identified with '%s'", identifier)
 }
