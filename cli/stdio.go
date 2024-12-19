@@ -6,13 +6,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"syscall"
 	"time"
 
 	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
-	"github.com/urfave/cli/v2"
-	"golang.org/x/term"
+	"github.com/urfave/cli/v3"
 )
 
 var redFormatter = pterm.Red
@@ -100,44 +98,39 @@ func initTheme() {
 }
 
 // Throw an error, show help and die if a different number of arguments than specified is provided
-func requiredArgumentsNumber(ctx *cli.Context, number int) {
-	if ctx.Args().Len() != number {
-		printError("Wrong number of arguments provided. Provided " + pterm.Bold.Sprintf("%d", ctx.Args().Len()) + ", required: " + pterm.Bold.Sprintf("%d", number))
-		cli.ShowSubcommandHelp(ctx)
+func requiredArgumentsNumber(cmd *cli.Command, number int) {
+	if cmd.Args().Len() != number {
+		printError("Wrong number of arguments provided. Provided " + pterm.Bold.Sprintf("%d", cmd.Args().Len()) + ", required: " + pterm.Bold.Sprintf("%d", number))
+		cli.ShowSubcommandHelp(cmd)
 		dieEmpty()
 	}
 }
 
 // Throw an error, show help and die if number of arguments provided is not within a given range
-func requiredArgumentsRange(ctx *cli.Context, lower, upper int) {
-	if ctx.Args().Len() < lower || ctx.Args().Len() > upper {
-		printError("Wrong number of arguments provided. Provided " + pterm.Bold.Sprintf("%d", ctx.Args().Len()) + ", required between " + pterm.Bold.Sprintf("%d", lower) + " and " + pterm.Bold.Sprintf("%d", upper))
-		cli.ShowSubcommandHelp(ctx)
+func requiredArgumentsRange(cmd *cli.Command, lower, upper int) {
+	if cmd.Args().Len() < lower || cmd.Args().Len() > upper {
+		printError("Wrong number of arguments provided. Provided " + pterm.Bold.Sprintf("%d", cmd.Args().Len()) + ", required between " + pterm.Bold.Sprintf("%d", lower) + " and " + pterm.Bold.Sprintf("%d", upper))
+		cli.ShowSubcommandHelp(cmd)
 		dieEmpty()
 	}
 }
 
 // Throw an error, show help and die if any arguments are provided
-func ignoreExtraArguments(ctx *cli.Context) {
-	if ctx.Args().Len() > 0 {
+func ignoreExtraArguments(cmd *cli.Command) {
+	if cmd.Args().Len() > 0 {
 		printError("Too many arguments provided!")
-		cli.ShowSubcommandHelp(ctx)
+		cli.ShowSubcommandHelp(cmd)
 		dieEmpty()
 	}
 }
 
 // Throw an error, show help and die if less than `lower` arguments are provided
-func minimumArguments(ctx *cli.Context, lower int) {
-	if ctx.Args().Len() < lower {
+func minimumArguments(cmd *cli.Command, lower int) {
+	if cmd.Args().Len() < lower {
 		printError("Not enough arguments provided!")
-		cli.ShowSubcommandHelp(ctx)
+		cli.ShowSubcommandHelp(cmd)
 		dieEmpty()
 	}
-}
-
-// Print not implemented yet warning
-func notImplementedYet() {
-	printError("Not implemented yet")
 }
 
 // Print a success message
@@ -188,35 +181,6 @@ func dieEmpty() {
 	os.Exit(1)
 }
 
-// Prompts user for username and password and returns them. Password is not visible while typing
-func getUserCredentialsFromStandardInput() (string, string) {
-	printParagraph(credentialsPrompt)
-	input := pterm.DefaultInteractiveTextInput
-
-	pterm.Println()
-	username, err := input.WithMultiLine(false).Show("Username")
-	if err != nil {
-		dieE(err)
-	}
-	pterm.Println()
-
-	password := getPasswordFromStandardInput()
-
-	return trimNewlines(username), trimNewlines(password)
-}
-
-func getPasswordFromStandardInput() string {
-	pterm.ThemeDefault.PrimaryStyle.Print("Password: ")
-	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		dieE(err)
-	}
-	password := string(bytePassword)
-	pterm.Println()
-
-	return trimNewlines(password)
-}
-
 // Prompts user for confirmation and exits the whole program if user does not confirm
 func askForConfirmation(question string) bool {
 	if nonInteractive {
@@ -235,7 +199,7 @@ func askForConfirmation(question string) bool {
 	return result
 }
 
-// Gives your an options to interactively choose from
+// Gives you an options to interactively choose from
 func interactiveChooseFrom(title string, options []string) string {
 	widget := pterm.DefaultInteractiveSelect.WithDefaultText(title)
 
@@ -261,7 +225,7 @@ func interactiveTextInput(title string) string {
 	return response
 }
 
-// Return a string length igoring all utf-8 quirks and terminal formatting
+// Return a string length ignoring all utf-8 quirks and terminal formatting
 func runeLength(s string) int {
 	return runewidth.StringWidth(pterm.RemoveColorFromString(s))
 }

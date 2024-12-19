@@ -4,10 +4,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/netip"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -170,7 +172,7 @@ func isJoinCode(candidate string) bool {
 }
 
 // parses an IP v4/v6 address and returns it as a string in a full format
-func makeCannonicalAddr(input string) string {
+func makeCanonicalAddr(input string) string {
 	addr, err := netip.ParseAddr(input)
 	if err != nil {
 		dieE(err)
@@ -222,4 +224,129 @@ func replaceLastOccurrence(search string, replacement string, subject string) st
 		return newStr
 	}
 	return subject
+}
+
+func getOwnHostname() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		printWarning("was unable to determine the hostname of the machine")
+		return "unnamed-device"
+	}
+	return hostname
+}
+
+var uuidv4Regex = regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+
+func looksLikeUuidv4(uuid string) bool {
+	return uuidv4Regex.MatchString(uuid)
+}
+
+var ipv6Regex = regexp.MustCompile("^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$")
+
+func looksLikeIpv6(uuid string) bool {
+	return ipv6Regex.MatchString(uuid)
+}
+
+func findGroupUuidByName(needle string, haystack Groups) (string, error) {
+	for _, group := range haystack {
+		if group.Name == needle {
+			return group.Id, nil
+		}
+	}
+	return "", errors.New(fmt.Sprintf("Couldn't find a group with name '%s'. Check the spelling.", needle))
+}
+
+func findDeviceUuidByIp(needle string, haystack Devices) (string, error) {
+	for _, dev := range haystack {
+		if dev.Ip == needle {
+			return dev.Id, nil
+		}
+	}
+	return "", errors.New(fmt.Sprintf("Couldn't find device with ip '%s'. Are you sure IP is correct?.", needle))
+}
+
+func findDeviceUuidByHostname(hostname string, haystack Devices) (string, error) {
+	// note this returns the first found match, and does not detect if there is ambiguity (TODO)
+	for _, dev := range haystack {
+		if dev.Hostname == hostname {
+			return dev.Id, nil
+		}
+		for _, alias := range dev.Aliases {
+			if alias == hostname {
+				return dev.Id, nil
+			}
+		}
+	}
+	return "", errors.New(fmt.Sprintf("Couldn't find device named '%s'.", hostname))
+}
+
+func determineGroupUuid(identifier string) (string, error) {
+	if !looksLikeUuidv4(identifier) {
+		resp, err := fetchGroups()
+		if err != nil {
+			return "", err
+		}
+
+		uuid, err := findGroupUuidByName(identifier, resp.Payload)
+		if err != nil {
+			printError(err.Error())
+			return "", err
+		}
+		return uuid, nil
+	}
+	return identifier, nil
+}
+
+func determineDeviceUuid(identifier string) (string, error) {
+	if looksLikeIpv6(identifier) {
+		resp, err := fetchDevices()
+		if err != nil {
+			return "", nil
+		}
+
+		uuid, err := findDeviceUuidByIp(identifier, resp.Payload)
+		if err != nil {
+			return "", err
+		}
+		return uuid, nil
+	} else if !looksLikeUuidv4(identifier) { // we assume it's a hostname (or hostname alias)
+		resp, err := fetchDevices()
+		if err != nil {
+			return "", err
+		}
+
+		uuid, err := findDeviceUuidByHostname(identifier, resp.Payload)
+		if err != nil {
+			return "", err
+		}
+		return uuid, nil
+	}
+	return identifier, nil // yeah, it's probably uuid
+}
+
+func determineDeviceIP(identifier string) (string, error) {
+	if looksLikeIpv6(identifier) {
+		return identifier, nil
+	}
+
+	resp, err := fetchDevices()
+	if err != nil {
+		return "", err
+	}
+
+	for _, dev := range resp.Payload {
+		if dev.Id == identifier {
+			return dev.Ip, nil
+		}
+		if dev.Hostname == identifier {
+			return dev.Ip, nil
+		}
+		for _, alias := range dev.Aliases {
+			if alias == identifier {
+				return dev.Ip, nil
+			}
+		}
+	}
+
+	return "", errors.New(fmt.Sprintf("Couldn't find device identified with '%s'.", identifier))
 }

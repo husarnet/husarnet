@@ -4,143 +4,283 @@
 package main
 
 import (
-	"net/netip"
-	"strings"
+	"context"
+	"slices"
 
-	"github.com/husarnet/husarnet/cli/v2/generated"
-
-	"github.com/Khan/genqlient/graphql"
-	u "github.com/rjNemo/underscore"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-func interactiveGetDeviceIpByName() string {
-	response := callDashboardAPI(func(client graphql.Client) (*generated.GetDevicesResponse, error) {
-		return generated.GetDevices(client)
-	})
+var dashboardDeviceListCommand = &cli.Command{
+	Name:      "list",
+	Aliases:   []string{"ls"},
+	Usage:     "Display a table of all your devices",
+	ArgsUsage: " ", // No arguments needed
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		ignoreExtraArguments(cmd)
 
-	deviceNames := u.Map(response.Devices, func(d generated.GetDevicesDevicesDeviceType) string { return d.Name })
+		resp, err := fetchDevices()
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
 
-	selectedDevice := interactiveChooseFrom("Select device", deviceNames)
+		if rawJson {
+			printJsonOrError(resp)
+			return nil
+		}
 
-	device, err := u.Find(response.Devices, func(d generated.GetDevicesDevicesDeviceType) bool { return d.Name == selectedDevice })
-	if err != nil {
-		dieE(err)
-	}
-
-	return device.DeviceId
+		prettyPrintDevices(resp)
+		return nil
+	},
 }
 
-func getDeviceIpByName(name string) string {
-	response := callDashboardAPI(func(client graphql.Client) (*generated.GetDevicesResponse, error) {
-		return generated.GetDevices(client)
-	})
+var dashboardDeviceShowCommand = &cli.Command{
+	Name:      "show",
+	Usage:     "Display device details",
+	ArgsUsage: "<device uuid OR Husarnet IPv6 addr OR hostname>",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsNumber(cmd, 1)
+		arg := cmd.Args().First()
+		uuid, err := determineDeviceUuid(arg)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
 
-	device, err := u.Find(response.Devices, func(d generated.GetDevicesDevicesDeviceType) bool { return d.Name == name })
-	if err != nil {
-		dieE(err)
-	}
+		resp, err := fetchDeviceByUuid(uuid)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
 
-	return device.DeviceId
+		if rawJson {
+			printJsonOrError(resp)
+		} else {
+			prettyPrintDevice(resp)
+		}
+		return nil
+	},
 }
 
-func getDeviceIpByNameOrIp(candidate string) string {
-	addr, err := netip.ParseAddr(candidate)
-	if err == nil {
-		return addr.String()
-	}
-	return getDeviceIpByName(candidate)
-}
-
-var dashboardDeviceCommand = &cli.Command{
-	Name:     "device",
-	Aliases:  []string{"devices"},
-	Usage:    "Husarnet device management",
-	Category: "dashboard",
-	Subcommands: []*cli.Command{
-		{
-			Name:      "list",
-			Aliases:   []string{"ls"},
-			Usage:     "display a table of all your devices and which groups are they in",
-			ArgsUsage: " ", // No arguments needed
-			Action: func(ctx *cli.Context) error {
-				ignoreExtraArguments(ctx)
-
-				response := callDashboardAPI(func(client graphql.Client) (*generated.GetDevicesResponse, error) {
-					return generated.GetDevices(client)
-				})
-
-				table := Table{}
-				table.SetTitle("Your devices")
-				table.SetHeader("ID(ipv6)", "Name", "Version", "UserAgent", "Groups containing device")
-
-				for _, device := range response.Devices {
-					groups := strings.Join(u.Map(device.GroupMemberships, func(membership generated.GetDevicesDevicesDeviceTypeGroupMembershipsGroupType) string {
-						return membership.Name
-					}), ", ")
-					table.AddRow(makeCannonicalAddr(device.DeviceId), device.Name, device.Version, strings.TrimSpace(device.UserAgent), groups)
-				}
-
-				table.Println()
-
-				return nil
-			},
+var dashboardDeviceUpdateCommand = &cli.Command{
+	Name:      "update",
+	Usage:     "Update device details",
+	ArgsUsage: "<device uuid OR Husarnet IPv6 addr OR hostname>",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "hostname",
+			Usage: "you can change primary hostname",
 		},
-		{
-			Name:      "rename",
-			Usage:     "change displayed name of a device",
-			ArgsUsage: "[device ip] [new name]",
-			Action: func(ctx *cli.Context) error {
-				requiredArgumentsRange(ctx, 0, 2)
-
-				var deviceIp string
-
-				if ctx.Args().Len() < 1 {
-					deviceIp = interactiveGetDeviceIpByName()
-				} else {
-					deviceIp = getDeviceIpByNameOrIp(ctx.Args().Get(0))
-				}
-
-				var newName string
-
-				if ctx.Args().Len() < 2 {
-					newName = interactiveTextInput("New device name")
-				} else {
-					newName = ctx.Args().Get(1)
-				}
-
-				callDashboardAPI(func(client graphql.Client) (*generated.RenameDeviceResponse, error) {
-					return generated.RenameDevice(client, deviceIp, newName)
-				})
-
-				printSuccess("Device renamed successfully.")
-
-				return nil
-			},
+		&cli.StringFlag{
+			Name:  "emoji",
+			Usage: "you can set custom emoji",
 		},
-		{
-			Name:      "remove",
-			Aliases:   []string{"rm"},
-			Usage:     "remove device from your account",
-			ArgsUsage: "[device ip]",
-			Action: func(ctx *cli.Context) error {
-				requiredArgumentsRange(ctx, 0, 1)
+		&cli.StringFlag{
+			Name:  "comment",
+			Usage: "you can add optional comment to the device",
+		},
+		&cli.StringSliceFlag{
+			Name:  "add-alias",
+			Usage: "you can add new hostname aliases",
+		},
+		&cli.StringSliceFlag{
+			Name:  "remove-alias",
+			Usage: "you can remove hostname aliases",
+		},
+	},
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsRange(cmd, 0, 1)
+		arg := cmd.Args().First() // will be empty string if not provided
+		if arg == "" {
+			// updating self. we can use our own IP as a parameter
+			status := getDaemonStatus()
+			// TODO: error here if we can't contact daemon
+			arg = status.LocalIP.StringExpanded()
+		}
 
-				var deviceIp string
+		uuid, err := determineDeviceUuid(arg)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
 
-				if ctx.Args().Len() < 1 {
-					deviceIp = interactiveGetDeviceIpByName()
-				} else {
-					deviceIp = getDeviceIpByNameOrIp(ctx.Args().Get(0))
+		deviceResp, err := fetchDeviceByUuid(uuid)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		addAliases := cmd.StringSlice("add-alias")
+		removeAliases := cmd.StringSlice("remove-alias")
+
+		aliases := append([]string{}, deviceResp.Payload.Aliases...)
+		if len(addAliases) != 0 {
+			for _, aliasToAdd := range addAliases {
+				if !slices.Contains(aliases, aliasToAdd) {
+					aliases = append(aliases, aliasToAdd)
 				}
+			}
+		}
+		var updatedAliases []string
+		for _, alias := range aliases {
+			if !slices.Contains(removeAliases, alias) {
+				updatedAliases = append(updatedAliases, alias)
+			}
+		}
 
-				callDashboardAPI(func(client graphql.Client) (*generated.RemoveDeviceResponse, error) {
-					return generated.RemoveDevice(client, deviceIp)
-				})
+		params := DeviceCrudInput{
+			Hostname: cmd.String("hostname"),
+			Comment:  cmd.String("comment"),
+			Emoji:    cmd.String("emoji"),
+			Aliases:  updatedAliases,
+		}
 
-				printSuccess("Device removed successfully.")
+		resp, err := reqUpdateDevice(uuid, params)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
 
+		if rawJson {
+			printJsonOrError(resp)
+		} else {
+			prettyPrintDevice(resp)
+		}
+		return nil
+	},
+}
+
+var dashboardDeviceUnclaimCommand = &cli.Command{
+	Name:      "unclaim",
+	Usage:     "Unclaim self (no argument) or some other device (single argument) in your network",
+	ArgsUsage: "<device uuid OR Husarnet IPv6 addr OR hostname>",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "yes",
+			Usage: "don't ask for confirmation",
+		},
+	},
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsRange(cmd, 0, 1)
+
+		if cmd.Args().Len() == 0 {
+			if !cmd.Bool("yes") {
+				askForConfirmation("Are you sure you want to unclaim this device?")
+			}
+			resp, err := reqUnclaimSelf()
+			if err != nil {
+				printError(err.Error())
 				return nil
-			}},
+			}
+
+			if rawJson {
+				printJsonOrError(resp)
+			}
+			return nil
+		}
+
+		uuid, err := determineDeviceUuid(cmd.Args().First())
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		resp := callDashboardApi[any]("POST", "/web/devices/unclaim/"+uuid)
+		if resp.Type != "success" {
+			printError("API request failed. Message: %s", resp.Errors[0])
+			return nil
+		}
+		printSuccess("device successfully unclaimed.")
+		return nil
+	},
+}
+
+var dashboardDeviceAttachCommand = &cli.Command{
+	Name:      "attach",
+	Usage:     "Attach self or another device to a group",
+	ArgsUsage: "[device uuid OR Husarnet IPv6 addr OR hostname] <group uuid OR name>",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsRange(cmd, 1, 2)
+
+		// determine inputs
+		var paramDevice string
+		var paramGroup string
+		if cmd.Args().Len() == 2 {
+			paramDevice = cmd.Args().Get(0)
+			paramGroup = cmd.Args().Get(1)
+		} else {
+			status := getDaemonStatus()
+			// TODO: error here if we can't contact daemon
+			paramDevice = status.LocalIP.StringExpanded()
+			paramGroup = cmd.Args().First()
+		}
+
+		deviceIP, err := determineDeviceIP(paramDevice)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		groupUuid, err := determineGroupUuid(paramGroup)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		resp := callDashboardApiWithInput[AttachDetachInput, any]("POST", "/web/groups/attach-device", AttachDetachInput{
+			GroupId:  groupUuid,
+			DeviceIp: deviceIP,
+		})
+		if resp.Type != "success" {
+			printError("API request failed. Message: %s", resp.Errors[0])
+			return nil
+		}
+		printSuccess("device successfully attached")
+		return nil
+	},
+}
+
+var dashboardDeviceDetachCommand = &cli.Command{
+	Name:      "detach",
+	Usage:     "Detach self or another device from a particular group",
+	ArgsUsage: "[device uuid OR Husarnet IPv6 addr OR hostname] <group uuid OR name>",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		requiredArgumentsRange(cmd, 1, 2)
+
+		// determine inputs
+		var paramDevice string
+		var paramGroup string
+		if cmd.Args().Len() == 2 {
+			paramDevice = cmd.Args().Get(0)
+			paramGroup = cmd.Args().Get(1)
+		} else {
+			status := getDaemonStatus()
+			// TODO: error here if we can't contact daemon
+			paramDevice = status.LocalIP.StringExpanded()
+			paramGroup = cmd.Args().First()
+		}
+
+		deviceIP, err := determineDeviceIP(paramDevice)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		groupUuid, err := determineGroupUuid(paramGroup)
+		if err != nil {
+			printError(err.Error())
+			return nil
+		}
+
+		resp := callDashboardApiWithInput[AttachDetachInput, any]("POST", "/web/groups/detach-device", AttachDetachInput{
+			GroupId:  groupUuid,
+			DeviceIp: deviceIP,
+		})
+		if resp.Type != "success" {
+			printError("API request failed. Message: %s", resp.Errors[0])
+			return nil
+		}
+		printSuccess("device successfully detached")
+		return nil
 	},
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
 	u "github.com/rjNemo/underscore"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -188,9 +188,8 @@ func printHooksStatus(status DaemonStatus) {
 	}
 }
 
-func printStatus(ctx *cli.Context, status DaemonStatus) {
-
-	verbose := verboseLogs || ctx.Bool("verbose")
+func printStatus(cmd *cli.Command, status DaemonStatus) {
+	verbose := verboseLogs || cmd.Bool("verbose")
 
 	printStatusHeader("Version")
 	printVersion(status.Version)
@@ -295,15 +294,15 @@ func printStatus(ctx *cli.Context, status DaemonStatus) {
 
 }
 
-func printStatusFollow(ctx *cli.Context) {
+func printStatusFollow(cmd *cli.Command) {
 	// Obtaining status twice is simpler than deep copy
 	currStatus := getDaemonStatus()
 	prevStatus := getDaemonStatus()
 	prevStatus.Version = "temporary change to enable print"
-	for true {
+	for {
 		currStatus = getDaemonStatus()
 		if !areStatusesEqual(prevStatus, currStatus) {
-			printStatus(ctx, currStatus)
+			printStatus(cmd, currStatus)
 			prevStatus = currStatus
 		}
 		time.Sleep(500 * time.Millisecond)
