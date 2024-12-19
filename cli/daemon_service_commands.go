@@ -132,7 +132,8 @@ func ensureServiceInstalled() {
 
 var daemonServiceInstallCommand = &cli.Command{
 	Name:      "service-install",
-	Usage:     "install service definition in OS's service manager (e.g. systemctl on Linux)",
+	Usage:     "Install service definition in OS's service manager (e.g. systemctl on Linux)",
+	Category:  CategoryDaemon,
 	ArgsUsage: " ", // No arguments needed
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -182,7 +183,8 @@ var daemonServiceInstallCommand = &cli.Command{
 
 var daemonServiceUninstallCommand = &cli.Command{
 	Name:      "service-uninstall",
-	Usage:     "remove service definition from OS's service manager (e.g. systemctl on Linux)",
+	Usage:     "Remove service definition from OS's service manager (e.g. systemctl on Linux)",
+	Category:  CategoryDaemon,
 	ArgsUsage: " ", // No arguments needed
 	Flags: []cli.Flag{
 		&cli.BoolFlag{

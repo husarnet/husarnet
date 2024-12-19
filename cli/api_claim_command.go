@@ -6,23 +6,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/urfave/cli/v3"
 	"strings"
-)
 
-type ClaimParams struct {
-	ClaimToken string   `json:"token" binding:"required"`
-	Hostname   string   `json:"hostname,omitempty"`
-	Aliases    []string `json:"aliases,omitempty"`
-	Comment    string   `json:"comment,omitempty"`
-	Emoji      string   `json:"emoji,omitempty"`
-}
+	"github.com/urfave/cli/v3"
+)
 
 var claimCommand = &cli.Command{
 	Name:      "claim",
-	Usage:     "assign the device to your Husarnet Dashboard account",
+	Usage:     "Assign the device to your Husarnet Dashboard account",
 	ArgsUsage: "<claim token or joincode>",
-	Aliases:   []string{"join"},
+	//Category:  CategoryBasic,
+	Aliases: []string{"join"},
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "hostname",

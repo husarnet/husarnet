@@ -2,11 +2,13 @@ package main
 
 import "time"
 
-type Container struct {
-	Devices Devices
-	Groups  Groups
+type ClaimParams struct {
+	ClaimToken string   `json:"token" binding:"required"`
+	Hostname   string   `json:"hostname,omitempty"`
+	Aliases    []string `json:"aliases,omitempty"`
+	Comment    string   `json:"comment,omitempty"`
+	Emoji      string   `json:"emoji,omitempty"`
 }
-
 type Device struct {
 	Id          string    `json:"id"`
 	Ip          string    `json:"ip"`

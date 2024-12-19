@@ -5,13 +5,14 @@ package main
 
 import (
 	"context"
+
 	"github.com/urfave/cli/v3"
 )
 
 var dashboardGroupListCommand = &cli.Command{
 	Name:      "list",
 	Aliases:   []string{"ls"},
-	Usage:     "display a table of all your groups (with summary information)",
+	Usage:     "Display a table of all your groups (with summary information)",
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		ignoreExtraArguments(cmd)
@@ -33,7 +34,7 @@ var dashboardGroupListCommand = &cli.Command{
 
 var dashboardGroupShowCommand = &cli.Command{
 	Name:      "show",
-	Usage:     "display group details",
+	Usage:     "Display group details",
 	ArgsUsage: "<group name or id>",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
@@ -61,7 +62,7 @@ var dashboardGroupShowCommand = &cli.Command{
 
 var dashboardGroupCreateCommand = &cli.Command{
 	Name:      "create",
-	Usage:     "create a new group",
+	Usage:     "Create a new group",
 	ArgsUsage: "<name>",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -99,7 +100,7 @@ var dashboardGroupCreateCommand = &cli.Command{
 
 var dashboardGroupUpdateCommand = &cli.Command{
 	Name:      "update",
-	Usage:     "update group details",
+	Usage:     "Update group details",
 	ArgsUsage: "<group name or id>",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -147,7 +148,7 @@ var dashboardGroupUpdateCommand = &cli.Command{
 
 var dashboardGroupDeleteCommand = &cli.Command{
 	Name:      "delete",
-	Usage:     "delete group by ID",
+	Usage:     "Delete group by ID",
 	ArgsUsage: "<group name or id>",
 	Flags: []cli.Flag{
 		&cli.BoolFlag{

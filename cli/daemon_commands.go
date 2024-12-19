@@ -18,7 +18,8 @@ import (
 var daemonStartCommand = &cli.Command{
 	Name:      "start",
 	Aliases:   []string{"up"},
-	Usage:     "start husarnet daemon",
+	Category:  CategoryDaemon,
+	Usage:     "Start husarnet daemon",
 	ArgsUsage: " ", // No arguments needed
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -58,7 +59,8 @@ var daemonStartCommand = &cli.Command{
 
 var daemonRestartCommand = &cli.Command{
 	Name:      "restart",
-	Usage:     "restart husarnet daemon",
+	Usage:     "Restart husarnet daemon",
+	Category:  CategoryDaemon,
 	ArgsUsage: " ", // No arguments needed
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -93,7 +95,8 @@ var daemonRestartCommand = &cli.Command{
 var daemonStopCommand = &cli.Command{
 	Name:      "stop",
 	Aliases:   []string{"down"},
-	Usage:     "stop husarnet daemon",
+	Usage:     "Stop husarnet daemon",
+	Category:  CategoryDaemon,
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		if onWindows() {
@@ -115,7 +118,8 @@ var daemonStopCommand = &cli.Command{
 
 var daemonStatusCommand = &cli.Command{
 	Name:  "status",
-	Usage: "display current connectivity status",
+	Usage: "Display current connectivity status",
+	//Category: CategoryBasic,
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:    "verbose",
@@ -143,9 +147,9 @@ var daemonStatusCommand = &cli.Command{
 
 var daemonSetupServerCommand = &cli.Command{
 	Name:      "setup-server",
-	Aliases:   []string{"change-dashboard"},
-	Usage:     "connect your Husarnet device to different instance of Husarnet infrastructure (eg. self-hosted instances)",
+	Usage:     "Connect your Husarnet device to different instance of Husarnet infrastructure (eg. self-hosted instances)",
 	ArgsUsage: "[dashboard fqdn]",
+	//Category:  CategoryDaemon,
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
 
@@ -180,8 +184,9 @@ var daemonSetupServerCommand = &cli.Command{
 }
 
 var daemonWhitelistCommand = &cli.Command{
-	Name:  "whitelist",
-	Usage: "Manage whitelist on the device.",
+	Name:     "whitelist",
+	Usage:    "Manage whitelist on the device",
+	Category: CategoryDaemon,
 	Commands: []*cli.Command{
 		{
 			Name:      "enable",
@@ -262,8 +267,9 @@ var daemonWhitelistCommand = &cli.Command{
 }
 
 var daemonHooksCommand = &cli.Command{
-	Name:  "hooks",
-	Usage: "Manage hooks on the device.",
+	Name:     "hooks",
+	Usage:    "Manage hooks on the device.",
+	Category: CategoryUtils,
 	Commands: []*cli.Command{
 		{
 			Name:      "enable",
@@ -308,8 +314,9 @@ var daemonHooksCommand = &cli.Command{
 }
 
 var daemonWaitCommand = &cli.Command{
-	Name:  "wait",
-	Usage: "Wait until certain events occur. If no events provided will wait for as many elements as it can (the best case scenario). Husarnet will continue working even if some of those elements are unreachable, so consider narrowing your search down a bit.",
+	Name:     "wait",
+	Usage:    "Wait until certain events occur. If no events provided will wait for as many elements as it can.",
+	Category: CategoryUtils,
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		ignoreExtraArguments(cmd)
 		err := waitBaseANY()
@@ -457,8 +464,8 @@ func genParallel(needle string, stripHaystack bool) string {
 
 var daemonGenIdCommand = &cli.Command{
 	Name:      "genid",
-	Aliases:   []string{"genID", "genId", "gen-id"},
 	Usage:     "Generate a valid identity file",
+	Category:  CategoryUtils,
 	ArgsUsage: " ", // No arguments needed
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -530,19 +537,7 @@ var daemonGenIdCommand = &cli.Command{
 }
 
 var daemonCommand = &cli.Command{
-	Name:  "daemon",
-	Usage: "control the local daemon",
-	Commands: []*cli.Command{
-		daemonStatusCommand,
-		daemonWaitCommand,
-		daemonStartCommand,
-		daemonStopCommand,
-		daemonRestartCommand,
-		daemonSetupServerCommand,
-		daemonWhitelistCommand,
-		daemonHooksCommand,
-		daemonGenIdCommand,
-		daemonServiceInstallCommand,
-		daemonServiceUninstallCommand,
-	},
+	Name:     "daemon",
+	Usage:    "control the local daemon",
+	Commands: []*cli.Command{},
 }

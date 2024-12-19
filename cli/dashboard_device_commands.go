@@ -5,14 +5,15 @@ package main
 
 import (
 	"context"
-	"github.com/urfave/cli/v3"
 	"slices"
+
+	"github.com/urfave/cli/v3"
 )
 
 var dashboardDeviceListCommand = &cli.Command{
 	Name:      "list",
 	Aliases:   []string{"ls"},
-	Usage:     "display a table of all your devices",
+	Usage:     "Display a table of all your devices",
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		ignoreExtraArguments(cmd)
@@ -35,7 +36,7 @@ var dashboardDeviceListCommand = &cli.Command{
 
 var dashboardDeviceShowCommand = &cli.Command{
 	Name:      "show",
-	Usage:     "display device details",
+	Usage:     "Display device details",
 	ArgsUsage: "<device uuid OR Husarnet IPv6 addr OR hostname>",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
@@ -63,7 +64,7 @@ var dashboardDeviceShowCommand = &cli.Command{
 
 var dashboardDeviceUpdateCommand = &cli.Command{
 	Name:      "update",
-	Usage:     "update device details",
+	Usage:     "Update device details",
 	ArgsUsage: "<device uuid OR Husarnet IPv6 addr OR hostname>",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -151,7 +152,7 @@ var dashboardDeviceUpdateCommand = &cli.Command{
 
 var dashboardDeviceUnclaimCommand = &cli.Command{
 	Name:      "unclaim",
-	Usage:     "unclaim self (no argument) or some other device (single argument) in your network",
+	Usage:     "Unclaim self (no argument) or some other device (single argument) in your network",
 	ArgsUsage: "<device uuid OR Husarnet IPv6 addr OR hostname>",
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -196,7 +197,7 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 
 var dashboardDeviceAttachCommand = &cli.Command{
 	Name:      "attach",
-	Usage:     "attach self or another device to a group",
+	Usage:     "Attach self or another device to a group",
 	ArgsUsage: "[device uuid OR Husarnet IPv6 addr OR hostname] <group uuid OR name>",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsRange(cmd, 1, 2)
@@ -241,7 +242,7 @@ var dashboardDeviceAttachCommand = &cli.Command{
 
 var dashboardDeviceDetachCommand = &cli.Command{
 	Name:      "detach",
-	Usage:     "detach self or another device from a particular group",
+	Usage:     "Detach self or another device from a particular group",
 	ArgsUsage: "[device uuid OR Husarnet IPv6 addr OR hostname] <group uuid OR name>",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsRange(cmd, 1, 2)

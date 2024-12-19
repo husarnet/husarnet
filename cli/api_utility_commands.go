@@ -5,21 +5,23 @@ package main
 
 import (
 	"context"
+
 	"github.com/urfave/cli/v3"
 )
 
 var tokenCommand = &cli.Command{
 	Name:  "token",
-	Usage: "(authorized only) print or rotate claim token associated with your account",
+	Usage: "print or rotate claim token associated with your account (authorized devices only)",
 	Commands: []*cli.Command{
 		dashboardTokenPrintCommand,
 		dashboardTokenRotateCommand,
 	},
+	Category: CategoryApi,
 }
 
 var dashboardTokenPrintCommand = &cli.Command{
 	Name:      "print",
-	Usage:     "print your claim token",
+	Usage:     "Print your claim token",
 	ArgsUsage: "",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		resp := callDashboardApi[UserResponse]("GET", "/web/user")
@@ -35,7 +37,7 @@ var dashboardTokenPrintCommand = &cli.Command{
 
 var dashboardTokenRotateCommand = &cli.Command{
 	Name:      "rotate",
-	Usage:     "rotate your claim token (you can do it once a minute)",
+	Usage:     "Rotate your claim token (you can do it once a minute)",
 	ArgsUsage: "",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		resp := callDashboardApi[UserResponse]("POST", "/web/settings/rotate-claim-token")
