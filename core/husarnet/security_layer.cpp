@@ -103,7 +103,6 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 {
   LOG_DEBUG(
       "received data packet from peer: %s", deviceIdToString(peerId).c_str())
-
   const int headerSize = 1 + 24 + 16;
   if(data.size() <= headerSize + 8)
     return;
