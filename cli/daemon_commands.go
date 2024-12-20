@@ -185,7 +185,7 @@ var daemonSetupServerCommand = &cli.Command{
 
 var daemonWhitelistCommand = &cli.Command{
 	Name:     "whitelist",
-	Usage:    "Manage whitelist on the device",
+	Usage:    "Manage whitelist on the device.",
 	Category: CategoryDaemon,
 	Commands: []*cli.Command{
 		{
@@ -537,7 +537,19 @@ var daemonGenIdCommand = &cli.Command{
 }
 
 var daemonCommand = &cli.Command{
-	Name:     "daemon",
-	Usage:    "control the local daemon",
-	Commands: []*cli.Command{},
+	Name:  "daemon",
+	Usage: "control the local daemon",
+	Commands: []*cli.Command{
+		daemonStatusCommand,
+		daemonWaitCommand,
+		daemonStartCommand,
+		daemonStopCommand,
+		daemonRestartCommand,
+		daemonSetupServerCommand,
+		daemonWhitelistCommand,
+		daemonHooksCommand,
+		daemonGenIdCommand,
+		daemonServiceInstallCommand,
+		daemonServiceUninstallCommand,
+	},
 }

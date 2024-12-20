@@ -118,6 +118,7 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 			return ctx, nil
 		},
 		Commands: []*cli.Command{
+			daemonCommand, // daemon "umbrella" command is needed here for integration tests, will _maybe_ be eventually deleted/rearranged
 			daemonStatusCommand,
 			daemonStartCommand,
 			daemonRestartCommand,
