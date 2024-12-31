@@ -6,7 +6,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"github.com/husarnet/husarnet/cli/v2/config"
 	"io"
 	"net/http"
 	"net/netip"
@@ -91,33 +91,14 @@ func (s DaemonStatus) getPeerByAddr(addr netip.Addr) *PeerStatus {
 	return nil
 }
 
-func getDaemonApiUrl() string {
-	if husarnetDaemonAPIPort == 0 {
-		husarnetDaemonAPIPort = defaultDaemonAPIPort
-	}
-
-	if husarnetDaemonAPIIp == "" {
-		husarnetDaemonAPIIp = defaultDaemonAPIIp
-	}
-
-	return fmt.Sprintf("http://%s:%d", husarnetDaemonAPIIp, husarnetDaemonAPIPort)
-}
-
-func getDaemonApiSecretPath() string {
-	if onWindows() {
-		sep := string(os.PathSeparator)
-		return os.ExpandEnv("${programdata}") + sep + "husarnet" + sep + "daemon_api_token"
-	}
-	return "/var/lib/husarnet/daemon_api_token"
-}
-
 func addDaemonApiSecret(params *url.Values) {
-	if len(daemonApiSecret) > 0 {
-		params.Add("secret", daemonApiSecret)
+	overriddenSecret := config.GetDaemonApiSecret()
+	if len(overriddenSecret) > 0 {
+		params.Add("secret", overriddenSecret)
 		return
 	}
 
-	apiSecret, err := os.ReadFile(getDaemonApiSecretPath())
+	apiSecret, err := os.ReadFile(config.GetDaemonApiSecretPath())
 	if err != nil {
 		printError("Error reading secret file, are you root/administrator? " + err.Error())
 		rerunWithSudoOrDie()
@@ -188,7 +169,7 @@ func callDaemonRetryable[ResultType any](retryable bool, route string, urlencode
 // Technically those should not require auth tokens so can be run at any time
 func callDaemonGetRaw[ResultType any](retryable bool, route string) (DaemonResponse[ResultType], error) {
 	return callDaemonRetryable(retryable, route, url.Values{}, func(route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error) {
-		response, err := http.Get(getDaemonApiUrl() + route)
+		response, err := http.Get(config.GetDaemonApiUrl() + route)
 		if err != nil {
 			return DaemonResponse[ResultType]{}, err
 		}
@@ -206,7 +187,7 @@ func callDaemonGet[ResultType any](route string) DaemonResponse[ResultType] {
 // Those will always require an auth token
 func callDaemonPostRaw[ResultType any](retryable bool, route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error) {
 	return callDaemonRetryable(retryable, route, urlencodedBody, func(route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error) {
-		response, err := http.PostForm(getDaemonApiUrl()+route, urlencodedBody)
+		response, err := http.PostForm(config.GetDaemonApiUrl()+route, urlencodedBody)
 		if err != nil {
 			return DaemonResponse[ResultType]{}, err
 		}

@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/husarnet/husarnet/cli/v2/config"
 	"log"
 	"net"
 	"os"
@@ -13,17 +14,10 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-var defaultDashboard = "app.husarnet.com"
-var defaultDaemonAPIIp = "127.0.0.1"
-var defaultDaemonAPIPort int64 = 16216
-
-var husarnetDaemonAPIIp = ""
-var husarnetDaemonAPIPort int64 = 0
 var verboseLogs bool
 var wait bool
 var nonInteractive bool
 var rawJson bool
-var daemonApiSecret string
 
 const (
 	CategoryDaemon = "DAEMON MANAGEMENT"
@@ -48,12 +42,10 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 		EnableShellCompletion: true,
 		Flags: []cli.Flag{
 			&cli.IntFlag{
-				Name:        "daemon_api_port",
-				Aliases:     []string{"p"},
-				Value:       defaultDaemonAPIPort,
-				Usage:       "port your Husarnet Daemon is listening at",
-				Sources:     cli.EnvVars("HUSARNET_DAEMON_API_PORT"),
-				Destination: &husarnetDaemonAPIPort,
+				Name:    config.DaemonApiPortFlagName,
+				Aliases: []string{"p"},
+				Usage:   "port your Husarnet Daemon is listening at",
+				Sources: cli.EnvVars("HUSARNET_DAEMON_API_PORT"),
 				Action: func(ctx context.Context, cmd *cli.Command, v int64) error {
 					if v < 0 || v > 65535 {
 						return fmt.Errorf("invalid port %d", v)
@@ -62,12 +54,10 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 				},
 			},
 			&cli.StringFlag{
-				Name:        "daemon_api_address",
-				Aliases:     []string{"a"},
-				Value:       defaultDaemonAPIIp,
-				Usage:       "IP address your Husarnet Daemon is listening at",
-				Sources:     cli.EnvVars("HUSARNET_DAEMON_API_ADDRESS"),
-				Destination: &husarnetDaemonAPIIp,
+				Name:    config.DaemonApiAddressFlagName,
+				Aliases: []string{"a"},
+				Usage:   "IP address your Husarnet Daemon is listening at",
+				Sources: cli.EnvVars("HUSARNET_DAEMON_API_ADDRESS"),
 				Action: func(ctx context.Context, cmd *cli.Command, v string) error {
 					if net.ParseIP(v) == nil {
 						return fmt.Errorf("invalid IP address %s", v)
@@ -76,12 +66,11 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 				},
 			},
 			&cli.StringFlag{
-				Name:        "daemon_api_secret",
-				Aliases:     []string{"s"},
-				Value:       "",
-				Usage:       "swap daemon API secret for a different one",
-				Sources:     cli.EnvVars("SECRET"),
-				Destination: &daemonApiSecret,
+				Name:    config.DaemonApiSecretFlagName,
+				Aliases: []string{"s"},
+				Value:   "",
+				Usage:   "swap daemon API secret for a different one",
+				Sources: cli.EnvVars("SECRET"),
 			},
 			&cli.BoolFlag{
 				Name:        "verbose",
@@ -104,6 +93,7 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 			},
 		},
 		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			config.Init(cmd)
 			initTheme()
 			return ctx, nil
 		},

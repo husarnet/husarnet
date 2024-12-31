@@ -1,9 +1,23 @@
 // Copyright (c) 2024 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-package main
+package types
 
 import "time"
+
+type ApiResponse[PayloadType any] struct {
+	Type     string      `json:"type"`
+	Errors   []string    `json:"errors"`
+	Warnings []string    `json:"warnings"`
+	Message  string      `json:"message"`
+	Payload  PayloadType `json:"payload"`
+}
+
+type Empty struct{}
+
+type MaybeError struct {
+	Error string `json:"error"`
+}
 
 type ClaimParams struct {
 	ClaimToken string   `json:"token" binding:"required"`

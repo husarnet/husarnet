@@ -6,6 +6,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/husarnet/husarnet/cli/v2/output"
+	"github.com/husarnet/husarnet/cli/v2/requests"
+	"github.com/husarnet/husarnet/cli/v2/types"
 	"strings"
 
 	"github.com/urfave/cli/v3"
@@ -15,8 +18,7 @@ var claimCommand = &cli.Command{
 	Name:      "claim",
 	Usage:     "Assign the device to your Husarnet Dashboard account",
 	ArgsUsage: "<claim token or joincode>",
-	//Category:  CategoryBasic,
-	Aliases: []string{"join"},
+	Aliases:   []string{"join"},
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "hostname",
@@ -45,7 +47,7 @@ var claimCommand = &cli.Command{
 			die("Provided claim token is old join code format, which is discontinued. Go to dashboard.husarnet.com to obtain a new one.")
 		}
 
-		params := ClaimParams{
+		params := types.ClaimParams{
 			ClaimToken: args[0],
 			Hostname:   cmd.String("hostname"),
 			Aliases:    cmd.StringSlice("alias"),
@@ -53,14 +55,23 @@ var claimCommand = &cli.Command{
 			Emoji:      cmd.String("emoji"),
 		}
 
-		resp, err := reqClaim(params)
+		resp, err := requests.ReqClaim(params)
 		if err != nil {
 			printError(err.Error())
 			return nil
 		}
 
+		if resp.Type == "success" {
+			printSuccess("Claim request was successful")
+			if len(resp.Warnings) > 0 {
+				for _, warning := range resp.Warnings {
+					printWarning(warning)
+				}
+			}
+		}
+
 		if rawJson {
-			printJsonOrError(resp)
+			output.PrintJsonOrError(resp)
 			return nil
 		}
 

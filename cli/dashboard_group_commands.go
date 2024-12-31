@@ -5,6 +5,9 @@ package main
 
 import (
 	"context"
+	"github.com/husarnet/husarnet/cli/v2/output"
+	"github.com/husarnet/husarnet/cli/v2/requests"
+	"github.com/husarnet/husarnet/cli/v2/types"
 
 	"github.com/urfave/cli/v3"
 )
@@ -17,14 +20,14 @@ var dashboardGroupListCommand = &cli.Command{
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		ignoreExtraArguments(cmd)
 
-		resp, err := fetchGroups()
+		resp, err := requests.FetchGroups()
 		if err != nil {
 			printError(err.Error())
 			return nil
 		}
 
 		if rawJson {
-			printJsonOrError(resp)
+			output.PrintJsonOrError(resp)
 		} else {
 			prettyPrintGroups(resp)
 		}
@@ -45,14 +48,14 @@ var dashboardGroupShowCommand = &cli.Command{
 			return nil
 		}
 
-		resp, err := fetchGroupByUuid(uuid)
+		resp, err := requests.FetchGroupByUuid(uuid)
 		if err != nil {
 			printError(err.Error())
 			return nil
 		}
 
 		if rawJson {
-			printJsonOrError(resp)
+			output.PrintJsonOrError(resp)
 		} else {
 			prettyPrintGroupDetails(resp)
 		}
@@ -77,20 +80,20 @@ var dashboardGroupCreateCommand = &cli.Command{
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
 
-		params := GroupCrudInput{
+		params := types.GroupCrudInput{
 			Name:    cmd.Args().First(),
 			Comment: cmd.String("comment"),
 			Emoji:   cmd.String("emoji"),
 		}
 
-		resp, err := reqCreateGroup(params)
+		resp, err := requests.ReqCreateGroup(params)
 		if err != nil {
 			printError(err.Error())
 			return nil
 		}
 
 		if rawJson {
-			printJsonOrError(resp)
+			output.PrintJsonOrError(resp)
 		} else {
 			prettyPrintGroup(resp)
 		}
@@ -125,20 +128,20 @@ var dashboardGroupUpdateCommand = &cli.Command{
 			return nil
 		}
 
-		params := GroupCrudInput{
+		params := types.GroupCrudInput{
 			Name:    cmd.String("name"),
 			Comment: cmd.String("comment"),
 			Emoji:   cmd.String("emoji"),
 		}
 
-		resp, err := reqUpdateGroup(uuid, params)
+		resp, err := requests.ReqUpdateGroup(uuid, params)
 		if err != nil {
 			printError(err.Error())
 			return nil
 		}
 
 		if rawJson {
-			printJsonOrError(resp)
+			output.PrintJsonOrError(resp)
 		} else {
 			prettyPrintGroup(resp)
 		}
@@ -169,14 +172,14 @@ var dashboardGroupDeleteCommand = &cli.Command{
 			askForConfirmation("Are you sure you want to delete this group?")
 		}
 
-		resp, err := reqDeleteGroup(uuid)
+		resp, err := requests.ReqDeleteGroup(uuid)
 		if err != nil {
 			printError(err.Error())
 			return nil
 		}
 
 		if rawJson {
-			printJsonOrError(resp)
+			output.PrintJsonOrError(resp)
 		} else {
 			printSuccess("Group was deleted successfully")
 		}

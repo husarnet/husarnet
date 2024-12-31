@@ -5,6 +5,9 @@ package main
 
 import (
 	"context"
+	"github.com/husarnet/husarnet/cli/v2/output"
+	"github.com/husarnet/husarnet/cli/v2/requests"
+	"github.com/husarnet/husarnet/cli/v2/types"
 	"slices"
 
 	"github.com/urfave/cli/v3"
@@ -18,14 +21,14 @@ var dashboardDeviceListCommand = &cli.Command{
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		ignoreExtraArguments(cmd)
 
-		resp, err := fetchDevices()
+		resp, err := requests.FetchDevices()
 		if err != nil {
 			printError(err.Error())
 			return nil
 		}
 
 		if rawJson {
-			printJsonOrError(resp)
+			output.PrintJsonOrError(resp)
 			return nil
 		}
 
@@ -47,14 +50,14 @@ var dashboardDeviceShowCommand = &cli.Command{
 			return nil
 		}
 
-		resp, err := fetchDeviceByUuid(uuid)
+		resp, err := requests.FetchDeviceByUuid(uuid)
 		if err != nil {
 			printError(err.Error())
 			return nil
 		}
 
 		if rawJson {
-			printJsonOrError(resp)
+			output.PrintJsonOrError(resp)
 		} else {
 			prettyPrintDevice(resp)
 		}
@@ -104,7 +107,7 @@ var dashboardDeviceUpdateCommand = &cli.Command{
 			return nil
 		}
 
-		deviceResp, err := fetchDeviceByUuid(uuid)
+		deviceResp, err := requests.FetchDeviceByUuid(uuid)
 		if err != nil {
 			printError(err.Error())
 			return nil
@@ -128,21 +131,21 @@ var dashboardDeviceUpdateCommand = &cli.Command{
 			}
 		}
 
-		params := DeviceCrudInput{
+		params := types.DeviceCrudInput{
 			Hostname: cmd.String("hostname"),
 			Comment:  cmd.String("comment"),
 			Emoji:    cmd.String("emoji"),
 			Aliases:  updatedAliases,
 		}
 
-		resp, err := reqUpdateDevice(uuid, params)
+		resp, err := requests.ReqUpdateDevice(uuid, params)
 		if err != nil {
 			printError(err.Error())
 			return nil
 		}
 
 		if rawJson {
-			printJsonOrError(resp)
+			output.PrintJsonOrError(resp)
 		} else {
 			prettyPrintDevice(resp)
 		}
@@ -167,14 +170,14 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 			if !cmd.Bool("yes") {
 				askForConfirmation("Are you sure you want to unclaim this device?")
 			}
-			resp, err := reqUnclaimSelf()
+			resp, err := requests.ReqUnclaimSelf()
 			if err != nil {
 				printError(err.Error())
 				return nil
 			}
 
 			if rawJson {
-				printJsonOrError(resp)
+				output.PrintJsonOrError(resp)
 			}
 			return nil
 		}
@@ -185,12 +188,18 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 			return nil
 		}
 
-		resp := callDashboardApi[any]("POST", "/web/devices/unclaim/"+uuid)
-		if resp.Type != "success" {
-			printError("API request failed. Message: %s", resp.Errors[0])
+		resp, err := requests.ReqUnclaimDevice(uuid)
+		if err != nil {
+			printError(err.Error())
 			return nil
 		}
-		printSuccess("device successfully unclaimed.")
+
+		if rawJson {
+			output.PrintJsonOrError(resp)
+		} else {
+			printSuccess("device successfully unclaimed.")
+		}
+
 		return nil
 	},
 }
@@ -227,15 +236,21 @@ var dashboardDeviceAttachCommand = &cli.Command{
 			return nil
 		}
 
-		resp := callDashboardApiWithInput[AttachDetachInput, any]("POST", "/web/groups/attach-device", AttachDetachInput{
+		resp, err := requests.AttachDetach(types.AttachDetachInput{
 			GroupId:  groupUuid,
 			DeviceIp: deviceIP,
 		})
-		if resp.Type != "success" {
-			printError("API request failed. Message: %s", resp.Errors[0])
+
+		if err != nil {
+			printError(err.Error())
 			return nil
 		}
-		printSuccess("device successfully attached")
+
+		if rawJson {
+			output.PrintJsonOrError(resp)
+		} else {
+			printSuccess("device successfully attached")
+		}
 		return nil
 	},
 }
@@ -272,15 +287,21 @@ var dashboardDeviceDetachCommand = &cli.Command{
 			return nil
 		}
 
-		resp := callDashboardApiWithInput[AttachDetachInput, any]("POST", "/web/groups/detach-device", AttachDetachInput{
+		resp, err := requests.AttachDetach(types.AttachDetachInput{
 			GroupId:  groupUuid,
 			DeviceIp: deviceIP,
 		})
-		if resp.Type != "success" {
-			printError("API request failed. Message: %s", resp.Errors[0])
+
+		if err != nil {
+			printError(err.Error())
 			return nil
 		}
-		printSuccess("device successfully detached")
+
+		if rawJson {
+			output.PrintJsonOrError(resp)
+		} else {
+			printSuccess("device successfully detached")
+		}
 		return nil
 	},
 }

@@ -5,6 +5,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/husarnet/husarnet/cli/v2/requests"
+	"github.com/husarnet/husarnet/cli/v2/types"
 	"net/netip"
 	"os"
 	"os/exec"
@@ -246,7 +248,7 @@ func looksLikeIpv6(uuid string) bool {
 	return ipv6Regex.MatchString(uuid)
 }
 
-func findGroupUuidByName(needle string, haystack Groups) (string, error) {
+func findGroupUuidByName(needle string, haystack types.Groups) (string, error) {
 	for _, group := range haystack {
 		if group.Name == needle {
 			return group.Id, nil
@@ -255,7 +257,7 @@ func findGroupUuidByName(needle string, haystack Groups) (string, error) {
 	return "", fmt.Errorf("Couldn't find a group with name '%s'. Check the spelling.", needle)
 }
 
-func findDeviceUuidByIp(needle string, haystack Devices) (string, error) {
+func findDeviceUuidByIp(needle string, haystack types.Devices) (string, error) {
 	for _, dev := range haystack {
 		if dev.Ip == needle {
 			return dev.Id, nil
@@ -264,7 +266,7 @@ func findDeviceUuidByIp(needle string, haystack Devices) (string, error) {
 	return "", fmt.Errorf("Couldn't find device with ip '%s'. Are you sure IP is correct?", needle)
 }
 
-func findDeviceUuidByHostname(hostname string, haystack Devices) (string, error) {
+func findDeviceUuidByHostname(hostname string, haystack types.Devices) (string, error) {
 	// note this returns the first found match, and does not detect if there is ambiguity (TODO)
 	for _, dev := range haystack {
 		if dev.Hostname == hostname {
@@ -281,7 +283,7 @@ func findDeviceUuidByHostname(hostname string, haystack Devices) (string, error)
 
 func determineGroupUuid(identifier string) (string, error) {
 	if !looksLikeUuidv4(identifier) {
-		resp, err := fetchGroups()
+		resp, err := requests.FetchGroups()
 		if err != nil {
 			return "", err
 		}
@@ -298,7 +300,7 @@ func determineGroupUuid(identifier string) (string, error) {
 
 func determineDeviceUuid(identifier string) (string, error) {
 	if looksLikeIpv6(identifier) {
-		resp, err := fetchDevices()
+		resp, err := requests.FetchDevices()
 		if err != nil {
 			return "", nil
 		}
@@ -309,7 +311,7 @@ func determineDeviceUuid(identifier string) (string, error) {
 		}
 		return uuid, nil
 	} else if !looksLikeUuidv4(identifier) { // we assume it's a hostname (or hostname alias)
-		resp, err := fetchDevices()
+		resp, err := requests.FetchDevices()
 		if err != nil {
 			return "", err
 		}
@@ -328,7 +330,7 @@ func determineDeviceIP(identifier string) (string, error) {
 		return identifier, nil
 	}
 
-	resp, err := fetchDevices()
+	resp, err := requests.FetchDevices()
 	if err != nil {
 		return "", err
 	}

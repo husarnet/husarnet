@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"github.com/husarnet/husarnet/cli/v2/requests"
 
 	"github.com/urfave/cli/v3"
 )
@@ -24,13 +25,12 @@ var dashboardTokenPrintCommand = &cli.Command{
 	Usage:     "Print your claim token",
 	ArgsUsage: "",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		resp := callDashboardApi[UserResponse]("GET", "/web/user")
-		if resp.Type == "success" {
-			printSuccess("User request was successful")
-			printInfo(resp.Payload.Settings.ClaimToken)
-		} else {
-			printError("API request failed. Message: %s", resp.Errors[0])
+		resp, err := requests.FetchUserInfo()
+		if err != nil {
+			printError(err.Error())
+			return nil
 		}
+		printInfo(resp.Payload.Settings.ClaimToken)
 		return nil
 	},
 }
@@ -40,13 +40,12 @@ var dashboardTokenRotateCommand = &cli.Command{
 	Usage:     "Rotate your claim token (you can do it once a minute)",
 	ArgsUsage: "",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		resp := callDashboardApi[UserResponse]("POST", "/web/settings/rotate-claim-token")
-		if resp.Type == "success" {
-			printSuccess("User request was successful")
-			printInfo(resp.Payload.Settings.ClaimToken) // TODO fix
-		} else {
-			printError("API request failed. Message: %s", resp.Errors[0])
+		resp, err := requests.RotateClaimToken()
+		if err != nil {
+			printError(err.Error())
+			return nil
 		}
+		printInfo(resp.Payload.Settings.ClaimToken)
 		return nil
 	},
 }

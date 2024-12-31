@@ -4,6 +4,7 @@
 package main
 
 import (
+	"github.com/husarnet/husarnet/cli/v2/config"
 	"net/netip"
 	"sort"
 	"strings"
@@ -200,7 +201,7 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 	pterm.Println()
 
 	var dashboardDot, dashboardHelp string
-	if status.DashboardFQDN != defaultDashboard {
+	if status.DashboardFQDN != config.GetDefaultDashboardUrl() {
 		dashboardDot = yellowDot
 		dashboardHelp = "You're using custom / self-hosted environment"
 	} else {

@@ -5,11 +5,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/husarnet/husarnet/cli/v2/types"
 	"github.com/pterm/pterm"
 	"strings"
 )
 
-func prettyPrintGroups(response *ApiResponse[Groups]) {
+func prettyPrintGroups(response *types.ApiResponse[types.Groups]) {
 	table := Table{}
 	table.SetTitle("Your groups")
 	table.SetHeader("ID", "Emoji", "Name", "Device#")
@@ -21,7 +22,7 @@ func prettyPrintGroups(response *ApiResponse[Groups]) {
 	table.Println()
 }
 
-func prettyPrintGroup(response *ApiResponse[Group]) {
+func prettyPrintGroup(response *types.ApiResponse[types.Group]) {
 	fmt.Println(response.Payload.Emoji, response.Payload.Name)
 	fmt.Println()
 
@@ -36,7 +37,7 @@ func prettyPrintGroup(response *ApiResponse[Group]) {
 	table.Println()
 }
 
-func prettyPrintGroupDetails(response *ApiResponse[GroupDetails]) {
+func prettyPrintGroupDetails(response *types.ApiResponse[types.GroupDetails]) {
 	fmt.Println(response.Payload.Group.Emoji, "", response.Payload.Group.Name)
 	fmt.Println()
 
@@ -51,7 +52,7 @@ func prettyPrintGroupDetails(response *ApiResponse[GroupDetails]) {
 	table.Println()
 }
 
-func prettyPrintDevices(response *ApiResponse[Devices]) {
+func prettyPrintDevices(response *types.ApiResponse[types.Devices]) {
 	table := Table{}
 	table.SetTitle("Devices in this group")
 	table.SetHeader("IPv6", "Emoji", "Hostname")
@@ -63,7 +64,7 @@ func prettyPrintDevices(response *ApiResponse[Devices]) {
 	table.Println()
 }
 
-func prettyPrintDevice(response *ApiResponse[Device]) {
+func prettyPrintDevice(response *types.ApiResponse[types.Device]) {
 	fmt.Println(response.Payload.Emoji, response.Payload.Hostname)
 	fmt.Println("ip of this device:", response.Payload.Ip)
 	fmt.Println("known as:", response.Payload.Hostname, strings.Join(response.Payload.Aliases, ", "))
