@@ -112,8 +112,8 @@ func getDaemonApiSecretPath() string {
 }
 
 func addDaemonApiSecret(params *url.Values) {
-	if len(secret) > 0 {
-		params.Add("secret", secret)
+	if len(daemonApiSecret) > 0 {
+		params.Add("secret", daemonApiSecret)
 		return
 	}
 
@@ -245,15 +245,6 @@ func getDaemonRunningVersion() string {
 	}
 
 	return response.Result.Version
-}
-
-func getDaemonsDashboardFqdn() string {
-	response, err := getDaemonStatusRaw(false)
-	if err != nil {
-		return defaultDashboard
-	}
-
-	return response.Result.DashboardFQDN
 }
 
 func handleStandardResult(res StandardResult) {

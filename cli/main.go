@@ -23,10 +23,9 @@ var verboseLogs bool
 var wait bool
 var nonInteractive bool
 var rawJson bool
-var secret string
+var daemonApiSecret string
 
 const (
-	CategoryBasic  = "BASIC COMMANDS"
 	CategoryDaemon = "DAEMON MANAGEMENT"
 	CategoryUtils  = "UTILITIES"
 	CategoryApi    = "DASHBOARD API ACCESS"
@@ -77,12 +76,12 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 				},
 			},
 			&cli.StringFlag{
-				Name:        "secret",
+				Name:        "daemon_api_secret",
 				Aliases:     []string{"s"},
 				Value:       "",
-				Usage:       "swap secret for a different one",
+				Usage:       "swap daemon API secret for a different one",
 				Sources:     cli.EnvVars("SECRET"),
-				Destination: &secret,
+				Destination: &daemonApiSecret,
 			},
 			&cli.BoolFlag{
 				Name:        "verbose",
