@@ -200,23 +200,15 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 	pterm.Println()
 
 	var dashboardDot, dashboardHelp string
-
-	if status.DashboardFQDN != husarnetDashboardFQDN {
-		dashboardDot = redDot
-		dashboardHelp = "Dashboards used by the CLI and Husarnet Daemon differ - you may get unexpected results!"
-	} else if husarnetDashboardFQDN != defaultDashboard && strings.HasSuffix(husarnetDashboardFQDN, ".husarnet.com") {
+	if status.DashboardFQDN != defaultDashboard {
 		dashboardDot = yellowDot
-		dashboardHelp = "You're using development environment"
-	} else if husarnetDashboardFQDN != defaultDashboard {
-		dashboardDot = yellowDot
-		dashboardHelp = "You're using self-hosted environment"
+		dashboardHelp = "You're using custom / self-hosted environment"
 	} else {
 		dashboardDot = greenDot
 	}
 
-	printStatusHeader("Dashboard URL")
-	printStatusLine(dashboardDot, "CLI", husarnetDashboardFQDN)
-	printStatusLine(dashboardDot, "Daemon", status.DashboardFQDN)
+	printStatusHeader("Dashboard")
+	printStatusLine(dashboardDot, "URL", status.DashboardFQDN)
 	if dashboardHelp != "" {
 		printStatusHelp(dashboardDot, dashboardHelp)
 	}

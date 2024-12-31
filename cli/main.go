@@ -17,7 +17,6 @@ var defaultDashboard = "app.husarnet.com"
 var defaultDaemonAPIIp = "127.0.0.1"
 var defaultDaemonAPIPort int64 = 16216
 
-var husarnetDashboardFQDN string
 var husarnetDaemonAPIIp = ""
 var husarnetDaemonAPIPort int64 = 0
 var verboseLogs bool
@@ -49,14 +48,6 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 		Usage:                 "Manage your Husarnet network",
 		EnableShellCompletion: true,
 		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "dashboard_fqdn",
-				Aliases:     []string{"d"},
-				Value:       getDaemonsDashboardFqdn(),
-				Usage:       "FQDN for your dashboard instance.",
-				Sources:     cli.EnvVars("HUSARNET_DASHBOARD_FQDN"),
-				Destination: &husarnetDashboardFQDN,
-			},
 			&cli.IntFlag{
 				Name:        "daemon_api_port",
 				Aliases:     []string{"p"},

@@ -11,7 +11,7 @@ import (
 
 var tokenCommand = &cli.Command{
 	Name:  "token",
-	Usage: "print or rotate claim token associated with your account (authorized devices only)",
+	Usage: "Print or rotate claim token associated with your account (authorized devices only)",
 	Commands: []*cli.Command{
 		dashboardTokenPrintCommand,
 		dashboardTokenRotateCommand,
