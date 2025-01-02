@@ -138,7 +138,7 @@ var dashboardDeviceUpdateCommand = &cli.Command{
 			Aliases:  updatedAliases,
 		}
 
-		resp, err := requests.ReqUpdateDevice(uuid, params)
+		resp, err := requests.UpdateDevice(uuid, params)
 		if err != nil {
 			printError(err.Error())
 			return nil
@@ -170,7 +170,7 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 			if !cmd.Bool("yes") {
 				askForConfirmation("Are you sure you want to unclaim this device?")
 			}
-			resp, err := requests.ReqUnclaimSelf()
+			resp, err := requests.UnclaimSelf()
 			if err != nil {
 				printError(err.Error())
 				return nil
@@ -188,7 +188,7 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 			return nil
 		}
 
-		resp, err := requests.ReqUnclaimDevice(uuid)
+		resp, err := requests.UnclaimDevice(uuid)
 		if err != nil {
 			printError(err.Error())
 			return nil

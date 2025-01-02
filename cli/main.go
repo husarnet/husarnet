@@ -85,6 +85,7 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 				Destination: &nonInteractive,
 				Value:       false,
 			},
+			// TODO: not every command respects this flag
 			&cli.BoolFlag{
 				Name:        "json",
 				Usage:       "return raw json response from the API. This is useful for scripts or piping to other tools",

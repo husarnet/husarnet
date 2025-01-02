@@ -25,37 +25,37 @@ func FetchGroupByUuid(uuid string) (*types.ApiResponse[types.GroupDetails], erro
 	return respOrError(&resp)
 }
 
-func ReqCreateGroup(params types.GroupCrudInput) (*types.ApiResponse[types.Group], error) {
+func CreateGroup(params types.GroupCrudInput) (*types.ApiResponse[types.Group], error) {
 	resp := callDashboardApiWithInput[types.GroupCrudInput, types.Group]("POST", "/web/groups", params)
 	return respOrError(&resp)
 }
 
-func ReqUpdateGroup(uuid string, params types.GroupCrudInput) (*types.ApiResponse[types.Group], error) {
+func UpdateGroup(uuid string, params types.GroupCrudInput) (*types.ApiResponse[types.Group], error) {
 	resp := callDashboardApiWithInput[types.GroupCrudInput, types.Group]("PUT", "/web/groups/"+uuid, params)
 	return respOrError(&resp)
 }
 
-func ReqDeleteGroup(uuid string) (*types.ApiResponse[any], error) {
+func DeleteGroup(uuid string) (*types.ApiResponse[any], error) {
 	resp := callDashboardApi[any]("DELETE", "/web/groups/"+uuid)
 	return respOrError(&resp)
 }
 
-func ReqClaim(params types.ClaimParams) (*types.ApiResponse[any], error) {
+func Claim(params types.ClaimParams) (*types.ApiResponse[any], error) {
 	resp := callDashboardApiWithInput[types.ClaimParams, any]("POST", "/device/manage/claim", params)
 	return respOrError(&resp)
 }
 
-func ReqUnclaimSelf() (*types.ApiResponse[any], error) {
+func UnclaimSelf() (*types.ApiResponse[any], error) {
 	resp := callDashboardApi[any]("POST", "/device/manage/unclaim")
 	return respOrError(&resp)
 }
 
-func ReqUpdateDevice(uuid string, params types.DeviceCrudInput) (*types.ApiResponse[types.Device], error) {
+func UpdateDevice(uuid string, params types.DeviceCrudInput) (*types.ApiResponse[types.Device], error) {
 	resp := callDashboardApiWithInput[types.DeviceCrudInput, types.Device]("PUT", "/web/devices/"+uuid, params)
 	return respOrError(&resp)
 }
 
-func ReqUnclaimDevice(uuid string) (*types.ApiResponse[any], error) {
+func UnclaimDevice(uuid string) (*types.ApiResponse[any], error) {
 	resp := callDashboardApi[any]("POST", "/web/devices/unclaim/"+uuid)
 	return respOrError(&resp)
 }

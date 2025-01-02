@@ -44,7 +44,6 @@ var daemonIpCommand = &cli.Command{
 var versionCommand = &cli.Command{
 	Name:  "version",
 	Usage: "Print the version of the CLI and also of the daemon, if available",
-	//Category: CategoryBasic,
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		printVersion(getDaemonRunningVersion())
 		return nil

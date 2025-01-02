@@ -86,7 +86,7 @@ var dashboardGroupCreateCommand = &cli.Command{
 			Emoji:   cmd.String("emoji"),
 		}
 
-		resp, err := requests.ReqCreateGroup(params)
+		resp, err := requests.CreateGroup(params)
 		if err != nil {
 			printError(err.Error())
 			return nil
@@ -134,7 +134,7 @@ var dashboardGroupUpdateCommand = &cli.Command{
 			Emoji:   cmd.String("emoji"),
 		}
 
-		resp, err := requests.ReqUpdateGroup(uuid, params)
+		resp, err := requests.UpdateGroup(uuid, params)
 		if err != nil {
 			printError(err.Error())
 			return nil
@@ -172,7 +172,7 @@ var dashboardGroupDeleteCommand = &cli.Command{
 			askForConfirmation("Are you sure you want to delete this group?")
 		}
 
-		resp, err := requests.ReqDeleteGroup(uuid)
+		resp, err := requests.DeleteGroup(uuid)
 		if err != nil {
 			printError(err.Error())
 			return nil

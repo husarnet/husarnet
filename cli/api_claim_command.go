@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/husarnet/husarnet/cli/v2/output"
 	"github.com/husarnet/husarnet/cli/v2/requests"
 	"github.com/husarnet/husarnet/cli/v2/types"
@@ -44,7 +43,7 @@ var claimCommand = &cli.Command{
 		token := args[0]
 
 		if strings.HasPrefix(token, "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a/") {
-			die("Provided claim token is old join code format, which is discontinued. Go to dashboard.husarnet.com to obtain a new one.")
+			die("Provided token is old join code format, which is discontinued. Go to dashboard.husarnet.com to obtain a new one.")
 		}
 
 		params := types.ClaimParams{
@@ -55,9 +54,14 @@ var claimCommand = &cli.Command{
 			Emoji:      cmd.String("emoji"),
 		}
 
-		resp, err := requests.ReqClaim(params)
+		resp, err := requests.Claim(params)
 		if err != nil {
 			printError(err.Error())
+			return nil
+		}
+
+		if rawJson {
+			output.PrintJsonOrError(resp)
 			return nil
 		}
 
@@ -68,14 +72,15 @@ var claimCommand = &cli.Command{
 					printWarning(warning)
 				}
 			}
+		} else {
+			printError("Claim request failed.")
+			if len(resp.Errors) > 0 {
+				for _, e := range resp.Errors {
+					printError(e)
+				}
+			}
 		}
 
-		if rawJson {
-			output.PrintJsonOrError(resp)
-			return nil
-		}
-
-		fmt.Println("pretty print not yet implemented, use --json")
 		return nil
 		// TODO: optionally add waits, as in the old code
 	},
