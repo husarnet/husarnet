@@ -6,6 +6,7 @@ package requests
 import (
 	"errors"
 	"fmt"
+	"github.com/husarnet/husarnet/cli/v2/constants"
 
 	"github.com/husarnet/husarnet/cli/v2/types"
 )
@@ -70,8 +71,16 @@ func FetchDeviceByUuid(uuid string) (*types.ApiResponse[types.Device], error) {
 	return respOrError(&resp)
 }
 
-func AttachDetach(params types.AttachDetachInput) (*types.ApiResponse[any], error) {
-	resp := callDashboardApiWithInput[types.AttachDetachInput, any]("POST", "/web/groups/attach-device", params)
+func AttachDetach(params types.AttachDetachInput, op constants.DeviceOp) (*types.ApiResponse[any], error) {
+	var endpoint string
+	if op == constants.OpAttach {
+		endpoint = "/web/groups/attach-device"
+	} else if op == constants.OpDetach {
+		endpoint = "/web/groups/detach-device"
+	} else {
+		return nil, errors.New("invalid operation")
+	}
+	resp := callDashboardApiWithInput[types.AttachDetachInput, any]("POST", endpoint, params)
 	return respOrError(&resp)
 }
 

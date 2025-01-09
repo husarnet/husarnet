@@ -10,65 +10,50 @@ import (
 	"strings"
 )
 
-func prettyPrintGroups(response *types.ApiResponse[types.Groups]) {
+func prettyPrintGroups(groups types.Groups) {
 	table := Table{}
 	table.SetTitle("Your groups")
 	table.SetHeader("ID", "Emoji", "Name", "Device#")
 
-	for _, group := range response.Payload {
+	for _, group := range groups {
 		table.AddRow(group.Id, group.Emoji, group.Name, pterm.Sprintf("%d", len(group.Devices)))
 	}
 
 	table.Println()
 }
 
-func prettyPrintGroup(response *types.ApiResponse[types.Group]) {
-	fmt.Println(response.Payload.Emoji, response.Payload.Name)
+func prettyPrintGroup(group types.Group) {
+	fmt.Println(group.Emoji, group.Name)
 	fmt.Println()
 
 	table := Table{}
 	table.SetTitle("Devices in this group")
 	table.SetHeader("IPv6", "Emoji", "Hostname")
 
-	for _, dev := range response.Payload.Devices {
+	for _, dev := range group.Devices {
 		table.AddRow(dev.Ip, dev.Emoji, dev.Hostname)
 	}
 
 	table.Println()
 }
 
-func prettyPrintGroupDetails(response *types.ApiResponse[types.GroupDetails]) {
-	fmt.Println(response.Payload.Group.Emoji, "", response.Payload.Group.Name)
-	fmt.Println()
-
+func prettyPrintDevices(devices types.Devices) {
 	table := Table{}
 	table.SetTitle("Devices in this group")
 	table.SetHeader("IPv6", "Emoji", "Hostname")
 
-	for _, dev := range response.Payload.Group.Devices {
+	for _, dev := range devices {
 		table.AddRow(dev.Ip, dev.Emoji, dev.Hostname)
 	}
 
 	table.Println()
 }
 
-func prettyPrintDevices(response *types.ApiResponse[types.Devices]) {
-	table := Table{}
-	table.SetTitle("Devices in this group")
-	table.SetHeader("IPv6", "Emoji", "Hostname")
-
-	for _, dev := range response.Payload {
-		table.AddRow(dev.Ip, dev.Emoji, dev.Hostname)
-	}
-
-	table.Println()
-}
-
-func prettyPrintDevice(response *types.ApiResponse[types.Device]) {
-	fmt.Println(response.Payload.Emoji, response.Payload.Hostname)
-	fmt.Println("ip of this device:", response.Payload.Ip)
-	fmt.Println("known as:", response.Payload.Hostname, strings.Join(response.Payload.Aliases, ", "))
-	fmt.Println("User agent:", response.Payload.UserAgent)
-	fmt.Println("Husarnet version installed:", response.Payload.Version)
-	fmt.Println("Last contact:", response.Payload.LastContact)
+func prettyPrintDevice(dev types.Device) {
+	fmt.Println(dev.Emoji, dev.Hostname)
+	fmt.Println("ip of this device:", dev.Ip)
+	fmt.Println("known as:", dev.Hostname, strings.Join(dev.Aliases, ", "))
+	fmt.Println("User agent:", dev.UserAgent)
+	fmt.Println("Husarnet version installed:", dev.Version)
+	fmt.Println("Last contact:", dev.LastContact)
 }

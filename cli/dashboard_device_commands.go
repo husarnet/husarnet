@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"github.com/husarnet/husarnet/cli/v2/constants"
 	"github.com/husarnet/husarnet/cli/v2/output"
 	"github.com/husarnet/husarnet/cli/v2/requests"
 	"github.com/husarnet/husarnet/cli/v2/types"
@@ -32,7 +33,7 @@ var dashboardDeviceListCommand = &cli.Command{
 			return nil
 		}
 
-		prettyPrintDevices(resp)
+		prettyPrintDevices(resp.Payload)
 		return nil
 	},
 }
@@ -59,7 +60,7 @@ var dashboardDeviceShowCommand = &cli.Command{
 		if rawJson {
 			output.PrintJsonOrError(resp)
 		} else {
-			prettyPrintDevice(resp)
+			prettyPrintDevice(resp.Payload)
 		}
 		return nil
 	},
@@ -67,7 +68,7 @@ var dashboardDeviceShowCommand = &cli.Command{
 
 var dashboardDeviceUpdateCommand = &cli.Command{
 	Name:      "update",
-	Usage:     "Update device details",
+	Usage:     "Update device details (self if no argument given, device identified by argument otherwise)",
 	ArgsUsage: "<device uuid OR Husarnet IPv6 addr OR hostname>",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -147,7 +148,7 @@ var dashboardDeviceUpdateCommand = &cli.Command{
 		if rawJson {
 			output.PrintJsonOrError(resp)
 		} else {
-			prettyPrintDevice(resp)
+			prettyPrintDevice(resp.Payload)
 		}
 		return nil
 	},
@@ -209,49 +210,7 @@ var dashboardDeviceAttachCommand = &cli.Command{
 	Usage:     "Attach self or another device to a group",
 	ArgsUsage: "[device uuid OR Husarnet IPv6 addr OR hostname] <group uuid OR name>",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		requiredArgumentsRange(cmd, 1, 2)
-
-		// determine inputs
-		var paramDevice string
-		var paramGroup string
-		if cmd.Args().Len() == 2 {
-			paramDevice = cmd.Args().Get(0)
-			paramGroup = cmd.Args().Get(1)
-		} else {
-			status := getDaemonStatus()
-			// TODO: error here if we can't contact daemon
-			paramDevice = status.LocalIP.StringExpanded()
-			paramGroup = cmd.Args().First()
-		}
-
-		deviceIP, err := determineDeviceIP(paramDevice)
-		if err != nil {
-			printError(err.Error())
-			return nil
-		}
-
-		groupUuid, err := determineGroupUuid(paramGroup)
-		if err != nil {
-			printError(err.Error())
-			return nil
-		}
-
-		resp, err := requests.AttachDetach(types.AttachDetachInput{
-			GroupId:  groupUuid,
-			DeviceIp: deviceIP,
-		})
-
-		if err != nil {
-			printError(err.Error())
-			return nil
-		}
-
-		if rawJson {
-			output.PrintJsonOrError(resp)
-		} else {
-			printSuccess("device successfully attached")
-		}
-		return nil
+		return handleDeviceGroupOperation(cmd, constants.OpAttach)
 	},
 }
 
@@ -260,48 +219,51 @@ var dashboardDeviceDetachCommand = &cli.Command{
 	Usage:     "Detach self or another device from a particular group",
 	ArgsUsage: "[device uuid OR Husarnet IPv6 addr OR hostname] <group uuid OR name>",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		requiredArgumentsRange(cmd, 1, 2)
-
-		// determine inputs
-		var paramDevice string
-		var paramGroup string
-		if cmd.Args().Len() == 2 {
-			paramDevice = cmd.Args().Get(0)
-			paramGroup = cmd.Args().Get(1)
-		} else {
-			status := getDaemonStatus()
-			// TODO: error here if we can't contact daemon
-			paramDevice = status.LocalIP.StringExpanded()
-			paramGroup = cmd.Args().First()
-		}
-
-		deviceIP, err := determineDeviceIP(paramDevice)
-		if err != nil {
-			printError(err.Error())
-			return nil
-		}
-
-		groupUuid, err := determineGroupUuid(paramGroup)
-		if err != nil {
-			printError(err.Error())
-			return nil
-		}
-
-		resp, err := requests.AttachDetach(types.AttachDetachInput{
-			GroupId:  groupUuid,
-			DeviceIp: deviceIP,
-		})
-
-		if err != nil {
-			printError(err.Error())
-			return nil
-		}
-
-		if rawJson {
-			output.PrintJsonOrError(resp)
-		} else {
-			printSuccess("device successfully detached")
-		}
-		return nil
+		return handleDeviceGroupOperation(cmd, constants.OpDetach)
 	},
+}
+
+func handleDeviceGroupOperation(cmd *cli.Command, op constants.DeviceOp) error {
+	requiredArgumentsRange(cmd, 1, 2)
+	// determine inputs
+	var paramDevice string
+	var paramGroup string
+	if cmd.Args().Len() == 2 {
+		paramDevice = cmd.Args().Get(0)
+		paramGroup = cmd.Args().Get(1)
+	} else {
+		status := getDaemonStatus()
+		// TODO: error here if we can't contact daemon
+		paramDevice = status.LocalIP.StringExpanded()
+		paramGroup = cmd.Args().First()
+	}
+
+	deviceIP, err := determineDeviceIP(paramDevice)
+	if err != nil {
+		printError(err.Error())
+		return nil
+	}
+
+	groupUuid, err := determineGroupUuid(paramGroup)
+	if err != nil {
+		printError(err.Error())
+		return nil
+	}
+
+	resp, err := requests.AttachDetach(types.AttachDetachInput{
+		GroupId:  groupUuid,
+		DeviceIp: deviceIP,
+	}, op)
+
+	if err != nil {
+		printError(err.Error())
+		return nil
+	}
+
+	if rawJson {
+		output.PrintJsonOrError(resp)
+	} else {
+		printSuccess("device successfully %sed", op)
+	}
+	return nil
 }

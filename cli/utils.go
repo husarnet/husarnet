@@ -6,11 +6,10 @@ package main
 import (
 	"fmt"
 	"github.com/husarnet/husarnet/cli/v2/requests"
-	"github.com/husarnet/husarnet/cli/v2/types"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 	"net/netip"
 	"os"
 	"os/exec"
-	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -216,81 +215,15 @@ func fileExists(filename string) bool {
 	return err == nil
 }
 
-// Replace only last occurrence of given substring in a string. Return new string.
-// If substring is not found, original string (haystack) is returned.
-func replaceLastOccurrence(search string, replacement string, subject string) string {
-	lastIdx := strings.LastIndex(subject, search)
-	if lastIdx != -1 {
-		newStr := subject[:lastIdx] + replacement + subject[lastIdx+len(search):]
-		return newStr
-	}
-	return subject
-}
-
-func getOwnHostname() string {
-	hostname, err := os.Hostname()
-	if err != nil {
-		printWarning("was unable to determine the hostname of the machine")
-		return "unnamed-device"
-	}
-	return hostname
-}
-
-var uuidv4Regex = regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-
-func looksLikeUuidv4(uuid string) bool {
-	return uuidv4Regex.MatchString(uuid)
-}
-
-var ipv6Regex = regexp.MustCompile("^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$")
-
-func looksLikeIpv6(uuid string) bool {
-	return ipv6Regex.MatchString(uuid)
-}
-
-func findGroupUuidByName(needle string, haystack types.Groups) (string, error) {
-	for _, group := range haystack {
-		if group.Name == needle {
-			return group.Id, nil
-		}
-	}
-	return "", fmt.Errorf("Couldn't find a group with name '%s'. Check the spelling.", needle)
-}
-
-func findDeviceUuidByIp(needle string, haystack types.Devices) (string, error) {
-	for _, dev := range haystack {
-		if dev.Ip == needle {
-			return dev.Id, nil
-		}
-	}
-	return "", fmt.Errorf("Couldn't find device with ip '%s'. Are you sure IP is correct?", needle)
-}
-
-func findDeviceUuidByHostname(hostname string, haystack types.Devices) (string, error) {
-	// note this returns the first found match, and does not detect if there is ambiguity (TODO)
-	for _, dev := range haystack {
-		if dev.Hostname == hostname {
-			return dev.Id, nil
-		}
-		for _, alias := range dev.Aliases {
-			if alias == hostname {
-				return dev.Id, nil
-			}
-		}
-	}
-	return "", fmt.Errorf("Couldn't find device named '%s'", hostname)
-}
-
 func determineGroupUuid(identifier string) (string, error) {
-	if !looksLikeUuidv4(identifier) {
+	if !utils.LooksLikeUuidv4(identifier) {
 		resp, err := requests.FetchGroups()
 		if err != nil {
 			return "", err
 		}
 
-		uuid, err := findGroupUuidByName(identifier, resp.Payload)
+		uuid, err := utils.FindGroupUuidByName(identifier, resp.Payload)
 		if err != nil {
-			printError(err.Error())
 			return "", err
 		}
 		return uuid, nil
@@ -299,24 +232,24 @@ func determineGroupUuid(identifier string) (string, error) {
 }
 
 func determineDeviceUuid(identifier string) (string, error) {
-	if looksLikeIpv6(identifier) {
+	if utils.LooksLikeIpv6(identifier) {
 		resp, err := requests.FetchDevices()
 		if err != nil {
 			return "", nil
 		}
 
-		uuid, err := findDeviceUuidByIp(identifier, resp.Payload)
+		uuid, err := utils.FindDeviceUuidByIp(identifier, resp.Payload)
 		if err != nil {
 			return "", err
 		}
 		return uuid, nil
-	} else if !looksLikeUuidv4(identifier) { // we assume it's a hostname (or hostname alias)
+	} else if !utils.LooksLikeUuidv4(identifier) { // we assume it's a hostname (or hostname alias)
 		resp, err := requests.FetchDevices()
 		if err != nil {
 			return "", err
 		}
 
-		uuid, err := findDeviceUuidByHostname(identifier, resp.Payload)
+		uuid, err := utils.FindDeviceUuidByHostname(identifier, resp.Payload)
 		if err != nil {
 			return "", err
 		}
@@ -326,7 +259,7 @@ func determineDeviceUuid(identifier string) (string, error) {
 }
 
 func determineDeviceIP(identifier string) (string, error) {
-	if looksLikeIpv6(identifier) {
+	if utils.LooksLikeIpv6(identifier) {
 		return identifier, nil
 	}
 

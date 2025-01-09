@@ -29,7 +29,7 @@ var dashboardGroupListCommand = &cli.Command{
 		if rawJson {
 			output.PrintJsonOrError(resp)
 		} else {
-			prettyPrintGroups(resp)
+			prettyPrintGroups(resp.Payload)
 		}
 		return nil
 	},
@@ -57,7 +57,7 @@ var dashboardGroupShowCommand = &cli.Command{
 		if rawJson {
 			output.PrintJsonOrError(resp)
 		} else {
-			prettyPrintGroupDetails(resp)
+			prettyPrintGroup(resp.Payload.Group)
 		}
 		return nil
 	},
@@ -95,7 +95,7 @@ var dashboardGroupCreateCommand = &cli.Command{
 		if rawJson {
 			output.PrintJsonOrError(resp)
 		} else {
-			prettyPrintGroup(resp)
+			prettyPrintGroup(resp.Payload)
 		}
 		return nil
 	},
@@ -143,7 +143,7 @@ var dashboardGroupUpdateCommand = &cli.Command{
 		if rawJson {
 			output.PrintJsonOrError(resp)
 		} else {
-			prettyPrintGroup(resp)
+			prettyPrintGroup(resp.Payload)
 		}
 		return nil
 	},

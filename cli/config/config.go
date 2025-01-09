@@ -7,7 +7,7 @@ import (
 	"runtime"
 )
 
-var defaultDashboard = "app.husarnet.com"
+var defaultDashboard = "prod.husarnet.com"
 var defaultDaemonAPIIp = "127.0.0.1"
 var defaultDaemonAPIPort int64 = 16216
 

@@ -289,9 +289,9 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 
 func printStatusFollow(cmd *cli.Command) {
 	// Obtaining status twice is simpler than deep copy
-	currStatus := getDaemonStatus()
 	prevStatus := getDaemonStatus()
 	prevStatus.Version = "temporary change to enable print"
+	var currStatus DaemonStatus
 	for {
 		currStatus = getDaemonStatus()
 		if !areStatusesEqual(prevStatus, currStatus) {

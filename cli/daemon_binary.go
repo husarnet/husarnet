@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 	"os"
 	"os/exec"
 	"strings"
@@ -26,7 +27,7 @@ func getDaemonBinaryPath() string {
 		return getFallbackDaemonBinaryPath()
 	}
 
-	potentialDaemonBinaryPath := replaceLastOccurrence("husarnet", "husarnet-daemon", ourPath)
+	potentialDaemonBinaryPath := utils.ReplaceLastOccurrence("husarnet", "husarnet-daemon", ourPath)
 
 	if fileExists(potentialDaemonBinaryPath) {
 		return potentialDaemonBinaryPath

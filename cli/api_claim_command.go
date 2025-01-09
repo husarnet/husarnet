@@ -8,6 +8,7 @@ import (
 	"github.com/husarnet/husarnet/cli/v2/output"
 	"github.com/husarnet/husarnet/cli/v2/requests"
 	"github.com/husarnet/husarnet/cli/v2/types"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 	"strings"
 
 	"github.com/urfave/cli/v3"
@@ -21,7 +22,7 @@ var claimCommand = &cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "hostname",
-			Value: getOwnHostname(),
+			Value: utils.GetOwnHostname(),
 			Usage: "how you want the device identified in the dashboard. If not provided, will use the hostname as reported by the operating system",
 		},
 		&cli.StringFlag{
@@ -65,22 +66,7 @@ var claimCommand = &cli.Command{
 			return nil
 		}
 
-		if resp.Type == "success" {
-			printSuccess("Claim request was successful")
-			if len(resp.Warnings) > 0 {
-				for _, warning := range resp.Warnings {
-					printWarning(warning)
-				}
-			}
-		} else {
-			printError("Claim request failed.")
-			if len(resp.Errors) > 0 {
-				for _, e := range resp.Errors {
-					printError(e)
-				}
-			}
-		}
-
+		output.PrintGenericApiResponse(resp, "Claim request was successful", "Claim request failed")
 		return nil
 		// TODO: optionally add waits, as in the old code
 	},

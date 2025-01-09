@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/husarnet/husarnet/cli/v2/config"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 	"log"
 	"net"
 	"os"
@@ -30,7 +31,6 @@ func main() {
 
 	cmd := &cli.Command{
 		Name: "husarnet",
-		//HelpName: "husarnet",
 		Description: `This is Husarnet CLI (command-line interface), which is invoked with 'husarnet' command.
 It's primary purpose is to query and manage daemon process ('husarnet-daemon') running 
 on the current machine. Additionally, given sufficient permissions, it can be also be used 
@@ -45,7 +45,7 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 				Name:    config.DaemonApiPortFlagName,
 				Aliases: []string{"p"},
 				Usage:   "port your Husarnet Daemon is listening at",
-				Sources: cli.EnvVars("HUSARNET_DAEMON_API_PORT"),
+				Sources: cli.EnvVars(utils.EnvVarName(config.DaemonApiPortFlagName)),
 				Action: func(ctx context.Context, cmd *cli.Command, v int64) error {
 					if v < 0 || v > 65535 {
 						return fmt.Errorf("invalid port %d", v)
@@ -57,7 +57,7 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 				Name:    config.DaemonApiAddressFlagName,
 				Aliases: []string{"a"},
 				Usage:   "IP address your Husarnet Daemon is listening at",
-				Sources: cli.EnvVars("HUSARNET_DAEMON_API_ADDRESS"),
+				Sources: cli.EnvVars(utils.EnvVarName(config.DaemonApiAddressFlagName)),
 				Action: func(ctx context.Context, cmd *cli.Command, v string) error {
 					if net.ParseIP(v) == nil {
 						return fmt.Errorf("invalid IP address %s", v)
@@ -70,7 +70,7 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 				Aliases: []string{"s"},
 				Value:   "",
 				Usage:   "swap daemon API secret for a different one",
-				Sources: cli.EnvVars("SECRET"),
+				Sources: cli.EnvVars(utils.EnvVarName(config.DaemonApiSecretFlagName)),
 			},
 			&cli.BoolFlag{
 				Name:        "verbose",

@@ -119,7 +119,6 @@ var daemonStopCommand = &cli.Command{
 var daemonStatusCommand = &cli.Command{
 	Name:  "status",
 	Usage: "Display current connectivity status",
-	//Category: CategoryBasic,
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:    "verbose",
@@ -149,7 +148,6 @@ var daemonSetupServerCommand = &cli.Command{
 	Name:      "setup-server",
 	Usage:     "Connect your Husarnet device to different instance of Husarnet infrastructure (eg. self-hosted instances)",
 	ArgsUsage: "[dashboard fqdn]",
-	//Category:  CategoryDaemon,
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsNumber(cmd, 1)
 
