@@ -14,8 +14,8 @@ windows_installer_script_path = os.path.realpath(
     )
 )
 
-cli_messages_path = os.path.realpath(
-    os.path.join(os.path.realpath(__file__), "..", "..", "cli", "messages.go")
+cli_version_path = os.path.realpath(
+    os.path.join(os.path.realpath(__file__), "..", "..", "cli", "constants", "version.go")
 )
 
 snap_yaml_path = os.path.realpath(
@@ -57,7 +57,7 @@ def get_new_version_string_for_cpp_and_iss(new_ver):
 
 
 def get_new_version_string_for_go(new_ver):
-    return 'const cliVersion string = "' + new_ver + '"'
+    return 'const Version string = "' + new_ver + '"'
 
 
 def get_new_version_string_for_yaml(new_ver):
@@ -93,8 +93,8 @@ def main():
     )
     replace_in_file(
         get_new_version_string_for_go(new_ver),
-        "const cliVersion string =",
-        cli_messages_path,
+        "const Version string =",
+        cli_version_path,
         "\n",
     )
     replace_in_file(

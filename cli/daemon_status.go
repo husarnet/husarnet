@@ -4,6 +4,7 @@
 package main
 
 import (
+	"github.com/husarnet/husarnet/cli/v2/config"
 	"net/netip"
 	"sort"
 	"strings"
@@ -13,7 +14,7 @@ import (
 	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
 	u "github.com/rjNemo/underscore"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -188,9 +189,8 @@ func printHooksStatus(status DaemonStatus) {
 	}
 }
 
-func printStatus(ctx *cli.Context, status DaemonStatus) {
-
-	verbose := verboseLogs || ctx.Bool("verbose")
+func printStatus(cmd *cli.Command, status DaemonStatus) {
+	verbose := verboseLogs || cmd.Bool("verbose")
 
 	printStatusHeader("Version")
 	printVersion(status.Version)
@@ -201,23 +201,15 @@ func printStatus(ctx *cli.Context, status DaemonStatus) {
 	pterm.Println()
 
 	var dashboardDot, dashboardHelp string
-
-	if status.DashboardFQDN != husarnetDashboardFQDN {
-		dashboardDot = redDot
-		dashboardHelp = "Dashboards used by the CLI and Husarnet Daemon differ - you may get unexpected results!"
-	} else if husarnetDashboardFQDN != defaultDashboard && strings.HasSuffix(husarnetDashboardFQDN, ".husarnet.com") {
+	if status.DashboardFQDN != config.GetDefaultDashboardUrl() {
 		dashboardDot = yellowDot
-		dashboardHelp = "You're using development environment"
-	} else if husarnetDashboardFQDN != defaultDashboard {
-		dashboardDot = yellowDot
-		dashboardHelp = "You're using self-hosted environment"
+		dashboardHelp = "You're using custom / self-hosted environment"
 	} else {
 		dashboardDot = greenDot
 	}
 
-	printStatusHeader("Dashboard URL")
-	printStatusLine(dashboardDot, "CLI", husarnetDashboardFQDN)
-	printStatusLine(dashboardDot, "Daemon", status.DashboardFQDN)
+	printStatusHeader("Dashboard")
+	printStatusLine(dashboardDot, "URL", status.DashboardFQDN)
 	if dashboardHelp != "" {
 		printStatusHelp(dashboardDot, dashboardHelp)
 	}
@@ -295,15 +287,15 @@ func printStatus(ctx *cli.Context, status DaemonStatus) {
 
 }
 
-func printStatusFollow(ctx *cli.Context) {
+func printStatusFollow(cmd *cli.Command) {
 	// Obtaining status twice is simpler than deep copy
-	currStatus := getDaemonStatus()
 	prevStatus := getDaemonStatus()
 	prevStatus.Version = "temporary change to enable print"
-	for true {
+	var currStatus DaemonStatus
+	for {
 		currStatus = getDaemonStatus()
 		if !areStatusesEqual(prevStatus, currStatus) {
-			printStatus(ctx, currStatus)
+			printStatus(cmd, currStatus)
 			prevStatus = currStatus
 		}
 		time.Sleep(500 * time.Millisecond)

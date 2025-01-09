@@ -3,52 +3,50 @@
 // License: specified in project_root/LICENSE.txt
 package main
 
-// Tag for code generator. Do not delete.
-//go:generate go run github.com/Khan/genqlient
-
 import (
+	"context"
 	"fmt"
+	"github.com/husarnet/husarnet/cli/v2/config"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 	"log"
 	"net"
 	"os"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-var defaultDashboard = "app.husarnet.com"
-var defaultDaemonAPIIp = "127.0.0.1"
-var defaultDaemonAPIPort = 16216
-
-var husarnetDashboardFQDN string
-var husarnetDaemonAPIIp = ""
-var husarnetDaemonAPIPort = 0
 var verboseLogs bool
 var wait bool
 var nonInteractive bool
+var rawJson bool
+
+const (
+	CategoryDaemon = "DAEMON MANAGEMENT"
+	CategoryUtils  = "UTILITIES"
+	CategoryApi    = "DASHBOARD API ACCESS"
+)
 
 func main() {
-	app := &cli.App{
-		Name:                 "Husarnet CLI",
-		HelpName:             "husarnet",
-		Usage:                "Manage your Husarnet groups and devices from your terminal",
-		EnableBashCompletion: true,
+	cli.RootCommandHelpTemplate = rootTemplate
+
+	cmd := &cli.Command{
+		Name: "husarnet",
+		Description: `This is Husarnet CLI (command-line interface), which is invoked with 'husarnet' command.
+It's primary purpose is to query and manage daemon process ('husarnet-daemon') running 
+on the current machine. Additionally, given sufficient permissions, it can be also be used 
+to manage your other Husarnet devices and even your entire Husarnet network (possibly 
+eliminating the need to ever use the web interface under https://dashboard.husarnet.com).
+
+For the details on what can be done with the CLI, visit: https://husarnet.com/docs/cli-guide.`,
+		Usage:                 "Manage your Husarnet network",
+		EnableShellCompletion: true,
 		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "dashboard_fqdn",
-				Aliases:     []string{"d"},
-				Value:       getDaemonsDashboardFqdn(),
-				Usage:       "FQDN for your dashboard instance.",
-				EnvVars:     []string{"HUSARNET_DASHBOARD_FQDN"},
-				Destination: &husarnetDashboardFQDN,
-			},
 			&cli.IntFlag{
-				Name:        "daemon_api_port",
-				Aliases:     []string{"p"},
-				Value:       defaultDaemonAPIPort,
-				Usage:       "port your Husarnet Daemon is listening at",
-				EnvVars:     []string{"HUSARNET_DAEMON_API_PORT"},
-				Destination: &husarnetDaemonAPIPort,
-				Action: func(ctx *cli.Context, v int) error {
+				Name:    config.DaemonApiPortFlagName,
+				Aliases: []string{"p"},
+				Usage:   "port your Husarnet Daemon is listening at",
+				Sources: cli.EnvVars(utils.EnvVarName(config.DaemonApiPortFlagName)),
+				Action: func(ctx context.Context, cmd *cli.Command, v int64) error {
 					if v < 0 || v > 65535 {
 						return fmt.Errorf("invalid port %d", v)
 					}
@@ -56,18 +54,23 @@ func main() {
 				},
 			},
 			&cli.StringFlag{
-				Name:        "daemon_api_address",
-				Aliases:     []string{"a"},
-				Value:       defaultDaemonAPIIp,
-				Usage:       "IP address your Husarnet Daemon is listening at",
-				EnvVars:     []string{"HUSARNET_DAEMON_API_ADDRESS"},
-				Destination: &husarnetDaemonAPIIp,
-				Action: func(ctx *cli.Context, v string) error {
+				Name:    config.DaemonApiAddressFlagName,
+				Aliases: []string{"a"},
+				Usage:   "IP address your Husarnet Daemon is listening at",
+				Sources: cli.EnvVars(utils.EnvVarName(config.DaemonApiAddressFlagName)),
+				Action: func(ctx context.Context, cmd *cli.Command, v string) error {
 					if net.ParseIP(v) == nil {
 						return fmt.Errorf("invalid IP address %s", v)
 					}
 					return nil
 				},
+			},
+			&cli.StringFlag{
+				Name:    config.DaemonApiSecretFlagName,
+				Aliases: []string{"s"},
+				Value:   "",
+				Usage:   "swap daemon API secret for a different one",
+				Sources: cli.EnvVars(utils.EnvVarName(config.DaemonApiSecretFlagName)),
 			},
 			&cli.BoolFlag{
 				Name:        "verbose",
@@ -82,39 +85,43 @@ func main() {
 				Destination: &nonInteractive,
 				Value:       false,
 			},
+			// TODO: not every command respects this flag
+			&cli.BoolFlag{
+				Name:        "json",
+				Usage:       "return raw json response from the API. This is useful for scripts or piping to other tools",
+				Destination: &rawJson,
+				Value:       false,
+			},
 		},
-		Before: func(ctx *cli.Context) error {
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			config.Init(cmd)
 			initTheme()
-
-			return nil
+			return ctx, nil
 		},
 		Commands: []*cli.Command{
-			dashboardCommand,
-			daemonCommand,
-
+			daemonCommand, // daemon "umbrella" command is needed here for integration tests, will _maybe_ be eventually deleted/rearranged
+			daemonStatusCommand,
 			daemonStartCommand,
 			daemonRestartCommand,
 			daemonStopCommand,
+			daemonIpCommand,
+			daemonWaitCommand,
+			daemonWhitelistCommand,
+			daemonHooksCommand,
+			daemonGenIdCommand,
+			daemonServiceInstallCommand,
+			daemonServiceUninstallCommand,
+			claimCommand,
+			tokenCommand,
+			groupCommands,
+			deviceCommands,
 
-			daemonStatusCommand,
-			joinCommand,
 			daemonSetupServerCommand,
-
-			dashboardLoginCommand,
-
-			{
-				Name:  "version",
-				Usage: "print the version of the CLI and also of the daemon, if available",
-				Action: func(ctx *cli.Context) error {
-					printVersion(getDaemonRunningVersion())
-
-					return nil
-				},
-			},
+			versionCommand,
 		},
 	}
 
-	err := app.Run(os.Args)
+	err := cmd.Run(context.Background(), os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}

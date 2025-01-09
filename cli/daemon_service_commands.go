@@ -4,11 +4,12 @@
 package main
 
 import (
+	"context"
 	"runtime"
 	"time"
 
 	"github.com/kardianos/service"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 const systemdScriptTemplate = `[Unit]
@@ -131,7 +132,8 @@ func ensureServiceInstalled() {
 
 var daemonServiceInstallCommand = &cli.Command{
 	Name:      "service-install",
-	Usage:     "install service definition in OS's service manager (e.g. systemctl on Linux)",
+	Usage:     "Install service definition in OS's service manager (e.g. systemctl on Linux)",
+	Category:  CategoryDaemon,
 	ArgsUsage: " ", // No arguments needed
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -143,9 +145,9 @@ var daemonServiceInstallCommand = &cli.Command{
 			Usage: "Don't check if the unit/service file exists already before attempting to write",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		silentFlag := ctx.Bool("silent")
-		forceFlag := ctx.Bool("force")
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		silentFlag := cmd.Bool("silent")
+		forceFlag := cmd.Bool("force")
 
 		if !forceFlag && isHusarnetInstalledInOSServiceManager(silentFlag) {
 			if !silentFlag {
@@ -181,7 +183,8 @@ var daemonServiceInstallCommand = &cli.Command{
 
 var daemonServiceUninstallCommand = &cli.Command{
 	Name:      "service-uninstall",
-	Usage:     "remove service definition from OS's service manager (e.g. systemctl on Linux)",
+	Usage:     "Remove service definition from OS's service manager (e.g. systemctl on Linux)",
+	Category:  CategoryDaemon,
 	ArgsUsage: " ", // No arguments needed
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -193,9 +196,9 @@ var daemonServiceUninstallCommand = &cli.Command{
 			Usage: "Don't check if the unit/service file exists already before attempting to write",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		silentFlag := ctx.Bool("silent")
-		forceFlag := ctx.Bool("force")
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		silentFlag := cmd.Bool("silent")
+		forceFlag := cmd.Bool("force")
 
 		if !forceFlag && runtime.GOOS == "linux" && !fileExists(systemdUnitFilePath) {
 			if !silentFlag {

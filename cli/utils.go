@@ -5,6 +5,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/husarnet/husarnet/cli/v2/requests"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 	"net/netip"
 	"os"
 	"os/exec"
@@ -170,7 +172,7 @@ func isJoinCode(candidate string) bool {
 }
 
 // parses an IP v4/v6 address and returns it as a string in a full format
-func makeCannonicalAddr(input string) string {
+func makeCanonicalAddr(input string) string {
 	addr, err := netip.ParseAddr(input)
 	if err != nil {
 		dieE(err)
@@ -213,13 +215,72 @@ func fileExists(filename string) bool {
 	return err == nil
 }
 
-// Replace only last occurrence of given substring in a string. Return new string.
-// If substring is not found, original string (haystack) is returned.
-func replaceLastOccurrence(search string, replacement string, subject string) string {
-	lastIdx := strings.LastIndex(subject, search)
-	if lastIdx != -1 {
-		newStr := subject[:lastIdx] + replacement + subject[lastIdx+len(search):]
-		return newStr
+func determineGroupUuid(identifier string) (string, error) {
+	if !utils.LooksLikeUuidv4(identifier) {
+		resp, err := requests.FetchGroups()
+		if err != nil {
+			return "", err
+		}
+
+		uuid, err := utils.FindGroupUuidByName(identifier, resp.Payload)
+		if err != nil {
+			return "", err
+		}
+		return uuid, nil
 	}
-	return subject
+	return identifier, nil
+}
+
+func determineDeviceUuid(identifier string) (string, error) {
+	if utils.LooksLikeIpv6(identifier) {
+		resp, err := requests.FetchDevices()
+		if err != nil {
+			return "", nil
+		}
+
+		uuid, err := utils.FindDeviceUuidByIp(identifier, resp.Payload)
+		if err != nil {
+			return "", err
+		}
+		return uuid, nil
+	} else if !utils.LooksLikeUuidv4(identifier) { // we assume it's a hostname (or hostname alias)
+		resp, err := requests.FetchDevices()
+		if err != nil {
+			return "", err
+		}
+
+		uuid, err := utils.FindDeviceUuidByHostname(identifier, resp.Payload)
+		if err != nil {
+			return "", err
+		}
+		return uuid, nil
+	}
+	return identifier, nil // yeah, it's probably uuid
+}
+
+func determineDeviceIP(identifier string) (string, error) {
+	if utils.LooksLikeIpv6(identifier) {
+		return identifier, nil
+	}
+
+	resp, err := requests.FetchDevices()
+	if err != nil {
+		return "", err
+	}
+
+	for _, dev := range resp.Payload {
+		if dev.Id == identifier {
+			return dev.Ip, nil
+		}
+		if dev.Hostname == identifier {
+			return dev.Ip, nil
+		}
+		for _, alias := range dev.Aliases {
+			if alias == identifier {
+				return dev.Ip, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("Couldn't find device identified with '%s'", identifier)
 }

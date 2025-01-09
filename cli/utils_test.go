@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 	"testing"
 )
 
@@ -81,7 +82,7 @@ func TestReplaceLastOccurrence(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			ans := replaceLastOccurrence(tt.needle, tt.replacement, tt.haystack)
+			ans := utils.ReplaceLastOccurrence(tt.needle, tt.replacement, tt.haystack)
 			if ans != tt.expected {
 				t.Error("Test failed. Expected:", tt.expected, "and got:", ans)
 			}
