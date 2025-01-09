@@ -35,8 +35,9 @@ std::string IpAddress::str() const
   std::string res;
 
   for(int i = 0; i < 16; i += 2) {
-    char buf[20];
-    sprintf(buf, "%02x%02x", data.data()[i], data.data()[i + 1]);
+    size_t buf_size = 20;
+    char buf[buf_size];
+    snprintf(buf, buf_size, "%02x%02x", data.data()[i], data.data()[i + 1]);
     if(i != 0)
       res += ":";
     res += buf;

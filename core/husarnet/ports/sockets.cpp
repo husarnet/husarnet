@@ -474,7 +474,7 @@ namespace OsSocket {
 
   // TODO: change callbacks from func pointers to etl::delegate
   std::shared_ptr<TcpConnection> TcpConnection::connect(
-      InetAddress address,
+      const InetAddress& address,
       TcpDataCallback dataCallback,
       TcpErrorCallback errorCallback,
       TcpConnection::Encapsulation transportType)

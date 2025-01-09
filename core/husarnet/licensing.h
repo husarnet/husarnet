@@ -15,18 +15,15 @@ using namespace nlohmann;  // json
 json retrieveLicenseJson(std::string dashboardHostname, bool abortOnFailure);
 
 class License {
-  std::string dashboardFqdn;
-  IpAddress websetupAddress;
   std::vector<IpAddress> baseServerAddresses;
   std::vector<IpAddress> dashboardApiAddresses;
   std::vector<IpAddress> ebAddresses;
 
  public:
   License(std::string dashboardHostname);
-  std::string getDashboardFqdn();
-  IpAddress getWebsetupAddress();
   std::vector<IpAddress> getBaseServerAddresses();
   std::vector<IpAddress> getDashboardApiAddresses();
   std::vector<IpAddress> getEbAddresses();
+
   static bool validateDashboard(std::string dashboardHostname);
 };

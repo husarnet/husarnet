@@ -26,7 +26,8 @@ BETTER_ENUM(
 BETTER_ENUM(
     UserSetting,
     int,
-    dashboardFqdn = 1,            // string
+    dashboardFqdn =
+        1,  // string, TODO may be renamed to tldFqdn or instanceFqdn
     enableWhitelist = 2,          // bool
     interfaceName = 3,            // string
     daemonApiPort = 4,            // int

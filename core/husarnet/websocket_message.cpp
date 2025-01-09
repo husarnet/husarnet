@@ -85,7 +85,7 @@ size_t WebSocket::Message::parse(
   return std::distance(buffer.begin(), it);
 }
 
-bool WebSocket::Message::encode(etl::ivector<char>& buffer)
+bool WebSocket::Message::encode(etl::ivector<char>& buffer) const
 {
   buffer.clear();
 
@@ -97,7 +97,7 @@ bool WebSocket::Message::encode(etl::ivector<char>& buffer)
   flags |= static_cast<uint8_t>(this->opcode) & 0x0F;
 
   buffer.push_back(flags);
-  size_t length = this->data.size();
+  uint64_t length = this->data.size();
 
   // Encode mask bit and length as a VLE
   if(length < 126) {

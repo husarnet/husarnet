@@ -24,7 +24,6 @@
 #include "husarnet/peer_flags.h"
 #include "husarnet/security_layer.h"
 #include "husarnet/util.h"
-#include "husarnet/websetup.h"
 
 #ifdef HTTP_CONTROL_API
 #include "husarnet/api_server/server.h"
@@ -130,15 +129,9 @@ bool HusarnetManager::isConnectedToBase()
   return ngsocket->getCurrentBaseConnectionType() != +BaseConnectionType::NONE;
 }
 
-bool HusarnetManager::isConnectedToWebsetup()
+bool HusarnetManager::isConnectedToEB()
 {
-  auto websetupPeer =
-      peerContainer->getPeer(deviceIdFromIpAddress(getWebsetupAddress()));
-  if(websetupPeer == NULL) {
-    return false;
-  }
-
-  return websetupPeer->isSecure();
+  return false;  // TODO implement this !!!
 }
 
 bool HusarnetManager::isDirty()
@@ -152,49 +145,9 @@ void HusarnetManager::setDirty()
   dirty = true;
 }
 
-std::string HusarnetManager::getWebsetupSecret()
-{
-  return configStorage->getInternalSetting(InternalSetting::websetupSecret);
-}
-
-std::string HusarnetManager::setWebsetupSecret(std::string newSecret)
-{
-  configStorage->setInternalSetting(InternalSetting::websetupSecret, newSecret);
-  return newSecret;
-}
-
-static std::string parseJoinCode(std::string joinCode)
-{
-  int slash = joinCode.find("/");
-  if(slash == -1) {
-    return joinCode;
-  }
-
-  return joinCode.substr(slash + 1);
-}
-
-void HusarnetManager::joinNetwork(std::string joinCode, std::string newHostname)
-{
-  this->whitelistAdd(this->getWebsetupAddress());
-
-  std::string dashboardHostname;
-  if(newHostname.empty()) {
-    dashboardHostname = this->getSelfHostname();
-  } else {
-    this->setSelfHostname(newHostname);
-    dashboardHostname = newHostname;
-  }
-
-  websetup->join(parseJoinCode(joinCode), dashboardHostname);
-}
-
 bool HusarnetManager::isJoined()
 {
-  // TODO long-term - add a periodic latency check for websetup
-  // auto websetupId = deviceIdFromIpAddress(getWebsetupAddress());
-  // getLatency(websetupId) >= 0
-  return configStorage->isOnWhitelist(getWebsetupAddress()) &&
-         websetup->getLastInitReply() > 0;
+  return false;  // TODO implement this (based on get_config)
 }
 
 bool HusarnetManager::changeServer(std::string domain)
@@ -333,13 +286,10 @@ std::string HusarnetManager::rotateDaemonApiSecret()
 
 std::string HusarnetManager::getDashboardFqdn()
 {
-  return license->getDashboardFqdn();
+  return configStorage->getUserSetting(UserSetting::dashboardFqdn);
 }
-IpAddress HusarnetManager::getWebsetupAddress()
-{
-  return license->getWebsetupAddress();
-}
-std::vector<IpAddress> HusarnetManager::getBaseServerAddresses()
+
+std::vector<IpAddress> HusarnetManager::getBaseServerAddresses() const
 {
   if(configStorage->getUserSettingInet(UserSetting::overrideBaseAddress)) {
     return {
@@ -348,11 +298,13 @@ std::vector<IpAddress> HusarnetManager::getBaseServerAddresses()
 
   return license->getBaseServerAddresses();
 }
-std::vector<IpAddress> HusarnetManager::getDashboardApiAddresses()
+
+std::vector<IpAddress> HusarnetManager::getDashboardApiAddresses() const
 {
   return license->getDashboardApiAddresses();
 }
-std::vector<IpAddress> HusarnetManager::getEbAddresses()
+
+std::vector<IpAddress> HusarnetManager::getEbAddresses() const
 {
   return license->getEbAddresses();
 }
@@ -422,7 +374,6 @@ void HusarnetManager::cleanup()
 {
   configStorage->groupChanges([&]() {
     configStorage->whitelistClear();
-    configStorage->whitelistAdd(getWebsetupAddress());
     configStorage->hostTableClear();
     configStorage->hostTableAdd("husarnet-local", getSelfAddress());
   });
@@ -528,32 +479,22 @@ void HusarnetManager::runHusarnet()
   stackUpperOnLower(compression, securityLayer);
   stackUpperOnLower(securityLayer, ngsocket);
 
-  // Initialize websetup
-  whitelistAdd(getWebsetupAddress());
-  whitelistAdd(license->getEbAddresses()[0]);
-  whitelistAdd(license->getDashboardApiAddresses()[0]);
-
-  websetup = new WebsetupConnection(this);
-  websetup->start();
-
-  eventBus = new EventBus(this);
-  eventBus->init();
-
-  // TODO move this to websetup/dashboard
-  this->hostTableAdd("husarnet-local", this->getSelfAddress());
-
-  // If user provided a joincode via environment variables - now's the point to
-  // use it Note: this case is different from the dashboard URL one as we do not
-  // save it to a persistent storage
-  if(configStorage->isUserSettingOverriden(UserSetting::joinCode)) {
-    if(configStorage->isUserSettingOverriden(UserSetting::hostname)) {
-      joinNetwork(
-          configStorage->getUserSetting(UserSetting::joinCode),
-          configStorage->getUserSetting(UserSetting::hostname));
-    } else {
-      joinNetwork(configStorage->getUserSetting(UserSetting::joinCode));
-    }
+  for(auto& addr : license->getDashboardApiAddresses()) {
+    whitelistAdd(addr);
   }
+  for(auto& addr : license->getEbAddresses()) {
+    whitelistAdd(addr);
+  }
+
+  Port::startThread(
+      [this]() {
+        eventBus = new EventBus(this);
+        eventBus->init();
+        while(true) {
+          eventBus->periodic();
+        }
+      },
+      "eb");
 
 // In case of a "fat" platform - start the API server
 #ifdef HTTP_CONTROL_API
@@ -570,7 +511,6 @@ void HusarnetManager::runHusarnet()
   // This is an actual event loop
   while(true) {
     ngsocket->periodic();
-    eventBus->periodic();
 
     Port::processSocketEvents(this);
   }

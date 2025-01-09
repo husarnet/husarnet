@@ -91,6 +91,7 @@ static const unsigned char* const PUBLIC_KEY[] = {
 };
 const int PUBLIC_KEY_COUNT = sizeof(PUBLIC_KEY) / sizeof(PUBLIC_KEY[0]);
 
+#define LICENSE_VERSION_KEY "version"
 #define LICENSE_INSTALLATION_ID_KEY "installation_id"
 #define LICENSE_LICENSE_ID_KEY "license_id"
 #define LICENSE_NAME_KEY "name"
@@ -105,11 +106,10 @@ const int PUBLIC_KEY_COUNT = sizeof(PUBLIC_KEY) / sizeof(PUBLIC_KEY[0]);
 #define LICENSE_SIGNATURE_KEY "signature"
 #define LICENSE_SIGNATURE_V2_KEY "signature_v2"
 
-static std::string getSignatureData(const json licenseJson)
+static std::string generateSignatureData(const json licenseJson)
 {
-  bool hasApiServers = licenseJson.contains(LICENSE_API_SERVERS_KEY);
   std::string s;
-  s.append("1\n");
+  s.append(std::to_string(licenseJson[LICENSE_VERSION_KEY].get<int>()) + "\n");
   s.append(licenseJson[LICENSE_INSTALLATION_ID_KEY].get<std::string>() + "\n");
   s.append(licenseJson[LICENSE_LICENSE_ID_KEY].get<std::string>() + "\n");
   s.append(licenseJson[LICENSE_NAME_KEY].get<std::string>() + "\n");
@@ -117,24 +117,52 @@ static std::string getSignatureData(const json licenseJson)
       std::to_string(licenseJson[LICENSE_MAX_DEVICES_KEY].get<int>()) + "\n");
   s.append(licenseJson[LICENSE_DASHBOARD_URL_KEY].get<std::string>() + "\n");
   s.append(licenseJson[LICENSE_WEBSETUP_HOST_KEY].get<std::string>() + "\n");
+
   for(auto address : licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]) {
     s.append(address.get<std::string>() + ",");
   }
   s[s.size() - 1] = '\n';  // remove the last comma
-  if(hasApiServers) {
-    for(auto address : licenseJson[LICENSE_API_SERVERS_KEY]) {
-      s.append(address.get<std::string>() + ",");
-    }
-    s[s.size() - 1] = '\n';
 
-    for(auto address : licenseJson[LICENSE_EB_SERVERS_KEY]) {
-      s.append(address.get<std::string>() + ",");
-    }
-    s[s.size() - 1] = '\n';
+  for(auto address : licenseJson[LICENSE_API_SERVERS_KEY]) {
+    s.append(address.get<std::string>() + ",");
   }
+  s[s.size() - 1] = '\n';
+
+  for(auto address : licenseJson[LICENSE_EB_SERVERS_KEY]) {
+    s.append(address.get<std::string>() + ",");
+  }
+  s[s.size() - 1] = '\n';
+
   s.append(licenseJson[LICENSE_ISSUED_KEY].get<std::string>() + "\n");
   s.append(licenseJson[LICENSE_VALID_UNTIL_KEY].get<std::string>());
   return s;
+}
+
+static bool isJsonValid(const json licenseJson)
+{
+  if(licenseJson.empty() || licenseJson.is_discarded()) {
+    LOG_CRITICAL("license data is invalid - malformed or empty JSON");
+    return false;
+  }
+
+  // This is mostly for checking if a minimum license version is present
+  if(!licenseJson.contains(LICENSE_SIGNATURE_V2_KEY)) {
+    LOG_CRITICAL(
+        "license data is invalid - missing signature for the required license "
+        "version");
+    return false;
+  }
+
+  // These fields are actually needed as the metadata
+  if(!licenseJson.contains(LICENSE_DASHBOARD_URL_KEY) ||
+     !licenseJson.contains(LICENSE_BASE_SERVER_ADDRESSES_KEY) ||
+     !licenseJson.contains(LICENSE_API_SERVERS_KEY) ||
+     !licenseJson.contains(LICENSE_EB_SERVERS_KEY)) {
+    LOG_CRITICAL("license data is invalid - missing required fields");
+    return false;
+  }
+
+  return true;
 }
 
 static bool verifySignature(
@@ -165,19 +193,21 @@ static bool verifySignature(
   return signatureValid;
 }
 
+// -----------------------------------------------------------------------------
+
 License::License(std::string dashboardHostname)
 {
   auto licenseJson = retrieveLicenseJson(dashboardHostname);
 
-  if(licenseJson.empty() || licenseJson.is_discarded()) {
+  if(!isJsonValid(licenseJson)) {
     licenseJson = retrieveCachedLicenseJson();
 
-    if(licenseJson.empty() || licenseJson.is_discarded()) {
+    if(!isJsonValid(licenseJson)) {
       LOG_CRITICAL(
           "No license! Husarnet Daemon can't start without license.json. "
-          "License not found on local disk and download from %s was not "
-          "possible. "
-          "Exiting.",
+          "Valid license was not found on local disk and download from %s was "
+          "not possible or downloaded an invalid file. Please see previous log "
+          "messages for more detailed information. Exiting.",
           dashboardHostname.c_str());
       abort();
     }
@@ -185,17 +215,9 @@ License::License(std::string dashboardHostname)
     LOG_INFO("Found cached license.json on local disk, proceed");
   }
 
-  bool hasApiServers = licenseJson.contains(LICENSE_API_SERVERS_KEY);
-  auto signature = hasApiServers
-                     ? licenseJson[LICENSE_SIGNATURE_V2_KEY].get<std::string>()
-                     : licenseJson[LICENSE_SIGNATURE_KEY].get<std::string>();
-
-  verifySignature(base64Decode(signature), getSignatureData(licenseJson));
-
-  this->dashboardFqdn =
-      licenseJson[LICENSE_DASHBOARD_URL_KEY].get<std::string>();
-  this->websetupAddress = IpAddress::parse(
-      licenseJson[LICENSE_WEBSETUP_HOST_KEY].get<std::string>());
+  verifySignature(
+      base64Decode(licenseJson[LICENSE_SIGNATURE_V2_KEY].get<std::string>()),
+      generateSignatureData(licenseJson));
 
   for(const auto& baseAddress :
       licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]) {
@@ -203,32 +225,16 @@ License::License(std::string dashboardHostname)
         IpAddress::parse(baseAddress.get<std::string>()));
   }
 
-  if(hasApiServers) {
-    for(const auto& addr : licenseJson[LICENSE_API_SERVERS_KEY]) {
-      this->dashboardApiAddresses.emplace_back(
-          IpAddress::parse(addr.get<std::string>()));
-    }
+  for(const auto& addr : licenseJson[LICENSE_API_SERVERS_KEY]) {
+    this->dashboardApiAddresses.emplace_back(
+        IpAddress::parse(addr.get<std::string>()));
+  }
 
-    for(const auto& addr : licenseJson[LICENSE_EB_SERVERS_KEY]) {
-      this->ebAddresses.emplace_back(IpAddress::parse(addr.get<std::string>()));
-    }
+  for(const auto& addr : licenseJson[LICENSE_EB_SERVERS_KEY]) {
+    this->ebAddresses.emplace_back(IpAddress::parse(addr.get<std::string>()));
   }
 
   Port::writeLicenseJson(licenseJson.dump());
-}
-
-std::string License::getDashboardFqdn()
-{
-  auto fqdn = this->dashboardFqdn;
-  fqdn = removePrefix(fqdn, "https://");
-  fqdn = removePrefix(fqdn, "http://");
-
-  return fqdn;
-}
-
-IpAddress License::getWebsetupAddress()
-{
-  return this->websetupAddress;
 }
 
 std::vector<IpAddress> License::getDashboardApiAddresses()
@@ -246,19 +252,16 @@ std::vector<IpAddress> License::getBaseServerAddresses()
   return this->baseServerAddresses;
 }
 
+// This is a static method
 bool License::validateDashboard(std::string dashboardHostname)
 {
   auto licenseJson = retrieveLicenseJson(dashboardHostname, false);
 
-  // Check if license fetch failed (bad hostname, no internet connection, etc.)
-  if(licenseJson.empty() || licenseJson.is_discarded()) {
+  if(!isJsonValid(licenseJson)) {
     return false;
   }
 
-  auto signature = licenseJson.contains(LICENSE_API_SERVERS_KEY)
-                     ? licenseJson[LICENSE_SIGNATURE_V2_KEY].get<std::string>()
-                     : licenseJson[LICENSE_SIGNATURE_KEY].get<std::string>();
-
   return verifySignature(
-      base64Decode(signature), getSignatureData(licenseJson), false);
+      base64Decode(licenseJson[LICENSE_SIGNATURE_V2_KEY].get<std::string>()),
+      generateSignatureData(licenseJson), false);
 }

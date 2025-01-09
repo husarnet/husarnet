@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.22.0)
+cmake_policy(SET CMP0135 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+set(GIT_DIR_LOOKUP_POLICY ALLOW_LOOKING_ABOVE_CMAKE_SOURCE_DIR) # ETL needs this
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -20,7 +25,7 @@ if(NOT DEFINED ESP_PLATFORM)
   endif()
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   set(COMMONFLAGS "${COMMONFLAGS} -fPIC -fstack-protector-strong")
 endif()
 
@@ -40,7 +45,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COMMONFLAGS} -lrt")
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COMMONFLAGS} -lpthread")
 endif()
 
@@ -52,14 +57,14 @@ if(DEFINED FAIL_ON_WARNING)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wconversion")
 endif()
 
-if (DEFINED ESP_PLATFORM)
+if(DEFINED ESP_PLATFORM)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
 endif()
 
 # Configure the build
 set(BUILD_HTTP_CONTROL_API FALSE)
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows) OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows) OR (${CMAKE_SYSTEM_NAME} STREQUAL Darwin))
   set(BUILD_HTTP_CONTROL_API TRUE)
 endif()
 
@@ -91,7 +96,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
   list(APPEND husarnet_core_SRC ${port_windows_SRC} ${port_fat_SRC})
 endif()
 
-if (DEFINED ESP_PLATFORM)
+if(DEFINED ESP_PLATFORM)
   list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/husarnet/ports/esp32)
   list(APPEND husarnet_core_include_DIRS ${COMPONENT_DIR})
   file(GLOB port_esp32_SRC "${CMAKE_CURRENT_LIST_DIR}/husarnet/ports/esp32/*.cpp")
@@ -139,7 +144,7 @@ target_compile_definitions(${husarnet_core} PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PR
 
 # Propagate selected ESP32 target for compile time checks
 # Disable unknown pragmas warning as we are not using clang in ESP32 builds for now
-if (DEFINED ESP_PLATFORM)
+if(DEFINED ESP_PLATFORM)
   idf_build_get_property(target IDF_TARGET)
   target_compile_definitions(${husarnet_core} PRIVATE IDF_TARGET=${target})
   target_compile_options(${husarnet_core} PRIVATE -Wno-unknown-pragmas -Wno-missing-field-initializers)
@@ -165,7 +170,7 @@ endif()
 
 # Fetch and build libsodium
 # In ESP32 builds, libsodium is already provided by the ESP-IDF
-if (NOT DEFINED ESP_PLATFORM)
+if(NOT DEFINED ESP_PLATFORM)
   FetchContent_Declare(
     libsodium
     GIT_REPOSITORY https://github.com/jedisct1/libsodium.git
@@ -178,7 +183,7 @@ if (NOT DEFINED ESP_PLATFORM)
   set(SODIUM_LIBRARY_VERSION_STRING "1.0.19")
 
   set(SODIUM_LIBRARY_VERSION_MAJOR 28)
-  set(SODIUM_LIBRARY_VERSION_MINOR  0)
+  set(SODIUM_LIBRARY_VERSION_MINOR 0)
   include(${CMAKE_CURRENT_LIST_DIR}/husarnet/lib-config/libsodium/generate.cmake)
 
   include_directories(${libsodium_SOURCE_DIR}/src/libsodium/include)
@@ -197,7 +202,7 @@ endif()
 
 FetchContent_Declare(
   nlohmann_json
-  URL https://github.com/nlohmann/json/archive/refs/tags/v3.11.2.zip
+  URL https://github.com/nlohmann/json/archive/refs/tags/v3.11.3.zip
 )
 set(JSON_BuildTests OFF)
 FetchContent_MakeAvailable(nlohmann_json)
@@ -213,7 +218,7 @@ target_include_directories(${husarnet_core} PUBLIC ${better_enums_SOURCE_DIR})
 target_compile_options(${husarnet_core} PUBLIC -DBETTER_ENUMS_STRICT_CONVERSION=1)
 
 # Include linux port libraries
-if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR(${CMAKE_SYSTEM_NAME} STREQUAL Darwin OR(${CMAKE_SYSTEM_NAME} STREQUAL Windows)))
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Darwin OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows)))
   FetchContent_Declare(
     c-ares
     URL https://github.com/c-ares/c-ares/releases/download/cares-1_22_0/c-ares-1.22.0.tar.gz
@@ -251,9 +256,9 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   set(LIBNL_VER_MIN 9)
   set(LIBNL_VER_MIC 0)
 
-  set(LIBNL_CURRENT  226)
+  set(LIBNL_CURRENT 226)
   set(LIBNL_REVISION 0)
-  set(LIBNL_AGE      26)
+  set(LIBNL_AGE 26)
   include(${CMAKE_CURRENT_LIST_DIR}/husarnet/lib-config/libnl/generate.cmake)
 
   # Generate Bison/Flex files

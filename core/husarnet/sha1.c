@@ -1,3 +1,4 @@
+// Public domain
 /*
 SHA-1 in C
 By Steve Reid <steve@edmweb.com>
@@ -68,7 +69,6 @@ void SHA1Transform(uint32_t state[5], const unsigned char buffer[64])
   uint32_t a, b, c, d, e;
 
   typedef union {
-    unsigned char c[64];
     uint32_t l[16];
   } CHAR64LONG16;
 
@@ -250,8 +250,9 @@ void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
             *--fcp = (unsigned char) t}
 #else
   for(i = 0; i < 8; i++) {
-    finalcount[i] =
-        (unsigned char)((context->count[(i >= 4 ? 0 : 1)] >> ((3 - (i & 3)) * 8)) & 255); /* Endian independent */
+    finalcount[i] = (unsigned char)((context->count[(i >= 4 ? 0 : 1)] >>
+                                     ((3 - (i & 3)) * 8)) &
+                                    255); /* Endian independent */
   }
 #endif
   c = 0200;

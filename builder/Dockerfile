@@ -82,7 +82,7 @@ RUN usermod -aG dialout builder
 # ESP-IDF calls expects python to be python3
 RUN ln -s /usr/bin/python3 /usr/bin/python
 USER 1000
-RUN git clone --recursive --depth 1 --shallow-submodules -b v5.3 https://github.com/espressif/esp-idf.git
+RUN git clone --recursive --depth 1 --shallow-submodules -b v5.3.2 https://github.com/espressif/esp-idf.git
 ENV IDF_PATH="/esp/esp-idf"
 ENV IDF_TOOLS_PATH="/esp/tools"
 RUN ./esp-idf/install.sh all --enable-pytest --enable-ci \

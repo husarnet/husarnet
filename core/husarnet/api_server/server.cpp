@@ -132,6 +132,17 @@ std::list<std::string> stringifyInetAddressList(
   return stringified;
 }
 
+template <typename iterable_IpAddress_t>
+std::list<std::string> stringifyIpAddressList(
+    const iterable_IpAddress_t& source)
+{
+  std::list<std::string> stringified{};
+  std::transform(
+      source.cbegin(), source.cend(), std::back_insert_iterator(stringified),
+      [](const IpAddress element) { return element.str(); });
+  return stringified;
+}
+
 void ApiServer::runThread()
 {
   httplib::Server svr;
@@ -161,7 +172,7 @@ void ApiServer::runThread()
               {"husarnet_address", rawPeer->getIpAddress().str()},
               {"is_active", rawPeer->isActive()},
               {"is_reestablishing", rawPeer->isReestablishing()},
-              {"is_tunelled", rawPeer->isTunelled()},
+              {"is_tunelled", rawPeer->isTunelled()},  // TODO fix spelling
               {"is_secure", rawPeer->isSecure()},
               {"source_addresses",
                stringifyInetAddressList(rawPeer->getSourceAddresses())},
@@ -189,15 +200,22 @@ void ApiServer::runThread()
                  manager
                      ->isConnectedToBase()},  // base server connection should
                                               // be enough to assume that we can
-                                              // try connectting to websetup
+                                              // try connecting to websetup
                 {"is_ready", manager->isConnectedToBase()},
                 {"connection_status",
                  {
                      {"base", manager->isConnectedToBase()},
-                     {"websetup", manager->isConnectedToWebsetup()},
+                     {"websetup", false},  // TODO implement this
+                     {"eb", manager->isConnectedToEB()},
                  }},
                 {"dashboard_fqdn", manager->getDashboardFqdn()},
-                {"websetup_address", manager->getWebsetupAddress().toString()},
+                {"websetup_address",
+                 "fc94:dead:beef::1337"},  // TODO remove this along with the
+                                           // CLI part
+                {"api_addresses",
+                 stringifyIpAddressList(manager->getDashboardApiAddresses())},
+                {"eb_addresses",
+                 stringifyIpAddressList(manager->getEbAddresses())},
                 {"base_connection",
                  {{"type", manager->getCurrentBaseProtocol()},
                   {"address", manager->getCurrentBaseAddress().ip.toString()},
@@ -208,24 +226,6 @@ void ApiServer::runThread()
                  manager->getConfigStorage().getUserSettings()},
                 {"peers", peerData},
             }));
-      });
-
-  svr.Post(
-      "/api/join", [&](const httplib::Request& req, httplib::Response& res) {
-        if(!validateSecret(req, res)) {
-          return;
-        }
-
-        if(!requireParams(req, res, {"code"})) {
-          return;
-        }
-
-        std::string code = req.get_param_value("code");
-        std::string hostname =
-            req.has_param("hostname") ? req.get_param_value("hostname") : "";
-
-        manager->joinNetwork(code, hostname);
-        returnSuccess(req, res);
       });
 
   svr.Post(

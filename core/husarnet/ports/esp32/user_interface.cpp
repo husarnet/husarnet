@@ -64,7 +64,7 @@ void HusarnetClient::join(const char* hostname, const char* joinCode)
   xSemaphoreTake(Port::notifyReadySemaphore, portMAX_DELAY);
 
   // Join the network
-  husarnetManager->joinNetwork(joinCode, hostname);
+  // husarnetManager->joinNetwork(joinCode, hostname); // TODO implement this
 }
 
 void HusarnetClient::setDashboardFqdn(const char* fqdn)

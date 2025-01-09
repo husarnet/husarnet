@@ -21,10 +21,6 @@ void EventBus::init()
 // Handle EB lifecycle
 void EventBus::periodic()
 {
-  // Wait for join
-  if(!this->manager->isJoined())
-    return;
-
   // (Re)connect to the EventBus server
   if(ws.getState() == WebSocket::State::SOCK_CLOSED) {
     // Throttle connection attempts
@@ -49,7 +45,6 @@ void EventBus::periodic()
     std::string endpoint = "/device/" + this->manager->getSelfAddress().str();
 
     this->ws.connect(ebAddress, endpoint.data());
-    // this->ws.connect(InetAddress::parse("127.0.0.1:8088"), "/");
   }
 }
 
@@ -65,14 +60,15 @@ void EventBus::_handleMessage(WebSocket::Message& message)
   etl::string_view data(message.data.begin(), message.data.size());
 
   if(data.compare("getConfig") == 0) {
-    this->_handleGetConfig();
+    this->_handleGetConfig_ll();
   } else {
     LOG_WARNING("Unknown EB message: %s", data.data());
   }
 }
 
-void EventBus::_handleGetConfig()
+void EventBus::_handleGetConfig_ll()
 {
+  return;
   // Send config request to the EB
   etl::vector<char, 256> buffer;
 
@@ -82,7 +78,7 @@ void EventBus::_handleGetConfig()
 
   http.encode(buffer);
 
-  // TODO: handle multiple EB addresses
+  // TODO: handle multiple API addresses
   assert(this->manager->getDashboardApiAddresses().size() > 0);
   InetAddress ebAddress = {
       .ip = this->manager->getDashboardApiAddresses()[0],
@@ -99,7 +95,7 @@ void EventBus::_handleGetConfig()
 
   if(res == -1) {
     LOG_ERROR("Failed to send message to EB");
-    close(fd);
+    SOCKFUNC_close(fd);
     return;
   }
 
@@ -112,14 +108,14 @@ void EventBus::_handleGetConfig()
     res = recv(fd, buffer.data(), buffer.capacity(), 0);
 
     if(res == -1) {
-      LOG_ERROR("Failed to receive message from EB");
-      close(fd);
+      LOG_ERROR("Failed to receive get_config from API");
+      SOCKFUNC_close(fd);
       return;
     }
 
     if(res == 0) {
       LOG_INFO("EB connection closed");
-      close(fd);
+      SOCKFUNC_close(fd);
       return;
     }
 
@@ -132,12 +128,20 @@ void EventBus::_handleGetConfig()
   }
 
   if(httpResult == HTTPMessage::Result::INVALID) {
-    LOG_ERROR("Failed to receive message from EB");
-    close(fd);
+    LOG_ERROR("Failed to receive get_config from API");
+    SOCKFUNC_close(fd);
     return;
   }
 
   // Handle the received message
-  LOG_INFO("Received message from EB");
-  close(fd);
+  LOG_INFO("Received get_config from API");
+  SOCKFUNC_close(fd);
+
+  this->_handleGetConfig(httpResult);
+}
+
+void EventBus::_handleGetConfig(const HTTPMessage::Result& httpResult)
+{
+  // Parse the JSON and act on it
+  // TODO implement this
 }

@@ -57,7 +57,7 @@ class WebSocket {
     static size_t parse(etl::string_view& buffer, Message& message);
 
     // Encode message to buffer
-    bool encode(etl::ivector<char>& buffer);
+    bool encode(etl::ivector<char>& buffer) const;
 
     size_t payloadSize() const
     {

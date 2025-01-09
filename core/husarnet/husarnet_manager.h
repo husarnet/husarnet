@@ -19,7 +19,6 @@
 #include "husarnet/ngsocket.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
-#include "husarnet/websetup.h"
 #include "husarnet/websocket.h"
 
 #include "ports/port.h"
@@ -51,7 +50,6 @@ class HusarnetManager {
   PeerContainer* peerContainer = nullptr;
   TunTap* tunTap = nullptr;
 
-  WebsetupConnection* websetup = nullptr;
   EventBus* eventBus;
   HooksManagerInterface* hooksManager = nullptr;
 
@@ -93,17 +91,13 @@ class HusarnetManager {
   std::string getCurrentBaseProtocol();
 
   bool isConnectedToBase();
-  bool isConnectedToWebsetup();
+  bool isConnectedToEB();
 
   // Husarnet daemon is "dirty" when a restart-requiring change in the
   // configuration was made, but the restart was not yet performed.
   bool isDirty();
   void setDirty();
 
-  std::string getWebsetupSecret();
-  std::string setWebsetupSecret(std::string newSecret);
-
-  void joinNetwork(std::string joinCode, std::string hostname = "");
   bool isJoined();
 
   bool changeServer(std::string domain);
@@ -137,10 +131,9 @@ class HusarnetManager {
   std::string rotateDaemonApiSecret();
   // Copy of methods from License class
   std::string getDashboardFqdn();
-  IpAddress getWebsetupAddress();
-  std::vector<IpAddress> getBaseServerAddresses();
-  std::vector<IpAddress> getDashboardApiAddresses();
-  std::vector<IpAddress> getEbAddresses();
+  std::vector<IpAddress> getBaseServerAddresses() const;
+  std::vector<IpAddress> getDashboardApiAddresses() const;
+  std::vector<IpAddress> getEbAddresses() const;
 
   NgSocket* getNGSocket();
   SecurityLayer* getSecurityLayer();
@@ -151,8 +144,9 @@ class HusarnetManager {
 
   void cleanup();
 
-  void prepareHusarnet();  // Initialize most of the necessary dependencies but
-                           // do not start them yet. You should now be able to
+  void prepareHusarnet();  // Initialize most of the necessary
+                           // dependencies but do not start them
+                           // yet. You should now be able to
                            // modify configuration
   void runHusarnet();
 };

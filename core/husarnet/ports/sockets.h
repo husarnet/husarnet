@@ -68,7 +68,7 @@ namespace OsSocket {
 
     // Create a new TCP connection
     static std::shared_ptr<TcpConnection> connect(
-        InetAddress address,
+        const InetAddress& address,
         TcpDataCallback dataCallback,
         TcpErrorCallback errorCallback,
         Encapsulation transportType =

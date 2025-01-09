@@ -17,7 +17,10 @@ class EventBus {
   void periodic();
 
   void _handleMessage(WebSocket::Message& message);
-  void _handleGetConfig();
+  void _handleGetConfig_ll();  // Do an HTTP call to API, read the response
+  void _handleGetConfig(
+      const HTTPMessage::Result& httpResult);  // Parse JSON and act on it (i.e.
+                                               // by modifying the config)
 
  private:
   WebSocket ws;

@@ -1,3 +1,4 @@
+// Public domain
 #pragma once
 
 /*

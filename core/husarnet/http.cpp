@@ -225,6 +225,9 @@ HTTPMessage::Result HTTPMessage::parse(etl::string_view& buffer_view)
         if(res == Result::OK)
           this->_parserState = ParseState::DONE;
         break;
+
+      case ParseState::DONE:
+        return Result::INVALID;
     }
   }
 
