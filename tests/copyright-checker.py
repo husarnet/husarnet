@@ -8,7 +8,7 @@ ignore_dirs = {"build", ".git", ".vscode", ".pio", ".pio_core"}
 old_copyright = """// Copyright (c) 2017 Husarion Sp. z o.o.
 // author: Michał Zieliński (zielmicha)"""
 
-new_copyright = """// Copyright (c) 2024 Husarnet sp. z o.o.
+new_copyright = """// Copyright (c) 2025 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt"""
 
