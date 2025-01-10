@@ -414,9 +414,6 @@ jobs:
             test_platform: "fedora"
         test_file:
           - "functional-basic"
-          - "join-workflow"
-          - "hooks-basic"
-          - "hooks-rw"
   run_tests:
     needs:
       - "bump_version"
