@@ -76,6 +76,7 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
   if(data.size() >= decryptedBuffer.size())
     return;  // sanity check
 
+  // TODO Make a proper serializer/deserializer for this part of the protocol
   if(data[0] == 0) {  // data packet
     if(data.size() <= 25)
       return;

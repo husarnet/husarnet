@@ -540,6 +540,7 @@ void NgSocket::multicastPacketReceived(
 
   std::string packet = packetView;
 
+  // TODO make this into a proper message type
   DeviceId devId = packet.substr(2, DEVICEID_LENGTH);
   uint16_t port = unpack<uint16_t>(packet.substr(0, 2));
 
