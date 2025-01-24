@@ -209,6 +209,7 @@ FetchContent_MakeAvailable(nlohmann_json)
 target_include_directories(${husarnet_core} PUBLIC ${nlohmann_json_SOURCE_DIR}/include)
 target_link_libraries(${husarnet_core} nlohmann_json)
 
+# Old enum library
 FetchContent_Declare(
   better_enums
   URL https://github.com/aantron/better-enums/archive/refs/tags/0.11.3.zip
@@ -216,6 +217,14 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(better_enums)
 target_include_directories(${husarnet_core} PUBLIC ${better_enums_SOURCE_DIR})
 target_compile_options(${husarnet_core} PUBLIC -DBETTER_ENUMS_STRICT_CONVERSION=1)
+
+# New enum library
+FetchContent_Declare(
+  magic_enum
+  URL https://github.com/Neargye/magic_enum/archive/refs/tags/v0.9.7.zip
+)
+FetchContent_MakeAvailable(magic_enum)
+target_include_directories(${husarnet_core} PUBLIC ${magic_enum_SOURCE_DIR})
 
 # Include linux port libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Darwin OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows)))
