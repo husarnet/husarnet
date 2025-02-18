@@ -11,9 +11,11 @@
 
 #include "husarnet/fstring.h"
 
-struct IpAddress {
+class IpAddress {
+ public:
   std::array<unsigned char, 16> data;
 
+ public:
   IpAddress() : data()
   {
   }
@@ -227,7 +229,8 @@ struct IpAddress {
   }
 };
 
-struct InetAddress {
+class InetAddress {
+ public:
   IpAddress ip;
   uint16_t port;
 
@@ -275,6 +278,9 @@ struct InetAddress {
         IpAddress::parse(ipstr), (uint16_t)atoi(s.substr(pos + 1).c_str())};
   }
 };
+
+typedef IpAddress HusarnetAddress;
+typedef IpAddress InternetAddress;
 
 inline size_t hashpair(size_t a, size_t b)
 {
