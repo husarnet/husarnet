@@ -10,7 +10,7 @@
 // simple thread safe queue
 
 template <typename T>
-struct Queue {
+struct Queue {  // TODO replace this with ETL queue
   std::mutex m;
   std::condition_variable cv;
   std::deque<T> q;

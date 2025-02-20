@@ -20,10 +20,6 @@
 #include <ws2tcpip.h>
 #endif
 
-#include <condition_variable>
-#include <mutex>
-#include <thread>
-
 #include <etl/string.h>
 #include <etl/string_view.h>
 #include <etl/vector.h>

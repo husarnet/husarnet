@@ -3,7 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ipaddress.h"
 
-#include "husarnet/ports/port.h"
+#include <netinet/in.h>
 
 bool IpAddress::isLinkLocal() const
 {

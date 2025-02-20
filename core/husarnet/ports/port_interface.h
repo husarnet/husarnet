@@ -15,10 +15,6 @@
 
 #include "etl/map.h"
 
-class HusarnetManager;
-class TunTap;
-class UpperLayer;
-
 using Time = int64_t;
 
 enum class EnvKey
@@ -86,7 +82,7 @@ namespace Port {
       const HusarnetAddress& myAddress,
       std::string interfaceName);
 
-  void processSocketEvents(HusarnetManager* manager);
+  void processSocketEvents(void* tuntap);
 
   // Hostnames
   std::string getSelfHostname();

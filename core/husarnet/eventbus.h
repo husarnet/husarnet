@@ -3,8 +3,6 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 
-#include "husarnet/ports/port.h"
-
 #include "husarnet/config_manager.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/websocket.h"

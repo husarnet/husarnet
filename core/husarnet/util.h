@@ -70,60 +70,10 @@ T unpack(fstring<sizeof(T)> s)
 
 static const char* hexLetters = "0123456789abcdef";
 
-inline std::string encodeHex(std::vector<unsigned char> s)
-{
-  std::string ret;
-  for(unsigned char ch : s) {
-    ret.push_back(hexLetters[(ch >> 4) & 0xF]);
-    ret.push_back(hexLetters[ch & 0xF]);
-  }
-  return ret;
-}
-
-inline std::string encodeHex(std::string s)
-{
-  std::string ret;
-  for(unsigned char ch : s) {
-    ret.push_back(hexLetters[(ch >> 4) & 0xF]);
-    ret.push_back(hexLetters[ch & 0xF]);
-  }
-  return ret;
-}
-
-inline std::string decodeHex(std::vector<unsigned char> s)
-{
-  if(s.size() % 2 != 0)
-    return "";
-
-  std::string ret;
-  for(int i = 0; i + 1 < (int)s.size(); i += 2) {
-    int a = (int)(std::find(hexLetters, hexLetters + 16, s[i]) - hexLetters);
-    int b =
-        (int)(std::find(hexLetters, hexLetters + 16, s[i + 1]) - hexLetters);
-    if(a == 16 || b == 16)
-      return "";
-    ret.push_back((char)((a << 4) | b));
-  }
-  return ret;
-}
-
-inline std::string decodeHex(std::string s)
-{
-  if(s.size() % 2 != 0)
-    return "";
-
-  std::string ret;
-  for(int i = 0; i + 1 < (int)s.size(); i += 2) {
-    int a = (int)(std::find(hexLetters, hexLetters + 16, s[i]) - hexLetters);
-    int b =
-        (int)(std::find(hexLetters, hexLetters + 16, s[i + 1]) - hexLetters);
-    if(a == 16 || b == 16)
-      return "";
-    ret.push_back((char)((a << 4) | b));
-  }
-  return ret;
-}
-
+std::string encodeHex(std::vector<unsigned char> s);
+std::string encodeHex(std::string s);
+std::string decodeHex(std::vector<unsigned char> s);
+std::string decodeHex(std::string s);
 std::string base64Decode(std::string s);
 
 inline bool startsWith(std::string s, std::string with)
@@ -136,14 +86,7 @@ inline bool endsWith(std::string s, std::string with)
   return s.size() >= with.size() && s.substr(s.size() - with.size()) == with;
 }
 
-inline std::string removePrefix(const std::string s, const std::string prefix)
-{
-  if(!startsWith(s, prefix)) {
-    return s;
-  }
-
-  return s.substr(prefix.length());
-}
+std::string removePrefix(const std::string s, const std::string prefix);
 
 std::vector<std::string> splitWhitespace(std::string s);
 std::vector<std::string> split(std::string s, char byChar, int maxSplit);
@@ -178,26 +121,7 @@ inline bool mapContains(const std::map<K, V> m, K needle)
   return false;
 }
 
-static inline const std::string
-padRight(int minLength, const std::string& text, char paddingChar = ' ')
-{
-  int padSize = 0;
-
-  if(text.length() < minLength) {
-    padSize = minLength - text.length();
-  }
-
-  return text + std::string(padSize, paddingChar);
-}
-
-static inline const std::string
-padLeft(int minLength, const std::string& text, char paddingChar = ' ')
-{
-  int padSize = 0;
-
-  if(text.length() < minLength) {
-    padSize = minLength - text.length();
-  }
-
-  return std::string(padSize, paddingChar) + text;
-}
+const std::string
+padRight(int minLength, const std::string& text, char paddingChar = ' ');
+const std::string
+padLeft(int minLength, const std::string& text, char paddingChar = ' ');

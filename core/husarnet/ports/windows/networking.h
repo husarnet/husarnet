@@ -4,8 +4,6 @@
 #pragma once
 #include <string>
 
-class HusarnetManager;
-
 class WindowsNetworking {
  private:
   std::string netshName;

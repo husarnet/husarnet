@@ -11,8 +11,6 @@
 
 #include "windef.h"
 
-class HusarnetManager;
-
 class TunTap : public UpperLayer {
  private:
   HANDLE tap_fd;

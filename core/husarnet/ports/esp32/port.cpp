@@ -313,10 +313,10 @@ namespace Port {
     return tunTap;
   }
 
-  void processSocketEvents(HusarnetManager* manager)
+  void processSocketEvents(void* tuntap)
   {
     OsSocket::runOnce(20);  // process socket events for at most so many ms
-    manager->getTunTap()->processQueuedPackets();
+    (TunTap*)tuntap->processQueuedPackets();
   }
 
   std::string getSelfHostname()

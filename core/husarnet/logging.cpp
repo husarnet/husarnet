@@ -3,9 +3,13 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/logging.h"
 
+#include <cstdarg>
+#include <cstdio>
 #include <string>
 
 #include "husarnet/ports/port_interface.h"
+
+#include "husarnet/util.h"
 
 #include "magic_enum/magic_enum.hpp"
 

@@ -281,7 +281,7 @@ namespace Port {
            padLeft(2, std::to_string(localtime.tm_sec), '0');
   }
 
-  __attribute__((weak)) void processSocketEvents(HusarnetManager* manager)
+  __attribute__((weak)) void processSocketEvents(void* tuntap)
   {
     OsSocket::runOnce(1000);  // process socket events for at most so many ms
   }

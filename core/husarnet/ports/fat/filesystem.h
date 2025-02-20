@@ -5,7 +5,6 @@
 #include <functional>
 #include <string>
 
-#include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 bool isFile(const std::string& path);

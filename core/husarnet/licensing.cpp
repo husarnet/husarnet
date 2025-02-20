@@ -6,6 +6,7 @@
 #include <sodium.h>
 
 #include "husarnet/logging.h"
+#include "husarnet/util.h"
 
 static const unsigned char* const PUBLIC_KEY[] = {
     reinterpret_cast<const unsigned char*>(

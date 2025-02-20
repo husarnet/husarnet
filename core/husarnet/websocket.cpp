@@ -6,7 +6,6 @@
 #include <etl/string.h>
 
 #include "husarnet/ports/port.h"
-#include "husarnet/ports/sockets.h"
 
 #include "husarnet/logging.h"
 
@@ -228,7 +227,7 @@ bool WebSocket::_sendClientHandshake()
   message.headers.emplace("Upgrade", "websocket");
   message.headers.emplace("Connection", "Upgrade");
   message.headers.emplace("Sec-WebSocket-Version", "13");
-  message.headers.emplace("User-Agent", "husarnet-daemon/" HUSARNET_VERSION);
+  message.headers.emplace("User-Agent", HUSARNET_USER_AGENT);
 
   // Generate random nonce
   etl::array<uint8_t, 16> rawNonce;

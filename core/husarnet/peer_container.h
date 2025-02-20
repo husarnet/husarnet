@@ -28,5 +28,6 @@ class PeerContainer {
   Peer* getOrCreatePeer(HusarnetAddress id);
 
   std::unordered_map<HusarnetAddress, Peer*>
-  getPeers();  // TODO change to ETL container
+  getPeers();  // TODO change to ETL container // TODO see how it's used and
+               // optimize the shape
 };

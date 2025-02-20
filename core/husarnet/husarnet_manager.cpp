@@ -9,7 +9,6 @@
 #include "husarnet/ports/port.h"
 
 #include "husarnet/compression_layer.h"
-#include "husarnet/config_env.h"
 #include "husarnet/eventbus.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/ipaddress.h"
@@ -17,8 +16,6 @@
 #include "husarnet/licensing.h"
 #include "husarnet/logging.h"
 #include "husarnet/multicast_layer.h"
-#include "husarnet/ngsocket.h"
-#include "husarnet/peer_container.h"
 #include "husarnet/peer_flags.h"
 #include "husarnet/security_layer.h"
 #include "husarnet/util.h"
@@ -116,6 +113,6 @@ void HusarnetManager::runHusarnet()
   while(true) {
     ngsocket->periodic();
 
-    Port::processSocketEvents(this);
+    Port::processSocketEvents(this->tunTap);
   }
 }

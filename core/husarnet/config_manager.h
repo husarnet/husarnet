@@ -7,7 +7,6 @@
 #include "husarnet/config_env.h"
 #include "husarnet/hooks_manager.h"
 #include "husarnet/ipaddress.h"
-#include "husarnet/logging.h"
 
 #include "etl/array.h"
 #include "nlohmann/json.hpp"

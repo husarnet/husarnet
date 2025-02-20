@@ -2,9 +2,7 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include "husarnet/config_env.h"
-#include "husarnet/logging.h"
-#include "husarnet/util.h"
+#include "husarnet/ports/port_interface.h"
 
 #include "etl/map.h"
 #include "etl/mutex.h"

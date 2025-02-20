@@ -13,8 +13,6 @@
 
 using HusarnetPeer = std::pair<std::string, std::string>;
 
-class HusarnetManager;
-
 /*
   HusarnetClient implements Husarnet VPN API. It is a wrapper
   around HusarnetManager and provides a simplified API for the user.

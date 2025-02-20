@@ -10,8 +10,6 @@
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
 
-#include "ports/port.h"
-
 class HusarnetManager {
  private:
   Identity* myIdentity = nullptr;

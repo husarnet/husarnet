@@ -3,8 +3,11 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include "husarnet/identity.h"
-#include "husarnet/ngsocket.h"
+#include "husarnet/ipaddress.h"
+#include "husarnet/layer_interfaces.h"
 #include "husarnet/peer_container.h"
+#include "husarnet/peer_flags.h"
+#include "husarnet/string_view.h"
 
 const uint64_t BOOT_ID_MASK = 0xFFFFFFFF00000000ull;
 

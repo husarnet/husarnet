@@ -9,6 +9,95 @@
 
 #include <time.h>
 
+std::string encodeHex(std::vector<unsigned char> s)
+{
+  std::string ret;
+  for(unsigned char ch : s) {
+    ret.push_back(hexLetters[(ch >> 4) & 0xF]);
+    ret.push_back(hexLetters[ch & 0xF]);
+  }
+  return ret;
+}
+
+std::string encodeHex(std::string s)
+{
+  std::string ret;
+  for(unsigned char ch : s) {
+    ret.push_back(hexLetters[(ch >> 4) & 0xF]);
+    ret.push_back(hexLetters[ch & 0xF]);
+  }
+  return ret;
+}
+
+std::string decodeHex(std::vector<unsigned char> s)
+{
+  if(s.size() % 2 != 0)
+    return "";
+
+  std::string ret;
+  for(int i = 0; i + 1 < (int)s.size(); i += 2) {
+    int a = (int)(std::find(hexLetters, hexLetters + 16, s[i]) - hexLetters);
+    int b =
+        (int)(std::find(hexLetters, hexLetters + 16, s[i + 1]) - hexLetters);
+    if(a == 16 || b == 16)
+      return "";
+    ret.push_back((char)((a << 4) | b));
+  }
+  return ret;
+}
+
+std::string decodeHex(std::string s)
+{
+  if(s.size() % 2 != 0)
+    return "";
+
+  std::string ret;
+  for(int i = 0; i + 1 < (int)s.size(); i += 2) {
+    int a = (int)(std::find(hexLetters, hexLetters + 16, s[i]) - hexLetters);
+    int b =
+        (int)(std::find(hexLetters, hexLetters + 16, s[i + 1]) - hexLetters);
+    if(a == 16 || b == 16)
+      return "";
+    ret.push_back((char)((a << 4) | b));
+  }
+  return ret;
+}
+
+std::string base64Decode(std::string s)
+{
+  std::string result;
+  std::vector<int> charmap(256, -1);
+  std::string characters(
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+
+  for(int i = 0; i < (int)characters.size(); i++)
+    charmap[(uint8_t)characters[i]] = i;
+
+  uint32_t val = 0;
+  int pos = -8;
+  for(uint8_t c : s) {
+    if(charmap[c] == -1)
+      continue;
+    val = (val << 6) + charmap[c];
+    pos += 6;
+    if(pos >= 0) {
+      result.push_back(char((val >> pos) & 0xFF));
+      pos -= 8;
+    }
+  }
+
+  return result;
+}
+
+std::string removePrefix(const std::string s, const std::string prefix)
+{
+  if(!startsWith(s, prefix)) {
+    return s;
+  }
+
+  return s.substr(prefix.length());
+}
+
 std::vector<std::string> splitWhitespace(std::string s)
 {
   std::vector<std::string> res;
@@ -41,32 +130,6 @@ std::vector<std::string> split(std::string s, char byChar, int maxSplit)
   }
 
   return res;
-}
-
-std::string base64Decode(std::string s)
-{
-  std::string result;
-  std::vector<int> charmap(256, -1);
-  std::string characters(
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
-
-  for(int i = 0; i < (int)characters.size(); i++)
-    charmap[(uint8_t)characters[i]] = i;
-
-  uint32_t val = 0;
-  int pos = -8;
-  for(uint8_t c : s) {
-    if(charmap[c] == -1)
-      continue;
-    val = (val << 6) + charmap[c];
-    pos += 6;
-    if(pos >= 0) {
-      result.push_back(char((val >> pos) & 0xFF));
-      pos -= 8;
-    }
-  }
-
-  return result;
 }
 
 static std::random_device rd;
@@ -149,4 +212,28 @@ bool strToBool(const std::string& s)
   }
 
   return false;
+}
+
+const std::string
+padRight(int minLength, const std::string& text, char paddingChar)
+{
+  int padSize = 0;
+
+  if(text.length() < minLength) {
+    padSize = minLength - text.length();
+  }
+
+  return text + std::string(padSize, paddingChar);
+}
+
+const std::string
+padLeft(int minLength, const std::string& text, char paddingChar)
+{
+  int padSize = 0;
+
+  if(text.length() < minLength) {
+    padSize = minLength - text.length();
+  }
+
+  return std::string(padSize, paddingChar) + text;
 }

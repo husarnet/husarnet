@@ -16,20 +16,10 @@
 
 #include "husarnet/fstring.h"
 #include "husarnet/husarnet_config.h"
-#include "husarnet/husarnet_manager.h"
-#include "husarnet/identity.h"
-#include "husarnet/ipaddress.h"
 #include "husarnet/logging.h"
+#include "husarnet/ngsocket.h"
 #include "husarnet/ngsocket_crypto.h"
-#include "husarnet/ngsocket_messages.h"
-#include "husarnet/peer.h"
-#include "husarnet/peer_container.h"
-#include "husarnet/queue.h"
 #include "husarnet/util.h"
-
-namespace OsSocket {
-  class TcpConnection;
-}  // namespace OsSocket
 
 #if defined(ESP_PLATFORM)
 const int WORKER_QUEUE_SIZE = 16;

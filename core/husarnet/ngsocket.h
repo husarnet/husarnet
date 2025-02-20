@@ -16,23 +16,15 @@
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_manager.h"
-#include "husarnet/fstring.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
-#include "husarnet/licensing.h"
-#include "husarnet/ngsocket.h"
-#include "husarnet/ngsocket_crypto.h"
 #include "husarnet/ngsocket_messages.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/queue.h"
 #include "husarnet/string_view.h"
 
 #include "enum.h"
-
-namespace OsSocket {
-  class TcpConnection;
-}  // namespace OsSocket
 
 const int REFRESH_TIMEOUT = 25 * 1000;
 const int NAT_INIT_TIMEOUT = 3 * 1000;

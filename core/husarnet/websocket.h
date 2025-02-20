@@ -9,12 +9,10 @@
 #include <etl/string.h>
 #include <etl/vector.h>
 
+#include "husarnet/ports/sockets.h"
+
 #include "husarnet/http.h"
 #include "husarnet/ipaddress.h"
-
-namespace OsSocket {
-  class TcpConnection;
-}
 
 class WebSocket {
  public:
@@ -53,7 +51,7 @@ class WebSocket {
         : flags({.fin = true}), opcode(opcode), masked(masked){};
 
     // Parse message from buffer to provided message object
-    // @returns number of bytes consumed, 0 if parser failure occured
+    // @returns number of bytes consumed, 0 if parser failure occurred
     static size_t parse(etl::string_view& buffer, Message& message);
 
     // Encode message to buffer
