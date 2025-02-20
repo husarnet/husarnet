@@ -15,12 +15,37 @@
 
 Identity::Identity()
 {
-  deviceId = BadDeviceId;
+  deviceId = IpAddress();
+}
+
+fstring<32> Identity::getPubkey()
+{
+  return pubkey;
+}
+
+HusarnetAddress Identity::getDeviceId()
+{
+  return deviceId;
+}
+
+HusarnetAddress Identity::getIpAddress()
+{
+  return getDeviceId();
+}
+
+fstring<64> Identity::sign(const std::string& msg)
+{
+  fstring<64> sig;
+  unsigned long long siglen = 64;
+  crypto_sign_ed25519_detached(
+      (unsigned char*)&sig[0], &siglen, (const unsigned char*)msg.data(),
+      msg.size(), (const unsigned char*)privkey.data());
+  return sig;
 }
 
 bool Identity::isValid()
 {
-  if(deviceId == BadDeviceId)
+  if(deviceId.isFC94())
     return false;
 
   // More tests to come I guess
@@ -28,36 +53,11 @@ bool Identity::isValid()
   return true;
 }
 
-fstring<32> Identity::getPubkey()
-{
-  return this->pubkey;
-}
-
-DeviceId Identity::getDeviceId()
-{
-  return this->deviceId;
-}
-
-IpAddress Identity::getIpAddress()
-{
-  return deviceIdToIpAddress(this->getDeviceId());
-}
-
-fstring<64> Identity::sign(const std::string& data)
-{
-  fstring<64> sig;
-  unsigned long long siglen = 64;
-  crypto_sign_ed25519_detached(
-      (unsigned char*)&sig[0], &siglen, (const unsigned char*)data.data(),
-      data.size(), (const unsigned char*)privkey.data());
-  return sig;
-}
-
 Identity* Identity::create()
 {
   auto identity = new Identity();
 
-  while(identity->deviceId == BadDeviceId) {
+  while(!identity->deviceId.isFC94()) {
     crypto_sign_ed25519_keypair(
         (unsigned char*)&identity->pubkey[0],
         (unsigned char*)&identity->privkey[0]);
@@ -71,7 +71,7 @@ std::string Identity::serialize()
 {
   std::stringstream buffer;
 
-  buffer << deviceIdToIpAddress(NgSocketCrypto::pubkeyToDeviceId(pubkey)).str();
+  buffer << NgSocketCrypto::pubkeyToDeviceId(pubkey).str();
   buffer << " ";
 
   buffer << encodeHex(pubkey);
@@ -99,7 +99,7 @@ Identity* Identity::deserialize(const std::string& data)
 
   identity->pubkey = decodeHex(pubkeyStr);
   identity->privkey = decodeHex(privkeyStr);
-  identity->deviceId = IpAddress::parse(ipStr.c_str()).toBinary();
+  identity->deviceId = IpAddress::parse(ipStr.c_str());
 
   return identity;
 }

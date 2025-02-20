@@ -13,10 +13,10 @@ PeerContainer::PeerContainer(ConfigManager* configManager, Identity* identity)
 {
 }
 
-Peer* PeerContainer::createPeer(DeviceId id)
+Peer* PeerContainer::createPeer(HusarnetAddress id)
 {
-  if(!configManager->isPeerAllowed(deviceIdToIpAddress(id))) {
-    LOG_INFO("peer %s is not on the whitelist", deviceIdToString(id).c_str());
+  if(!this->configManager->isPeerAllowed(id)) {
+    LOG_INFO("peer %s is not on the whitelist", id.toString().c_str());
     return nullptr;
   }
   Peer* peer = new Peer;
@@ -29,13 +29,13 @@ Peer* PeerContainer::createPeer(DeviceId id)
   return peer;
 }
 
-Peer* PeerContainer::getPeer(DeviceId id)
+Peer* PeerContainer::getPeer(HusarnetAddress id)
 {
   if(cachedPeerId == id)
     return cachedPeer;
 
-  if(!configManager->isPeerAllowed(deviceIdToIpAddress(id))) {
-    LOG_INFO("peer %s is not on the whitelist", deviceIdToString(id).c_str());
+  if(!this->configManager->isPeerAllowed(id)) {
+    LOG_INFO("peer %s is not on the whitelist", id.toString().c_str());
     return nullptr;
   }
 
@@ -52,7 +52,7 @@ Peer* PeerContainer::getPeer(DeviceId id)
   return it->second;
 }
 
-Peer* PeerContainer::getOrCreatePeer(DeviceId id)
+Peer* PeerContainer::getOrCreatePeer(HusarnetAddress id)
 {
   Peer* peer = getPeer(id);
   if(peer == nullptr) {
@@ -61,7 +61,8 @@ Peer* PeerContainer::getOrCreatePeer(DeviceId id)
   return peer;
 }
 
-std::unordered_map<DeviceId, Peer*> PeerContainer::getPeers()
+// TODO: ympek: why are we returning a copy and not a reference here?
+std::unordered_map<HusarnetAddress, Peer*> PeerContainer::getPeers()
 {
   return peers;
 }

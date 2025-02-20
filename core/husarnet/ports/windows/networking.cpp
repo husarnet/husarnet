@@ -59,7 +59,7 @@ void WindowsNetworking::setupNetworkInterface(
       "netsh interface ipv6 add neighbors " + quotedName +
       " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001 52-54-00-fc-94-4d");
 
-  IpAddress myIp = deviceIdToIpAddress(manager->getIdentity()->getDeviceId());
+  IpAddress myIp = manager->getIdentity()->getDeviceId();
 
   LOG_INFO("myIp is: %s", myIp.toString().c_str());
   callWindowsCmd(

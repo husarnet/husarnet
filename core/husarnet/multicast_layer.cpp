@@ -14,13 +14,13 @@
 #include "husarnet/util.h"
 
 MulticastLayer::MulticastLayer(
-    DeviceId myDeviceId,
+    HusarnetAddress myDeviceId,
     ConfigManager* configmanager)
     : myDeviceId(myDeviceId), configManager(configmanager)
 {
 }
 
-void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
+void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   std::string packet;
   if(data.size() < 2)
@@ -48,13 +48,14 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
     packet[5] = (char)(payloadSize & 0xFF);
     packet[6] = protocol;
     packet[7] = 3;  // hop limit
-    packet += source;
+    packet +=
+        source;  // TODO: ympek: check if binary data is appended correctly
     packet += mcastAddr;
     packet += data.substr(19);
 
-    LOG_INFO("received multicast from %s", deviceIdToString(source).c_str());
+    LOG_INFO("received multicast from %s", source.toString().c_str());
 
-    sendToUpperLayer(BadDeviceId, packet);
+    sendToUpperLayer(IpAddress(), packet);
   } else {
     // unicast
     int payloadSize = (int)data.size() - 1;
@@ -66,7 +67,8 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
     packet[5] = (char)(payloadSize & 0xFF);
     packet[6] = protocol;
     packet[7] = 3;  // hop limit
-    packet += source;
+    packet +=
+        source;  // TODO : ympek : check if binary data is appended correctly
     packet += this->myDeviceId;
     packet += data.substr(1);
 
@@ -74,10 +76,12 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
   }
 }
 
-void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
+void MulticastLayer::onUpperLayerData(
+    HusarnetAddress target,
+    string_view packet)
 {
   if(packet.size() <= 40) {
-    LOG_WARNING("truncated packet from %s", std::string(target).c_str());
+    LOG_WARNING("truncated packet from %s", target.toString().c_str());
     return;
   }
   int version = packet[0] >> 4;
@@ -98,7 +102,7 @@ void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
     msgData += packet.substr(40);
 
     auto dst = this->configManager->getMulticastDestinations(dstAddress);
-    for(DeviceId dest : dst) {
+    for(auto dest : dst) {
       sendToLowerLayer(dest, msgData);
     }
 

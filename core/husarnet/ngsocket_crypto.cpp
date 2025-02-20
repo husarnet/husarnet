@@ -22,16 +22,16 @@ namespace NgSocketCrypto {
     return identity->sign(msg);
   }
 
-  fstring<16> pubkeyToDeviceId(fstring<32> pubkey)
+  HusarnetAddress pubkeyToDeviceId(fstring<32> pubkey)
   {
     fstring<32> hash;
     crypto_hash_sha256(
         (unsigned char*)&hash[0], (const unsigned char*)pubkey.data(),
         pubkey.size());
     if(!(hash[0] == 0 && ((unsigned char)hash[1]) < 50)) {
-      return BadDeviceId;
+      return IpAddress();
     }
-    return "\xfc\x94" + std::string(hash).substr(3, 14);
+    return IpAddress("\xfc\x94" + std::string(hash).substr(3, 14));
   }
 
   bool verifySignature(

@@ -5,8 +5,8 @@
 #include <unordered_map>
 
 #include "husarnet/config_manager.h"
-#include "husarnet/device_id.h"
 #include "husarnet/identity.h"
+#include "husarnet/ipaddress.h"
 #include "husarnet/peer.h"
 
 class PeerContainer {
@@ -14,19 +14,19 @@ class PeerContainer {
   ConfigManager* configManager;
   Identity* identity;
 
-  std::unordered_map<DeviceId, Peer*> peers;  // TODO change to ETL container
+  std::unordered_map<HusarnetAddress, Peer*> peers;
 
   // TODO figure out whether this caching is still beneficial
   Peer* cachedPeer = nullptr;
-  DeviceId cachedPeerId;
+  HusarnetAddress cachedPeerId;
 
  public:
   PeerContainer(ConfigManager* configManager, Identity* identity);
 
-  Peer* createPeer(DeviceId id);
-  Peer* getPeer(DeviceId id);
-  Peer* getOrCreatePeer(DeviceId id);
+  Peer* createPeer(HusarnetAddress id);
+  Peer* getPeer(HusarnetAddress id);
+  Peer* getOrCreatePeer(HusarnetAddress id);
 
-  std::unordered_map<DeviceId, Peer*>
+  std::unordered_map<HusarnetAddress, Peer*>
   getPeers();  // TODO change to ETL container
 };

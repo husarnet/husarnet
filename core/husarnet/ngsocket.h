@@ -16,7 +16,6 @@
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_manager.h"
-#include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
@@ -116,7 +115,7 @@ class NgSocket : public LowerLayer {
   void multicastPacketReceived(InetAddress address, string_view packetView);
   void init();
   void resendInfoRequests();
-  void sendInfoRequestToBase(DeviceId id);
+  void sendInfoRequestToBase(HusarnetAddress id);
   std::string sign(const std::string& data, const std::string& kind);
   bool reloadLocalAddresses();
   void removeSourceAddress(Peer* peer, InetAddress address);
@@ -140,7 +139,7 @@ class NgSocket : public LowerLayer {
       PeerContainer* peerContainer,
       ConfigManager* configManager);
 
-  virtual void onUpperLayerData(DeviceId peerId, string_view data);
+  virtual void onUpperLayerData(HusarnetAddress peerId, string_view data);
   void periodic();
 
   BaseConnectionType getCurrentBaseConnectionType();

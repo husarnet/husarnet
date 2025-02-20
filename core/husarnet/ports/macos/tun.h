@@ -4,7 +4,6 @@
 #pragma once
 #include <string>
 
-#include "husarnet/device_id.h"
 #include "husarnet/layer_interfaces.h"
 #include "husarnet/ngsocket.h"
 #include "husarnet/string_view.h"

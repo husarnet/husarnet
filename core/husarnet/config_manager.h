@@ -80,9 +80,9 @@ class ConfigManager {
   bool isPeerAllowed(const HusarnetAddress& address)
       const;  // TODO always say "yes" to all of the infra servers // This has
               // to be a high performance method
-  const etl::array<DeviceId, MULTICAST_DESTINATIONS_LIMIT>
+  const etl::array<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
   getMulticastDestinations(
-      DeviceId id);  // This has to be a high performance method
+      HusarnetAddress id);  // This has to be a high performance method
 
   // Those may change over time (license, get_config changes) so whoever
   // uses them is responsible for re-reading them periodically

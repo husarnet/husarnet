@@ -271,7 +271,7 @@ TunTap::TunTap(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
   this->conn->pcb.raw->flags = RAW_FLAGS_HDRINCL;
 }
 
-void TunTap::onLowerLayerData(DeviceId source, string_view data)
+void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   // Input packet should contain IPv4/IPv6 header
   if(data.size() < 40) {
@@ -311,7 +311,7 @@ void TunTap::processQueuedPackets()
   while(xQueueReceive(tunTapMsgQueue, &p, 0) == pdPASS) {
     // Send packet to the Husarnet stack
     string_view packet((char*)p->payload, p->len);
-    sendToLowerLayer(BadDeviceId, packet);
+    sendToLowerLayer(IpAddress(), packet);
 
     pbuf_free(p);
   }

@@ -36,7 +36,7 @@ SecurityLayer::SecurityLayer(
   this->cleartextBuffer.resize(2010);
 }
 
-int SecurityLayer::getLatency(DeviceId peerId)
+int SecurityLayer::getLatency(HusarnetAddress peerId)
 {
   Peer* peer = peerContainer->getOrCreatePeer(peerId);
   if(peer == nullptr) {
@@ -55,13 +55,15 @@ int SecurityLayer::getLatency(DeviceId peerId)
   return peer->latency;
 }
 
-void SecurityLayer::handleHeartbeat(DeviceId source, fstring<8> ident)
+void SecurityLayer::handleHeartbeat(HusarnetAddress source, fstring<8> ident)
 {
   std::string packet = std::string("\5") + ident;
   sendToLowerLayer(source, packet);
 }
 
-void SecurityLayer::handleHeartbeatReply(DeviceId source, fstring<8> ident)
+void SecurityLayer::handleHeartbeatReply(
+    HusarnetAddress source,
+    fstring<8> ident)
 {
   Peer* peer = peerContainer->getOrCreatePeer(source);
   if(peer == nullptr)
@@ -74,7 +76,7 @@ void SecurityLayer::handleHeartbeatReply(DeviceId source, fstring<8> ident)
   }
 }
 
-void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
+void SecurityLayer::onLowerLayerData(HusarnetAddress peerId, string_view data)
 {
   if(data.size() >= decryptedBuffer.size())
     return;  // sanity check
@@ -103,10 +105,9 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
   }
 }
 
-void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
+void SecurityLayer::handleDataPacket(HusarnetAddress peerId, string_view data)
 {
-  LOG_DEBUG(
-      "received data packet from peer: %s", deviceIdToString(peerId).c_str())
+  LOG_DEBUG("received data packet from peer: %s", peerId.toString().c_str())
   const int headerSize = 1 + 24 + 16;
   if(data.size() <= headerSize + 8)
     return;
@@ -119,7 +120,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
     sendHelloPacket(peer);
     LOG_WARNING(
         "received data packet before hello from peer: %s",
-        deviceIdToString(peerId).c_str());
+        peerId.toString().c_str());
     return;
   }
 
@@ -143,8 +144,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
     sendToUpperLayer(peerId, decryptedData);
   } else {
     LOG_INFO(
-        "received forged message from peer: %s",
-        deviceIdToString(peerId).c_str());
+        "received forged message from peer: %s", peerId.toString().c_str());
   }
 }
 
@@ -164,14 +164,14 @@ void SecurityLayer::sendHelloPacket(Peer* peer, int num, uint64_t helloseq)
 }
 
 void SecurityLayer::handleHelloPacket(
-    DeviceId target,
+    HusarnetAddress target,
     string_view data,
     int helloNum)
 {
   constexpr int dataLen = 65 + 16 + 16;
   if(data.size() < dataLen + 64)
     return;
-  LOG_INFO("hello %d from %s", helloNum, deviceIdToString(target).c_str());
+  LOG_INFO("hello %d from %s", helloNum, target.toString().c_str());
 
   Peer* peer = peerContainer->getOrCreatePeer(target);
   if(peer == nullptr)
@@ -276,7 +276,7 @@ void SecurityLayer::finishNegotiation(Peer* peer)
   peer->packetQueue = std::vector<std::string>();
 }
 
-void SecurityLayer::onUpperLayerData(DeviceId target, string_view data)
+void SecurityLayer::onUpperLayerData(HusarnetAddress target, string_view data)
 {
   Peer* peer = peerContainer->getOrCreatePeer(target);
   if(peer == nullptr)

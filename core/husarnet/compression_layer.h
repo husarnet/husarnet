@@ -4,7 +4,7 @@
 #pragma once
 #include <string>
 
-#include "husarnet/device_id.h"
+#include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/peer_flags.h"
@@ -18,11 +18,11 @@ class CompressionLayer : public BidirectionalLayer {
   std::string compressionBuffer;
   std::string cleartextBuffer;
 
-  bool shouldProceed(DeviceId source);
+  bool shouldProceed(HusarnetAddress source);
 
  public:
   CompressionLayer(PeerContainer* peerContainer, PeerFlags* myFlags);
 
-  void onUpperLayerData(DeviceId peerId, string_view data);
-  void onLowerLayerData(DeviceId peerId, string_view data);
+  void onUpperLayerData(HusarnetAddress peerId, string_view data);
+  void onLowerLayerData(HusarnetAddress peerId, string_view data);
 };

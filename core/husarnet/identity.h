@@ -4,15 +4,15 @@
 #pragma once
 #include <string>
 
-#include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
+#include "husarnet/ipaddress.h"
 
 class Identity {
  private:
   fstring<32> pubkey;
   fstring<64> privkey;
 
-  DeviceId deviceId;
+  HusarnetAddress deviceId;
 
  public:
   Identity();  // This will create an invalid identity - BadDeviceId. Look
@@ -21,7 +21,7 @@ class Identity {
   bool isValid();
 
   fstring<32> getPubkey();
-  DeviceId getDeviceId();
+  HusarnetAddress getDeviceId();
   IpAddress getIpAddress();
 
   fstring<64> sign(const std::string& data);  // Sign data with identity

@@ -96,7 +96,7 @@ void TunTap::onTunTapData()
   }
 
   string_view packet = string_view(tunBuffer).substr(0, size);
-  sendToLowerLayer(BadDeviceId, packet.substr(4));
+  sendToLowerLayer(IpAddress(), packet.substr(4));
 }
 
 TunTap::TunTap()

@@ -4,7 +4,6 @@
 #pragma once
 #include <string>
 
-#include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
 #include "husarnet/identity.h"
 
@@ -14,7 +13,7 @@ namespace NgSocketCrypto {
   fstring<64>
   sign(const std::string& data, const std::string& kind, Identity* identity);
 
-  DeviceId pubkeyToDeviceId(fstring<32> pubkey);
+  HusarnetAddress pubkeyToDeviceId(fstring<32> pubkey);
 
   bool verifySignature(
       const std::string& data,

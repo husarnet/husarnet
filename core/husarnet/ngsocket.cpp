@@ -14,7 +14,6 @@
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/sockets.h"
 
-#include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
@@ -39,13 +38,6 @@ const int WORKER_QUEUE_SIZE = 256;
 #endif
 
 using namespace OsSocket;
-
-std::string idstr(DeviceId id)
-{
-  return IpAddress::fromBinary(id).str();
-}
-
-#define IDSTR(id) idstr(id).c_str()
 
 NgSocket::NgSocket(
     Identity* myIdentity,
@@ -169,7 +161,7 @@ void NgSocket::periodicPeer(Peer* peer)
   }
 }
 
-void NgSocket::onUpperLayerData(DeviceId peerId, string_view data)
+void NgSocket::onUpperLayerData(HusarnetAddress peerId, string_view data)
 {
   Peer* peer = peerContainer->getOrCreatePeer(peerId);
   if(peer != nullptr)
@@ -201,7 +193,7 @@ void NgSocket::sendDataToPeer(Peer* peer, string_view data)
     // Not (yet) connected, relay via base.
     PeerToBaseMessage msg = {
         .kind = PeerToBaseMessageKind::DATA,
-        .target = peer->id,
+        .target = peer->id.data,
         .data = data,
     };
 
@@ -250,7 +242,7 @@ void NgSocket::attemptReestablish(Peer* peer)
     msg += ", ";
     PeerToPeerMessage response = {
         .kind = PeerToPeerMessageKind::HELLO,
-        .yourId = peer->id,
+        .yourId = peer->id.data,
         .helloCookie = peer->helloCookie,
     };
     sendToPeer(address, response);
@@ -285,15 +277,16 @@ void NgSocket::peerMessageReceived(
 
 void NgSocket::helloReceived(InetAddress source, const PeerToPeerMessage& msg)
 {
-  if(msg.yourId != this->myIdentity->getDeviceId())
+  if(msg.yourId != this->myIdentity->getDeviceId().data) {
     return;
+  }
 
   Peer* peer = peerContainer->getOrCreatePeer(msg.myId);
   if(peer == nullptr)
     return;
   LOG_DEBUG(
       "HELLO from %s (id: %s, active: %s)", source.str().c_str(),
-      IDSTR(msg.myId), peer->isActive() ? "YES" : "NO");
+      msg.myId.toString().c_str(), peer->isActive() ? "YES" : "NO");
 
   addSourceAddress(peer, source);
 
@@ -315,19 +308,23 @@ void NgSocket::helloReplyReceived(
     InetAddress source,
     const PeerToPeerMessage& msg)
 {
-  if(msg.yourId != this->myIdentity->getDeviceId())
+  if(msg.yourId != this->myIdentity->getDeviceId().data) {
     return;
+  }
 
   LOG_DEBUG(
       "HELLO-REPLY from %s (%s)", source.str().c_str(),
-      deviceIdToString(msg.myId).c_str());
+      msg.myId.toString().c_str());
   Peer* peer = peerContainer->getPeer(msg.myId);
-  if(peer == nullptr)
+  if(peer == nullptr) {
     return;
-  if(!peer->reestablishing)
+  }
+  if(!peer->reestablishing) {
     return;
-  if(peer->helloCookie != msg.helloCookie)
+  }
+  if(peer->helloCookie != msg.helloCookie) {
     return;
+  }
 
   int latency = Port::getCurrentTime() - peer->lastReestablish;
   LOG_DEBUG(
@@ -451,7 +448,7 @@ void NgSocket::sendNatInitToBase()
 
   PeerToBaseMessage msg = {
       .kind = PeerToBaseMessageKind::NAT_INIT,
-      .deviceId = this->myIdentity->getDeviceId(),
+      .deviceId = this->myIdentity->getDeviceId().data,
       .counter = natInitCounter,
   };
   natInitCounter++;
@@ -461,7 +458,7 @@ void NgSocket::sendNatInitToBase()
   if(baseTransientPort != 0) {
     PeerToBaseMessage msg2 = {
         .kind = PeerToBaseMessageKind::NAT_INIT_TRANSIENT,
-        .deviceId = this->myIdentity->getDeviceId(),
+        .deviceId = this->myIdentity->getDeviceId().data,
         .counter = natInitCounter,
     };
     sendToBaseUdp(msg2);
@@ -486,10 +483,10 @@ void NgSocket::sendMulticast()
 {
   udpSendMulticast(
       InetAddress{MULTICAST_ADDR_4, MULTICAST_PORT},
-      pack((uint16_t)sourcePort) + this->myIdentity->getDeviceId());
+      pack((uint16_t)sourcePort) + this->myIdentity->getDeviceId().data);
   udpSendMulticast(
       InetAddress{MULTICAST_ADDR_6, MULTICAST_PORT},
-      pack((uint16_t)sourcePort) + this->myIdentity->getDeviceId());
+      pack((uint16_t)sourcePort) + this->myIdentity->getDeviceId().data);
 }
 
 void NgSocket::multicastPacketReceived(
@@ -506,7 +503,8 @@ void NgSocket::multicastPacketReceived(
   std::string packet = packetView;
 
   // TODO make this into a proper message type
-  DeviceId devId = packet.substr(2, DEVICEID_LENGTH);
+  HusarnetAddress devId =
+      HusarnetAddress::fromBinary(packet.substr(2, DEVICEID_LENGTH));
   uint16_t port = unpack<uint16_t>(packet.substr(0, 2));
 
   if(devId == this->myIdentity->getDeviceId())
@@ -516,7 +514,8 @@ void NgSocket::multicastPacketReceived(
 
   LOG_DEBUG(
       "multicast received from %s, id %s, port %d, interesting: %s",
-      address.str().c_str(), IDSTR(devId), port, peer == NULL ? "NO" : "YES");
+      address.str().c_str(), devId.toString().c_str(), port,
+      peer == NULL ? "NO" : "YES");
 
   InetAddress srcAddress = InetAddress{address.ip, port};
   if(peer != nullptr && peer->linkLocalAddress != srcAddress) {
@@ -560,8 +559,8 @@ void NgSocket::init()
       NGSOCKET_TASK_PRIORITY);  // TODO figure whether this is still useful
 
   LOG_INFO(
-      "ngsocket %s listening on %d", IDSTR(this->myIdentity->getDeviceId()),
-      sourcePort);
+      "ngsocket %s listening on %d",
+      this->myIdentity->getDeviceId().toString().c_str(), sourcePort);
 }
 
 void NgSocket::resendInfoRequests()
@@ -572,12 +571,12 @@ void NgSocket::resendInfoRequests()
   }
 }
 
-void NgSocket::sendInfoRequestToBase(DeviceId id)
+void NgSocket::sendInfoRequestToBase(HusarnetAddress id)
 {
-  LOG_DEBUG("info request %s", IDSTR(id));
+  LOG_DEBUG("info request %s", id.toString().c_str());
   PeerToBaseMessage msg = {
       .kind = PeerToBaseMessageKind::REQUEST_INFO,
-      .deviceId = id,
+      .deviceId = id.data,
   };
   sendToBaseTcp(msg);
 }
@@ -591,7 +590,7 @@ std::string NgSocket::sign(const std::string& data, const std::string& kind)
 // data structure manipulation
 
 Peer* cachedPeer = nullptr;
-DeviceId cachedPeerId;
+HusarnetAddress cachedPeerId;
 
 bool NgSocket::reloadLocalAddresses()
 {
@@ -674,7 +673,7 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
   } else if(data[0] == (char)BaseToPeerMessageKind::DEVICE_ADDRESSES) {
     if(data.size() <= 17)
       return msg;
-    msg.deviceId = std::string(substr<1, 16>(data));
+    msg.deviceId = substr<1, 16>(data);
     for(int i = 17; i + 18 <= data.size(); i += 18) {
       msg.addresses.push_back(InetAddress{
           IpAddress::fromBinary(data.substr(i, 16)),
@@ -683,7 +682,7 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
   } else if(data[0] == (char)BaseToPeerMessageKind::DATA) {
     if(data.size() <= 17)
       return msg;
-    msg.source = std::string(substr<1, 16>(data));
+    msg.source = substr<1, 16>(data);
     msg.data = data.substr(17);
   } else if(data[0] == (char)BaseToPeerMessageKind::NAT_OK) {
   } else if(data[0] == (char)BaseToPeerMessageKind::STATE) {
@@ -771,11 +770,12 @@ std::string NgSocket::serializePeerToPeerMessage(const PeerToPeerMessage& msg)
     case +PeerToPeerMessageKind::HELLO:
     case +PeerToPeerMessageKind::HELLO_REPLY:
       assert(
-          this->myIdentity->getDeviceId().size() == 16 &&
-          msg.yourId.size() == 16 && msg.helloCookie.size() == 16 &&
+          this->myIdentity->getDeviceId().data.size() == 16 &&
+          msg.yourId.data.size() == 16 && msg.helloCookie.size() == 16 &&
           this->myIdentity->getPubkey().size() == 32);
-      data = pack((uint8_t)msg.kind._value) + this->myIdentity->getDeviceId() +
-             this->myIdentity->getPubkey() + msg.yourId + msg.helloCookie;
+      data = pack((uint8_t)msg.kind._value) +
+             this->myIdentity->getDeviceId().data +
+             this->myIdentity->getPubkey() + msg.yourId.data + msg.helloCookie;
       data += sign(data, "ng-p2p-msg");
       break;
     case +PeerToPeerMessageKind::DATA:
@@ -791,20 +791,21 @@ std::string NgSocket::serializePeerToPeerMessage(const PeerToPeerMessage& msg)
 std::string NgSocket::serializePeerToBaseMessage(const PeerToBaseMessage& msg)
 {
   assert(
-      this->myIdentity->getDeviceId().size() == 16 && cookie.size() == 16 &&
-      this->myIdentity->getPubkey().size() == 32);
+      this->myIdentity->getDeviceId().data.size() == 16 &&
+      cookie.size() == 16 && this->myIdentity->getPubkey().size() == 32);
 
   std::string data = pack((uint8_t)msg.kind._value) +
-                     this->myIdentity->getDeviceId() +
+                     this->myIdentity->getDeviceId().data +
                      this->myIdentity->getPubkey() + this->cookie;
 
   switch(msg.kind) {
     case +PeerToBaseMessageKind::REQUEST_INFO:
-      data += fstring<16>(msg.deviceId);
+      data += msg.deviceId;
       break;
     case +PeerToBaseMessageKind::DATA:
-      data = pack((uint8_t)msg.kind._value) + this->myIdentity->getDeviceId();
-      data += fstring<16>(msg.target);
+      data =
+          pack((uint8_t)msg.kind._value) + this->myIdentity->getDeviceId().data;
+      data += msg.target;
       data += msg.data;
       break;
     case +PeerToBaseMessageKind::USER_AGENT:

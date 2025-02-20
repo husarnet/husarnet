@@ -88,7 +88,7 @@ void TunTap::startReaderThread()
           if(packet.substr(0, 6) == peerMacAddr &&
              packet.substr(6, 6) == selfMacAddr &&
              packet.substr(12, 2) == string_view("\x86\xdd", 2)) {
-            sendToLowerLayer(BadDeviceId, packet.substr(14));
+            sendToLowerLayer(IpAddress(), packet.substr(14));
           }
         }
       },

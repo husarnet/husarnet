@@ -33,11 +33,11 @@ struct BaseToPeerMessage {
   std::pair<int, int> natTransientRange;
 
   // Device addresses message
-  DeviceId deviceId;
+  HusarnetAddress deviceId;
   std::vector<InetAddress> addresses;
 
   // Data message
-  DeviceId source;
+  HusarnetAddress source;
   std::string data;
 
   // Redirect
@@ -63,13 +63,13 @@ struct PeerToBaseMessage {
   fstring<16> cookie;
 
   // Request info
-  DeviceId deviceId;
+  HusarnetAddress deviceId;
 
   // My info
   std::vector<InetAddress> addresses;
 
   // Data message
-  DeviceId target;
+  HusarnetAddress target;
   std::string data;
 
   // NAT init message
@@ -85,8 +85,8 @@ struct PeerToPeerMessage {
   PeerToPeerMessageKind kind;
 
   // hello and hello_reply
-  DeviceId myId;
-  DeviceId yourId;
+  HusarnetAddress myId;
+  HusarnetAddress yourId;
   std::string helloCookie;
 
   // data message

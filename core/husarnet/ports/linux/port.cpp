@@ -40,7 +40,6 @@
 #include "husarnet/ports/linux/tun.h"
 #include "husarnet/ports/port.h"
 
-#include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"

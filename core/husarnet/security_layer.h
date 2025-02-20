@@ -22,14 +22,15 @@ class SecurityLayer : public BidirectionalLayer {
 
   int queuedPackets = 0;
 
-  void handleHeartbeat(DeviceId source, fstring<8> ident);
-  void handleHeartbeatReply(DeviceId source, fstring<8> ident);
+  void handleHeartbeat(HusarnetAddress source, fstring<8> ident);
+  void handleHeartbeatReply(HusarnetAddress source, fstring<8> ident);
 
-  void handleDataPacket(DeviceId source, string_view data);
+  void handleDataPacket(HusarnetAddress source, string_view data);
 
   void sendHelloPacket(Peer* peer, int num = 1, uint64_t helloseq = 0);
 
-  void handleHelloPacket(DeviceId target, string_view data, int helloNum);
+  void
+  handleHelloPacket(HusarnetAddress target, string_view data, int helloNum);
   void finishNegotiation(Peer* peer);
 
   void doSendDataPacket(Peer* peer, string_view data);
@@ -40,8 +41,8 @@ class SecurityLayer : public BidirectionalLayer {
       PeerFlags* myFlags,
       PeerContainer* peerContainer);
 
-  void onUpperLayerData(DeviceId peerId, string_view data) override;
-  void onLowerLayerData(DeviceId peerId, string_view data) override;
+  void onUpperLayerData(HusarnetAddress peerId, string_view data) override;
+  void onLowerLayerData(HusarnetAddress peerId, string_view data) override;
 
-  int getLatency(DeviceId peerId);
+  int getLatency(HusarnetAddress peerId);
 };

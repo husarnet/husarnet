@@ -38,7 +38,6 @@
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_storage.h"
-#include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
@@ -133,8 +132,7 @@ namespace Port {
 
   UpperLayer* startTunTap(HusarnetManager* manager)
   {
-    std::string myIp =
-        deviceIdToIpAddress(manager->getIdentity()->getDeviceId()).str();
+    std::string myIp = manager->getIdentity()->getDeviceId().str();
 
     auto tunTap = new TunTap();
     auto interfaceName = tunTap->getName();

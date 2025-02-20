@@ -26,7 +26,7 @@ CompressionLayer::CompressionLayer(
 #endif
 }
 
-bool CompressionLayer::shouldProceed(DeviceId peerId)
+bool CompressionLayer::shouldProceed(HusarnetAddress peerId)
 {
 #ifndef WITH_ZSTD
   return false;
@@ -40,7 +40,9 @@ bool CompressionLayer::shouldProceed(DeviceId peerId)
   return true;
 }
 
-void CompressionLayer::onUpperLayerData(DeviceId peerId, string_view data)
+void CompressionLayer::onUpperLayerData(
+    HusarnetAddress peerId,
+    string_view data)
 {
   if(!shouldProceed(peerId)) {
     sendToLowerLayer(peerId, data);
@@ -60,7 +62,9 @@ void CompressionLayer::onUpperLayerData(DeviceId peerId, string_view data)
   // #endif
 }
 
-void CompressionLayer::onLowerLayerData(DeviceId peerId, string_view data)
+void CompressionLayer::onLowerLayerData(
+    HusarnetAddress peerId,
+    string_view data)
 {
   if(!shouldProceed(peerId)) {
     sendToUpperLayer(peerId, data);
