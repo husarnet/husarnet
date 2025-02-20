@@ -5,69 +5,7 @@
 
 #include <sodium.h>
 
-#include "husarnet/ports/port.h"
-#include "husarnet/ports/sockets.h"
-
-#include "husarnet/husarnet_config.h"
 #include "husarnet/logging.h"
-#include "husarnet/util.h"
-
-#include "ports/port.h"
-
-json retrieveLicenseJson(
-    std::string dashboardHostname,
-    bool abortOnFailure = true)
-{
-  IpAddress ip = Port::resolveToIp(dashboardHostname);
-  InetAddress address{ip, 80};
-  int sockfd = OsSocket::connectUnmanagedTcpSocket(address);
-  if(sockfd < 0) {
-    LOG_ERROR(
-        "Can't contact %s - is DNS resolution working properly?",
-        dashboardHostname.c_str());
-    return json::parse("{}");
-  }
-
-  std::string readBuffer;
-  readBuffer.resize(8192);
-
-  std::string request =
-      "GET /license.json HTTP/1.1\n"
-      "Host: " +
-      dashboardHostname +
-      "\n"
-      "User-Agent: husarnet\n"
-      "Accept: */*\n\n";
-
-  SOCKFUNC(send)(sockfd, request.data(), request.size(), 0);
-
-  // TODO add a while loop here
-  size_t len =
-      SOCKFUNC(recv)(sockfd, (char*)readBuffer.data(), readBuffer.size(), 0);
-  size_t pos = readBuffer.find("\r\n\r\n");
-
-  if(pos == std::string::npos) {
-    LOG_ERROR("invalid response from the server: %s", readBuffer.c_str());
-
-    if(abortOnFailure) {
-      abort();
-    } else {
-      return json::parse("{}");
-    }
-  }
-  pos += 4;
-
-  LOG_DEBUG(
-      "License retrieved from %s, size %d", dashboardHostname.c_str(), len);
-
-  return json::parse(readBuffer.substr(pos, len - pos), nullptr, false);
-}
-
-json retrieveCachedLicenseJson()
-{
-  // Don't throw an exception on parse failure
-  return json::parse(Port::readLicenseJson(), nullptr, false);
-}
 
 static const unsigned char* const PUBLIC_KEY[] = {
     reinterpret_cast<const unsigned char*>(
@@ -106,7 +44,7 @@ const int PUBLIC_KEY_COUNT = sizeof(PUBLIC_KEY) / sizeof(PUBLIC_KEY[0]);
 #define LICENSE_SIGNATURE_KEY "signature"
 #define LICENSE_SIGNATURE_V2_KEY "signature_v2"
 
-static std::string generateSignatureData(const json licenseJson)
+static std::string generateSignatureData(const json& licenseJson)
 {
   std::string s;
   s.append(std::to_string(licenseJson[LICENSE_VERSION_KEY].get<int>()) + "\n");
@@ -145,14 +83,6 @@ static bool isJsonValid(const json licenseJson)
     return false;
   }
 
-  // This is mostly for checking if a minimum license version is present
-  if(!licenseJson.contains(LICENSE_SIGNATURE_V2_KEY)) {
-    LOG_CRITICAL(
-        "license data is invalid - missing signature for the required license "
-        "version");
-    return false;
-  }
-
   // These fields are actually needed as the metadata
   if(!licenseJson.contains(LICENSE_DASHBOARD_URL_KEY) ||
      !licenseJson.contains(LICENSE_BASE_SERVER_ADDRESSES_KEY) ||
@@ -165,103 +95,41 @@ static bool isJsonValid(const json licenseJson)
   return true;
 }
 
-static bool verifySignature(
-    const std::string& signature,
-    const std::string& data,
-    bool abortOnFailure = true)
+static bool verifySignature(const json& licenseJson)
 {
-  auto* signaturePtr = reinterpret_cast<const unsigned char*>(signature.data());
-  auto* dataPtr = reinterpret_cast<const unsigned char*>(data.data());
+  // This is mostly for checking if a minimum license version is present
+  if(!licenseJson.contains(LICENSE_SIGNATURE_V2_KEY)) {
+    LOG_CRITICAL(
+        "license data is invalid - missing signature for the required license "
+        "version");
+    return false;
+  }
 
-  bool signatureValid = false;
+  auto declaredSignature =
+      base64Decode(licenseJson[LICENSE_SIGNATURE_V2_KEY].get<std::string>());
+  auto signatureData = generateSignatureData(licenseJson);
+
   for(int i = 0; i < PUBLIC_KEY_COUNT; i++) {
     if(crypto_sign_ed25519_verify_detached(
-           signaturePtr, dataPtr, data.size(), PUBLIC_KEY[i]) == 0) {
-      signatureValid = true;
-      break;
+           reinterpret_cast<const unsigned char*>(declaredSignature.c_str()),
+           reinterpret_cast<const unsigned char*>(signatureData.c_str()),
+           signatureData.size(), PUBLIC_KEY[i]) == 0) {
+      return true;
     }
   }
 
-  if(!signatureValid) {
-    LOG_CRITICAL("license file is invalid");
-
-    if(abortOnFailure) {
-      abort();
-    }
-  }
-
-  return signatureValid;
+  return false;
 }
 
-// -----------------------------------------------------------------------------
-
-License::License(std::string dashboardHostname)
+bool isLicenseValid(const json& licenseJson)
 {
-  auto licenseJson = retrieveLicenseJson(dashboardHostname);
-
-  if(!isJsonValid(licenseJson)) {
-    licenseJson = retrieveCachedLicenseJson();
-
-    if(!isJsonValid(licenseJson)) {
-      LOG_CRITICAL(
-          "No license! Husarnet Daemon can't start without license.json. "
-          "Valid license was not found on local disk and download from %s was "
-          "not possible or downloaded an invalid file. Please see previous log "
-          "messages for more detailed information. Exiting.",
-          dashboardHostname.c_str());
-      abort();
-    }
-
-    LOG_INFO("Found cached license.json on local disk, proceed");
-  }
-
-  verifySignature(
-      base64Decode(licenseJson[LICENSE_SIGNATURE_V2_KEY].get<std::string>()),
-      generateSignatureData(licenseJson));
-
-  for(const auto& baseAddress :
-      licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]) {
-    this->baseServerAddresses.emplace_back(
-        IpAddress::parse(baseAddress.get<std::string>()));
-  }
-
-  for(const auto& addr : licenseJson[LICENSE_API_SERVERS_KEY]) {
-    this->dashboardApiAddresses.emplace_back(
-        IpAddress::parse(addr.get<std::string>()));
-  }
-
-  for(const auto& addr : licenseJson[LICENSE_EB_SERVERS_KEY]) {
-    this->ebAddresses.emplace_back(IpAddress::parse(addr.get<std::string>()));
-  }
-
-  Port::writeLicenseJson(licenseJson.dump());
-}
-
-std::vector<IpAddress> License::getDashboardApiAddresses()
-{
-  return this->dashboardApiAddresses;
-}
-
-std::vector<IpAddress> License::getEbAddresses()
-{
-  return this->ebAddresses;
-}
-
-std::vector<IpAddress> License::getBaseServerAddresses()
-{
-  return this->baseServerAddresses;
-}
-
-// This is a static method
-bool License::validateDashboard(std::string dashboardHostname)
-{
-  auto licenseJson = retrieveLicenseJson(dashboardHostname, false);
-
   if(!isJsonValid(licenseJson)) {
     return false;
   }
 
-  return verifySignature(
-      base64Decode(licenseJson[LICENSE_SIGNATURE_V2_KEY].get<std::string>()),
-      generateSignatureData(licenseJson), false);
+  if(!verifySignature(licenseJson)) {
+    return false;
+  }
+
+  return true;
 }

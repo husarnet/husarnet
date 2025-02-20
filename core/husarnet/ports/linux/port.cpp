@@ -40,7 +40,6 @@
 #include "husarnet/ports/linux/tun.h"
 #include "husarnet/ports/port.h"
 
-#include "husarnet/config_storage.h"
 #include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
@@ -321,16 +320,15 @@ namespace Port {
     return ret;
   }
 
-  UpperLayer* startTunTap(HusarnetManager* manager)
+  UpperLayer* startTunTap(
+      const HusarnetAddress& myAddress,
+      std::string interfaceName)
   {
     struct nl_sock* ns;
     struct rtnl_link* link;
     struct nl_addr* addr;
     struct rtnl_addr* link_addr;
     int err;
-
-    IpAddress myIp = deviceIdToIpAddress(manager->getIdentity()->getDeviceId());
-    auto interfaceName = manager->getInterfaceName();
 
     netlinkMutex.lock();
 
@@ -366,7 +364,7 @@ namespace Port {
     }
 
     // Add a IP address to the TUN interface
-    addr = nl_addr_build(AF_INET6, (void*)myIp.toBinary().c_str(), 16);
+    addr = nl_addr_build(AF_INET6, (void*)(myAddress.toBinary().c_str()), 16);
     nl_addr_set_prefixlen(addr, 16);
 
     link_addr = rtnl_addr_alloc();

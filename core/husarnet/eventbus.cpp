@@ -10,6 +10,11 @@
 #include "etl/delegate.h"
 #include "etl/string_view.h"
 
+EventBus::EventBus(HusarnetAddress myAddress, ConfigManager* configManager)
+    : myAddress(myAddress), configManager(configManager)
+{
+}
+
 void EventBus::init()
 {
   auto callback =
@@ -33,16 +38,16 @@ void EventBus::periodic()
     this->_lastConnectionAttempt = currentTime;
 
     // Connect to EB WS with Husarnet address from the license file
-    if(this->manager->getEbAddresses().size() == 0)
+    if(this->configManager->getEventbusAddresses().size() == 0)
       return;
 
     // TODO: handle multiple EB addresses
     InetAddress ebAddress = {
-        .ip = this->manager->getEbAddresses()[0],
+        .ip = this->configManager->getEventbusAddresses()[0],
         .port = 80,
     };
 
-    std::string endpoint = "/device/" + this->manager->getSelfAddress().str();
+    std::string endpoint = "/device/" + this->myAddress.str();
 
     this->ws.connect(ebAddress, endpoint.data());
   }
@@ -79,9 +84,9 @@ void EventBus::_handleGetConfig_ll()
   http.encode(buffer);
 
   // TODO: handle multiple API addresses
-  assert(this->manager->getDashboardApiAddresses().size() > 0);
+  assert(this->configManager->getDashboardApiAddresses().size() > 0);
   InetAddress ebAddress = {
-      .ip = this->manager->getDashboardApiAddresses()[0],
+      .ip = this->configManager->getDashboardApiAddresses()[0],
       .port = 80,
   };
 

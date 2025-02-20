@@ -173,7 +173,7 @@ namespace Port {
     fatInit();
   }
 
-  void startThread(
+  void threadStart(
       std::function<void()> func,
       const char* name,
       int stack,

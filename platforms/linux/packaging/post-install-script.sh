@@ -19,14 +19,10 @@ echo "                             OR                                "
 echo "             sudo usermod -aG husarnet \$USER                  "
 echo "***************************************************************"
 
-# During the install we want to make sure that all necessary files are present
+# During install we want to make sure that all necessary files are present
 # This is to ensure Husarnet can also run on systems with (mostly) read-only filesystems
 if [ ! -d ${husarnet_dir} ]; then
   mkdir -p ${husarnet_dir}
-fi
-
-if [ ! -f ${husarnet_dir}/license.json ]; then
-  echo "{}" > ${husarnet_dir}/license.json # Empty JSON is a reasonable placeholder
 fi
 
 if [ ! -f ${husarnet_dir}/id ]; then
@@ -49,8 +45,13 @@ if [ ! -f ${husarnet_dir}/cache.json ]; then
 fi
 
 # Make sure all the files in this directory support the husarnet group (non-recursive as we won't be managing i.e. hooks)
-chgrp husarnet ${husarnet_dir} -R
+chgrp husarnet ${husarnet_dir}
 find ${husarnet_dir} -maxdepth 1 -type f -exec chmod 660 {} +
+
+# Husarnet files (hooks, etc.)
+mkdir -p ${files_dir}
+chmod 770 ${files_dir}
+chgrp husarnet ${files_dir}
 
 # Ignore installation of systemd service if systemd is not present
 command -v pidof >/dev/null || exit 0

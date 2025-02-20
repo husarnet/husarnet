@@ -9,15 +9,15 @@
 #include <stdint.h>
 
 #include "husarnet/fstring.h"
-#include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-MulticastLayer::MulticastLayer(HusarnetManager* manager) : manager(manager)
-
+MulticastLayer::MulticastLayer(
+    DeviceId myDeviceId,
+    ConfigManager* configmanager)
+    : myDeviceId(myDeviceId), configManager(configmanager)
 {
-  deviceId = manager->getIdentity()->getDeviceId();
 }
 
 void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
@@ -67,7 +67,7 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
     packet[6] = protocol;
     packet[7] = 3;  // hop limit
     packet += source;
-    packet += deviceId;
+    packet += this->myDeviceId;
     packet += data.substr(1);
 
     sendToUpperLayer(source, packet);
@@ -97,7 +97,7 @@ void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
     msgData += dstAddress;
     msgData += packet.substr(40);
 
-    auto dst = manager->getMulticastDestinations(dstAddress);
+    auto dst = this->configManager->getMulticastDestinations(dstAddress);
     for(DeviceId dest : dst) {
       sendToLowerLayer(dest, msgData);
     }
@@ -110,7 +110,7 @@ void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
   if(dstAddress[0] == 0xfc && dstAddress[1] == 0x94) {
     // unicast
 
-    if(srcAddress != deviceId)
+    if(srcAddress != this->myDeviceId)
       return;
 
     string_view msgData = packet.substr(39);

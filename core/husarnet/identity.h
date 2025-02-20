@@ -15,20 +15,24 @@ class Identity {
   DeviceId deviceId;
 
  public:
-  Identity();  // This will create BadDeviceId. Look below for methods that'll
-               // get you something actually usable
+  Identity();  // This will create an invalid identity - BadDeviceId. Look
+               // below for methods that'll get you something actually usable
+
+  bool isValid();
 
   fstring<32> getPubkey();
   DeviceId getDeviceId();
   IpAddress getIpAddress();
 
-  fstring<64> sign(const std::string& data);
-  bool isValid();
+  fstring<64> sign(const std::string& data);  // Sign data with identity
 
   // This will make new Identity (and *not* recover the existing one)
-  static Identity create();
+  static Identity* create();
 
   // Those are meant to be saved and recovered from file
   std::string serialize();
-  static Identity deserialize(std::string);
+  static Identity* deserialize(const std::string& data);
+
+  static Identity* init();  // This will recover the identity from the file,
+                            // creating and saving if necessary
 };

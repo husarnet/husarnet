@@ -15,7 +15,7 @@
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/sockets.h"
 
-#include "husarnet/config_storage.h"
+#include "husarnet/config_manager.h"
 #include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
 #include "husarnet/identity.h"
@@ -31,12 +31,6 @@
 
 #include "enum.h"
 
-class HusarnetManager;
-class ConfigStorage;
-class Identity;
-class Peer;
-class PeerContainer;
-
 namespace OsSocket {
   class TcpConnection;
 }  // namespace OsSocket
@@ -51,17 +45,19 @@ const int MAX_ADDRESSES = 10;
 const int MAX_SOURCE_ADDRESSES = 5;
 const int DEVICEID_LENGTH = 16;
 
-BETTER_ENUM(BaseConnectionType, int, NONE = 0, TCP = 1, UDP = 2)
+BETTER_ENUM(
+    BaseConnectionType,
+    int,
+    NONE = 0,
+    TCP = 1,
+    UDP = 2)  // TODO switch to magic_enum
 
 class NgSocket : public LowerLayer {
  private:
-  Identity* identity;
-  HusarnetManager* manager;
+  Identity* myIdentity;
   PeerContainer* peerContainer;
-  ConfigStorage& configStorage;
 
-  DeviceId deviceId;
-  fstring<32> pubkey;
+  ConfigManager* configManager;
 
   std::unordered_map<InetAddress, Peer*, iphash> peerSourceAddresses;
   std::vector<InetAddress> localAddresses;  // sorted
@@ -139,7 +135,10 @@ class NgSocket : public LowerLayer {
   void sendToPeer(InetAddress dest, const PeerToPeerMessage& msg);
 
  public:
-  NgSocket(HusarnetManager* manager);
+  NgSocket(
+      Identity* myIdentity,
+      PeerContainer* peerContainer,
+      ConfigManager* configManager);
 
   virtual void onUpperLayerData(DeviceId peerId, string_view data);
   void periodic();

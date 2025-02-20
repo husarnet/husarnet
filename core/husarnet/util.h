@@ -14,18 +14,6 @@
 #include "husarnet/fstring.h"
 #include "husarnet/string_view.h"
 
-#include "enum.h"
-
-BETTER_ENUM(
-    HookType,
-    int,
-    hosttable_changed = 1,
-    whitelist_changed = 2,
-    joined = 3,
-    reconnected = 4,
-    rw_request = 5,
-    rw_release = 6)
-
 template <typename Vec, typename T>
 bool insertIfNotPresent(Vec& v, const T& t)
 {
@@ -171,8 +159,12 @@ struct pair_hash {
 std::string generateRandomString(const int length);
 std::string strToUpper(std::string input);
 std::string strToLower(std::string input);
+std::string ltrim(std::string input);
 std::string rtrim(std::string input);
+std::string trim(std::string input);
 std::string camelCaseToUnderscores(std::string camel);
+
+bool strToBool(const std::string& s);
 
 template <typename K, typename V>
 inline bool mapContains(const std::map<K, V> m, K needle)

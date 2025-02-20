@@ -102,6 +102,14 @@ std::string strToLower(std::string input)
   return ret;
 }
 
+std::string ltrim(std::string s)
+{
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+            return !std::isspace(ch);
+          }));
+  return s;
+}
+
 std::string rtrim(std::string s)
 {
   s.erase(
@@ -111,6 +119,11 @@ std::string rtrim(std::string s)
           .base(),
       s.end());
   return s;
+}
+
+std::string trim(std::string s)
+{
+  return ltrim(rtrim(s));
 }
 
 std::string camelCaseToUnderscores(std::string camel)
@@ -126,4 +139,14 @@ std::string camelCaseToUnderscores(std::string camel)
   }
 
   return underscored;
+}
+
+bool strToBool(const std::string& s)
+{
+  auto r = trim(std::string(s));
+  if(r == "true" || r == "1" || r == "yes" || r == "on") {
+    return true;
+  }
+
+  return false;
 }

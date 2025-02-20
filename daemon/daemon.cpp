@@ -6,7 +6,9 @@
 
 #include "husarnet/ports/port.h"
 
+#include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
+#include "husarnet/identity.h"
 #include "husarnet/util.h"
 
 void printUsage()
@@ -34,7 +36,7 @@ int main(int argc, const char* argv[])
     }
 
     if(argument == "--genid" || argument == "genid") {
-      std::cout << Identity::create().serialize();
+      std::cout << Identity::create()->serialize();
       return 0;
     }
 

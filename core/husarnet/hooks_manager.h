@@ -2,90 +2,40 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include <condition_variable>
-#include <functional>
-#include <map>
-#include <mutex>
-
-#include "husarnet/husarnet_manager.h"
+#include "husarnet/config_env.h"
 #include "husarnet/logging.h"
-#include "husarnet/timer.h"
 #include "husarnet/util.h"
 
-class HooksManagerInterface {
- public:
-  virtual ~HooksManagerInterface() = default;
+#include "etl/map.h"
+#include "etl/mutex.h"
 
-  virtual void runHook(HookType hookType, bool immediate = false) = 0;
-  virtual void waitHook(HookType hookType) = 0;
-  virtual void cancelHook(HookType hookType) = 0;
+#ifndef HOOKS_MAP_SIZE
+#define HOOKS_MAP_SIZE 10  // Keep this in sync with size of HookType enum
+#endif
 
-  virtual void withRw(std::function<void()> f) = 0;
-};
+#ifndef HOOKS_PERIOD
+#define HOOKS_PERIOD 100  // ms, processing period
+#endif
 
-class HooksManager : public HooksManagerInterface {
- public:
-  HooksManager(HusarnetManager* manager);
-  ~HooksManager();
+#ifndef HOOKS_BUMP_TIME
+#define HOOKS_BUMP_TIME \
+  200  // ms, each schedule will set hook's timer to this amount of time. Hook
+       // will be executed after it times out
+#endif
 
-  virtual void runHook(HookType hookType, bool immediate = false);
-  virtual void waitHook(HookType hookType);
-  virtual void cancelHook(HookType hookType);
-
-  virtual void withRw(std::function<void()> f);
-
+class HooksManager {
  private:
-  HusarnetManager* manager;
+  bool enabled;
 
-  // Basic hooks
-  std::map<std::string, std::condition_variable*>
-      hookConditionalVariables;  // dirName -> condition_variable
-  std::mutex waitMutex;
+  etl::mutex mutex;
+  etl::map<HookType, int, HOOKS_MAP_SIZE>
+      hookTimers;  // >0 time in ms. 0 means fire now, <0 means not set/already
+                   // fired
 
-  std::map<std::string, Timer*> hookTimers;  // dirName -> Timer
-
-  // Rw logic
-  bool isRw = false;
-  std::mutex rwMutex;
-
-  // Constants
-  std::chrono::milliseconds timespan{
-      1000};  // Time to postpone the hook execution on every runHook
-  std::chrono::milliseconds interval{100};  // How often to re-check the timers
-  std::chrono::milliseconds waitspan{
-      5000};  // How long to wait for a script using waitHook
-
-  std::map<HookType, std::string> hookDirNames{
-      {HookType::hosttable_changed, "hook.hosttable_changed.d"},
-      {HookType::whitelist_changed, "hook.whitelist_changed.d"},
-      {HookType::joined, "hook.joined.d"},
-      {HookType::reconnected, "hook.reconnected.d"},
-      {HookType::rw_request, "hook.rw_request.d"},
-      {HookType::rw_release, "hook.rw_release.d"},
-  };
-};
-
-class DummyHooksManager : public HooksManagerInterface {
  public:
-  virtual void runHook(HookType hookType, bool immediate = false)
-  {
-    LOG_DEBUG("DummyHooksManager::runHook %s", hookType._to_string());
-  }
+  HooksManager(bool enableHooks);
 
-  virtual void waitHook(HookType hookType)
-  {
-    LOG_DEBUG("DummyHooksManager::waitHook %s", hookType._to_string());
-  }
-
-  virtual void cancelHook(HookType hookType)
-  {
-    LOG_DEBUG("DummyHooksManager::cancelHook %s", hookType._to_string());
-  }
-
-  virtual void withRw(std::function<void()> f)
-  {
-    LOG_DEBUG("DummyHooksManager::withRw enter");
-    f();
-    LOG_DEBUG("DummyHooksManager::withRw exit");
-  }
+  void periodicThread();  // Start this as a thread - will handle timers and
+                          // actually calling the hooks
+  void scheduleHook(const HookType hookType);  // Threadsafe
 };

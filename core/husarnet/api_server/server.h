@@ -8,11 +8,12 @@
 #include <string>
 
 #include "husarnet/api_server/dashboard_api_proxy.h"
+#include "husarnet/config_env.h"
+#include "husarnet/config_manager.h"
+#include "husarnet/ngsocket.h"
 
 #include "httplib.h"
 #include "nlohmann/json.hpp"
-
-class HusarnetManager;
 
 namespace httplib {
   struct Request;
@@ -21,8 +22,11 @@ namespace httplib {
 
 class ApiServer {
  private:
-  HusarnetManager* manager;
+  ConfigEnv* configEnv;
+  ConfigManager* configManager;
+
   DashboardApiProxy* proxy;
+
   std::mutex mutex;
   std::condition_variable cv;
 
@@ -46,15 +50,16 @@ class ApiServer {
       const httplib::Request& req,
       httplib::Response& res);
 
-  nlohmann::json getStandardReply();
-
   bool requireParams(
       const httplib::Request& req,
       httplib::Response& res,
       std::list<std::string> paramNames);
 
  public:
-  ApiServer(HusarnetManager* manager, DashboardApiProxy* proxy);
+  ApiServer(
+      ConfigEnv* configEnv,
+      ConfigManager* configManager,
+      DashboardApiProxy* proxy);
 
   void runThread();
   void waitStarted();

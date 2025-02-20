@@ -4,8 +4,7 @@
 #pragma once
 #include <string>
 
-#include <husarnet/husarnet_manager.h>
-
+#include "husarnet/config_manager.h"
 #include "husarnet/identity.h"
 
 #include "httplib.h"
@@ -13,10 +12,12 @@
 
 class DashboardApiProxy {
  private:
-  HusarnetManager* manager;
+  Identity* myIdentity;
+  ConfigManager* configManager;
 
  public:
-  DashboardApiProxy(HusarnetManager* manager) : manager(manager)
+  DashboardApiProxy(Identity* myIdentity, ConfigManager* configManager)
+      : myIdentity(myIdentity), configManager(configManager)
   {
   }
 

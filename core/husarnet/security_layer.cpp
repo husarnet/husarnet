@@ -10,6 +10,7 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
 
+#include "husarnet/husarnet_config.h"
 #include "husarnet/logging.h"
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
@@ -22,15 +23,17 @@ static fstring<32> mixFlags(fstring<32> key, uint64_t flags1, uint64_t flags2)
   return res;
 }
 
-SecurityLayer::SecurityLayer(HusarnetManager* manager) : manager(manager)
+SecurityLayer::SecurityLayer(
+    Identity* myIdentity,
+    PeerFlags* myFlags,
+    PeerContainer* peerContainer)
+    : myIdentity(myIdentity), myFlags(myFlags), peerContainer(peerContainer)
 {
-  randombytes_buf(&helloseq, 8);
-  helloseq = helloseq & BOOT_ID_MASK;
-  decryptedBuffer.resize(2000);
-  ciphertextBuffer.resize(2100);
-  cleartextBuffer.resize(2010);
-
-  peerContainer = manager->getPeerContainer();
+  randombytes_buf(&this->helloseq, 8);
+  this->helloseq = this->helloseq & BOOT_ID_MASK;
+  this->decryptedBuffer.resize(2000);
+  this->ciphertextBuffer.resize(2100);
+  this->cleartextBuffer.resize(2010);
 }
 
 int SecurityLayer::getLatency(DeviceId peerId)
@@ -150,14 +153,13 @@ void SecurityLayer::sendHelloPacket(Peer* peer, int num, uint64_t helloseq)
   assert(num == 1 || num == 2 || num == 3);
   std::string packet;
   packet.push_back((char)num);
-  packet += manager->getIdentity()->getPubkey();
+  packet += this->myIdentity->getPubkey();
   packet += peer->kxPubkey;
   packet += peer->id;
   packet += pack(this->helloseq);
   packet += pack(helloseq);
-  packet += pack(manager->getSelfFlags()->asBin());
-  packet +=
-      NgSocketCrypto::sign(packet, "ng-kx-pubkey", manager->getIdentity());
+  packet += pack(this->myFlags->asBin());
+  packet += NgSocketCrypto::sign(packet, "ng-kx-pubkey", this->myIdentity);
   sendToLowerLayer(peer->id, packet);
 }
 
@@ -188,7 +190,7 @@ void SecurityLayer::handleHelloPacket(
   LOG_DEBUG(
       "peer flags: %llx (bits, not count)", (unsigned long long)flags_bin);
 
-  if(targetId != manager->getIdentity()->getDeviceId()) {
+  if(targetId != this->myIdentity->getDeviceId()) {
     LOG_INFO(
         "misdirected hello packet received from peer: %s",
         std::string(targetId).c_str());
@@ -228,7 +230,7 @@ void SecurityLayer::handleHelloPacket(
   int r;
   // key exchange is asymmetric, pretend that device with smaller ID is a
   // client
-  if(target < manager->getIdentity()->getDeviceId())
+  if(target < this->myIdentity->getDeviceId())
     r = crypto_kx_client_session_keys(
         peer->rxKey.data(), peer->txKey.data(), peer->kxPubkey.data(),
         peer->kxPrivkey.data(), peerKxPubkey.data());
@@ -240,10 +242,8 @@ void SecurityLayer::handleHelloPacket(
   if(flags_bin != 0) {
     // we need to make sure both peers agree on flags - mix them into the key
     // exchange
-    peer->rxKey =
-        mixFlags(peer->rxKey, flags_bin, manager->getSelfFlags()->asBin());
-    peer->txKey =
-        mixFlags(peer->txKey, manager->getSelfFlags()->asBin(), flags_bin);
+    peer->rxKey = mixFlags(peer->rxKey, flags_bin, this->myFlags->asBin());
+    peer->txKey = mixFlags(peer->txKey, this->myFlags->asBin(), flags_bin);
   }
 
   if(r == 0) {

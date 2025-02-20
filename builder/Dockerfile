@@ -22,6 +22,7 @@ RUN apt-get update \
     git \
     golang-1.21 \
     gperf \
+    iwyu \
     less \
     libarchive-tools \
     libdbus-1-dev \

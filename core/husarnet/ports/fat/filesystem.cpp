@@ -16,12 +16,11 @@ __attribute__((weak)) bool isFile(const std::string& path)
   return std::filesystem::exists(path);
 }
 
-__attribute__((weak)) std::optional<std::string> readFile(
-    const std::string& path)
+__attribute__((weak)) const std::string readFile(const std::string& path)
 {
   if(!isFile(path)) {
     LOG_ERROR("file %s does not exist", path.c_str());
-    return std::nullopt;
+    return "";
   }
 
   std::ifstream f(path);
@@ -64,10 +63,6 @@ __attribute__((weak)) bool transformFile(
   }
 
   auto currentContent = readFile(path);
-  if(!currentContent.has_value()) {
-    return false;
-  }
-
-  std::string newContent = transform(currentContent.value());
+  std::string newContent = transform(currentContent);
   return writeFile(path, newContent);
 }

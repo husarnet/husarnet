@@ -170,7 +170,7 @@ namespace Port {
     }
   }
 
-  void startThread(
+  void threadStart(
       std::function<void()> func,
       const char* name,
       int stack,
@@ -184,9 +184,9 @@ namespace Port {
     }
   }
 
-  std::map<UserSetting, std::string> getEnvironmentOverrides()
+  std::map<std::string, std::string> getEnvironmentOverrides()
   {
-    return std::map<UserSetting, std::string>();
+    return std::map<std::string, std::string>();
   }
 
   void notifyReady()

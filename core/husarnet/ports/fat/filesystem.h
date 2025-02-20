@@ -3,14 +3,14 @@
 // License: specified in project_root/LICENSE.txt
 
 #include <functional>
-#include <optional>
 #include <string>
 
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
 bool isFile(const std::string& path);
-std::optional<std::string> readFile(const std::string& path);
+
+const std::string readFile(const std::string& path);
 
 // This is the most naive implementation possible - open at the beginning of a
 // file, dump the content, close the file Use this only for files that are not

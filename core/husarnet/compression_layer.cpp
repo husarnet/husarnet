@@ -3,8 +3,6 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/compression_layer.h"
 
-#include "husarnet/config_storage.h"
-#include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
 #include "husarnet/peer.h"
 #include "husarnet/peer_container.h"
@@ -15,16 +13,16 @@
 #include "zstd.h"
 #endif
 
-CompressionLayer::CompressionLayer(HusarnetManager* manager)
-    : manager(manager), config(manager->getConfigStorage())
+CompressionLayer::CompressionLayer(
+    PeerContainer* peerContainer,
+    PeerFlags* myFlags)
+    : peerContainer(peerContainer), myFlags(myFlags)
 {
-  peerContainer = manager->getPeerContainer();
-
-  compressionBuffer.resize(2100);
-  cleartextBuffer.resize(2010);
+  this->compressionBuffer.resize(2100);
+  this->cleartextBuffer.resize(2010);
 
 #ifndef WITH_ZSTD
-  manager->getSelfFlags()->setFlag(PeerFlag::compression);
+  this->myFlags->setFlag(PeerFlag::compression);
 #endif
 }
 
@@ -33,10 +31,6 @@ bool CompressionLayer::shouldProceed(DeviceId peerId)
 #ifndef WITH_ZSTD
   return false;
 #endif
-
-  if(!config.getUserSettingBool(UserSetting::enableCompression)) {
-    return false;
-  }
 
   auto peer = peerContainer->getPeer(peerId);
   if(!peer->flags.checkFlag(PeerFlag::compression)) {

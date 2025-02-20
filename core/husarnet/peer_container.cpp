@@ -5,21 +5,23 @@
 
 #include <sodium.h>
 
-#include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-PeerContainer::PeerContainer(HusarnetManager* manager) : manager(manager)
+PeerContainer::PeerContainer(ConfigManager* configManager, Identity* identity)
+    : configManager(configManager), identity(identity)
 {
 }
 
 Peer* PeerContainer::createPeer(DeviceId id)
 {
-  if(!manager->isPeerAddressAllowed(deviceIdToIpAddress(id))) {
+  if(!configManager->isPeerAllowed(deviceIdToIpAddress(id))) {
     LOG_INFO("peer %s is not on the whitelist", deviceIdToString(id).c_str());
     return nullptr;
   }
   Peer* peer = new Peer;
+  // TODO honestly move this to Peer class (either constructor or some static
+  // method)
   peer->heartbeatIdent = generateRandomString(8);
   peer->id = id;
   crypto_kx_keypair(peer->kxPubkey.data(), peer->kxPrivkey.data());
@@ -32,12 +34,13 @@ Peer* PeerContainer::getPeer(DeviceId id)
   if(cachedPeerId == id)
     return cachedPeer;
 
-  if(!manager->isPeerAddressAllowed(deviceIdToIpAddress(id))) {
+  if(!configManager->isPeerAllowed(deviceIdToIpAddress(id))) {
     LOG_INFO("peer %s is not on the whitelist", deviceIdToString(id).c_str());
     return nullptr;
   }
 
-  if(id == manager->getIdentity()->getDeviceId())
+  // Prevent self-connection (i.e. in case of multicast issue)
+  if(id == identity->getDeviceId())
     return nullptr;
 
   auto it = peers.find(id);

@@ -75,7 +75,7 @@ void TunTap::onTunTapData()
 
 void TunTap::startReaderThread()
 {
-  Port::startThread(
+  Port::threadStart(
       [&] {
         std::string buf;
         buf.resize(4096);

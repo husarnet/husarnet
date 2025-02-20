@@ -30,7 +30,7 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
-#include "husarnet/config_storage.h"
+#include "husarnet/config_manager.h"
 #include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
@@ -39,7 +39,7 @@
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-#include "enum.h"
+#include "magic_enum/magic_enum_all.hpp"
 
 #ifndef PORT_WINDOWS
 extern char** environ;
@@ -49,15 +49,12 @@ const static std::string hostnamePath = "/etc/hostname";
 
 #ifdef PORT_WINDOWS
 const static std::string configDir =
-    std::string(getenv("PROGRAMDATA")) + "\\Husarnet";
+    std::string(getenv("PROGRAMDATA")) + "\\Husarnet\\";
+const static std::string filesDir = configDir + "files\\";
 #else
 const static std::string configDir = "/var/lib/husarnet/";
+const static std::string filesDir = configDir + "files/";
 #endif
-
-const static std::string configPath = configDir + "config.json";
-const static std::string identityPath = configDir + "id";
-const static std::string apiSecretPath = configDir + "daemon_api_token";
-const static std::string licenseJsonPath = configDir + "license.json";
 
 static bool validateHostname(std::string hostname)
 {
@@ -176,34 +173,6 @@ static void ares_local_callback(
   ares_freeaddrinfo(addrinfo);
 }
 
-static std::list<std::string> listScripts(const std::string& path)
-{
-  std::list<std::string> result;
-  DIR* dir = opendir(path.c_str());
-  if(dir == NULL) {
-    return result;
-  }
-
-  struct dirent* ent;
-  while((ent = readdir(dir)) != NULL) {
-    std::string fileName = ent->d_name;
-    if(fileName == "." || fileName == "..") {
-      continue;
-    }
-
-    std::string filePath = path + "/" + fileName;
-    if(access(filePath.c_str(), X_OK) == 0) {
-      result.push_back(filePath);
-    } else {
-      LOG_WARNING(
-          "%s is not executable, skipping it as a hook", filePath.c_str());
-    }
-  }
-  closedir(dir);
-
-  return result;
-}
-
 namespace Port {
   void fatInit()
   {
@@ -222,7 +191,7 @@ namespace Port {
     }
   }
 
-  __attribute__((weak)) void startThread(
+  __attribute__((weak)) void threadStart(
       std::function<void()> func,
       const char* name,
       int stack,
@@ -241,26 +210,42 @@ namespace Port {
     });
   }
 
-  __attribute__((weak)) std::map<UserSetting, std::string>
+  __attribute__((weak)) void threadSleep(Time ms)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+  }
+
+  static etl::map<std::string, EnvKey, ENV_KEY_OPTIONS> envMap = {
+      etl::pair{std::string("HUSARNET_TLD_FQDN"), EnvKey::tldFqdn},
+      etl::pair{std::string("HUSARNET_LOG_VERBOSITY"), EnvKey::logVerbosity},
+      etl::pair{std::string("HUSARNET_ENABLE_HOOKS"), EnvKey::enableHooks},
+      etl::pair{
+          std::string("HUSARNET_ENABLE_CONTROLPLANE"),
+          EnvKey::enableControlPlane},
+      etl::pair{
+          std::string("HUSARNET_DAEMON_INTERFACE"), EnvKey::daemonInterface},
+      etl::pair{
+          std::string("HUSARNET_DAEMON_API_INTERFACE"),
+          EnvKey::daemonApiInterface},
+      etl::pair{std::string("HUSARNET_DAEMON_API_HOST"), EnvKey::daemonApiHost},
+      etl::pair{std::string("HUSARNET_DAEMON_API_PORT"), EnvKey::daemonApiPort},
+  };
+
+  __attribute__((weak)) etl::map<EnvKey, std::string, ENV_KEY_OPTIONS>
   getEnvironmentOverrides()
   {
-    std::map<UserSetting, std::string> result;
+    etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> result;
     for(char** environ_ptr = environ; *environ_ptr != nullptr; environ_ptr++) {
-      for(auto enumName : UserSetting::_names()) {
-        auto candidate =
-            "HUSARNET_" + strToUpper(camelCaseToUnderscores(enumName));
+      std::vector<std::string> splitted = split(*environ_ptr, '=', 1);
+      if(splitted.size() == 1) {
+        continue;
+      }
 
-        std::vector<std::string> splitted = split(*environ_ptr, '=', 1);
-        if(splitted.size() == 1) {
-          continue;
-        }
+      auto key = strToUpper(splitted[0]);
+      auto value = splitted[1];
 
-        auto key = splitted[0];
-        auto value = splitted[1];
-
-        if(key == candidate) {
-          result[UserSetting::_from_string(enumName)] = value;
-        }
+      if(envMap.contains(key)) {
+        result[envMap[key]] = value;
       }
     }
 
@@ -308,8 +293,8 @@ namespace Port {
 #ifndef PORT_WINDOWS
     auto hostname = readFile(hostnamePath);
 
-    if(hostname.has_value())
-      return rtrim(hostname.value());
+    if(!hostname.empty())
+      return rtrim(hostname);
 
     // On some platforms (i.e. OpenWRT) the hostname file does not exist
     LOG_WARNING(
@@ -404,99 +389,74 @@ namespace Port {
     return result.address;
   }
 
-  __attribute__((weak)) bool runScripts(const std::string& eventName)
+  __attribute__((weak)) bool runHook(HookType hookType)
   {
-    // TODO make this start each hook in a separate thread
-    auto path = Port::getConfigDir() + eventName;
-    auto scriptPaths = listScripts(path);
-    if(scriptPaths.empty()) {
+    auto hookName = std::string(magic_enum::enum_name(hookType));
+    auto path = filesDir + "hook_" + hookName;
+
+    if(access(path.c_str(), X_OK) != 0) {
+      LOG_INFO(("hook " + path + " not found or not executable").c_str());
       return false;
     }
 
-    LOG_DEBUG(("running hooks under path " + path).c_str());
-    for(auto& scriptPath : scriptPaths) {
-      LOG_INFO(("running " + scriptPath + " as a hook").c_str());
+    Port::threadStart(
+        [path, hookName]() {
+          // TODO probably can be replaced with execve or similar
+          LOG_DEBUG(("running " + hookName).c_str());
 
-      FILE* pipe = popen((scriptPath + " 2>&1").c_str(), "r");
-      if(!pipe) {
-        LOG_ERROR(("failed to run " + scriptPath).c_str());
-        continue;
-      }
+          FILE* pipe = popen((path + " 2>&1").c_str(), "r");
+          if(!pipe) {
+            LOG_ERROR(("failed to run " + path).c_str());
+          }
 
-      char buffer[1024];
-      std::string output;
+          char buffer[1024];
+          std::string output;
 
-      // nullptr here is a delimiter of subprocess end
-      while(fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        output += buffer;
-      }
+          // nullptr here is a delimiter of subprocess end
+          while(fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            output += buffer;
+          }
 
-      pclose(pipe);
+          pclose(pipe);
 
-      std::istringstream iss(output);
-      std::string line;
-      while(std::getline(iss, line)) {
-        LOG_INFO((scriptPath + ": " + line).c_str());
-      }
+          std::istringstream iss(output);
+          std::string line;
+          while(std::getline(iss, line)) {
+            LOG_INFO((hookName + ": " + line).c_str());
+          }
 
-      LOG_INFO(("running " + scriptPath + " as a hook done").c_str());
-    }
-    LOG_DEBUG(("running hooks under path " + path + " done").c_str());
+          auto ret = pclose(pipe);
+
+          LOG_INFO(
+              (hookName + " finished with exit code: " + std::to_string(ret))
+                  .c_str());
+        },
+        hookName.c_str());
+
     return true;
   }
 
-  __attribute__((weak)) bool checkScriptsExist(const std::string& eventName)
-  {
-    auto path = Port::getConfigDir() + eventName;
+  static const etl::map<StorageKey, std::string, STORAGE_KEY_OPTIONS>
+      storageMap = {
+          etl::pair{StorageKey::id, std::string("id")},
+          etl::pair{StorageKey::config, std::string("config.json")},
+          etl::pair{
+              StorageKey::daemonApiToken, std::string("daemon_api_token")},
+          etl::pair{StorageKey::cache, std::string("cache.json")},
 
-    LOG_DEBUG(("checking for valid hooks under " + path).c_str());
-    auto scriptPaths = listScripts(path);
-    return !scriptPaths.empty();
+  };
+
+  __attribute__((weak)) std::string readStorage(StorageKey key)
+  {
+    auto path = configDir + storageMap.at(key);
+    return readFile(path);
   }
 
-  __attribute__((weak)) std::string getConfigDir()
+  __attribute__((weak)) bool writeStorage(
+      StorageKey key,
+      const std::string& data)
   {
-    return configDir;
+    auto path = configDir + storageMap.at(key);
+    return writeFile(path, data);
   }
-
-  __attribute__((weak)) std::string readLicenseJson()
-  {
-    return readFile(licenseJsonPath).value_or("{}");
-  }
-
-  __attribute__((weak)) bool writeLicenseJson(const std::string& data)
-  {
-    return writeFile(licenseJsonPath, data);
-  }
-
-  __attribute__((weak)) std::string readConfig()
-  {
-    return readFile(configPath).value_or("{}");
-  }
-
-  __attribute__((weak)) bool writeConfig(const std::string& data)
-  {
-    return writeFile(configPath, data);
-  }
-
-  __attribute__((weak)) std::string readIdentity()
-  {
-    return readFile(identityPath).value_or("");
-  }
-
-  __attribute__((weak)) bool writeIdentity(const std::string& identity)
-  {
-    return writeFile(identityPath, identity);
-  }
-
-  __attribute__((weak)) std::string readApiSecret()
-  {
-    return readFile(apiSecretPath).value_or("");
-  }
-
-  __attribute__((weak)) bool writeApiSecret(const std::string& secret)
-  {
-    return writeFile(apiSecretPath, secret);
-  }
-
 }  // namespace Port

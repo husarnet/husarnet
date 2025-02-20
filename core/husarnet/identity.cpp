@@ -5,6 +5,8 @@
 
 #include <sstream>
 
+#include "husarnet/ports/port_interface.h"
+
 #include "husarnet/logging.h"
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
@@ -14,31 +16,6 @@
 Identity::Identity()
 {
   deviceId = BadDeviceId;
-}
-
-fstring<32> Identity::getPubkey()
-{
-  return pubkey;
-}
-
-DeviceId Identity::getDeviceId()
-{
-  return deviceId;
-}
-
-IpAddress Identity::getIpAddress()
-{
-  return deviceIdToIpAddress(getDeviceId());
-}
-
-fstring<64> Identity::sign(const std::string& msg)
-{
-  fstring<64> sig;
-  unsigned long long siglen = 64;
-  crypto_sign_ed25519_detached(
-      (unsigned char*)&sig[0], &siglen, (const unsigned char*)msg.data(),
-      msg.size(), (const unsigned char*)privkey.data());
-  return sig;
 }
 
 bool Identity::isValid()
@@ -51,15 +28,40 @@ bool Identity::isValid()
   return true;
 }
 
-Identity Identity::create()
+fstring<32> Identity::getPubkey()
 {
-  Identity identity;
+  return this->pubkey;
+}
 
-  while(identity.deviceId == BadDeviceId) {
+DeviceId Identity::getDeviceId()
+{
+  return this->deviceId;
+}
+
+IpAddress Identity::getIpAddress()
+{
+  return deviceIdToIpAddress(this->getDeviceId());
+}
+
+fstring<64> Identity::sign(const std::string& data)
+{
+  fstring<64> sig;
+  unsigned long long siglen = 64;
+  crypto_sign_ed25519_detached(
+      (unsigned char*)&sig[0], &siglen, (const unsigned char*)data.data(),
+      data.size(), (const unsigned char*)privkey.data());
+  return sig;
+}
+
+Identity* Identity::create()
+{
+  auto identity = new Identity();
+
+  while(identity->deviceId == BadDeviceId) {
     crypto_sign_ed25519_keypair(
-        (unsigned char*)&identity.pubkey[0],
-        (unsigned char*)&identity.privkey[0]);
-    identity.deviceId = NgSocketCrypto::pubkeyToDeviceId(identity.pubkey);
+        (unsigned char*)&identity->pubkey[0],
+        (unsigned char*)&identity->privkey[0]);
+    identity->deviceId = NgSocketCrypto::pubkeyToDeviceId(identity->pubkey);
   }
 
   return identity;
@@ -81,13 +83,13 @@ std::string Identity::serialize()
   return buffer.str();
 }
 
-Identity Identity::deserialize(std::string data)
+Identity* Identity::deserialize(const std::string& data)
 {
   std::stringstream buffer;
   auto identity = new Identity();
 
   if(data.empty()) {
-    return *identity;
+    return identity;
   }
 
   buffer << data;
@@ -98,5 +100,32 @@ Identity Identity::deserialize(std::string data)
   identity->pubkey = decodeHex(pubkeyStr);
   identity->privkey = decodeHex(privkeyStr);
   identity->deviceId = IpAddress::parse(ipStr.c_str()).toBinary();
-  return *identity;
+
+  return identity;
+}
+
+Identity* Identity::init()
+{
+  Identity* identity = new Identity();
+
+  std::string id_string = Port::readStorage(StorageKey::id);
+  if(id_string.empty()) {
+    LOG_WARNING("No identity found!");
+  } else {
+    identity = Identity::deserialize(id_string);
+  }
+
+  if(!identity->isValid()) {
+    LOG_ERROR("Identity is invalid, generating a new one");
+
+    identity = Identity::create();
+
+    auto success = Port::writeStorage(StorageKey::id, identity->serialize());
+    if(!success) {
+      LOG_CRITICAL(
+          "Failed to save identity to storage, will run with a volatile one!");
+    }
+  }
+
+  return identity;
 }

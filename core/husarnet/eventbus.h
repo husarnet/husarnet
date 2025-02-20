@@ -5,13 +5,22 @@
 
 #include "husarnet/ports/port.h"
 
+#include "husarnet/config_manager.h"
+#include "husarnet/ipaddress.h"
 #include "husarnet/websocket.h"
 
-class HusarnetManager;
-
 class EventBus {
+ private:
+  HusarnetAddress myAddress;
+  ConfigManager* configManager;
+  WebSocket ws;
+
+  // Connection attempts throttling
+  const Time CONNECTION_ATTEMPT_INTERVAL = 1000;
+  Time _lastConnectionAttempt = 0;
+
  public:
-  EventBus(HusarnetManager* manager) : manager(manager){};
+  EventBus(HusarnetAddress myAddress, ConfigManager* configManager);
 
   void init();
   void periodic();
@@ -20,13 +29,5 @@ class EventBus {
   void _handleGetConfig_ll();  // Do an HTTP call to API, read the response
   void _handleGetConfig(
       const HTTPMessage::Result& httpResult);  // Parse JSON and act on it (i.e.
-                                               // by modifying the config)
-
- private:
-  WebSocket ws;
-  HusarnetManager* manager;
-
-  // Connection attempts throttling
-  const Time CONNECTION_ATTEMPT_INTERVAL = 1000;
-  Time _lastConnectionAttempt = 0;
+                                               // by modifying the config
 };

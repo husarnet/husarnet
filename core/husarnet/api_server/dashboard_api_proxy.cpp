@@ -13,8 +13,7 @@ void DashboardApiProxy::signAndForward(
   auto method = req.method;
   LOG_INFO("Forwarding request %s %s", method.c_str(), path.c_str());
 
-  auto identity = manager->getIdentity();
-  auto dashboardApiAddresses = manager->getDashboardApiAddresses();
+  auto dashboardApiAddresses = configManager->getDashboardApiAddresses();
   if(dashboardApiAddresses.empty() || !dashboardApiAddresses[0].isFC94()) {
     LOG_WARNING(
         "Not forwarding the request, as proxy does not have valid "
@@ -34,9 +33,9 @@ void DashboardApiProxy::signAndForward(
   }
 
   httplib::Params params;
-  params.emplace("pk", httplib::detail::base64_encode(identity->getPubkey()));
+  params.emplace("pk", httplib::detail::base64_encode(myIdentity->getPubkey()));
   params.emplace(
-      "sig", httplib::detail::base64_encode(identity->sign(req.body)));
+      "sig", httplib::detail::base64_encode(myIdentity->sign(req.body)));
 
   std::string query = httplib::detail::params_to_query_str(params);
   std::string pathWithQuery(path + "?" + query);

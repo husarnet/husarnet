@@ -9,20 +9,18 @@
 
 #include "husarnet/util.h"
 
-const std::string stripLogPathPrefix(const std::string& filename);
-
 // Windows API is broken
 #undef ERROR
 
-BETTER_ENUM(
-    LogLevel,
-    int,
-    NONE, /* 0 */
-    CRITICAL /* 1 */,
-    ERROR /* 2 */,
-    WARNING /* 3 */,
-    INFO /* 4 */,
-    DEBUG /* 5 */);
+enum class LogLevel
+{
+  NONE = 0,
+  CRITICAL = 1,
+  ERROR = 2,
+  WARNING = 3,
+  INFO = 4,
+  DEBUG = 5,
+};
 
 extern LogLevel globalLogLevel;
 

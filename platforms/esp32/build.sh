@@ -29,7 +29,7 @@ fi
 pushd ${base_dir}
 
 # Build husarnet_core with GCC compiler
-# TODO: when the clang will be officially supported by ESP-IDF, switch to it
+# TODO when the clang will be officially supported by ESP-IDF, switch to it
 rm -rf ${build_dir} # Set target will try to do this anyway and fail it it exists but it's not fully populated
 idf.py -B ${build_dir} -C ${source_dir} set-target ${TARGET}
 idf.py -B ${build_dir} -C ${source_dir} build

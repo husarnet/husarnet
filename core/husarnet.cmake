@@ -224,7 +224,7 @@ FetchContent_Declare(
   URL https://github.com/Neargye/magic_enum/archive/refs/tags/v0.9.7.zip
 )
 FetchContent_MakeAvailable(magic_enum)
-target_include_directories(${husarnet_core} PUBLIC ${magic_enum_SOURCE_DIR})
+target_include_directories(${husarnet_core} PUBLIC ${magic_enum_SOURCE_DIR}/include)
 
 # Include linux port libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Darwin OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows)))
