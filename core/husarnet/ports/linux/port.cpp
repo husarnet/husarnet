@@ -110,7 +110,7 @@ static void getLocalIpv6Addresses(std::vector<IpAddress>& ret)
     std::string line = buf;
     if(line.size() < 32)
       continue;
-    auto ip = IpAddress::fromBinary(decodeHex(line.substr(0, 32)));
+    auto ip = IpAddress::fromBinaryString(decodeHex(line.substr(0, 32)));
     if(ip.isLinkLocal())
       continue;
     if(ip == IpAddress::fromBinary("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1"))
@@ -363,7 +363,7 @@ namespace Port {
     }
 
     // Add a IP address to the TUN interface
-    addr = nl_addr_build(AF_INET6, (void*)(myAddress.toBinary().c_str()), 16);
+    addr = nl_addr_build(AF_INET6, (void*)(myAddress.toBinaryString().c_str()), 16);
     nl_addr_set_prefixlen(addr, 16);
 
     link_addr = rtnl_addr_alloc();
@@ -427,7 +427,7 @@ namespace Port {
 
     // Add multicast route
     nl_addr_put(addr);
-    addr = nl_addr_build(AF_INET6, multicastDestination.toBinary().c_str(), 16);
+    addr = nl_addr_build(AF_INET6, multicastDestination.toBinaryString().c_str(), 16);
     nl_addr_set_prefixlen(addr, 48);
 
     struct rtnl_route* route = rtnl_route_alloc();

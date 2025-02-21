@@ -40,6 +40,8 @@ class IpAddress {
     return !(*this == other);
   }
 
+  // TODO: this conversion is probably bit dangerous now,
+  // because 0.0.0.0 is valid in some contexts
   operator bool() const
   {
     return *this != IpAddress();
@@ -55,7 +57,7 @@ class IpAddress {
   bool isPrivateNetworkV4() const;
   bool isReservedNotPrivate() const;
 
-  std::string toBinary() const
+  std::string toBinaryString() const
   {
     return std::string((char*)data.data(), 16);
   }
@@ -65,14 +67,7 @@ class IpAddress {
     return str();
   }
 
-  static IpAddress fromBinary(fstring<16> s)
-  {
-    IpAddress r;
-    memcpy(r.data.data(), s.data(), 16);
-    return r;
-  }
-
-  static IpAddress fromBinary(std::string s)
+  static IpAddress fromBinaryString(std::string s)
   {
     assert(s.size() == 16);
     IpAddress r;

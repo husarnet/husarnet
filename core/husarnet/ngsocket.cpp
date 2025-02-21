@@ -494,7 +494,7 @@ void NgSocket::multicastPacketReceived(
 
   // TODO make this into a proper message type
   HusarnetAddress devId =
-      HusarnetAddress::fromBinary(packet.substr(2, DEVICEID_LENGTH));
+      HusarnetAddress::fromBinaryString(packet.substr(2, DEVICEID_LENGTH));
   uint16_t port = unpack<uint16_t>(packet.substr(0, 2));
 
   if(devId == this->myIdentity->getDeviceId())
@@ -666,7 +666,7 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
     msg.deviceId = substr<1, 16>(data);
     for(int i = 17; i + 18 <= data.size(); i += 18) {
       msg.addresses.push_back(InetAddress{
-          IpAddress::fromBinary(data.substr(i, 16)),
+              IpAddress::fromBinaryString(data.substr(i, 16)),
           unpack<uint16_t>(data.substr(i + 16, 2))});
     }
   } else if(data[0] == (char)BaseToPeerMessageKind::DATA) {
@@ -680,7 +680,7 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
 
     while(i + 18 <= data.size() && msg.udpAddress.size() < 5) {
       msg.udpAddress.push_back(InetAddress{
-          IpAddress::fromBinary(data.substr(i, 16)),
+              IpAddress::fromBinaryString(data.substr(i, 16)),
           unpack<uint16_t>(data.substr(i + 16, 2))});
       i += 18;
     }
@@ -803,7 +803,7 @@ std::string NgSocket::serializePeerToBaseMessage(const PeerToBaseMessage& msg)
       break;
     case +PeerToBaseMessageKind::INFO:
       for(InetAddress address : localAddresses) {
-        data += address.ip.toBinary() + pack((uint16_t)address.port);
+        data += address.ip.toBinaryString() + pack((uint16_t)address.port);
       }
       break;
     case +PeerToBaseMessageKind::NAT_INIT:

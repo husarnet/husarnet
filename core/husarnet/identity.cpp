@@ -20,17 +20,17 @@ Identity::Identity()
 
 fstring<32> Identity::getPubkey()
 {
-  return pubkey;
+  return this->pubkey;
 }
 
 HusarnetAddress Identity::getDeviceId()
 {
-  return deviceId;
+  return this->deviceId;
 }
 
 HusarnetAddress Identity::getIpAddress()
 {
-  return getDeviceId();
+  return this->getDeviceId();
 }
 
 fstring<64> Identity::sign(const std::string& msg)
@@ -39,18 +39,14 @@ fstring<64> Identity::sign(const std::string& msg)
   unsigned long long siglen = 64;
   crypto_sign_ed25519_detached(
       (unsigned char*)&sig[0], &siglen, (const unsigned char*)msg.data(),
-      msg.size(), (const unsigned char*)privkey.data());
+      msg.size(), (const unsigned char*)this->privkey.data());
   return sig;
 }
 
 bool Identity::isValid()
 {
-  if(deviceId.isFC94())
-    return false;
-
-  // More tests to come I guess
-
-  return true;
+  return this->deviceId.isFC94();
+  // ... and maybe some more tests later?
 }
 
 Identity* Identity::create()
