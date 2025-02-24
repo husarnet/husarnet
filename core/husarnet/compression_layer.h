@@ -23,6 +23,6 @@ class CompressionLayer : public BidirectionalLayer {
  public:
   CompressionLayer(PeerContainer* peerContainer, PeerFlags* myFlags);
 
-  void onUpperLayerData(HusarnetAddress peerId, string_view data);
-  void onLowerLayerData(HusarnetAddress peerId, string_view data);
+  void onUpperLayerData(HusarnetAddress peerAddress, string_view data);
+  void onLowerLayerData(HusarnetAddress peerAddress, string_view data);
 };

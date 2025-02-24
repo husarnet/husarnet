@@ -363,7 +363,8 @@ namespace Port {
     }
 
     // Add a IP address to the TUN interface
-    addr = nl_addr_build(AF_INET6, (void*)(myAddress.toBinaryString().c_str()), 16);
+    addr = nl_addr_build(
+        AF_INET6, (void*)(myAddress.toBinaryString().c_str()), 16);
     nl_addr_set_prefixlen(addr, 16);
 
     link_addr = rtnl_addr_alloc();
@@ -427,7 +428,8 @@ namespace Port {
 
     // Add multicast route
     nl_addr_put(addr);
-    addr = nl_addr_build(AF_INET6, multicastDestination.toBinaryString().c_str(), 16);
+    addr = nl_addr_build(
+        AF_INET6, multicastDestination.toBinaryString().c_str(), 16);
     nl_addr_set_prefixlen(addr, 48);
 
     struct rtnl_route* route = rtnl_route_alloc();

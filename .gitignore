@@ -32,6 +32,7 @@ compile_commands.json
 
 # jetbrains
 .idea
+daemon/cmake-build-debug/*
 
 # ESP32 testing
 

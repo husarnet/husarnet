@@ -131,7 +131,7 @@ class NgSocket : public LowerLayer {
       PeerContainer* peerContainer,
       ConfigManager* configManager);
 
-  virtual void onUpperLayerData(HusarnetAddress peerId, string_view data);
+  virtual void onUpperLayerData(HusarnetAddress peerAddress, string_view data);
   void periodic();
 
   BaseConnectionType getCurrentBaseConnectionType();

@@ -34,9 +34,9 @@ SecurityLayer::SecurityLayer(
   this->cleartextBuffer.resize(2010);
 }
 
-int SecurityLayer::getLatency(HusarnetAddress peerId)
+int SecurityLayer::getLatency(HusarnetAddress peerAddress)
 {
-  Peer* peer = peerContainer->getOrCreatePeer(peerId);
+  Peer* peer = peerContainer->getOrCreatePeer(peerAddress);
   if(peer == nullptr) {
     return -1;
   }
@@ -74,7 +74,9 @@ void SecurityLayer::handleHeartbeatReply(
   }
 }
 
-void SecurityLayer::onLowerLayerData(HusarnetAddress peerId, string_view data)
+void SecurityLayer::onLowerLayerData(
+    HusarnetAddress peerAddress,
+    string_view data)
 {
   if(data.size() >= decryptedBuffer.size())
     return;  // sanity check
@@ -83,12 +85,12 @@ void SecurityLayer::onLowerLayerData(HusarnetAddress peerId, string_view data)
   if(data[0] == 0) {  // data packet
     if(data.size() <= 25)
       return;
-    handleDataPacket(peerId, data);
+    handleDataPacket(peerAddress, data);
   } else if(data[0] == 1 || data[0] == 2 || data[0] == 3) {  // hello packet
     if(data.size() <= 25)
       return;
 
-    handleHelloPacket(peerId, data, (int)data[0]);
+    handleHelloPacket(peerAddress, data, (int)data[0]);
   } else if(data[0] == 4 || data[0] == 5) {  // heartbeat (hopefully they are
                                              // not cursed)
     if(data.size() < 9)
@@ -96,9 +98,9 @@ void SecurityLayer::onLowerLayerData(HusarnetAddress peerId, string_view data)
 
     std::string ident = substr<1, 8>(data);
     if(data[0] == 4) {
-      handleHeartbeat(peerId, ident);
+      handleHeartbeat(peerAddress, ident);
     } else {
-      handleHeartbeatReply(peerId, ident);
+      handleHeartbeatReply(peerAddress, ident);
     }
   }
 }

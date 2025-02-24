@@ -44,8 +44,8 @@ class SecurityLayer : public BidirectionalLayer {
       PeerFlags* myFlags,
       PeerContainer* peerContainer);
 
-  void onUpperLayerData(HusarnetAddress peerId, string_view data) override;
-  void onLowerLayerData(HusarnetAddress peerId, string_view data) override;
+  void onUpperLayerData(HusarnetAddress peerAddress, string_view data) override;
+  void onLowerLayerData(HusarnetAddress peerAddress, string_view data) override;
 
-  int getLatency(HusarnetAddress peerId);
+  int getLatency(HusarnetAddress peerAddress);
 };

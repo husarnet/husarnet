@@ -26,13 +26,13 @@ CompressionLayer::CompressionLayer(
 #endif
 }
 
-bool CompressionLayer::shouldProceed(HusarnetAddress peerId)
+bool CompressionLayer::shouldProceed(HusarnetAddress peerAddress)
 {
 #ifndef WITH_ZSTD
   return false;
 #endif
 
-  auto peer = peerContainer->getPeer(peerId);
+  auto peer = peerContainer->getPeer(peerAddress);
   if(!peer->flags.checkFlag(PeerFlag::compression)) {
     return false;
   }
@@ -41,11 +41,11 @@ bool CompressionLayer::shouldProceed(HusarnetAddress peerId)
 }
 
 void CompressionLayer::onUpperLayerData(
-    HusarnetAddress peerId,
+    HusarnetAddress peerAddress,
     string_view data)
 {
-  if(!shouldProceed(peerId)) {
-    sendToLowerLayer(peerId, data);
+  if(!shouldProceed(peerAddress)) {
+    sendToLowerLayer(peerAddress, data);
   }
   // TODO long term - this is left here merely as an example. Reference old code
   // and rewrite this #ifdef WITH_ZSTD
@@ -58,16 +58,16 @@ void CompressionLayer::onUpperLayerData(
   //     return;
   //   }
 
-  //   sendToLowerLayer(peerId, cleartextBuffer);
+  //   sendToLowerLayer(peerAddress, cleartextBuffer);
   // #endif
 }
 
 void CompressionLayer::onLowerLayerData(
-    HusarnetAddress peerId,
+    HusarnetAddress peerAddress,
     string_view data)
 {
-  if(!shouldProceed(peerId)) {
-    sendToUpperLayer(peerId, data);
+  if(!shouldProceed(peerAddress)) {
+    sendToUpperLayer(peerAddress, data);
   }
 
   // TODO long term - this is left here merely as an example. Reference old code

@@ -151,9 +151,9 @@ void NgSocket::periodicPeer(Peer* peer)
   }
 }
 
-void NgSocket::onUpperLayerData(HusarnetAddress peerId, string_view data)
+void NgSocket::onUpperLayerData(HusarnetAddress peerAddress, string_view data)
 {
-  Peer* peer = peerContainer->getOrCreatePeer(peerId);
+  Peer* peer = peerContainer->getOrCreatePeer(peerAddress);
   if(peer != nullptr)
     sendDataToPeer(peer, data);
 }
@@ -666,7 +666,7 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
     msg.deviceId = substr<1, 16>(data);
     for(int i = 17; i + 18 <= data.size(); i += 18) {
       msg.addresses.push_back(InetAddress{
-              IpAddress::fromBinaryString(data.substr(i, 16)),
+          IpAddress::fromBinaryString(data.substr(i, 16)),
           unpack<uint16_t>(data.substr(i + 16, 2))});
     }
   } else if(data[0] == (char)BaseToPeerMessageKind::DATA) {
@@ -680,7 +680,7 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
 
     while(i + 18 <= data.size() && msg.udpAddress.size() < 5) {
       msg.udpAddress.push_back(InetAddress{
-              IpAddress::fromBinaryString(data.substr(i, 16)),
+          IpAddress::fromBinaryString(data.substr(i, 16)),
           unpack<uint16_t>(data.substr(i + 16, 2))});
       i += 18;
     }
