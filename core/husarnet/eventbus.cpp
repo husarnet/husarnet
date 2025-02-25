@@ -48,7 +48,7 @@ void EventBus::periodic()
         .port = 80,
     };
 
-    std::string endpoint = "/device/" + this->myAddress.str();
+    std::string endpoint = "/device/" + this->myAddress.toString();
 
     this->ws.connect(ebAddress, endpoint.data());
   }

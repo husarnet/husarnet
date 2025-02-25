@@ -41,7 +41,7 @@ class IpAddress {
   }
 
   // TODO: this conversion is probably bit dangerous now,
-  // because 0.0.0.0 is valid in some contexts
+  // because ::/0 is valid in some contexts
   operator bool() const
   {
     return *this != IpAddress();
@@ -57,15 +57,8 @@ class IpAddress {
   bool isPrivateNetworkV4() const;
   bool isReservedNotPrivate() const;
 
-  std::string toBinaryString() const
-  {
-    return std::string((char*)data.data(), 16);
-  }
-
-  std::string toString() const
-  {
-    return str();
-  }
+  std::string toBinaryString() const;
+  std::string toString() const;
 
   static IpAddress fromBinaryString(std::string s)
   {
@@ -100,7 +93,6 @@ class IpAddress {
     return r;
   }
 
-  std::string str() const;
   static IpAddress parse(const char* s);
   static IpAddress parse(const std::string& s)
   {
@@ -110,21 +102,6 @@ class IpAddress {
 
 typedef IpAddress HusarnetAddress;
 typedef IpAddress InternetAddress;
-
-// specialize hash function for map keys
-// this is identical to hash<fstring<16>> but I have to rewrite it
-// TODO: ympek I don't yet understand why we just copy last 4 bytes...
-namespace std {
-  template <>
-  struct hash<HusarnetAddress> {
-    unsigned operator()(const HusarnetAddress& a) const
-    {
-      unsigned s;
-      memcpy(&s, &a.data[12], 4);
-      return s;
-    }
-  };
-}  // namespace std
 
 class InetAddress {
  public:
@@ -155,10 +132,10 @@ class InetAddress {
   std::string str() const
   {
     if(ip.isMappedV4()) {
-      return ip.str() + ":" + std::to_string(port);
+      return ip.toString() + ":" + std::to_string(port);
     }
 
-    return "[" + ip.str() + "]:" + std::to_string(port);
+    return "[" + ip.toString() + "]:" + std::to_string(port);
   }
 
   // TODO long term - make it handle addresses without brackets too (namely IPv4
@@ -181,6 +158,7 @@ inline size_t hashpair(size_t a, size_t b)
   return (a + b + 0x64e9c409) ^ (a << 1);  // no idea if this a good function
 }
 
+// specialize hash function for map keys
 class iphash {
  public:
   size_t operator()(IpAddress a) const

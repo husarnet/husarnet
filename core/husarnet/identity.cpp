@@ -67,7 +67,7 @@ std::string Identity::serialize()
 {
   std::stringstream buffer;
 
-  buffer << NgSocketCrypto::pubkeyToDeviceId(pubkey).str();
+  buffer << NgSocketCrypto::pubkeyToDeviceId(pubkey).toString();
   buffer << " ";
 
   buffer << encodeHex(pubkey);

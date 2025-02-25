@@ -158,7 +158,7 @@ std::list<std::string> stringifyIpAddressList(
   std::list<std::string> stringified{};
   std::transform(
       source.cbegin(), source.cend(), std::back_insert_iterator(stringified),
-      [](const IpAddress element) { return element.str(); });
+      [](const IpAddress element) { return element.toString(); });
   return stringified;
 }
 

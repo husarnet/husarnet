@@ -14,7 +14,7 @@ class PeerContainer {
   ConfigManager* configManager;
   Identity* identity;
 
-  std::unordered_map<HusarnetAddress, Peer*> peers;
+  std::unordered_map<HusarnetAddress, Peer*, iphash> peers;
 
   // TODO figure out whether this caching is still beneficial
   Peer* cachedPeer = nullptr;
@@ -27,7 +27,7 @@ class PeerContainer {
   Peer* getPeer(HusarnetAddress id);
   Peer* getOrCreatePeer(HusarnetAddress id);
 
-  std::unordered_map<HusarnetAddress, Peer*>
+  std::unordered_map<HusarnetAddress, Peer*, iphash>
   getPeers();  // TODO change to ETL container // TODO see how it's used and
                // optimize the shape
 };

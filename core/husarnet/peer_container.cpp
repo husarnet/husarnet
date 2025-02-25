@@ -62,7 +62,7 @@ Peer* PeerContainer::getOrCreatePeer(HusarnetAddress id)
 }
 
 // TODO: ympek: why are we returning a copy and not a reference here?
-std::unordered_map<HusarnetAddress, Peer*> PeerContainer::getPeers()
+std::unordered_map<HusarnetAddress, Peer*, iphash> PeerContainer::getPeers()
 {
   return peers;
 }

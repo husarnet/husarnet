@@ -42,18 +42,6 @@ struct fstring : std::array<unsigned char, size> {
   }
 };
 
-namespace std {
-  template <>
-  struct hash<fstring<16>> {
-    unsigned operator()(const fstring<16>& a) const
-    {
-      unsigned s;
-      memcpy(&s, &a[12], 4);
-      return s;
-    }
-  };
-}  // namespace std
-
 template <int size, int size1>
 std::string operator+(const fstring<size>& a, const fstring<size1>& b)
 {

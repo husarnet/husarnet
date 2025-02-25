@@ -366,7 +366,12 @@ IpAddress IpAddress::parse(const char* s)
   return IpAddress{};
 }
 
-std::string IpAddress::str() const
+std::string IpAddress::toBinaryString() const
+{
+  return std::string((char*)data.data(), 16);
+}
+
+std::string IpAddress::toString() const
 {
   if(isMappedV4()) {
     return std::to_string(data[12]) + "." + std::to_string(data[13]) + "." +
@@ -386,3 +391,4 @@ std::string IpAddress::str() const
 
   return res;
 }
+
