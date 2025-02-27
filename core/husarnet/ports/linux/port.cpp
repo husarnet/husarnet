@@ -302,7 +302,7 @@ namespace Port {
 
     netlinkMutex.unlock();
 
-    if(ipv4) {
+    if(ipv4.isMappedV4()) {
       return ipv4;
     } else {
       return ipv6;

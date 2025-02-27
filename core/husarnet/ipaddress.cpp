@@ -5,6 +5,35 @@
 
 #include <netinet/in.h>
 
+// Default initialization sets one of "Documentation" Ipv6 reserved addresses (3fff::)
+// This value does not make sense in a real system, contrary to :: (all zeroes)
+// Which can be valid sometimes
+// Always use isValid() and other checks to verify if the instance is valid
+// DO NOT compare the underlying data value directly
+// TODO: fix ngsocket and make the data field private
+IpAddress::IpAddress() : data("\x3f\xff\0\0\0\0\0\0\0\0\0\0\0\0\0\0") {}
+IpAddress::IpAddress(fstring<16> data) : data(data) {}
+
+bool IpAddress::operator==(const fstring<16> other) const
+{
+  return data == other;
+}
+
+bool IpAddress::operator==(const IpAddress other) const
+{
+  return data == other.data;
+}
+
+bool IpAddress::operator<(const IpAddress other) const
+{
+  return data < other.data;
+}
+
+bool IpAddress::operator!=(const IpAddress other) const
+{
+  return !(*this == other);
+}
+
 bool IpAddress::isLinkLocal() const
 {
   if(isMappedV4())
@@ -368,6 +397,11 @@ IpAddress IpAddress::parse(const char* s)
   return IpAddress{};
 }
 
+IpAddress IpAddress::parse(const std::string& s)
+{
+  return parse(s.c_str());
+}
+
 std::string IpAddress::toBinaryString() const
 {
   return std::string((char*)data.data(), 16);
@@ -405,4 +439,46 @@ bool IpAddress::isValid() const
 bool IpAddress::isInvalid() const
 {
   return memcmp(data.data(), "\x3f\xff", 2) == 0;
+}
+
+IpAddress IpAddress::fromBinaryString(std::string s)
+{
+  assert(s.size() == 16);
+  IpAddress r;
+  memcpy(r.data.data(), s.data(), 16);
+  return r;
+}
+
+IpAddress IpAddress::fromBinary(const char* data)
+{
+  IpAddress r;
+  memcpy(r.data.data(), data, 16);
+  return r;
+}
+
+IpAddress IpAddress::fromBinary4(uint32_t addr)
+{
+  IpAddress r;
+  r.data[0] = 0;
+  r.data[1] = 0;
+  r.data[10] = 0xFF;
+  r.data[11] = 0xFF;
+  memcpy(r.data.data() + 12, &addr, 4);
+  return r;
+}
+
+IpAddress IpAddress::fromBinary4(const char* data)
+{
+  IpAddress r;
+  r.data[0] = 0;
+  r.data[1] = 0;
+  r.data[10] = 0xFF;
+  r.data[11] = 0xFF;
+  memcpy(r.data.data() + 12, data, 4);
+  return r;
+}
+
+IpAddress IpAddress::wildcard()
+{
+  return IpAddress(fstring<16>("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"));
 }

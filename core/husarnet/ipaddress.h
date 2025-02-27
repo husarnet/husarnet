@@ -14,39 +14,13 @@ class IpAddress {
  public:
   fstring<16> data;
 
-  // fstring default constructor will zero-initialize;
-  // This makes IpAddress() equivalent to old BadDeviceId
-  // TODO make sure we still zero-initialize after getting rid of fstring
-  IpAddress() : data()
-  {
-  }
+  IpAddress();
+  IpAddress(fstring<16>);
 
-  IpAddress(fstring<16> data) : data(data)
-  {
-  }
-
-  bool operator==(const IpAddress other) const
-  {
-    return data == other.data;
-  }
-
-  bool operator<(const IpAddress other) const
-  {
-    return data < other.data;
-  }
-
-  bool operator!=(const IpAddress other) const
-  {
-    return !(*this == other);
-  }
-
-  // TODO: this conversion is probably bit dangerous now,
-  // because ::/0 is valid in some contexts
-  // TODO: we will use explicit isZero() method maybe
-  operator bool() const
-  {
-    return *this != IpAddress();
-  }
+  bool operator==(const fstring<16> other) const;
+  bool operator==(const IpAddress other) const;
+  bool operator<(const IpAddress other) const;
+  bool operator!=(const IpAddress other) const;
 
   bool isValid() const;
   bool isInvalid() const;
@@ -64,44 +38,13 @@ class IpAddress {
   std::string toBinaryString() const;
   std::string toString() const;
 
-  static IpAddress fromBinaryString(std::string s)
-  {
-    assert(s.size() == 16);
-    IpAddress r;
-    memcpy(r.data.data(), s.data(), 16);
-    return r;
-  }
-
-  static IpAddress fromBinary(const char* data)
-  {
-    IpAddress r;
-    memcpy(r.data.data(), data, 16);
-    return r;
-  }
-
-  static IpAddress fromBinary4(uint32_t addr)
-  {
-    IpAddress r;
-    r.data[10] = 0xFF;
-    r.data[11] = 0xFF;
-    memcpy(r.data.data() + 12, &addr, 4);
-    return r;
-  }
-
-  static IpAddress fromBinary4(const char* data)
-  {
-    IpAddress r;
-    r.data[10] = 0xFF;
-    r.data[11] = 0xFF;
-    memcpy(r.data.data() + 12, data, 4);
-    return r;
-  }
-
+  static IpAddress wildcard();
   static IpAddress parse(const char* s);
-  static IpAddress parse(const std::string& s)
-  {
-    return parse(s.c_str());
-  }
+  static IpAddress parse(const std::string& s);
+  static IpAddress fromBinaryString(std::string s);
+  static IpAddress fromBinary(const char* data);
+  static IpAddress fromBinary4(uint32_t addr);
+  static IpAddress fromBinary4(const char* data);
 };
 
 typedef IpAddress HusarnetAddress;
@@ -129,7 +72,7 @@ class InetAddress {
 
   operator bool()
   {
-    return ip;
+    return ip.isValid();
   }
 
   // TODO long term - make it not use brackets for IPv4 addresses

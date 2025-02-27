@@ -790,12 +790,12 @@ std::string NgSocket::serializePeerToBaseMessage(const PeerToBaseMessage& msg)
 
   switch(msg.kind) {
     case +PeerToBaseMessageKind::REQUEST_INFO:
-      data += msg.deviceId;
+      data += msg.deviceId.data;
       break;
     case +PeerToBaseMessageKind::DATA:
       data =
           pack((uint8_t)msg.kind._value) + this->myIdentity->getDeviceId().data;
-      data += msg.target;
+      data += msg.target.data;
       data += msg.data;
       break;
     case +PeerToBaseMessageKind::USER_AGENT:

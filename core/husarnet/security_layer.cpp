@@ -155,7 +155,7 @@ void SecurityLayer::sendHelloPacket(Peer* peer, int num, uint64_t helloseq)
   packet.push_back((char)num);
   packet += this->myIdentity->getPubkey();
   packet += peer->kxPubkey;
-  packet += peer->id;
+  packet += peer->id.data;
   packet += pack(this->helloseq);
   packet += pack(helloseq);
   packet += pack(this->myFlags->asBin());

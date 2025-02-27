@@ -48,8 +48,7 @@ void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
     packet[5] = (char)(payloadSize & 0xFF);
     packet[6] = protocol;
     packet[7] = 3;  // hop limit
-    packet +=
-        source;  // TODO: ympek: check if binary data is appended correctly
+    packet += source.data;  // TODO: ympek: check if binary data is appended correctly
     packet += mcastAddr;
     packet += data.substr(19);
 
@@ -67,9 +66,8 @@ void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
     packet[5] = (char)(payloadSize & 0xFF);
     packet[6] = protocol;
     packet[7] = 3;  // hop limit
-    packet +=
-        source;  // TODO : ympek : check if binary data is appended correctly
-    packet += this->myDeviceId;
+    packet += source.data;  // TODO : ympek : check if binary data is appended correctly
+    packet += this->myDeviceId.data;
     packet += data.substr(1);
 
     sendToUpperLayer(source, packet);

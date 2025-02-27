@@ -135,7 +135,7 @@ namespace OsSocket {
 
   bool udpListenUnicast(int port, PacketCallback callback, bool setAsDefault)
   {
-    int fd = bindUdpSocket(InetAddress{IpAddress(), (uint16_t)port}, false);
+    int fd = bindUdpSocket(InetAddress{IpAddress::wildcard(), (uint16_t)port}, false);
     if(fd == -1)
       return false;
 
@@ -163,7 +163,7 @@ namespace OsSocket {
   {
     if(address.ip.isMappedV4()) {
       int fd = bindUdpSocket(
-          InetAddress{IpAddress(), (uint16_t)address.port}, true,
+          InetAddress{IpAddress::wildcard(), (uint16_t)address.port}, true,
           /*ipv6=*/false);
       if(fd == -1)
         return false;
@@ -182,7 +182,7 @@ namespace OsSocket {
       }
     } else {
       int fd =
-          bindUdpSocket(InetAddress{IpAddress(), (uint16_t)address.port}, true);
+          bindUdpSocket(InetAddress{IpAddress::wildcard(), (uint16_t)address.port}, true);
       if(fd == -1)
         return false;
       multicastUdpFd6 = fd;
