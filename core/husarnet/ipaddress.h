@@ -42,11 +42,15 @@ class IpAddress {
 
   // TODO: this conversion is probably bit dangerous now,
   // because ::/0 is valid in some contexts
+  // TODO: we will use explicit isZero() method maybe
   operator bool() const
   {
     return *this != IpAddress();
   }
 
+  bool isValid() const;
+  bool isInvalid() const;
+  bool isZero() const;
   bool isLinkLocal() const;
   bool isMappedV4() const;
   bool isPrivateV4() const;

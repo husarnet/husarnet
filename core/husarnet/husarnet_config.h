@@ -3,10 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include "husarnet/ipaddress.h"
-
-#ifdef ESP_PLATFORM
-#include "sdkconfig.h"
-#endif
+#include "husarnet/ports/port.h"
 
 #ifdef ESP_PLATFORM
 #include "sdkconfig.h"
@@ -16,10 +13,14 @@
 #define HUSARNET_USER_AGENT \
   "Husarnet," PORT_NAME "," PORT_ARCH "," HUSARNET_VERSION
 
-#define WEBSETUP_SERVER_PORT 5580
-#define WEBSETUP_CLIENT_PORT 4800
 #define BASESERVER_PORT 443
 #define MULTICAST_PORT 5581
+
+#ifdef ESP_PLATFORM
+#define JSON_INDENT_SPACES 0
+#else
+#define JSON_INDENT_SPACES 4
+#endif
 
 static const int MAX_QUEUED_PACKETS = 10;
 

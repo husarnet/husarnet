@@ -3,6 +3,14 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/config_manager.h"
 
+#include <etl/string.h>
+#include <sockets.h>
+
+#include "husarnet/husarnet_config.h"
+#include "husarnet/licensing.h"
+
+#include "ngsocket_messages.h"
+
 /*
 
 std::string ConfigStorage::serialize()
@@ -51,58 +59,176 @@ void ConfigStorage::save()
   });
 }
 
-json retrieveLicenseJson(
-    std::string dashboardHostname,
-    bool abortOnFailure = true)
-{
-  IpAddress ip = Port::resolveToIp(dashboardHostname);
-  InetAddress address{ip, 80};
-  int sockfd = OsSocket::connectUnmanagedTcpSocket(address);
-  if(sockfd < 0) {
-    LOG_ERROR(
-        "Can't contact %s - is DNS resolution working properly?",
-        dashboardHostname.c_str());
-    return json::parse("{}");
-  }
-
-  std::string readBuffer;
-  readBuffer.resize(8192);
-
-  std::string request =
-      "GET /license.json HTTP/1.1\n"
-      "Host: " +
-      dashboardHostname +
-      "\n"
-      "User-Agent: husarnet\n"  // TODO change this to HUSARNET_USER_AGENT
-      "Accept: *\n\n"; // fix this accept header
-
-  SOCKFUNC(send)(sockfd, request.data(), request.size(), 0);
-
-  // TODO add a while loop here
-  size_t len =
-      SOCKFUNC(recv)(sockfd, (char*)readBuffer.data(), readBuffer.size(), 0);
-  size_t pos = readBuffer.find("\r\n\r\n");
-
-  if(pos == std::string::npos) {
-    LOG_ERROR("invalid response from the server: %s", readBuffer.c_str());
-
-    if(abortOnFailure) {
-      abort();
-    } else {
-      return json::parse("{}");
-    }
-  }
-  pos += 4;
-
-  LOG_DEBUG(
-      "License retrieved from %s, size %d", dashboardHostname.c_str(), len);
-
-  return json::parse(readBuffer.substr(pos, len - pos), nullptr, false);
-}
-
 json retrieveCachedLicenseJson()
 {
   // Don't throw an exception on parse failure
   return json::parse(Port::readLicenseJson(), nullptr, false);
 }
 */
+
+ConfigManager::ConfigManager(
+    const HooksManager* hooks_manager,
+    const ConfigEnv* configEnv)
+    : hooks_manager(hooks_manager), configEnv(configEnv)
+{
+}
+
+void ConfigManager::getLicense()
+{
+  auto tldAddress = this->configEnv->getTldFqdn();
+  auto [statusCode, bytes] = Port::httpGet(tldAddress, "/license.json");
+
+  if(statusCode != 200) {
+    LOG_ERROR("failed to download license file (using tld address %s)", tldAddress.c_str());
+    return;
+  }
+
+  auto licenseJson = json::parse(bytes);
+  if(!isLicenseValid(licenseJson)) {
+    LOG_CRITICAL("license file downloaded from %s is invalid", tldAddress.c_str());
+    return;
+  }
+
+  this->cache_json[CACHE_LICENSE] = licenseJson;
+}
+
+HusarnetAddress ConfigManager::getCurrentApiAddress() const {
+  auto addresses = this->getDashboardApiAddresses();
+  return addresses[0];
+}
+
+void ConfigManager::getGetConfig()
+{
+  auto apiAddress = this->getCurrentApiAddress();
+  auto [statusCode, bytes] = Port::httpGet(apiAddress.toString(), "/device/get_config");
+
+  if(statusCode != 200) {
+    LOG_ERROR("failed to obtain latest config (http request to %s was unsuccessful)", apiAddress.toString().c_str());
+    return;
+  }
+
+  auto config = json::parse(bytes);
+  this->cache_json[CACHE_GET_CONFIG] = config;
+}
+
+bool ConfigManager::readConfig()
+{
+  // TODO: read the file and set the structure properly
+  auto configJson = json::parse(Port::readStorage(StorageKey::config));
+
+  return false;
+}
+bool ConfigManager::readCache()
+{
+  // TODO: read the file (port)
+  return false;
+}
+
+bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
+{
+  // TODO: check ENABLE_CONTROL_PLANE flag I think
+  // first check our iPS, then whitelist, use efficient data str (eg etl::map)
+  return true;
+}
+
+const etl::array<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
+ConfigManager::getEventbusAddresses() const
+{
+  const auto ips = this->cache_json["license"][LICENSE_EB_SERVERS_KEY]
+                       .get<std::vector<std::string>>();
+  auto result = etl::array<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>();
+  for(int i = 0; i < ips.size(); i++) {
+    result[i] = HusarnetAddress::parse(ips[i]);
+  }
+  return result;
+}
+
+const etl::array<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>
+ConfigManager::getDashboardApiAddresses() const
+{
+  const auto ips = this->cache_json["license"][LICENSE_API_SERVERS_KEY]
+                       .get<std::vector<std::string>>();
+  auto result = etl::array<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>();
+  for(int i = 0; i < ips.size(); i++) {
+    result[i] = HusarnetAddress::parse(ips[i]);
+  }
+  return result;
+}
+
+const etl::array<InternetAddress, BASE_ADDRESSES_LIMIT>
+ConfigManager::getBaseAddresses() const
+{
+  const auto ips =
+      this->cache_json["license"][LICENSE_BASE_SERVER_ADDRESSES_KEY]
+          .get<std::vector<std::string>>();
+  auto result = etl::array<InternetAddress, BASE_ADDRESSES_LIMIT>();
+  for(int i = 0; i < ips.size(); i++) {
+    result[i] = InternetAddress::parse(ips[i]);
+  }
+  return result;
+}
+
+const etl::array<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
+ConfigManager::getMulticastDestinations(HusarnetAddress id)
+{
+  return etl::array<HusarnetAddress, 128>();
+}
+const json ConfigManager::getStatus() const
+{
+  return this->config_json;
+}
+bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
+{
+  return false;
+}
+void ConfigManager::flush()
+{
+  this->writeConfig();
+  this->writeCache();
+}
+
+bool ConfigManager::writeConfig()
+{
+  return Port::writeStorage(StorageKey::config, config_json.dump(4));
+}
+
+bool ConfigManager::writeCache()
+{
+  return Port::writeStorage(StorageKey::cache, config_json.dump(4));
+}
+
+void ConfigManager::periodicThread()
+{
+  // while w srodku
+  LOG_INFO("ConfigManagerDev: periodic thread started")
+  if(this->readConfig()) {
+    LOG_INFO("ConfigManagerDev: config read from disk successful")
+  }
+  if(this->readCache()) {
+    LOG_INFO("ConfigManagerDev: cache read from disk successful")
+  }
+
+  LOG_INFO("ConfigManagerDev: getting the license")
+  this->getLicense();
+}
+void ConfigManager::waitInit()
+{
+  LOG_INFO("ConfigManagerDev: wait init started")
+  // we need to at least have license information, like for example base server
+  // to connect to.
+  while(this->cache_json["license"].is_discarded() ||
+        this->cache_json["license"].is_null()) {
+    // LOG_INFO("ConfigManagerDev: waiting")
+  }
+  LOG_INFO("ConfigManagerDev: wait init finished")
+}
+bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
+{
+  auto whitelist =
+      this->config_json["whitelist"].get<std::vector<std::string>>();
+  return false;
+}
+void ConfigManager::triggerGetConfig()
+{
+  // send to periodicThread
+}

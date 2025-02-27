@@ -14,6 +14,7 @@
 #include "husarnet/logging.h"
 
 #include "etl/map.h"
+#include "nlohmann/json.hpp"
 
 using Time = int64_t;
 
@@ -95,6 +96,13 @@ namespace Port {
 
   // Hooks
   bool runHook(HookType hookType);
+
+  // Layer 7 network ops
+  struct HttpResult {
+    int statusCode; // -1 will be set if the request failed
+    std::string bytes;
+  };
+  HttpResult httpGet(const std::string& url, const std::string& path);
 
   // Storage
   std::string readStorage(

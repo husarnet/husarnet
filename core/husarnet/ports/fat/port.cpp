@@ -457,4 +457,56 @@ namespace Port {
     auto path = configDir + storageMap.at(key);
     return writeFile(path, data);
   }
+
+  __attribute__((weak)) HttpResult httpGet(const std::string& host, const std::string& path)
+  {
+    // Host could be an IP address, let's check
+    // If it's not, we need to resolve it
+    auto ip = IpAddress::parse(host);
+    if(ip.isInvalid()) {
+      ip = Port::resolveToIp(host);
+    }
+
+    if(ip.isInvalid()) {
+      LOG_ERROR("Can't resolve %s to IP: requesting %s failed", host.c_str(), path.c_str());
+      return {-1, ""};
+    }
+
+    std::string req = {
+      "GET " + path + " HTTP/1.1\n"
+      "Host: " + host + "\n"
+      "User-Agent: " + HUSARNET_USER_AGENT + "\n"
+      "Accept: application/json\n\n"
+    };
+
+    InetAddress address{ip, 80};
+    int sockfd = OsSocket::connectUnmanagedTcpSocket(address);
+    if(sockfd < 0) {
+      LOG_ERROR(
+          "can't contact %s - is DNS resolution working properly?",
+          host.c_str());
+      return {-1, ""};
+    }
+
+    std::string readBuffer;
+    readBuffer.resize(8192);
+
+    SOCKFUNC(send)(sockfd, req.data(), req.size(), 0);
+
+    // TODO add a while loop here
+    size_t len =
+      SOCKFUNC(recv)(sockfd, (char*)readBuffer.data(), readBuffer.size(), 0);
+    size_t pos = readBuffer.find("\r\n\r\n");
+
+    if(pos == std::string::npos) {
+      LOG_CRITICAL("invalid response from the server: %s", readBuffer.c_str());
+    }
+    pos += 4;
+
+    LOG_CRITICAL( // TODO
+        "License retrieved from %s, size %d", host.c_str(), len);
+
+    // TODO: for now it is fake 200
+    return {200, readBuffer.substr(pos, len - pos)};
+  }
 }  // namespace Port

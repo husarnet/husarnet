@@ -38,9 +38,15 @@ using namespace nlohmann;  // json
 #define CACHE_LICENSE "license"
 #define CACHE_GET_CONFIG "get_config"
 
+#define CONFIG_ENV_KEY "env"
+#define ENV_TLD_FQDN "tldFqdn"
+
 class ConfigManager {
  private:
-  HooksManager* hooks_manager;
+  const HooksManager* hooks_manager;
+  const ConfigEnv* configEnv;
+
+  // TODO: template basic_json class to use etl containers
   json config_json;
   json cache_json;
 
@@ -53,10 +59,10 @@ class ConfigManager {
   bool writeConfig();  // If this fails we should propagate the error
   bool writeCache();   // It does not matter whether this fails
 
-  void flush();  // Technically - just call these two writes above
+  void flush();
 
  public:
-  ConfigManager(HooksManager* hooks_manager, const ConfigEnv* configEnv);
+  ConfigManager(const HooksManager* hooks_manager, const ConfigEnv* configEnv);
 
   void periodicThread();  // Start as a thread - update license, flush cache to
                           // file, etc.
@@ -92,4 +98,6 @@ class ConfigManager {
   getDashboardApiAddresses() const;
   const etl::array<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
   getEventbusAddresses() const;
+
+  HusarnetAddress getCurrentApiAddress() const;
 };

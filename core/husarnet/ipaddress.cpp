@@ -44,7 +44,7 @@ bool IpAddress::isWildcard() const
   if(isMappedV4())
     return data[12] == 0;
   else
-    return memcmp(data.data(), "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16) == 0;
+    return isZero();
 }
 
 bool IpAddress::isLoopback() const
@@ -354,6 +354,8 @@ IpAddress IpAddress::parse(const char* s)
   IpAddress r{};
 
   if(husarnet_ip4addr_aton(s, (uint8_t*)(r.data.data() + 12)) == 1) {
+    r.data[0] = 0;
+    r.data[1] = 0;
     r.data[10] = 0xFF;
     r.data[11] = 0xFF;
     return r;
@@ -392,3 +394,15 @@ std::string IpAddress::toString() const
   return res;
 }
 
+bool IpAddress::isZero() const
+{
+  return memcmp(data.data(), "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16) == 0;
+}
+bool IpAddress::isValid() const
+{
+  return !isInvalid();
+}
+bool IpAddress::isInvalid() const
+{
+  return memcmp(data.data(), "\x3f\xff", 2) == 0;
+}
