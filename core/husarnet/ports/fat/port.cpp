@@ -506,7 +506,7 @@ namespace Port {
     LOG_CRITICAL( // TODO
         "License retrieved from %s, size %d", host.c_str(), len);
 
-    // TODO: for now it is fake 200
+    // TODO: for now it is fake 200, we don't parse the resp headers, just body
     return {200, readBuffer.substr(pos, len - pos)};
   }
 }  // namespace Port

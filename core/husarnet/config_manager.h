@@ -8,7 +8,7 @@
 #include "husarnet/hooks_manager.h"
 #include "husarnet/ipaddress.h"
 
-#include "etl/array.h"
+#include "etl/vector.h"
 #include "nlohmann/json.hpp"
 
 using namespace nlohmann;  // json
@@ -43,7 +43,7 @@ using namespace nlohmann;  // json
 
 class ConfigManager {
  private:
-  const HooksManager* hooks_manager;
+  const HooksManager* hooksManager;
   const ConfigEnv* configEnv;
 
   // TODO: template basic_json class to use etl containers
@@ -62,7 +62,7 @@ class ConfigManager {
   void flush();
 
  public:
-  ConfigManager(const HooksManager* hooks_manager, const ConfigEnv* configEnv);
+  ConfigManager(const HooksManager* hooksManager, const ConfigEnv* configEnv);
 
   void periodicThread();  // Start as a thread - update license, flush cache to
                           // file, etc.
@@ -85,18 +85,18 @@ class ConfigManager {
   bool isPeerAllowed(const HusarnetAddress& address)
       const;  // TODO always say "yes" to all of the infra servers // This has
               // to be a high performance method
-  const etl::array<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
+  const etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
   getMulticastDestinations(
       HusarnetAddress id);  // This has to be a high performance method
 
   // Those may change over time (license, get_config changes) so whoever
   // uses them is responsible for re-reading them periodically
-  const etl::array<InternetAddress, BASE_ADDRESSES_LIMIT> getBaseAddresses()
+  const etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> getBaseAddresses()
       const;  // Note: one day this will also carry some metadata
               // about the base servers
-  const etl::array<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>
+  const etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>
   getDashboardApiAddresses() const;
-  const etl::array<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
+  const etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
   getEventbusAddresses() const;
 
   HusarnetAddress getCurrentApiAddress() const;

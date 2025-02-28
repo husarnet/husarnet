@@ -11,65 +11,10 @@
 
 #include "ngsocket_messages.h"
 
-/*
-
-std::string ConfigStorage::serialize()
-{
-#ifdef PORT_ESP32
-  return this->currentData.dump(0);
-#else
-  return this->currentData.dump(4);
-#endif
-}
-
-void ConfigStorage::deserialize(std::string blob)
-{
-  // Initialize an empty file with something JSON-ish
-  if(blob.length() < 3) {
-    blob = "{}";
-  }
-
-  this->currentData = json::parse(blob);
-
-  // Make sure that all data is in a proper format
-  if(!currentData[HOST_TABLE_KEY].is_object()) {
-    currentData[HOST_TABLE_KEY] = json::object();
-  }
-  if(!currentData[WHITELIST_KEY].is_array()) {
-    currentData[WHITELIST_KEY] = json::array();
-  }
-  if(!currentData[INTERNAL_SETTINGS_KEY].is_object()) {
-    currentData[INTERNAL_SETTINGS_KEY] = json::object();
-  }
-  if(!currentData[USER_SETTINGS_KEY].is_object()) {
-    currentData[USER_SETTINGS_KEY] = json::object();
-  }
-}
-
-void ConfigStorage::save()
-{
-  if(!this->shouldSaveImmediately) {
-    return;
-  }
-
-  manager->getHooksManager()->withRw([&]() {
-    LOG_DEBUG("saving settings for ConfigStorage");
-    writeFunc(serialize());
-    updateHostsInSystem();
-  });
-}
-
-json retrieveCachedLicenseJson()
-{
-  // Don't throw an exception on parse failure
-  return json::parse(Port::readLicenseJson(), nullptr, false);
-}
-*/
-
 ConfigManager::ConfigManager(
-    const HooksManager* hooks_manager,
+    const HooksManager* hooksManager,
     const ConfigEnv* configEnv)
-    : hooks_manager(hooks_manager), configEnv(configEnv)
+    : hooksManager(hooksManager), configEnv(configEnv)
 {
 }
 
@@ -89,6 +34,7 @@ void ConfigManager::getLicense()
     return;
   }
 
+  // TODO: mutex is needed
   this->cache_json[CACHE_LICENSE] = licenseJson;
 }
 
@@ -113,15 +59,36 @@ void ConfigManager::getGetConfig()
 
 bool ConfigManager::readConfig()
 {
-  // TODO: read the file and set the structure properly
-  auto configJson = json::parse(Port::readStorage(StorageKey::config));
-
-  return false;
+  auto contents = Port::readStorage(StorageKey::config);
+  if(contents.empty()) {
+    LOG_INFO("saved config.json is empty/nonexistent");
+    return false;
+  }
+  auto configJson = json::parse(contents, nullptr, false);
+  if(configJson.is_discarded()) {
+    LOG_INFO("saved config.json is not a valid JSON, not reading");
+    return false;
+  }
+  // TODO: mutex here
+  this->config_json = configJson;
+  return true;
 }
+
 bool ConfigManager::readCache()
 {
-  // TODO: read the file (port)
-  return false;
+  auto contents = Port::readStorage(StorageKey::cache);
+  if(contents.empty()) {
+    LOG_INFO("saved cache.json is empty/nonexistent");
+    return false;
+  }
+  auto cacheJson = json::parse(contents, nullptr, false);
+  if(cacheJson.is_discarded()) {
+    LOG_INFO("saved cache.json is not a valid JSON, not reading");
+    return false;
+  }
+  // TODO: mutex here
+  this->cache_json = cacheJson;
+  return true;
 }
 
 bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
@@ -131,50 +98,52 @@ bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
   return true;
 }
 
-const etl::array<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
+const etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
 ConfigManager::getEventbusAddresses() const
 {
   const auto ips = this->cache_json["license"][LICENSE_EB_SERVERS_KEY]
                        .get<std::vector<std::string>>();
-  auto result = etl::array<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>();
-  for(int i = 0; i < ips.size(); i++) {
-    result[i] = HusarnetAddress::parse(ips[i]);
+  auto result = etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>();
+  for (auto& ip: ips) {
+    result.push_back(HusarnetAddress::parse(ip));
   }
   return result;
 }
 
-const etl::array<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>
+const etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>
 ConfigManager::getDashboardApiAddresses() const
 {
   const auto ips = this->cache_json["license"][LICENSE_API_SERVERS_KEY]
                        .get<std::vector<std::string>>();
-  auto result = etl::array<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>();
-  for(int i = 0; i < ips.size(); i++) {
-    result[i] = HusarnetAddress::parse(ips[i]);
+  auto result = etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>();
+  for (auto& ip: ips) {
+    result.push_back(HusarnetAddress::parse(ip));
   }
   return result;
 }
 
-const etl::array<InternetAddress, BASE_ADDRESSES_LIMIT>
+const etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT>
 ConfigManager::getBaseAddresses() const
 {
   const auto ips =
       this->cache_json["license"][LICENSE_BASE_SERVER_ADDRESSES_KEY]
           .get<std::vector<std::string>>();
-  auto result = etl::array<InternetAddress, BASE_ADDRESSES_LIMIT>();
-  for(int i = 0; i < ips.size(); i++) {
-    result[i] = InternetAddress::parse(ips[i]);
+  auto result = etl::vector<HusarnetAddress, BASE_ADDRESSES_LIMIT>();
+  for (auto& ip: ips) {
+    result.push_back(HusarnetAddress::parse(ip));
   }
   return result;
 }
 
-const etl::array<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
+const etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
 ConfigManager::getMulticastDestinations(HusarnetAddress id)
 {
-  return etl::array<HusarnetAddress, 128>();
+  // TODO: what are multicast destinations anyway?
+  return etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>();
 }
 const json ConfigManager::getStatus() const
 {
+  // TODO: there's much more to this, implement it later
   return this->config_json;
 }
 bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
@@ -189,12 +158,12 @@ void ConfigManager::flush()
 
 bool ConfigManager::writeConfig()
 {
-  return Port::writeStorage(StorageKey::config, config_json.dump(4));
+  return Port::writeStorage(StorageKey::config, config_json.dump(JSON_INDENT_SPACES));
 }
 
 bool ConfigManager::writeCache()
 {
-  return Port::writeStorage(StorageKey::cache, config_json.dump(4));
+  return Port::writeStorage(StorageKey::cache, config_json.dump(JSON_INDENT_SPACES));
 }
 
 void ConfigManager::periodicThread()
@@ -210,7 +179,9 @@ void ConfigManager::periodicThread()
 
   LOG_INFO("ConfigManagerDev: getting the license")
   this->getLicense();
+  this->flush();
 }
+
 void ConfigManager::waitInit()
 {
   LOG_INFO("ConfigManagerDev: wait init started")
@@ -218,10 +189,12 @@ void ConfigManager::waitInit()
   // to connect to.
   while(this->cache_json["license"].is_discarded() ||
         this->cache_json["license"].is_null()) {
+    // busy wait
     // LOG_INFO("ConfigManagerDev: waiting")
   }
   LOG_INFO("ConfigManagerDev: wait init finished")
 }
+
 bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 {
   auto whitelist =
@@ -231,4 +204,5 @@ bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 void ConfigManager::triggerGetConfig()
 {
   // send to periodicThread
+  // some sort of IPC is here needed
 }
