@@ -9,6 +9,9 @@
 #include "husarnet/ipaddress.h"
 
 #include "etl/vector.h"
+#include "etl/mutex.h"
+#include "etl/unordered_map.h"
+
 #include "nlohmann/json.hpp"
 
 using namespace nlohmann;  // json
@@ -39,7 +42,10 @@ using namespace nlohmann;  // json
 #define CACHE_GET_CONFIG "get_config"
 
 #define CONFIG_ENV_KEY "env"
+#define CONFIG_PEERS_KEY "peers"
 #define ENV_TLD_FQDN "tldFqdn"
+
+constexpr int configManagerThreadPeriodMs = 1000 * 60 * 10; // 10 min
 
 class ConfigManager {
  private:
@@ -49,6 +55,8 @@ class ConfigManager {
   // TODO: template basic_json class to use etl containers
   json config_json;
   json cache_json;
+
+  etl::mutex mutex;
 
   void getLicense();    // Actually do an HTTP call to TLD
   void getGetConfig();  // Actually do an HTTP call to API
@@ -64,7 +72,7 @@ class ConfigManager {
  public:
   ConfigManager(const HooksManager* hooksManager, const ConfigEnv* configEnv);
 
-  void periodicThread();  // Start as a thread - update license, flush cache to
+  [[noreturn]] void periodicThread();  // Start as a thread - update license, flush cache to
                           // file, etc.
   void waitInit();  // Busy loop until valid enough metadata is available to
                     // function
@@ -85,18 +93,18 @@ class ConfigManager {
   bool isPeerAllowed(const HusarnetAddress& address)
       const;  // TODO always say "yes" to all of the infra servers // This has
               // to be a high performance method
-  const etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
+  etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
   getMulticastDestinations(
       HusarnetAddress id);  // This has to be a high performance method
 
   // Those may change over time (license, get_config changes) so whoever
   // uses them is responsible for re-reading them periodically
-  const etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> getBaseAddresses()
+  etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> getBaseAddresses()
       const;  // Note: one day this will also carry some metadata
               // about the base servers
-  const etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>
+  etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>
   getDashboardApiAddresses() const;
-  const etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
+  etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
   getEventbusAddresses() const;
 
   HusarnetAddress getCurrentApiAddress() const;

@@ -65,7 +65,7 @@ void EventBus::_handleMessage(WebSocket::Message& message)
 
   etl::string_view data(message.data.begin(), message.data.size());
 
-  if(data.compare("getConfig") == 0) {
+  if(data.compare("get_config") == 0) {
     this->_handleGetConfig_ll();
   } else {
     LOG_WARNING("Unknown EB message: %s", data.data());

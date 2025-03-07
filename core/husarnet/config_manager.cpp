@@ -95,10 +95,12 @@ bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
 {
   // TODO: check ENABLE_CONTROL_PLANE flag I think
   // first check our iPS, then whitelist, use efficient data str (eg etl::map)
+  const auto ebServers = this->cache_json["license"][LICENSE_EB_SERVERS_KEY]
+                       .get<std::vector<std::string>>();
   return true;
 }
 
-const etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
+etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
 ConfigManager::getEventbusAddresses() const
 {
   const auto ips = this->cache_json["license"][LICENSE_EB_SERVERS_KEY]
@@ -110,7 +112,7 @@ ConfigManager::getEventbusAddresses() const
   return result;
 }
 
-const etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>
+etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>
 ConfigManager::getDashboardApiAddresses() const
 {
   const auto ips = this->cache_json["license"][LICENSE_API_SERVERS_KEY]
@@ -122,11 +124,11 @@ ConfigManager::getDashboardApiAddresses() const
   return result;
 }
 
-const etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT>
+etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT>
 ConfigManager::getBaseAddresses() const
 {
   const auto ips =
-      this->cache_json["license"][LICENSE_BASE_SERVER_ADDRESSES_KEY]
+      this->cache_json[CACHE_LICENSE][LICENSE_BASE_SERVER_ADDRESSES_KEY]
           .get<std::vector<std::string>>();
   auto result = etl::vector<HusarnetAddress, BASE_ADDRESSES_LIMIT>();
   for (auto& ip: ips) {
@@ -135,11 +137,20 @@ ConfigManager::getBaseAddresses() const
   return result;
 }
 
-const etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
+etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
 ConfigManager::getMulticastDestinations(HusarnetAddress id)
 {
-  // TODO: what are multicast destinations anyway?
-  return etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>();
+  // TODO: figure out if this check was even relevant
+  //  if(!id == deviceIdFromIpAddress(multicastDestination)) {
+  //    return {};
+  //  }
+
+  auto result = etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>();
+  for(auto& peer : this->config_json[CONFIG_PEERS_KEY]) {
+    auto addr = peer["address"].get<std::string>();
+    result.push_back(HusarnetAddress::parse(addr));
+  }
+  return result;
 }
 const json ConfigManager::getStatus() const
 {
@@ -166,20 +177,26 @@ bool ConfigManager::writeCache()
   return Port::writeStorage(StorageKey::cache, config_json.dump(JSON_INDENT_SPACES));
 }
 
-void ConfigManager::periodicThread()
+[[noreturn]] void ConfigManager::periodicThread()
 {
-  // while w srodku
-  LOG_INFO("ConfigManagerDev: periodic thread started")
-  if(this->readConfig()) {
-    LOG_INFO("ConfigManagerDev: config read from disk successful")
-  }
-  if(this->readCache()) {
-    LOG_INFO("ConfigManagerDev: cache read from disk successful")
-  }
+  while(true) {
+    LOG_INFO("ConfigManagerDev: periodic thread started")
+    this->mutex.lock();
+    if(this->readConfig()) {
+      LOG_INFO("ConfigManagerDev: config read from disk successful")
+    }
+    if(this->readCache()) {
+      LOG_INFO("ConfigManagerDev: cache read from disk successful")
+    }
 
-  LOG_INFO("ConfigManagerDev: getting the license")
-  this->getLicense();
-  this->flush();
+    LOG_INFO("ConfigManagerDev: getting the license")
+    this->getLicense();
+    this->flush();
+
+    this->mutex.unlock();
+    LOG_INFO("ConfigManagerDev: periodic thread finished")
+    Port::threadSleep(configManagerThreadPeriodMs);
+  }
 }
 
 void ConfigManager::waitInit()
