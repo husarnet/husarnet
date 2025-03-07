@@ -56,6 +56,11 @@ void HusarnetManager::prepareHusarnet()
   // separately
   this->myIdentity = Identity::init();
 
+  if (this->configManager->isInfraAddress(this->myIdentity->getIpAddress())) {
+    LOG_INFO("HusarnetManager: considering self a part of control plane");
+    this->configManager->setAllowEveryone();
+  }
+
   // Make our PeerFlags available early if the caller wants to change them
   this->myFlags = new PeerFlags();
 }

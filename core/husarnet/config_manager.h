@@ -10,7 +10,7 @@
 
 #include "etl/vector.h"
 #include "etl/mutex.h"
-#include "etl/unordered_map.h"
+#include "etl/set.h"
 
 #include "nlohmann/json.hpp"
 
@@ -19,6 +19,10 @@ using namespace nlohmann;  // json
 // ETL return limits
 #ifndef MULTICAST_DESTINATIONS_LIMIT
 #define MULTICAST_DESTINATIONS_LIMIT 128
+#endif
+
+#ifndef ALLOWED_PEERS_LIMIT
+#define ALLOWED_PEERS_LIMIT 128
 #endif
 
 #ifndef BASE_ADDRESSES_LIMIT
@@ -52,28 +56,30 @@ class ConfigManager {
   const HooksManager* hooksManager;
   const ConfigEnv* configEnv;
 
-  // TODO: template basic_json class to use etl containers
-  json config_json;
-  json cache_json;
+  mutable etl::mutex mutex;
 
-  etl::mutex mutex;
+  etl::set<HusarnetAddress, ALLOWED_PEERS_LIMIT> allowedPeers;
+  etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> baseAdresses;
+  etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT> apiAddresses;
+  etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT> ebAddresses;
+
+  bool allowEveryone = false;
 
   void getLicense();    // Actually do an HTTP call to TLD
+  void processLicense(const json& licenseJson);
   void getGetConfig();  // Actually do an HTTP call to API
 
-  bool readConfig();  // Read from disk and save to object if possible
-  bool readCache();   // Read from disk and save to object if possible
+  bool readConfig(json& jsonDoc);  // Read from disk and save to object if possible
+  bool readCache(json& jsonDoc);   // Read from disk and save to object if possible
 
-  bool writeConfig();  // If this fails we should propagate the error
-  bool writeCache();   // It does not matter whether this fails
-
-  void flush();
+  bool writeConfig(const json& jsonDoc);  // If this fails we should propagate the error
+  bool writeCache(const json& jsonDoc);   // It does not matter whether this fails
 
  public:
   ConfigManager(const HooksManager* hooksManager, const ConfigEnv* configEnv);
 
   [[noreturn]] void periodicThread();  // Start as a thread - update license, flush cache to
-                          // file, etc.
+                                       // file, etc.
   void waitInit();  // Busy loop until valid enough metadata is available to
                     // function
 
@@ -90,21 +96,24 @@ class ConfigManager {
                                  // data (like is connected to base, etc) -
                                  // ideally through the HusarnetManager
 
-  bool isPeerAllowed(const HusarnetAddress& address)
-      const;  // TODO always say "yes" to all of the infra servers // This has
-              // to be a high performance method
+  void setAllowEveryone(); // in case of an infra server
+
+  bool isPeerAllowed(const HusarnetAddress& address) const;
+
+  bool isInfraAddress(const HusarnetAddress& address) const;
+
   etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
   getMulticastDestinations(
       HusarnetAddress id);  // This has to be a high performance method
 
   // Those may change over time (license, get_config changes) so whoever
   // uses them is responsible for re-reading them periodically
-  etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> getBaseAddresses()
+  const etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT>& getBaseAddresses()
       const;  // Note: one day this will also carry some metadata
               // about the base servers
-  etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>
+  const etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>&
   getDashboardApiAddresses() const;
-  etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>
+  const etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>&
   getEventbusAddresses() const;
 
   HusarnetAddress getCurrentApiAddress() const;
