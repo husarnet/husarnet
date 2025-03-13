@@ -3,6 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <string>
+#include <condition_variable>
 
 #include "husarnet/config_env.h"
 #include "husarnet/hooks_manager.h"
@@ -37,6 +38,11 @@ using namespace nlohmann;  // json
 #define EVENTBUS_ADDRESSES_LIMIT 16
 #endif
 
+
+#ifndef USER_WHITELIST_SIZE_LIMIT
+#define USER_WHITELIST_SIZE_LIMIT 8
+#endif
+
 // JSON map keys
 #define USER_CONFIG_LAST_UPDATED "last_updated"
 #define USER_CONFIG_WHITELIST "whitelist"
@@ -49,25 +55,30 @@ using namespace nlohmann;  // json
 #define CONFIG_PEERS_KEY "peers"
 #define ENV_TLD_FQDN "tldFqdn"
 
-constexpr int configManagerThreadPeriodMs = 1000 * 60 * 10; // 10 min
+constexpr int configManagerPeriodInSeconds = 60 * 10; // fresh get_config every 10 min
 
 class ConfigManager {
  private:
   const HooksManager* hooksManager;
   const ConfigEnv* configEnv;
 
-  mutable etl::mutex mutex;
+  // synchronization primitives
+  mutable etl::mutex configMutex;
+  mutable etl::mutex cvMutex;
+  std::condition_variable cv;
 
   etl::set<HusarnetAddress, ALLOWED_PEERS_LIMIT> allowedPeers;
-  etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> baseAdresses;
+  etl::set<HusarnetAddress, USER_WHITELIST_SIZE_LIMIT> userWhitelist;
+  etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> baseAddresses;
   etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT> apiAddresses;
   etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT> ebAddresses;
 
   bool allowEveryone = false;
 
   void getLicense();    // Actually do an HTTP call to TLD
-  void processLicense(const json& licenseJson);
+  void updateLicenseData(const json& licenseJson);
   void getGetConfig();  // Actually do an HTTP call to API
+  void updateGetConfigData(const json& configJson);
 
   bool readConfig(json& jsonDoc);  // Read from disk and save to object if possible
   bool readCache(json& jsonDoc);   // Read from disk and save to object if possible
@@ -96,11 +107,7 @@ class ConfigManager {
                                  // data (like is connected to base, etc) -
                                  // ideally through the HusarnetManager
 
-  void setAllowEveryone(); // in case of an infra server
-
   bool isPeerAllowed(const HusarnetAddress& address) const;
-
-  bool isInfraAddress(const HusarnetAddress& address) const;
 
   etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
   getMulticastDestinations(

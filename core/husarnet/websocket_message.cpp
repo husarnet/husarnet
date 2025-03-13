@@ -123,10 +123,6 @@ bool WebSocket::Message::encode(etl::ivector<char>& buffer) const
     return false;
   }
 
-  if(length == 0) {
-    return true;
-  }
-
   if(this->masked) {
     // Generate random masking key per each message
     etl::array<uint8_t, 4> maskingKey;

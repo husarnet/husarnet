@@ -171,7 +171,7 @@ void NgSocket::sendDataToPeer(Peer* peer, string_view data)
         .data = data,
     };
 
-    LOG_DEBUG("send to peer %s", peer->targetAddress.str().c_str());
+    LOG_DEBUG("send to peer %s (%d bytes)", peer->targetAddress.str().c_str(), data.size());
     sendToPeer(peer->targetAddress, msg);
   } else {
     if(!peer->reestablishing ||

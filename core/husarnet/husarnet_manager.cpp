@@ -48,18 +48,13 @@ void HusarnetManager::prepareHusarnet()
   this->configManager = new ConfigManager(this->hooksManager, this->configEnv);
   Port::threadStart(
       [this]() { this->configManager->periodicThread(); }, "config");
-  this->configManager->waitInit();
+  this->configManager->waitInit(); // blocks until we know where (and if) to connect
 
   // At this point we have working settings/configuration and logs
 
   // Identity is not handled through the config so we need to initialize it
   // separately
   this->myIdentity = Identity::init();
-
-  if (this->configManager->isInfraAddress(this->myIdentity->getIpAddress())) {
-    LOG_INFO("HusarnetManager: considering self a part of control plane");
-    this->configManager->setAllowEveryone();
-  }
 
   // Make our PeerFlags available early if the caller wants to change them
   this->myFlags = new PeerFlags();

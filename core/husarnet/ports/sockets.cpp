@@ -400,7 +400,7 @@ namespace OsSocket {
         }
 
         if(read <= 0) {
-          LOG_ERROR("TCP recv failed: %s", strerror(errno));
+          LOG_ERROR("TCP recv failed: %d: %s", errno, strerror(errno));
           TcpConnection::close(conn);
           return;
         }

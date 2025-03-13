@@ -38,14 +38,18 @@ void WebSocket::_connectSocket(InetAddress addr)
     this->_handleRead(data);
   };
 
-  auto errorCallback = [this](std::shared_ptr<OsSocket::TcpConnection> conn) {
+  auto errorCallback = [this](std::shared_ptr<OsSocket::TcpConnection>) {
     LOG_ERROR("WS connection error, closing");  // TODO: errno
     this->close();
   };
 
+  LOG_INFO("WS: _connectSocket started")
+
   this->conn = OsSocket::TcpConnection::connect(
       addr, dataCallback, errorCallback,
       OsSocket::TcpConnection::Encapsulation::NONE);
+
+  LOG_INFO("WS: _connectSocket finished")
 
   if(this->conn == nullptr || this->conn->getFd() < 0) {
     LOG_ERROR("WS connect failed: %s", strerror(errno));
