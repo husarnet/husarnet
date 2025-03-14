@@ -12,13 +12,17 @@
 #include "ngsocket_messages.h"
 
 ConfigManager::ConfigManager(
-    const HooksManager* hooksManager,
+    const HooksManager* hooksManager, // TODO: currently unused
     const ConfigEnv* configEnv)
     : hooksManager(hooksManager), configEnv(configEnv)
 {
+  this->configMutex.lock();
+
   if(!configEnv->getEnableControlplane()) {
     allowEveryone = true;
   }
+
+  this->configMutex.unlock();
 }
 
 void ConfigManager::getLicense()
@@ -31,7 +35,7 @@ void ConfigManager::getLicense()
     return;
   }
 
-  auto licenseJson = json::parse(bytes);
+  auto licenseJson = json::parse(bytes); // TODO: check if noexcept
   if(!isLicenseValid(licenseJson)) {
     LOG_CRITICAL("license file downloaded from %s is invalid", tldAddress.c_str());
     return;
@@ -62,7 +66,7 @@ void ConfigManager::updateLicenseData(const json& licenseJson)
     this->allowedPeers.insert(ip);
   }
 
-  const auto baseServerIps= licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]
+  const auto baseServerIps = licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]
           .get<std::vector<std::string>>();
 
   this->baseAddresses.clear();
@@ -256,6 +260,7 @@ bool ConfigManager::writeCache(const json& cacheJson)
 void ConfigManager::waitInit()
 {
   if (!this->configEnv->getEnableControlplane()) {
+    LOG_WARNING("ConfigManagerDev: control plane is disabled, any peer will be let through")
     return;
   }
   LOG_INFO("ConfigManagerDev: wait init started")
@@ -263,8 +268,7 @@ void ConfigManager::waitInit()
   // to connect to.
   while(this->baseAddresses.empty() &&
         this->apiAddresses.empty()) {
-    // busy wait
-    // LOG_INFO("ConfigManagerDev: waiting")
+    // busy waiting on purpose
   }
   LOG_INFO("ConfigManagerDev: wait init finished")
 }
@@ -275,6 +279,7 @@ bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
     return true;
   }
   if (this->userWhitelist.full()) {
+    LOG_ERROR("ConfigManagerDev: userWhitelist is full")
     return false;
   }
 

@@ -62,6 +62,9 @@ class ConfigManager {
   const HooksManager* hooksManager;
   const ConfigEnv* configEnv;
 
+  // flipped to true if control plane is disabled
+  bool allowEveryone = false;
+
   // synchronization primitives
   mutable etl::mutex configMutex;
   mutable etl::mutex cvMutex;
@@ -73,12 +76,10 @@ class ConfigManager {
   etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT> apiAddresses;
   etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT> ebAddresses;
 
-  bool allowEveryone = false;
-
   void getLicense();    // Actually do an HTTP call to TLD
-  void updateLicenseData(const json& licenseJson);
+  void updateLicenseData(const json& licenseJson); // Transform JSON to internal structures
   void getGetConfig();  // Actually do an HTTP call to API
-  void updateGetConfigData(const json& configJson);
+  void updateGetConfigData(const json& configJson); // Transform JSON to internal structures
 
   bool readConfig(json& jsonDoc);  // Read from disk and save to object if possible
   bool readCache(json& jsonDoc);   // Read from disk and save to object if possible
