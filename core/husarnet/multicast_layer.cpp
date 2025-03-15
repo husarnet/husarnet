@@ -13,9 +13,7 @@
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-MulticastLayer::MulticastLayer(
-    HusarnetAddress myDeviceId,
-    ConfigManager* configmanager)
+MulticastLayer::MulticastLayer(HusarnetAddress myDeviceId, ConfigManager* configmanager)
     : myDeviceId(myDeviceId), configManager(configmanager)
 {
 }
@@ -47,7 +45,7 @@ void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
     packet[4] = (char)(payloadSize >> 8);
     packet[5] = (char)(payloadSize & 0xFF);
     packet[6] = protocol;
-    packet[7] = 3;  // hop limit
+    packet[7] = 3;          // hop limit
     packet += source.data;  // TODO: ympek: check if binary data is appended correctly
     packet += mcastAddr;
     packet += data.substr(19);
@@ -65,7 +63,7 @@ void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
     packet[4] = (char)(payloadSize >> 8);
     packet[5] = (char)(payloadSize & 0xFF);
     packet[6] = protocol;
-    packet[7] = 3;  // hop limit
+    packet[7] = 3;          // hop limit
     packet += source.data;  // TODO : ympek : check if binary data is appended correctly
     packet += this->myDeviceId.data;
     packet += data.substr(1);
@@ -74,9 +72,7 @@ void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
   }
 }
 
-void MulticastLayer::onUpperLayerData(
-    HusarnetAddress target,
-    string_view packet)
+void MulticastLayer::onUpperLayerData(HusarnetAddress target, string_view packet)
 {
   if(packet.size() <= 40) {
     LOG_WARNING("truncated packet from %s", target.toString().c_str());
@@ -116,8 +112,7 @@ void MulticastLayer::onUpperLayerData(
       return;
 
     string_view msgData = packet.substr(39);
-    *(char*)(&msgData[0]) =
-        (char)protocol;  // a bit hacky, but we assume we can modify `packet`
+    *(char*)(&msgData[0]) = (char)protocol;  // a bit hacky, but we assume we can modify `packet`
     sendToLowerLayer(dstAddress, msgData);
   }
 }

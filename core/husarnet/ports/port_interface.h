@@ -58,11 +58,7 @@ namespace Port {
 #endif
 
   // Basic interfaces
-  void threadStart(
-      std::function<void()> func,
-      const char* name,
-      int stack = -1,
-      int priority = 2);
+  void threadStart(std::function<void()> func, const char* name, int stack = -1, int priority = 2);
   void threadSleep(Time ms);
 
   etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentOverrides();
@@ -79,9 +75,7 @@ namespace Port {
   IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName);
   std::vector<IpAddress> getLocalAddresses();
 
-  UpperLayer* startTunTap(
-      const HusarnetAddress& myAddress,
-      std::string interfaceName);
+  UpperLayer* startTunTap(const HusarnetAddress& myAddress, std::string interfaceName);
 
   void processSocketEvents(void* tuntap);
 
@@ -99,14 +93,13 @@ namespace Port {
 
   // Layer 7 network ops
   struct HttpResult {
-    int statusCode; // -1 will be set if the request failed
+    int statusCode;  // -1 will be set if the request failed
     std::string bytes;
   };
   HttpResult httpGet(const std::string& url, const std::string& path);
 
   // Storage
-  std::string readStorage(
-      StorageKey key);  // Empty means error (or actually empty)
+  std::string readStorage(StorageKey key);  // Empty means error (or actually empty)
   bool writeStorage(StorageKey key, const std::string& data);
 
 }  // namespace Port

@@ -43,8 +43,7 @@ class PacketPool {
       return nullptr;
     }
 
-    return std::shared_ptr<Packet>(
-        pool->create(), [](Packet* p) { PacketPool::getPool()->destroy(p); });
+    return std::shared_ptr<Packet>(pool->create(), [](Packet* p) { PacketPool::getPool()->destroy(p); });
   }
 
   PacketPool(const PacketPool&) = delete;

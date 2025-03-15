@@ -95,8 +95,7 @@ class InetAddress {
     std::string ipstr = s.substr(0, pos);
     if(ipstr.size() > 2 && ipstr.front() == '[' && ipstr.back() == ']')
       ipstr = ipstr.substr(1, ipstr.size() - 2);
-    return InetAddress{
-        IpAddress::parse(ipstr), (uint16_t)atoi(s.substr(pos + 1).c_str())};
+    return InetAddress{IpAddress::parse(ipstr), (uint16_t)atoi(s.substr(pos + 1).c_str())};
   }
 };
 

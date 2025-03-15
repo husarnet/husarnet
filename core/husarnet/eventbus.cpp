@@ -18,9 +18,7 @@ EventBus::EventBus(HusarnetAddress myAddress, ConfigManager* configManager)
 
 void EventBus::init()
 {
-  auto callback =
-      WebSocket::OnMessageDelegate::create<EventBus, &EventBus::_handleMessage>(
-          *this);
+  auto callback = WebSocket::OnMessageDelegate::create<EventBus, &EventBus::_handleMessage>(*this);
   this->ws.setOnMessageCallback(callback);
 }
 
@@ -32,8 +30,7 @@ void EventBus::periodic()
     LOG_INFO("websocket is closed, attempt reconnectinon");
     // Throttle connection attempts
     Time currentTime = Port::getCurrentTime();
-    if(currentTime - this->_lastConnectionAttempt <
-       CONNECTION_ATTEMPT_INTERVAL) {
+    if(currentTime - this->_lastConnectionAttempt < CONNECTION_ATTEMPT_INTERVAL) {
       return;
     }
 

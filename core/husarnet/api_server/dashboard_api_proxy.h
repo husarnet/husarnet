@@ -21,8 +21,5 @@ class DashboardApiProxy {
   {
   }
 
-  void signAndForward(
-      const httplib::Request& req,
-      httplib::Response& res,
-      const std::string& path);
+  void signAndForward(const httplib::Request& req, httplib::Response& res, const std::string& path);
 };

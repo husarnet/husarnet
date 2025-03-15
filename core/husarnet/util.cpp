@@ -37,8 +37,7 @@ std::string decodeHex(std::vector<unsigned char> s)
   std::string ret;
   for(int i = 0; i + 1 < (int)s.size(); i += 2) {
     int a = (int)(std::find(hexLetters, hexLetters + 16, s[i]) - hexLetters);
-    int b =
-        (int)(std::find(hexLetters, hexLetters + 16, s[i + 1]) - hexLetters);
+    int b = (int)(std::find(hexLetters, hexLetters + 16, s[i + 1]) - hexLetters);
     if(a == 16 || b == 16)
       return "";
     ret.push_back((char)((a << 4) | b));
@@ -54,8 +53,7 @@ std::string decodeHex(std::string s)
   std::string ret;
   for(int i = 0; i + 1 < (int)s.size(); i += 2) {
     int a = (int)(std::find(hexLetters, hexLetters + 16, s[i]) - hexLetters);
-    int b =
-        (int)(std::find(hexLetters, hexLetters + 16, s[i + 1]) - hexLetters);
+    int b = (int)(std::find(hexLetters, hexLetters + 16, s[i + 1]) - hexLetters);
     if(a == 16 || b == 16)
       return "";
     ret.push_back((char)((a << 4) | b));
@@ -67,8 +65,7 @@ std::string base64Decode(std::string s)
 {
   std::string result;
   std::vector<int> charmap(256, -1);
-  std::string characters(
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+  std::string characters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
   for(int i = 0; i < (int)characters.size(); i++)
     charmap[(uint8_t)characters[i]] = i;
@@ -150,37 +147,26 @@ std::string generateRandomString(const int length)
 std::string strToUpper(std::string input)
 {
   std::string ret(input);
-  std::transform(input.begin(), input.end(), ret.begin(), [](unsigned char c) {
-    return std::toupper(c);
-  });
+  std::transform(input.begin(), input.end(), ret.begin(), [](unsigned char c) { return std::toupper(c); });
   return ret;
 }
 
 std::string strToLower(std::string input)
 {
   std::string ret(input);
-  std::transform(input.begin(), input.end(), ret.begin(), [](unsigned char c) {
-    return std::tolower(c);
-  });
+  std::transform(input.begin(), input.end(), ret.begin(), [](unsigned char c) { return std::tolower(c); });
   return ret;
 }
 
 std::string ltrim(std::string s)
 {
-  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-            return !std::isspace(ch);
-          }));
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
   return s;
 }
 
 std::string rtrim(std::string s)
 {
-  s.erase(
-      std::find_if(
-          s.rbegin(), s.rend(),
-          [](unsigned char ch) { return !std::isspace(ch); })
-          .base(),
-      s.end());
+  s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
   return s;
 }
 
@@ -214,8 +200,7 @@ bool strToBool(const std::string& s)
   return false;
 }
 
-const std::string
-padRight(int minLength, const std::string& text, char paddingChar)
+const std::string padRight(int minLength, const std::string& text, char paddingChar)
 {
   int padSize = 0;
 
@@ -226,8 +211,7 @@ padRight(int minLength, const std::string& text, char paddingChar)
   return text + std::string(padSize, paddingChar);
 }
 
-const std::string
-padLeft(int minLength, const std::string& text, char paddingChar)
+const std::string padLeft(int minLength, const std::string& text, char paddingChar)
 {
   int padSize = 0;
 

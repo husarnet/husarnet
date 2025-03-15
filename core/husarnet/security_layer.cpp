@@ -21,10 +21,7 @@ static fstring<32> mixFlags(fstring<32> key, uint64_t flags1, uint64_t flags2)
   return res;
 }
 
-SecurityLayer::SecurityLayer(
-    Identity* myIdentity,
-    PeerFlags* myFlags,
-    PeerContainer* peerContainer)
+SecurityLayer::SecurityLayer(Identity* myIdentity, PeerFlags* myFlags, PeerContainer* peerContainer)
     : myIdentity(myIdentity), myFlags(myFlags), peerContainer(peerContainer)
 {
   randombytes_buf(&this->helloseq, 8);
@@ -59,9 +56,7 @@ void SecurityLayer::handleHeartbeat(HusarnetAddress source, fstring<8> ident)
   sendToLowerLayer(source, packet);
 }
 
-void SecurityLayer::handleHeartbeatReply(
-    HusarnetAddress source,
-    fstring<8> ident)
+void SecurityLayer::handleHeartbeatReply(HusarnetAddress source, fstring<8> ident)
 {
   Peer* peer = peerContainer->getOrCreatePeer(source);
   if(peer == nullptr)
@@ -74,9 +69,7 @@ void SecurityLayer::handleHeartbeatReply(
   }
 }
 
-void SecurityLayer::onLowerLayerData(
-    HusarnetAddress peerAddress,
-    string_view data)
+void SecurityLayer::onLowerLayerData(HusarnetAddress peerAddress, string_view data)
 {
   if(data.size() >= decryptedBuffer.size())
     return;  // sanity check
@@ -118,9 +111,7 @@ void SecurityLayer::handleDataPacket(HusarnetAddress peerId, string_view data)
 
   if(!peer->negotiated) {
     sendHelloPacket(peer);
-    LOG_WARNING(
-        "received data packet before hello from peer: %s",
-        peerId.toString().c_str());
+    LOG_WARNING("received data packet before hello from peer: %s", peerId.toString().c_str());
     return;
   }
 
@@ -137,14 +128,12 @@ void SecurityLayer::handleDataPacket(HusarnetAddress peerId, string_view data)
   if(decryptedSize <= 8)
     return;
 
-  auto decryptedData =
-      string_view(decryptedBuffer).substr(8, decryptedSize - 8);
+  auto decryptedData = string_view(decryptedBuffer).substr(8, decryptedSize - 8);
 
   if(r == 0) {
     sendToUpperLayer(peerId, decryptedData);
   } else {
-    LOG_INFO(
-        "received forged message from peer: %s", peerId.toString().c_str());
+    LOG_INFO("received forged message from peer: %s", peerId.toString().c_str());
   }
 }
 
@@ -163,10 +152,7 @@ void SecurityLayer::sendHelloPacket(Peer* peer, int num, uint64_t helloseq)
   sendToLowerLayer(peer->id, packet);
 }
 
-void SecurityLayer::handleHelloPacket(
-    HusarnetAddress target,
-    string_view data,
-    int helloNum)
+void SecurityLayer::handleHelloPacket(HusarnetAddress target, string_view data, int helloNum)
 {
   constexpr int dataLen = 65 + 16 + 16;
   if(data.size() < dataLen + 64)
@@ -187,29 +173,20 @@ void SecurityLayer::handleHelloPacket(
   if(data.size() >= 64 + 65 + 32 + 8) {
     flags_bin = unpack<uint64_t>(substr<65 + 32, 8>(data));
   }
-  LOG_DEBUG(
-      "peer flags: %llx (bits, not count)", (unsigned long long)flags_bin);
+  LOG_DEBUG("peer flags: %llx (bits, not count)", (unsigned long long)flags_bin);
 
   if(targetId != this->myIdentity->getDeviceId()) {
-    LOG_INFO(
-        "misdirected hello packet received from peer: %s",
-        std::string(targetId).c_str());
+    LOG_INFO("misdirected hello packet received from peer: %s", std::string(targetId).c_str());
     return;
   }
 
   if(NgSocketCrypto::pubkeyToDeviceId(incomingPubkey) != target) {
-    LOG_INFO(
-        "forged hello packet received (invalid pubkey: %s)",
-        std::string(incomingPubkey).c_str());
+    LOG_INFO("forged hello packet received (invalid pubkey: %s)", std::string(incomingPubkey).c_str());
     return;
   }
 
-  if(!NgSocketCrypto::verifySignature(
-         data.substr(0, data.size() - 64), "ng-kx-pubkey", incomingPubkey,
-         signature)) {
-    LOG_CRITICAL(
-        "forged hello packet (invalid signature: %s)",
-        std::string(signature).c_str());
+  if(!NgSocketCrypto::verifySignature(data.substr(0, data.size() - 64), "ng-kx-pubkey", incomingPubkey, signature)) {
+    LOG_CRITICAL("forged hello packet (invalid signature: %s)", std::string(signature).c_str());
     return;
   }
 
@@ -232,12 +209,10 @@ void SecurityLayer::handleHelloPacket(
   // client
   if(target < this->myIdentity->getDeviceId())
     r = crypto_kx_client_session_keys(
-        peer->rxKey.data(), peer->txKey.data(), peer->kxPubkey.data(),
-        peer->kxPrivkey.data(), peerKxPubkey.data());
+        peer->rxKey.data(), peer->txKey.data(), peer->kxPubkey.data(), peer->kxPrivkey.data(), peerKxPubkey.data());
   else
     r = crypto_kx_server_session_keys(
-        peer->rxKey.data(), peer->txKey.data(), peer->kxPubkey.data(),
-        peer->kxPrivkey.data(), peerKxPubkey.data());
+        peer->rxKey.data(), peer->txKey.data(), peer->kxPubkey.data(), peer->kxPrivkey.data(), peerKxPubkey.data());
 
   if(flags_bin != 0) {
     // we need to make sure both peers agree on flags - mix them into the key
@@ -248,8 +223,7 @@ void SecurityLayer::handleHelloPacket(
 
   if(r == 0) {
     LOG_DEBUG(
-        "negotiated session keys %s %s",
-        encodeHex(peer->rxKey.substr(0, 6)).c_str(),
+        "negotiated session keys %s %s", encodeHex(peer->rxKey.substr(0, 6)).c_str(),
         encodeHex(peer->txKey.substr(0, 6)).c_str());
     finishNegotiation(peer);
   } else {
@@ -265,9 +239,7 @@ void SecurityLayer::handleHelloPacket(
 
 void SecurityLayer::finishNegotiation(Peer* peer)
 {
-  LOG_INFO(
-      "established secure connection to %s",
-      peer->getIpAddressString().c_str());
+  LOG_INFO("established secure connection to %s", peer->getIpAddressString().c_str());
   peer->negotiated = true;
   for(auto& packet : peer->packetQueue) {
     queuedPackets--;
@@ -316,10 +288,8 @@ void SecurityLayer::doSendDataPacket(Peer* peer, string_view data)
   randombytes_buf(nonce, 24);
 
   crypto_secretbox_easy(
-      (unsigned char*)&ciphertextBuffer[25],
-      (const unsigned char*)cleartextBuffer.data(), cleartextSize,
+      (unsigned char*)&ciphertextBuffer[25], (const unsigned char*)cleartextBuffer.data(), cleartextSize,
       (const unsigned char*)nonce, peer->txKey.data());
 
-  sendToLowerLayer(
-      peer->id, string_view(ciphertextBuffer).substr(0, ciphertextSize));
+  sendToLowerLayer(peer->id, string_view(ciphertextBuffer).substr(0, ciphertextSize));
 }

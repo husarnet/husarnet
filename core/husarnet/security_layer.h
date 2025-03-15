@@ -32,17 +32,13 @@ class SecurityLayer : public BidirectionalLayer {
 
   void sendHelloPacket(Peer* peer, int num = 1, uint64_t helloseq = 0);
 
-  void
-  handleHelloPacket(HusarnetAddress target, string_view data, int helloNum);
+  void handleHelloPacket(HusarnetAddress target, string_view data, int helloNum);
   void finishNegotiation(Peer* peer);
 
   void doSendDataPacket(Peer* peer, string_view data);
 
  public:
-  SecurityLayer(
-      Identity* myIdentity,
-      PeerFlags* myFlags,
-      PeerContainer* peerContainer);
+  SecurityLayer(Identity* myIdentity, PeerFlags* myFlags, PeerContainer* peerContainer);
 
   void onUpperLayerData(HusarnetAddress peerAddress, string_view data) override;
   void onLowerLayerData(HusarnetAddress peerAddress, string_view data) override;

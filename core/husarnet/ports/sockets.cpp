@@ -54,8 +54,7 @@ namespace OsSocket {
       InetAddress r{};
       memcpy(r.ip.data.data(), &st6->sin6_addr, 16);
 
-      if(r.ip.data[0] == 0 && r.ip.data[1] == 0x64 && r.ip.data[2] == 0xff &&
-         r.ip.data[3] == 0x9b) {
+      if(r.ip.data[0] == 0 && r.ip.data[1] == 0x64 && r.ip.data[2] == 0xff && r.ip.data[3] == 0x9b) {
         // NAT64 mapped IPv4 address, do our best at mapping it
         memset(&r.ip.data[0], 0, 10);
         r.ip.data[10] = 0xFF;
@@ -172,17 +171,14 @@ namespace OsSocket {
       struct ip_mreq mreq {};
       memcpy(&mreq.imr_multiaddr, address.ip.data.data() + 12, 4);
 
-      if(SOCKFUNC(setsockopt)(
-             fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&mreq,
-             sizeof(mreq)) == 0) {
+      if(SOCKFUNC(setsockopt)(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&mreq, sizeof(mreq)) == 0) {
         udpSockets.push_back(UdpSocket{fd, callback});
         return true;
       } else {
         return false;
       }
     } else {
-      int fd =
-          bindUdpSocket(InetAddress{IpAddress::wildcard(), (uint16_t)address.port}, true);
+      int fd = bindUdpSocket(InetAddress{IpAddress::wildcard(), (uint16_t)address.port}, true);
       if(fd == -1)
         return false;
       multicastUdpFd6 = fd;
@@ -191,9 +187,7 @@ namespace OsSocket {
       struct ipv6_mreq mreq {};
       memcpy(&mreq.ipv6mr_multiaddr, address.ip.data.data(), 16);
       mreq.ipv6mr_interface = 0;
-      if(SOCKFUNC(setsockopt)(
-             fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (const char*)&mreq,
-             sizeof(mreq)) == 0) {
+      if(SOCKFUNC(setsockopt)(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (const char*)&mreq, sizeof(mreq)) == 0) {
         udpSockets.push_back(UdpSocket{fd, callback});
         return true;
       } else {
@@ -270,9 +264,7 @@ namespace OsSocket {
     res = select(fd + 1, NULL, &fdset, NULL, &tv);
 
     if(res <= 0) {
-      LOG_ERROR(
-          "connection with the server (%s) failed (timeout)",
-          addr.str().c_str());
+      LOG_ERROR("connection with the server (%s) failed (timeout)", addr.str().c_str());
       SOCKFUNC_close(fd);
       return -1;
     }
@@ -289,9 +281,7 @@ namespace OsSocket {
       SOCKFUNC(getsockopt)(fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
       if(so_error != 0) {
-        LOG_ERROR(
-            "connection with the server (%s) failed (error)",
-            addr.str().c_str());
+        LOG_ERROR("connection with the server (%s) failed (error)", addr.str().c_str());
         SOCKFUNC_close(fd);
         return -1;
       }
@@ -303,9 +293,7 @@ namespace OsSocket {
     return fd;
   }
 
-  bool TcpConnection::write(
-      std::shared_ptr<TcpConnection> conn,
-      std::string& packet)
+  bool TcpConnection::write(std::shared_ptr<TcpConnection> conn, std::string& packet)
   {
     if(conn->fd == -1)
       return false;
@@ -322,8 +310,7 @@ namespace OsSocket {
     // Send data supporting partial writes
     do {
       ssize_t remaining = packet.size() - bytes_written;
-      ssize_t n =
-          SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
+      ssize_t n = SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
 
       if(n < 0) {
         LOG_ERROR("WS send failed: %s", strerror(errno));
@@ -336,9 +323,7 @@ namespace OsSocket {
     return true;
   }
 
-  bool TcpConnection::write(
-      std::shared_ptr<TcpConnection> conn,
-      etl::ivector<char>& packet)
+  bool TcpConnection::write(std::shared_ptr<TcpConnection> conn, etl::ivector<char>& packet)
   {
     if(conn->fd == -1)
       return false;
@@ -349,9 +334,7 @@ namespace OsSocket {
       std::string header = "\x17\x03\x03" + pack((uint16_t)packet.size());
 
       if(packet.size() + header.size() > packet.capacity()) {
-        LOG_ERROR(
-            "TCP message too large (%d, max is %d)", packet.size(),
-            packet.capacity());
+        LOG_ERROR("TCP message too large (%d, max is %d)", packet.size(), packet.capacity());
         return false;
       }
 
@@ -363,8 +346,7 @@ namespace OsSocket {
     // Send data supporting partial writes
     do {
       ssize_t remaining = packet.size() - bytes_written;
-      ssize_t n =
-          SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
+      ssize_t n = SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
 
       if(n < 0) {
         LOG_ERROR("TCP send failed: %s", strerror(errno));
@@ -389,8 +371,7 @@ namespace OsSocket {
         // to prevent reinitialization of the buffer underlying data type
         size_t size = conn->readBuffer.size();
         conn->readBuffer.uninitialized_resize(conn->readBuffer.capacity());
-        read = SOCKFUNC(recv)(
-            conn->fd, conn->readBuffer.begin() + size, available, 0);
+        read = SOCKFUNC(recv)(conn->fd, conn->readBuffer.begin() + size, available, 0);
 
         size_t newSize = (read > 0) ? size + read : size;
         conn->readBuffer.resize(newSize);
@@ -434,12 +415,9 @@ namespace OsSocket {
           uint16_t expectedSize = unpack<uint16_t>(etl::string_view(iter, 2));
           iter += 2;
 
-          size_t packetLen =
-              etl::distance(conn->readBuffer.begin(), iter) + expectedSize;
+          size_t packetLen = etl::distance(conn->readBuffer.begin(), iter) + expectedSize;
           if(packetLen >= conn->readBuffer.capacity()) {
-            LOG_INFO(
-                "TCP message too large (%d, max is %d)", expectedSize,
-                conn->readBuffer.size());
+            LOG_INFO("TCP message too large (%d, max is %d)", expectedSize, conn->readBuffer.size());
             TcpConnection::close(conn);
             return;
           }
@@ -501,8 +479,7 @@ namespace OsSocket {
     int res = SOCKFUNC(connect)(conn->fd, (sockaddr*)(&sa), socklen);
 
     if(res < 0 && errno != EINPROGRESS) {
-      LOG_ERROR(
-          "connection with the server (%s) failed", address.str().c_str());
+      LOG_ERROR("connection with the server (%s) failed", address.str().c_str());
       SOCKFUNC_close(conn->fd);
       return nullptr;
     }
@@ -519,9 +496,7 @@ namespace OsSocket {
     res = select(conn->fd + 1, NULL, &fdset, NULL, &tv);
 
     if(res <= 0) {
-      LOG_ERROR(
-          "connection with the server (%s) failed (timeout)",
-          address.str().c_str());
+      LOG_ERROR("connection with the server (%s) failed (timeout)", address.str().c_str());
       SOCKFUNC_close(conn->fd);
       return nullptr;
     }
@@ -538,9 +513,7 @@ namespace OsSocket {
       SOCKFUNC(getsockopt)(conn->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
       if(so_error != 0) {
-        LOG_ERROR(
-            "connection with the server (%s) failed (error)",
-            address.str().c_str());
+        LOG_ERROR("connection with the server (%s) failed (error)", address.str().c_str());
         SOCKFUNC_close(conn->fd);
         return nullptr;
       }
@@ -598,8 +571,7 @@ namespace OsSocket {
         udpBuffer.resize(UDP_BUFFER_SIZE);
 
         while(true) {
-          long r = SOCKFUNC(recvfrom)(
-              conn.fd, &udpBuffer[0], udpBuffer.size(), 0, (sockaddr*)&s, &len);
+          long r = SOCKFUNC(recvfrom)(conn.fd, &udpBuffer[0], udpBuffer.size(), 0, (sockaddr*)&s, &len);
           if(r <= 0)
             break;
           conn.callback(ipFromSockaddr(s), string_view(udpBuffer).substr(0, r));
@@ -636,9 +608,7 @@ namespace OsSocket {
     tcpConnections.erase(
         std::remove_if(
             tcpConnections.begin(), tcpConnections.end(),
-            [](std::shared_ptr<TcpConnection> conn) {
-              return conn->_hasErrored;
-            }),
+            [](std::shared_ptr<TcpConnection> conn) { return conn->_hasErrored; }),
         tcpConnections.end());
   }
 

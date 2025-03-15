@@ -13,12 +13,9 @@ size_t HTTPMessage::encode(etl::ivector<char>& buffer)
   buffer.clear();
 
   // Start line ({method} {endpoint} HTTP/1.1)
-  buffer.insert(
-      buffer.end(), this->request.method.begin(), this->request.method.end());
+  buffer.insert(buffer.end(), this->request.method.begin(), this->request.method.end());
   buffer.push_back(' ');
-  buffer.insert(
-      buffer.end(), this->request.endpoint.begin(),
-      this->request.endpoint.end());
+  buffer.insert(buffer.end(), this->request.endpoint.begin(), this->request.endpoint.end());
   etl::string<11> version = " HTTP/1.1\r\n";
   buffer.insert(buffer.end(), version.begin(), version.end());
 
@@ -46,8 +43,7 @@ size_t HTTPMessage::encode(etl::ivector<char>& buffer)
 
 HTTPMessage::Result HTTPMessage::_parseStartLine()
 {
-  etl::string_view buffer_view(
-      &(*this->_it), std::distance(this->_it, this->_buffer.end()));
+  etl::string_view buffer_view(&(*this->_it), std::distance(this->_it, this->_buffer.end()));
 
   // Find end of line
   size_t end = buffer_view.find(EOL_DELIMITER);
@@ -88,8 +84,7 @@ HTTPMessage::Result HTTPMessage::_parseStartLine()
     if(this->request.method.empty() || this->request.endpoint.empty())
       return Result::INVALID;
 
-    if(this->request.method.is_truncated() ||
-       this->request.endpoint.is_truncated())
+    if(this->request.method.is_truncated() || this->request.endpoint.is_truncated())
       return Result::INVALID;
   } else {
     return Result::INVALID;
@@ -103,8 +98,7 @@ HTTPMessage::Result HTTPMessage::_parseStartLine()
 
 HTTPMessage::Result HTTPMessage::_parseHeader()
 {
-  etl::string_view buffer_view(
-      &(*this->_it), std::distance(this->_it, this->_buffer.end()));
+  etl::string_view buffer_view(&(*this->_it), std::distance(this->_it, this->_buffer.end()));
 
   // Find header-body separator
   // TODO: something is fucked up here
@@ -150,8 +144,7 @@ HTTPMessage::Result HTTPMessage::_parseHeader()
 
 HTTPMessage::Result HTTPMessage::_parseBody()
 {
-  etl::string_view buffer_view(
-      &(*this->_it), std::distance(this->_it, this->_buffer.end()));
+  etl::string_view buffer_view(&(*this->_it), std::distance(this->_it, this->_buffer.end()));
 
   auto it = this->headers.find("Content-Length");
 
@@ -160,8 +153,7 @@ HTTPMessage::Result HTTPMessage::_parseBody()
   if(it == this->headers.end())
     return Result::OK;
 
-  size_t contentLength =
-      etl::to_arithmetic<size_t>(etl::string_view(it->second.data()));
+  size_t contentLength = etl::to_arithmetic<size_t>(etl::string_view(it->second.data()));
 
   if(buffer_view.size() < contentLength)
     return Result::INCOMPLETE;
@@ -191,8 +183,7 @@ HTTPMessage::Result HTTPMessage::parse(etl::string_view& buffer_view)
 
   // Parsing is done on a dynamic internal buffer
   // to provide support for chunked messages
-  this->_buffer.insert(
-      this->_buffer.end(), buffer_view.begin(), buffer_view.end());
+  this->_buffer.insert(this->_buffer.end(), buffer_view.begin(), buffer_view.end());
 
   Result res = Result::OK;
 

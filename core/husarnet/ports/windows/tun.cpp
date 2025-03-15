@@ -21,8 +21,7 @@
 #include "husarnet/util.h"
 
 // From OpenVPN tap driver, common.h
-#define TAP_CONTROL_CODE(request, method) \
-  CTL_CODE(FILE_DEVICE_UNKNOWN, request, method, FILE_ANY_ACCESS)
+#define TAP_CONTROL_CODE(request, method) CTL_CODE(FILE_DEVICE_UNKNOWN, request, method, FILE_ANY_ACCESS)
 #define TAP_IOCTL_GET_MAC TAP_CONTROL_CODE(1, METHOD_BUFFERED)
 #define TAP_IOCTL_GET_VERSION TAP_CONTROL_CODE(2, METHOD_BUFFERED)
 #define TAP_IOCTL_GET_MTU TAP_CONTROL_CODE(3, METHOD_BUFFERED)
@@ -43,8 +42,7 @@ static HANDLE openTun(const std::string& name)
 
   std::string path = "\\\\.\\Global\\" + name + ".tap";
   tun_fd = CreateFile(
-      path.c_str(), GENERIC_WRITE | GENERIC_READ,
-      FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING,
+      path.c_str(), GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING,
       FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
   if(tun_fd == INVALID_HANDLE_VALUE) {
     int errcode = GetLastError();
@@ -85,8 +83,7 @@ void TunTap::startReaderThread()
         while(true) {
           string_view packet = read(buf);
 
-          if(packet.substr(0, 6) == peerMacAddr &&
-             packet.substr(6, 6) == selfMacAddr &&
+          if(packet.substr(0, 6) == peerMacAddr && packet.substr(6, 6) == selfMacAddr &&
              packet.substr(12, 2) == string_view("\x86\xdd", 2)) {
             sendToLowerLayer(IpAddress(), packet.substr(14));
           }
@@ -118,8 +115,7 @@ string_view TunTap::read(std::string& buffer)
   OVERLAPPED overlapped = {0, 0, {{0}}, 0};
   overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-  if(ReadFile(tap_fd, &buffer[0], (DWORD)buffer.size(), NULL, &overlapped) ==
-     0) {
+  if(ReadFile(tap_fd, &buffer[0], (DWORD)buffer.size(), NULL, &overlapped) == 0) {
     if(GetLastError() != ERROR_IO_PENDING) {
       LOG_ERROR("tap read failed %d", (int)GetLastError());
       assert(false);
@@ -159,9 +155,7 @@ void TunTap::bringUp()
   DWORD len;
 
   ULONG flag = 1;
-  if(DeviceIoControl(
-         tap_fd, TAP_IOCTL_SET_MEDIA_STATUS, &flag, sizeof(flag), &flag,
-         sizeof(flag), &len, NULL) == 0) {
+  if(DeviceIoControl(tap_fd, TAP_IOCTL_SET_MEDIA_STATUS, &flag, sizeof(flag), &flag, sizeof(flag), &len, NULL) == 0) {
     LOG_ERROR("failed to bring up the tap device");
     return;
   }
@@ -175,16 +169,14 @@ std::string TunTap::getMac()
   hwaddr.resize(6);
   DWORD len;
 
-  if(DeviceIoControl(
-         tap_fd, TAP_IOCTL_GET_MAC, &hwaddr[0], hwaddr.size(), &hwaddr[0],
-         hwaddr.size(), &len, NULL) == 0) {
+  if(DeviceIoControl(tap_fd, TAP_IOCTL_GET_MAC, &hwaddr[0], hwaddr.size(), &hwaddr[0], hwaddr.size(), &len, NULL) ==
+     0) {
     LOG_ERROR("failed to retrieve MAC address");
     assert(false);
   } else {
     LOG_DEBUG(
-        "MAC address: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 0xFF & hwaddr[0],
-        0xFF & hwaddr[1], 0xFF & hwaddr[2], 0xFF & hwaddr[3], 0xFF & hwaddr[4],
-        0xFF & hwaddr[5]);
+        "MAC address: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 0xFF & hwaddr[0], 0xFF & hwaddr[1], 0xFF & hwaddr[2],
+        0xFF & hwaddr[3], 0xFF & hwaddr[4], 0xFF & hwaddr[5]);
   }
   return hwaddr;
 }

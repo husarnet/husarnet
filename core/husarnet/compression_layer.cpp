@@ -13,9 +13,7 @@
 #include "zstd.h"
 #endif
 
-CompressionLayer::CompressionLayer(
-    PeerContainer* peerContainer,
-    PeerFlags* myFlags)
+CompressionLayer::CompressionLayer(PeerContainer* peerContainer, PeerFlags* myFlags)
     : peerContainer(peerContainer), myFlags(myFlags)
 {
   this->compressionBuffer.resize(2100);
@@ -40,9 +38,7 @@ bool CompressionLayer::shouldProceed(HusarnetAddress peerAddress)
   return true;
 }
 
-void CompressionLayer::onUpperLayerData(
-    HusarnetAddress peerAddress,
-    string_view data)
+void CompressionLayer::onUpperLayerData(HusarnetAddress peerAddress, string_view data)
 {
   if(!shouldProceed(peerAddress)) {
     sendToLowerLayer(peerAddress, data);
@@ -62,9 +58,7 @@ void CompressionLayer::onUpperLayerData(
   // #endif
 }
 
-void CompressionLayer::onLowerLayerData(
-    HusarnetAddress peerAddress,
-    string_view data)
+void CompressionLayer::onLowerLayerData(HusarnetAddress peerAddress, string_view data)
 {
   if(!shouldProceed(peerAddress)) {
     sendToUpperLayer(peerAddress, data);

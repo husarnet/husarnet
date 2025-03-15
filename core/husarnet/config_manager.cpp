@@ -12,7 +12,7 @@
 #include "ngsocket_messages.h"
 
 ConfigManager::ConfigManager(
-    const HooksManager* hooksManager, // TODO: currently unused
+    const HooksManager* hooksManager,  // TODO: currently unused
     const ConfigEnv* configEnv)
     : hooksManager(hooksManager), configEnv(configEnv)
 {
@@ -35,7 +35,7 @@ void ConfigManager::getLicense()
     return;
   }
 
-  auto licenseJson = json::parse(bytes); // TODO: check if noexcept
+  auto licenseJson = json::parse(bytes, nullptr, false);
   if(!isLicenseValid(licenseJson)) {
     LOG_CRITICAL("license file downloaded from %s is invalid", tldAddress.c_str());
     return;
@@ -44,33 +44,31 @@ void ConfigManager::getLicense()
   this->updateLicenseData(licenseJson);
 }
 
+// TODO: discuss: might also be renamed to updateControlPlaneData
 void ConfigManager::updateLicenseData(const json& licenseJson)
 {
   this->configMutex.lock();
-  const auto& ebServerIps = licenseJson[LICENSE_EB_SERVERS_KEY]
-                       .get<std::vector<std::string>>();
+  const auto& ebServerIps = licenseJson[LICENSE_EB_SERVERS_KEY].get<std::vector<std::string>>();
   this->ebAddresses.clear();
-  for (auto& ipStr: ebServerIps) {
+  for(auto& ipStr : ebServerIps) {
     const auto ip = HusarnetAddress::parse(ipStr);
     this->ebAddresses.push_back(ip);
     this->allowedPeers.insert(ip);
   }
 
-  const auto& apiServerIps = licenseJson[LICENSE_API_SERVERS_KEY]
-                               .get<std::vector<std::string>>();
+  const auto& apiServerIps = licenseJson[LICENSE_API_SERVERS_KEY].get<std::vector<std::string>>();
 
   this->apiAddresses.clear();
-  for (auto& ipStr: apiServerIps) {
+  for(auto& ipStr : apiServerIps) {
     const auto ip = HusarnetAddress::parse(ipStr);
     this->apiAddresses.push_back(ip);
     this->allowedPeers.insert(ip);
   }
 
-  const auto baseServerIps = licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY]
-          .get<std::vector<std::string>>();
+  const auto baseServerIps = licenseJson[LICENSE_BASE_SERVER_ADDRESSES_KEY].get<std::vector<std::string>>();
 
   this->baseAddresses.clear();
-  for (auto& ip: baseServerIps) {
+  for(auto& ip : baseServerIps) {
     this->baseAddresses.push_back(InternetAddress::parse(ip));
   }
   this->configMutex.unlock();
@@ -81,20 +79,22 @@ void ConfigManager::updateGetConfigData(const json& configJson)
   this->configMutex.lock();
   LOG_INFO("ConfigManagerDev: updateGetConfigData started")
 
-  if (configJson.contains(CONFIG_PEERS_KEY) && configJson[CONFIG_PEERS_KEY].is_array()) {
+  if(configJson.contains(CONFIG_PEERS_KEY) && configJson[CONFIG_PEERS_KEY].is_array()) {
     allowedPeers.clear();
     // rebuild allowlist
-    for (auto& addr: this->apiAddresses) {
+    for(auto& addr : this->apiAddresses) {
       this->allowedPeers.insert(addr);
     }
-    for (auto& addr: this->ebAddresses) {
+    for(auto& addr : this->ebAddresses) {
       this->allowedPeers.insert(addr);
     }
-    for (auto& peerInfo: configJson[CONFIG_PEERS_KEY]) {
+    for(auto& peerInfo : configJson[CONFIG_PEERS_KEY]) {
       // unpack PeerInfo structure
       auto addr = peerInfo["address"].get<std::string>();
       LOG_INFO("ConfigManagerDev: parse %s", addr.c_str())
       this->allowedPeers.insert(HusarnetAddress::parse(addr));
+      // TODO: there is also hostname and aliases, which we will need to
+      // insert into hosts file, but this will happen asynchronously (probably)
     }
   }
 
@@ -102,7 +102,8 @@ void ConfigManager::updateGetConfigData(const json& configJson)
   this->configMutex.unlock();
 }
 
-HusarnetAddress ConfigManager::getCurrentApiAddress() const {
+HusarnetAddress ConfigManager::getCurrentApiAddress() const
+{
   const auto& addresses = this->getDashboardApiAddresses();
   if(addresses.empty()) {
     return {};
@@ -116,16 +117,48 @@ void ConfigManager::getGetConfig()
   auto [statusCode, bytes] = Port::httpGet(apiAddress.toString(), "/device/get_config");
 
   if(statusCode != 200) {
-    LOG_ERROR("ConfigManagerDev: failed to obtain latest config (http request to %s was unsuccessful)", apiAddress.toString().c_str());
+    LOG_ERROR(
+        "ConfigManagerDev: failed to obtain latest config (http request to %s was unsuccessful)",
+        apiAddress.toString().c_str());
     return;
   }
 
   LOG_INFO("ConfigManagerDev: config: %s ", bytes.c_str());
 
-  auto config = json::parse(bytes);
-  // TODO: handle API error (type other than "success")
-  this->updateGetConfigData(config["payload"]);
+  auto apiResponse = json::parse(bytes);
+  if(this->isApiResponseSuccessful(apiResponse)) {
+    this->updateGetConfigData(config["payload"]);
+  } else {
+    LOG_ERROR("ConfigManagerDev: API responded with error, details: %s", 
+        this->apiResponseToErrorString(apiResponse).c_str());
+  }
 }
+
+// TODO: move those to own/class module
+bool ConfigManager::isApiResponseSuccessful(const json& jsonDoc) const
+{
+  return (jsonDoc["type"].get<std::string>() == "success")
+}
+
+std::string ConfigManager::apiResponseToErrorString(const json& jsonDoc) const
+{
+  std::string result{};
+  if(jsonDoc["type"] == "user_error") {
+    result += "invalid request: ";
+  } else if(jsonDoc["type"] == "server_error") {
+    result += "server error: ";
+  } else {
+    result += "unknown api error: ";
+  }
+
+  auto errors = jsonDoc["errors"].get<std::vector<std::string>>();
+  for (auto& err : errors) {
+    result += err;
+  }
+
+  return result;
+}
+
 
 bool ConfigManager::readConfig(json& configJson)
 {
@@ -170,26 +203,22 @@ bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
   return isAllowed;
 }
 
-const etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>&
-ConfigManager::getEventbusAddresses() const
+const etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>& ConfigManager::getEventbusAddresses() const
 {
   return this->ebAddresses;
 }
 
-const etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>&
-ConfigManager::getDashboardApiAddresses() const
+const etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>& ConfigManager::getDashboardApiAddresses() const
 {
   return this->apiAddresses;
 }
 
-const etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT>&
-ConfigManager::getBaseAddresses() const
+const etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT>& ConfigManager::getBaseAddresses() const
 {
   return this->baseAddresses;
 }
 
-etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>
-ConfigManager::getMulticastDestinations(HusarnetAddress id)
+etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT> ConfigManager::getMulticastDestinations(HusarnetAddress id)
 {
   // TODO: figure out if this check was even relevant
   //  if(!id == deviceIdFromIpAddress(multicastDestination)) {
@@ -251,23 +280,21 @@ bool ConfigManager::writeCache(const json& cacheJson)
     } else {
       LOG_ERROR("ConfigManagerDev: config write failed")
     }
-    this->writeCache(cacheJson); // best-effort
+    this->writeCache(cacheJson);  // best-effort
 
     LOG_INFO("ConfigManagerDev: periodic thread going to sleep")
   }
 }
 
-void ConfigManager::waitInit()
+void ConfigManager::waitInit() const
 {
-  if (!this->configEnv->getEnableControlplane()) {
+  if(!this->configEnv->getEnableControlplane()) {
     LOG_WARNING("ConfigManagerDev: control plane is disabled, any peer will be let through")
     return;
   }
   LOG_INFO("ConfigManagerDev: wait init started")
-  // we need to at least have license information, like for example base server
-  // to connect to.
-  while(this->baseAddresses.empty() &&
-        this->apiAddresses.empty()) {
+  // we need to at least have license information, like for example base server to connect to.
+  while(this->baseAddresses.empty() && this->apiAddresses.empty()) {
     // busy waiting on purpose
   }
   LOG_INFO("ConfigManagerDev: wait init finished")
@@ -275,10 +302,10 @@ void ConfigManager::waitInit()
 
 bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 {
-  if (this->userWhitelist.contains(address)) {
+  if(this->userWhitelist.contains(address)) {
     return true;
   }
-  if (this->userWhitelist.full()) {
+  if(this->userWhitelist.full()) {
     LOG_ERROR("ConfigManagerDev: userWhitelist is full")
     return false;
   }
@@ -290,7 +317,7 @@ bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 
 bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
 {
-  if (this->userWhitelist.contains(address)) {
+  if(this->userWhitelist.contains(address)) {
     this->userWhitelist.erase(address);
     this->allowedPeers.erase(address);
     return true;

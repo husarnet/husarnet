@@ -24,41 +24,33 @@
 
 class FromUpperConsumer {
  public:
-  virtual void onUpperLayerData(
-      HusarnetAddress peerAddress,
-      string_view data) = 0;
+  virtual void onUpperLayerData(HusarnetAddress peerAddress, string_view data) = 0;
 };
 
 class ForUpperProducer {
  protected:
-  std::function<void(HusarnetAddress peerAddress, string_view data)>
-      fromUpperConsumer;
+  std::function<void(HusarnetAddress peerAddress, string_view data)> fromUpperConsumer;
 
  public:
   ForUpperProducer();
 
-  void setUpperLayerConsumer(
-      std::function<void(HusarnetAddress peerAddress, string_view data)> func);
+  void setUpperLayerConsumer(std::function<void(HusarnetAddress peerAddress, string_view data)> func);
   void sendToUpperLayer(HusarnetAddress peerAddress, string_view data);
 };
 
 class FromLowerConsumer {
  public:
-  virtual void onLowerLayerData(
-      HusarnetAddress peerAddress,
-      string_view data) = 0;
+  virtual void onLowerLayerData(HusarnetAddress peerAddress, string_view data) = 0;
 };
 
 class ForLowerProducer {
  protected:
-  std::function<void(HusarnetAddress peerAddress, string_view data)>
-      fromLowerConsumer;
+  std::function<void(HusarnetAddress peerAddress, string_view data)> fromLowerConsumer;
 
  public:
   ForLowerProducer();
 
-  void setLowerLayerConsumer(
-      std::function<void(HusarnetAddress peerAddress, string_view data)> func);
+  void setLowerLayerConsumer(std::function<void(HusarnetAddress peerAddress, string_view data)> func);
   void sendToLowerLayer(HusarnetAddress peerAddress, string_view data);
 };
 

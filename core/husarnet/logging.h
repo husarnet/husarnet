@@ -22,13 +22,7 @@ extern LogLevel globalLogLevel;
 // Do not use this function directly
 // Do not use Port::log function directly either
 // Do use the LOG_* macros below
-void log(
-    LogLevel level,
-    const std::string& filename,
-    int lineno,
-    const std::string& extra,
-    const char* format,
-    ...);
+void log(LogLevel level, const std::string& filename, int lineno, const std::string& extra, const char* format, ...);
 
 // New log level aliases
 

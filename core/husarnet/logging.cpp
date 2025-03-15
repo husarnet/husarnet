@@ -27,20 +27,12 @@ LogLevel globalLogLevel = LogLevel::INFO;
 const static std::string stripLogPathPrefix(const std::string& filename)
 {
   auto loggingFile = std::string(__FILE__);
-  auto prefix = loggingFile.substr(
-      0, loggingFile.length() -
-             std::string("/core/husarnet/logging.cpp").length() + 1);
+  auto prefix = loggingFile.substr(0, loggingFile.length() - std::string("/core/husarnet/logging.cpp").length() + 1);
   return filename.substr(prefix.length());
 }
 
 // TODO: replace buffer with std::string
-void log(
-    LogLevel level,
-    const std::string& filename,
-    int lineno,
-    const std::string& extra,
-    const char* format,
-    ...)
+void log(LogLevel level, const std::string& filename, int lineno, const std::string& extra, const char* format, ...)
 {
   if(globalLogLevel < level) {
     return;
@@ -71,8 +63,7 @@ void log(
 
 #if defined(DEBUG_BUILD) && not defined(ESP_PLATFORM)
   message += " " + padRight(80, userMessage);
-  message +=
-      " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
+  message += " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
 #else
   message += userMessage;
 #endif

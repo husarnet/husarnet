@@ -11,8 +11,12 @@
 // Always use isValid() and other checks to verify if the instance is valid
 // DO NOT compare the underlying data value directly
 // TODO: fix ngsocket and make the data field private
-IpAddress::IpAddress() : data("\x3f\xff\0\0\0\0\0\0\0\0\0\0\0\0\0\0") {}
-IpAddress::IpAddress(fstring<16> data) : data(data) {}
+IpAddress::IpAddress() : data("\x3f\xff\0\0\0\0\0\0\0\0\0\0\0\0\0\0")
+{
+}
+IpAddress::IpAddress(fstring<16> data) : data(data)
+{
+}
 
 bool IpAddress::operator==(const fstring<16> other) const
 {
@@ -116,8 +120,7 @@ bool IpAddress::isReservedNotPrivate() const
   if(isMappedV4()) {
     if(data[12] == 100 && (data[13] & 0b11000000) == 64)  // CGNAT
       return true;
-    if(data[12] == 192 && data[13] == 0 &&
-       data[14] == 0)  // IETF Protocol Assignments
+    if(data[12] == 192 && data[13] == 0 && data[14] == 0)  // IETF Protocol Assignments
       return true;
     if(data[12] == 192 && data[13] == 0 && data[14] == 2)  // TEST-NET-1
       return true;
@@ -133,22 +136,18 @@ bool IpAddress::isReservedNotPrivate() const
       return true;
     if((data[12] & 0xf0) == 240)  // Future use
       return true;
-    if(data[12] == 255 && data[13] == 255 && data[14] == 255 &&
-       data[15] == 255)  // Broadcast
+    if(data[12] == 255 && data[13] == 255 && data[14] == 255 && data[15] == 255)  // Broadcast
       return true;
-  } else {  // IPv6
-    if(memcmp(data.data(), "\x00\x64\xff\x9b\0\0\0\0\0\0\0\0", 12) ==
-       0)  // Global translation
+  } else {                                                                // IPv6
+    if(memcmp(data.data(), "\x00\x64\xff\x9b\0\0\0\0\0\0\0\0", 12) == 0)  // Global translation
       return true;
-    if(memcmp(data.data(), "\x00\x64\xff\x9b\x00\x01", 6) ==
-       0)  // Private translation
+    if(memcmp(data.data(), "\x00\x64\xff\x9b\x00\x01", 6) == 0)  // Private translation
       return true;
     if(memcmp(data.data(), "\x01\x00\0\0\0\0\0\0", 8) == 0)  // Discard prefix
       return true;
     if(memcmp(data.data(), "\x20\x01\x00\x00", 4) == 0)  // Teredo
       return true;
-    if(data[0] == 0x20 && data[1] == 0x01 && data[2] == 0 &&
-       (data[3] & 0b11110000) == 0x20)  // ORCHIDv2
+    if(data[0] == 0x20 && data[1] == 0x01 && data[2] == 0 && (data[3] & 0b11110000) == 0x20)  // ORCHIDv2
       return true;
     if(memcmp(data.data(), "\x20\x01\x0d\xb8", 4) == 0)  // Documentation
       return true;
@@ -226,10 +225,8 @@ int husarnet_ip6addr_aton(const char* cp, uint8_t* result)
       }
     } else if(isxdigit(*s)) {
       /* add current digit */
-      current_block_value =
-          (current_block_value << 4) +
-          (isdigit(*s) ? (uint32_t)(*s - '0')
-                       : (uint32_t)(10 + (islower(*s) ? *s - 'a' : *s - 'A')));
+      current_block_value = (current_block_value << 4) +
+                            (isdigit(*s) ? (uint32_t)(*s - '0') : (uint32_t)(10 + (islower(*s) ? *s - 'a' : *s - 'A')));
     } else {
       /* unexpected digit, space? CRLF? */
       break;
@@ -410,8 +407,8 @@ std::string IpAddress::toBinaryString() const
 std::string IpAddress::toString() const
 {
   if(isMappedV4()) {
-    return std::to_string(data[12]) + "." + std::to_string(data[13]) + "." +
-           std::to_string(data[14]) + "." + std::to_string(data[15]);
+    return std::to_string(data[12]) + "." + std::to_string(data[13]) + "." + std::to_string(data[14]) + "." +
+           std::to_string(data[15]);
   }
 
   std::string res;

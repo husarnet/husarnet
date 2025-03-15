@@ -35,9 +35,7 @@ __attribute__((weak)) const std::string readFile(const std::string& path)
   return buffer.str();
 }
 
-__attribute__((weak)) bool writeFile(
-    const std::string& path,
-    const std::string& data)
+__attribute__((weak)) bool writeFile(const std::string& path, const std::string& data)
 {
   std::ofstream f(path);
   if(!f.good()) {

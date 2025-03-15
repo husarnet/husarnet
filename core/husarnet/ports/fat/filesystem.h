@@ -19,6 +19,4 @@ bool writeFile(const std::string& path, const std::string& data);
 // This is a method for handling files that are shared with other processes in
 // the most graceful way possible Default implementation is still somewhat
 // naive, but it can be overriden by a given port to make it smarter
-bool transformFile(
-    const std::string& path,
-    std::function<std::string(const std::string&)> transform);
+bool transformFile(const std::string& path, std::function<std::string(const std::string&)> transform);

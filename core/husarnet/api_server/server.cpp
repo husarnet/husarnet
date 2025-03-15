@@ -24,18 +24,12 @@
 
 using namespace nlohmann;  // json
 
-ApiServer::ApiServer(
-    ConfigEnv* configEnv,
-    ConfigManager* configManager,
-    DashboardApiProxy* proxy)
+ApiServer::ApiServer(ConfigEnv* configEnv, ConfigManager* configManager, DashboardApiProxy* proxy)
     : configEnv(configEnv), configManager(configManager), proxy(proxy)
 {
 }
 
-void ApiServer::returnSuccess(
-    const httplib::Request& req,
-    httplib::Response& res,
-    json result)
+void ApiServer::returnSuccess(const httplib::Request& req, httplib::Response& res, json result)
 {
   json doc;
 
@@ -45,17 +39,12 @@ void ApiServer::returnSuccess(
   res.set_content(doc.dump(4), "text/json");
 }
 
-void ApiServer::returnSuccess(
-    const httplib::Request& req,
-    httplib::Response& res)
+void ApiServer::returnSuccess(const httplib::Request& req, httplib::Response& res)
 {
   returnSuccess(req, res, "success");
 }
 
-void ApiServer::returnInvalidQuery(
-    const httplib::Request& req,
-    httplib::Response& res,
-    std::string errorString)
+void ApiServer::returnInvalidQuery(const httplib::Request& req, httplib::Response& res, std::string errorString)
 {
   LOG_ERROR("httpApi: returning invalid query: %s", errorString.c_str());
   json doc;
@@ -66,10 +55,7 @@ void ApiServer::returnInvalidQuery(
   res.set_content(doc.dump(4), "text/json");
 }
 
-void ApiServer::returnError(
-    const httplib::Request& req,
-    httplib::Response& res,
-    std::string errorString)
+void ApiServer::returnError(const httplib::Request& req, httplib::Response& res, std::string errorString)
 {
   LOG_ERROR("httpApi: returning error: %s", errorString.c_str());
   json doc;
@@ -96,12 +82,9 @@ static const std::string getDaemonApiToken()
   return token;
 }
 
-bool ApiServer::validateSecret(
-    const httplib::Request& req,
-    httplib::Response& res)
+bool ApiServer::validateSecret(const httplib::Request& req, httplib::Response& res)
 {
-  if(!req.has_param("secret") ||
-     req.get_param_value("secret") != getDaemonApiToken()) {
+  if(!req.has_param("secret") || req.get_param_value("secret") != getDaemonApiToken()) {
     returnInvalidQuery(req, res, "invalid control secret");
     return false;
   }
@@ -109,10 +92,7 @@ bool ApiServer::validateSecret(
   return true;
 }
 
-bool ApiServer::requireParams(
-    const httplib::Request& req,
-    httplib::Response& res,
-    std::list<std::string> paramNames)
+bool ApiServer::requireParams(const httplib::Request& req, httplib::Response& res, std::list<std::string> paramNames)
 {
   for(auto paramName : paramNames) {
     if(!req.has_param(paramName.c_str())) {
@@ -123,9 +103,7 @@ bool ApiServer::requireParams(
   return true;
 }
 
-void ApiServer::forwardRequestToDashboardApi(
-    const httplib::Request& req,
-    httplib::Response& res)
+void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httplib::Response& res)
 {
   if(!validateSecret(req, res)) {
     return;
@@ -141,24 +119,22 @@ void ApiServer::forwardRequestToDashboardApi(
 }
 
 template <typename iterable_InetAddress_t>
-std::list<std::string> stringifyInetAddressList(
-    const iterable_InetAddress_t& source)
+std::list<std::string> stringifyInetAddressList(const iterable_InetAddress_t& source)
 {
   std::list<std::string> stringified{};
-  std::transform(
-      source.cbegin(), source.cend(), std::back_insert_iterator(stringified),
-      [](const InetAddress element) { return element.str(); });
+  std::transform(source.cbegin(), source.cend(), std::back_insert_iterator(stringified), [](const InetAddress element) {
+    return element.str();
+  });
   return stringified;
 }
 
 template <typename iterable_IpAddress_t>
-std::list<std::string> stringifyIpAddressList(
-    const iterable_IpAddress_t& source)
+std::list<std::string> stringifyIpAddressList(const iterable_IpAddress_t& source)
 {
   std::list<std::string> stringified{};
-  std::transform(
-      source.cbegin(), source.cend(), std::back_insert_iterator(stringified),
-      [](const IpAddress element) { return element.toString(); });
+  std::transform(source.cbegin(), source.cend(), std::back_insert_iterator(stringified), [](const IpAddress element) {
+    return element.toString();
+  });
   return stringified;
 }
 
@@ -167,103 +143,84 @@ void ApiServer::runThread()
   httplib::Server svr;
 
   // Test endpoint
-  svr.Get("/hi", [](const httplib::Request&, httplib::Response& res) {
-    res.set_content("Hello World!", "text/plain");
+  svr.Get(
+      "/hi", [](const httplib::Request&, httplib::Response& res) { res.set_content("Hello World!", "text/plain"); });
+
+  svr.Get("/api/status", [&](const httplib::Request& req, httplib::Response& res) {
+    returnSuccess(
+        req, res,
+        json::object({
+            {"config", this->configManager->getStatus()},
+            {"version", HUSARNET_VERSION},
+            {"user_agent", HUSARNET_USER_AGENT},
+        }));
   });
 
-  svr.Get(
-      "/api/status", [&](const httplib::Request& req, httplib::Response& res) {
-        returnSuccess(
-            req, res,
-            json::object({
-                {"config", this->configManager->getStatus()},
-                {"version", HUSARNET_VERSION},
-                {"user_agent", HUSARNET_USER_AGENT},
-            }));
-      });
+  svr.Post("/api/whitelist/add", [&](const httplib::Request& req, httplib::Response& res) {
+    if(!validateSecret(req, res)) {
+      return;
+    }
 
-  svr.Post(
-      "/api/whitelist/add",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        if(!validateSecret(req, res)) {
-          return;
-        }
+    if(!requireParams(req, res, {"address"})) {
+      return;
+    }
 
-        if(!requireParams(req, res, {"address"})) {
-          return;
-        }
+    if(configManager->userWhitelistAdd(IpAddress::parse(req.get_param_value("address")))) {
+      returnSuccess(req, res, {});
+    } else {
+      returnError(req, res, "Failed to add address to whitelist");
+    }
+  });
 
-        if(configManager->userWhitelistAdd(
-               IpAddress::parse(req.get_param_value("address")))) {
-          returnSuccess(req, res, {});
-        } else {
-          returnError(req, res, "Failed to add address to whitelist");
-        }
-      });
+  svr.Post("/api/whitelist/rm", [&](const httplib::Request& req, httplib::Response& res) {
+    if(!validateSecret(req, res)) {
+      return;
+    }
 
-  svr.Post(
-      "/api/whitelist/rm",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        if(!validateSecret(req, res)) {
-          return;
-        }
+    if(!requireParams(req, res, {"address"})) {
+      return;
+    }
 
-        if(!requireParams(req, res, {"address"})) {
-          return;
-        }
+    if(configManager->userWhitelistRm(IpAddress::parse(req.get_param_value("address")))) {
+      returnSuccess(req, res, {});
+    } else {
+      returnError(req, res, "Failed to remove address from whitelist");
+    }
+  });
 
-        if(configManager->userWhitelistRm(
-               IpAddress::parse(req.get_param_value("address")))) {
-          returnSuccess(req, res, {});
-        } else {
-          returnError(req, res, "Failed to remove address from whitelist");
-        }
-      });
+  svr.Get(R"(/api/forward/(.*))", [&](const httplib::Request& req, httplib::Response& res) {
+    forwardRequestToDashboardApi(req, res);
+  });
 
-  svr.Get(
-      R"(/api/forward/(.*))",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        forwardRequestToDashboardApi(req, res);
-      });
+  svr.Post(R"(/api/forward/(.*))", [&](const httplib::Request& req, httplib::Response& res) {
+    forwardRequestToDashboardApi(req, res);
+  });
 
-  svr.Post(
-      R"(/api/forward/(.*))",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        forwardRequestToDashboardApi(req, res);
-      });
+  svr.Put(R"(/api/forward/(.*))", [&](const httplib::Request& req, httplib::Response& res) {
+    forwardRequestToDashboardApi(req, res);
+  });
 
-  svr.Put(
-      R"(/api/forward/(.*))",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        forwardRequestToDashboardApi(req, res);
-      });
-
-  svr.Delete(
-      R"(/api/forward/(.*))",
-      [&](const httplib::Request& req, httplib::Response& res) {
-        forwardRequestToDashboardApi(req, res);
-      });
+  svr.Delete(R"(/api/forward/(.*))", [&](const httplib::Request& req, httplib::Response& res) {
+    forwardRequestToDashboardApi(req, res);
+  });
 
   IpAddress bindAddress{};
 
   if(configEnv->getDaemonApiInterface() != "") {
     // Deduce bind address from the provided interface
-    bindAddress =
-        Port::getIpAddressFromInterfaceName(configEnv->getDaemonApiInterface());
+    bindAddress = Port::getIpAddressFromInterfaceName(configEnv->getDaemonApiInterface());
     LOG_INFO(
-        "Deducing bind address %s from the provided interface: %s",
-        bindAddress.toString().c_str(),
+        "Deducing bind address %s from the provided interface: %s", bindAddress.toString().c_str(),
         configEnv->getDaemonApiInterface().c_str());
   } else {
     // Use provided/default bind address
     bindAddress = configEnv->getDaemonApiHost();
   }
 
-  if(!svr.bind_to_port(
-         bindAddress.toString().c_str(), configEnv->getDaemonApiPort())) {
+  if(!svr.bind_to_port(bindAddress.toString().c_str(), configEnv->getDaemonApiPort())) {
     LOG_CRITICAL(
-        "Unable to bind HTTP thread to port %s:%d. Exiting!",
-        bindAddress.toString().c_str(), configEnv->getDaemonApiPort());
+        "Unable to bind HTTP thread to port %s:%d. Exiting!", bindAddress.toString().c_str(),
+        configEnv->getDaemonApiPort());
     exit(1);
   } else {
     LOG_INFO(

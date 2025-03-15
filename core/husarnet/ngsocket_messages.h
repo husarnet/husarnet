@@ -11,16 +11,7 @@
 
 #include "enum.h"
 
-BETTER_ENUM(
-    BaseToPeerMessageKind,
-    uint8_t,
-    HELLO,
-    DEVICE_ADDRESSES,
-    DATA,
-    NAT_OK,
-    STATE,
-    REDIRECT,
-    INVALID)
+BETTER_ENUM(BaseToPeerMessageKind, uint8_t, HELLO, DEVICE_ADDRESSES, DATA, NAT_OK, STATE, REDIRECT, INVALID)
 
 struct BaseToPeerMessage {
   BaseToPeerMessageKind kind;

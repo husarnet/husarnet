@@ -42,13 +42,11 @@ void HusarnetManager::prepareHusarnet()
                                                    // if not a debug build
 
   this->hooksManager = new HooksManager(this->configEnv->getEnableHooks());
-  Port::threadStart(
-      [this]() { this->hooksManager->periodicThread(); }, "hooks");
+  Port::threadStart([this]() { this->hooksManager->periodicThread(); }, "hooks");
 
   this->configManager = new ConfigManager(this->hooksManager, this->configEnv);
-  Port::threadStart(
-      [this]() { this->configManager->periodicThread(); }, "config");
-  this->configManager->waitInit(); // blocks until we know where (and if) to connect
+  Port::threadStart([this]() { this->configManager->periodicThread(); }, "config");
+  this->configManager->waitInit();  // blocks until we know where (and if) to connect
 
   // At this point we have working settings/configuration and logs
 
@@ -64,20 +62,15 @@ void HusarnetManager::runHusarnet()
 {
   // Initialize the networking stack (peer container, tun/tap and various
   // ngsocket layers)
-  this->peerContainer =
-      new PeerContainer(this->configManager, this->myIdentity);
+  this->peerContainer = new PeerContainer(this->configManager, this->myIdentity);
 
-  auto tunTap = Port::startTunTap(
-      this->myIdentity->getIpAddress(), this->configEnv->getDaemonInterface());
+  auto tunTap = Port::startTunTap(this->myIdentity->getIpAddress(), this->configEnv->getDaemonInterface());
   this->tunTap = static_cast<TunTap*>(tunTap);
 
-  auto multicast =
-      new MulticastLayer(this->myIdentity->getDeviceId(), this->configManager);
+  auto multicast = new MulticastLayer(this->myIdentity->getDeviceId(), this->configManager);
   auto compression = new CompressionLayer(this->peerContainer, this->myFlags);
-  this->securityLayer =
-      new SecurityLayer(this->myIdentity, this->myFlags, this->peerContainer);
-  this->ngsocket =
-      new NgSocket(this->myIdentity, this->peerContainer, this->configManager);
+  this->securityLayer = new SecurityLayer(this->myIdentity, this->myFlags, this->peerContainer);
+  this->ngsocket = new NgSocket(this->myIdentity, this->peerContainer, this->configManager);
 
   stackUpperOnLower(tunTap, multicast);
   stackUpperOnLower(multicast, compression);
@@ -86,8 +79,7 @@ void HusarnetManager::runHusarnet()
 
   Port::threadStart(
       [this]() {
-        auto eventBus =
-            new EventBus(this->myIdentity->getIpAddress(), this->configManager);
+        auto eventBus = new EventBus(this->myIdentity->getIpAddress(), this->configManager);
         eventBus->init();
 
         while(true) {

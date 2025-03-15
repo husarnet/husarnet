@@ -121,7 +121,5 @@ inline bool mapContains(const std::map<K, V> m, K needle)
   return false;
 }
 
-const std::string
-padRight(int minLength, const std::string& text, char paddingChar = ' ');
-const std::string
-padLeft(int minLength, const std::string& text, char paddingChar = ' ');
+const std::string padRight(int minLength, const std::string& text, char paddingChar = ' ');
+const std::string padLeft(int minLength, const std::string& text, char paddingChar = ' ');

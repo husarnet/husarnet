@@ -7,10 +7,8 @@
 
 #include "magic_enum/magic_enum.hpp"
 
-static const std::string envPresentOrDefault(
-    etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> env,
-    const EnvKey key,
-    const std::string& def)
+static const std::string
+envPresentOrDefault(etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> env, const EnvKey key, const std::string& def)
 {
   if(env.contains(key)) {
     return env.at(key);
@@ -63,14 +61,12 @@ LogLevel ConfigEnv::getLogVerbosity() const
 
 bool ConfigEnv::getEnableHooks() const
 {
-  return strToBool(
-      envPresentOrDefault(this->env, EnvKey::enableHooks, "false"));
+  return strToBool(envPresentOrDefault(this->env, EnvKey::enableHooks, "false"));
 }
 
 bool ConfigEnv::getEnableControlplane() const
 {
-  return strToBool(
-      envPresentOrDefault(this->env, EnvKey::enableControlPlane, "true"));
+  return strToBool(envPresentOrDefault(this->env, EnvKey::enableControlPlane, "true"));
 }
 
 const std::string ConfigEnv::getDaemonInterface() const
@@ -88,9 +84,8 @@ const InternetAddress ConfigEnv::getDaemonApiHost() const
   auto def = InternetAddress::parse("127.0.0.1");
 
   if(this->env.contains(EnvKey::daemonApiHost)) {
-    return InternetAddress::parse(
-        this->env.at(EnvKey::daemonApiHost));  // TODO maybe add a sanity check
-                                               // and a nice user-facing message
+    return InternetAddress::parse(this->env.at(EnvKey::daemonApiHost));  // TODO maybe add a sanity check
+                                                                         // and a nice user-facing message
   }
 
   return def;
@@ -98,6 +93,5 @@ const InternetAddress ConfigEnv::getDaemonApiHost() const
 
 int ConfigEnv::getDaemonApiPort() const
 {
-  return std::stoi(
-      envPresentOrDefault(this->env, EnvKey::daemonApiPort, "16216"));
+  return std::stoi(envPresentOrDefault(this->env, EnvKey::daemonApiPort, "16216"));
 }

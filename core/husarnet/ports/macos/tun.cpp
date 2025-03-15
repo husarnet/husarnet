@@ -30,8 +30,7 @@ static int openTun(std::string& name)
   int fd;
 
   memset(&ctlInfo, 0, sizeof(ctlInfo));
-  if(strlcpy(ctlInfo.ctl_name, UTUN_CONTROL_NAME, sizeof(ctlInfo.ctl_name)) >=
-     sizeof(ctlInfo.ctl_name)) {
+  if(strlcpy(ctlInfo.ctl_name, UTUN_CONTROL_NAME, sizeof(ctlInfo.ctl_name)) >= sizeof(ctlInfo.ctl_name)) {
     fprintf(stderr, "UTUN_CONTROL_NAME too long");
     return -1;
   }

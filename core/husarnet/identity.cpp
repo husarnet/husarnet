@@ -38,8 +38,8 @@ fstring<64> Identity::sign(const std::string& msg)
   fstring<64> sig;
   unsigned long long siglen = 64;
   crypto_sign_ed25519_detached(
-      (unsigned char*)&sig[0], &siglen, (const unsigned char*)msg.data(),
-      msg.size(), (const unsigned char*)this->privkey.data());
+      (unsigned char*)&sig[0], &siglen, (const unsigned char*)msg.data(), msg.size(),
+      (const unsigned char*)this->privkey.data());
   return sig;
 }
 
@@ -54,9 +54,7 @@ Identity* Identity::create()
   auto identity = new Identity();
 
   while(!identity->deviceId.isFC94()) {
-    crypto_sign_ed25519_keypair(
-        (unsigned char*)&identity->pubkey[0],
-        (unsigned char*)&identity->privkey[0]);
+    crypto_sign_ed25519_keypair((unsigned char*)&identity->pubkey[0], (unsigned char*)&identity->privkey[0]);
     identity->deviceId = NgSocketCrypto::pubkeyToDeviceId(identity->pubkey);
   }
 
@@ -118,8 +116,7 @@ Identity* Identity::init()
 
     auto success = Port::writeStorage(StorageKey::id, identity->serialize());
     if(!success) {
-      LOG_CRITICAL(
-          "Failed to save identity to storage, will run with a volatile one!");
+      LOG_CRITICAL("Failed to save identity to storage, will run with a volatile one!");
     }
   }
 

@@ -26,14 +26,13 @@ class HooksManager {
   bool enabled;
 
   etl::mutex mutex;
-  etl::map<HookType, int, HOOKS_MAP_SIZE>
-      hookTimers;  // >0 time in ms. 0 means fire now, <0 means not set/already
-                   // fired
+  etl::map<HookType, int, HOOKS_MAP_SIZE> hookTimers;  // >0 time in ms. 0 means fire now, <0 means not set/already
+                                                       // fired
 
  public:
   HooksManager(bool enableHooks);
 
-  void periodicThread();  // Start this as a thread - will handle timers and
-                          // actually calling the hooks
+  void periodicThread();                       // Start this as a thread - will handle timers and
+                                               // actually calling the hooks
   void scheduleHook(const HookType hookType);  // Threadsafe
 };

@@ -34,9 +34,7 @@ void WebSocket::_connectSocket(InetAddress addr)
   assert(this->conn == nullptr);
   assert(this->serverEndpoint.is_truncated() == false);
 
-  auto dataCallback = [this](etl::string_view& data) {
-    this->_handleRead(data);
-  };
+  auto dataCallback = [this](etl::string_view& data) { this->_handleRead(data); };
 
   auto errorCallback = [this](std::shared_ptr<OsSocket::TcpConnection>) {
     LOG_ERROR("WS connection error, closing");  // TODO: errno
@@ -45,9 +43,8 @@ void WebSocket::_connectSocket(InetAddress addr)
 
   LOG_INFO("WS: _connectSocket started")
 
-  this->conn = OsSocket::TcpConnection::connect(
-      addr, dataCallback, errorCallback,
-      OsSocket::TcpConnection::Encapsulation::NONE);
+  this->conn =
+      OsSocket::TcpConnection::connect(addr, dataCallback, errorCallback, OsSocket::TcpConnection::Encapsulation::NONE);
 
   LOG_INFO("WS: _connectSocket finished")
 
@@ -88,8 +85,7 @@ void WebSocket::send(etl::istring data)
   this->_sendRaw(buf);
 }
 
-void WebSocket::setOnMessageCallback(
-    etl::delegate<void(WebSocket::Message&)> callback)
+void WebSocket::setOnMessageCallback(etl::delegate<void(WebSocket::Message&)> callback)
 {
   if(callback.is_valid())
     this->onMessage = callback;
@@ -206,8 +202,7 @@ void WebSocket::_handleHandshake(etl::string_view& buf)
   auto res = message.parse(buf);
 
   // TODO: handle partial messages
-  if(res == HTTPMessage::Result::INVALID ||
-     res == HTTPMessage::Result::INCOMPLETE ||
+  if(res == HTTPMessage::Result::INVALID || res == HTTPMessage::Result::INCOMPLETE ||
      !this->_verifyServerHandshake(message)) {
     LOG_ERROR("Invalid WS server handshake");
     this->close();
@@ -238,8 +233,7 @@ bool WebSocket::_sendClientHandshake()
   randombytes_buf(static_cast<void*>(rawNonce.data()), rawNonce.size());
 
   sodium_bin2base64(
-      this->nonce.data(), this->nonce.size(), rawNonce.data(), rawNonce.size(),
-      sodium_base64_VARIANT_ORIGINAL);
+      this->nonce.data(), this->nonce.size(), rawNonce.data(), rawNonce.size(), sodium_base64_VARIANT_ORIGINAL);
 
   message.headers.emplace("Sec-WebSocket-Key", this->nonce.data());
 
@@ -289,14 +283,11 @@ bool WebSocket::_verifyServerHandshake(HTTPMessage& message)
 
   etl::array<char, 29> serverKeyHashBase64;
   sodium_bin2base64(
-      serverKeyHashBase64.data(), serverKeyHashBase64.size(),
-      reinterpret_cast<unsigned char*>(serverKeyHash.data()),
+      serverKeyHashBase64.data(), serverKeyHashBase64.size(), reinterpret_cast<unsigned char*>(serverKeyHash.data()),
       serverKeyHash.size(), sodium_base64_VARIANT_ORIGINAL);
 
-  if(strncmp(
-         serverKeyHashBase64.data(),
-         message.headers["Sec-WebSocket-Accept"].data(),
-         serverKeyHashBase64.size()) != 0) {
+  if(strncmp(serverKeyHashBase64.data(), message.headers["Sec-WebSocket-Accept"].data(), serverKeyHashBase64.size()) !=
+     0) {
     return false;
   }
 

@@ -17,9 +17,7 @@
 
 #define RENAME_EXCHANGE (1 << 1)
 
-static bool transformTmpFile(
-    const std::string& path,
-    std::function<std::string(const std::string&)> transform)
+static bool transformTmpFile(const std::string& path, std::function<std::string(const std::string&)> transform)
 {
   // This path has to be on the same mountpoint as the original file for the
   // rename to work, hence we're adding a suffix
@@ -39,9 +37,7 @@ static bool transformTmpFile(
 
   // RENAME_EXCHANGE makes this an atomic operation
   // Using syscall directly as musl has not yet added a wrapper for this
-  if(syscall(
-         SYS_renameat2, 0, tmpPath.c_str(), 0, path.c_str(), RENAME_EXCHANGE) !=
-     0) {
+  if(syscall(SYS_renameat2, 0, tmpPath.c_str(), 0, path.c_str(), RENAME_EXCHANGE) != 0) {
     LOG_DEBUG("Failed to rename %s to %s", tmpPath.c_str(), path.c_str());
     return false;
   }
@@ -54,9 +50,7 @@ static bool transformTmpFile(
   return true;
 }
 
-static bool transformLockFile(
-    const std::string& path,
-    std::function<std::string(const std::string&)> transform)
+static bool transformLockFile(const std::string& path, std::function<std::string(const std::string&)> transform)
 {
   std::string oldContent, newContent;
 
@@ -150,9 +144,7 @@ abort:
   return false;
 }
 
-bool transformFile(
-    const std::string& path,
-    std::function<std::string(const std::string&)> transform)
+bool transformFile(const std::string& path, std::function<std::string(const std::string&)> transform)
 {
   LOG_DEBUG("Transforming %s", path.c_str());
 

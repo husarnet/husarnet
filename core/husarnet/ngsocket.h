@@ -36,12 +36,8 @@ const int MAX_ADDRESSES = 10;
 const int MAX_SOURCE_ADDRESSES = 5;
 const int DEVICEID_LENGTH = 16;
 
-BETTER_ENUM(
-    BaseConnectionType,
-    int,
-    NONE = 0,
-    TCP = 1,
-    UDP = 2)  // TODO switch to magic_enum
+BETTER_ENUM(BaseConnectionType, int, NONE = 0, TCP = 1,
+            UDP = 2)  // TODO switch to magic_enum
 
 class NgSocket : public LowerLayer {
  private:
@@ -98,9 +94,7 @@ class NgSocket : public LowerLayer {
   void peerDataPacketReceived(InetAddress source, string_view data);
   void baseMessageReceivedUdp(const BaseToPeerMessage& msg);
   void baseMessageReceivedTcp(const BaseToPeerMessage& msg);
-  void changePeerTargetAddresses(
-      Peer* peer,
-      std::vector<InetAddress> addresses);
+  void changePeerTargetAddresses(Peer* peer, std::vector<InetAddress> addresses);
   void sendNatInitToBase();
   void sendLocalAddressesToBase();
   void sendMulticast();
@@ -126,10 +120,7 @@ class NgSocket : public LowerLayer {
   void sendToPeer(InetAddress dest, const PeerToPeerMessage& msg);
 
  public:
-  NgSocket(
-      Identity* myIdentity,
-      PeerContainer* peerContainer,
-      ConfigManager* configManager);
+  NgSocket(Identity* myIdentity, PeerContainer* peerContainer, ConfigManager* configManager);
 
   virtual void onUpperLayerData(HusarnetAddress peerAddress, string_view data);
   void periodic();

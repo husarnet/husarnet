@@ -58,26 +58,21 @@ namespace OsSocket {
       FRAMED_TLS_MASKED,  // SSL magic + length + data
     };
 
-    TcpConnection(
-        Encapsulation transportType = Encapsulation::FRAMED_TLS_MASKED)
-        : _encapsulation(transportType){};
+    TcpConnection(Encapsulation transportType = Encapsulation::FRAMED_TLS_MASKED) : _encapsulation(transportType){};
 
     // Create a new TCP connection
     static std::shared_ptr<TcpConnection> connect(
         const InetAddress& address,
         TcpDataCallback dataCallback,
         TcpErrorCallback errorCallback,
-        Encapsulation transportType =
-            TcpConnection::Encapsulation::FRAMED_TLS_MASKED);
+        Encapsulation transportType = TcpConnection::Encapsulation::FRAMED_TLS_MASKED);
 
     // TODO: remove c style static functions, use Packet shared ptr to pass data
 
     // Write a data packet.
     // Returns true if the packet was sent.
     static bool write(std::shared_ptr<TcpConnection> conn, std::string& data);
-    static bool write(
-        std::shared_ptr<TcpConnection> conn,
-        etl::ivector<char>& data);
+    static bool write(std::shared_ptr<TcpConnection> conn, etl::ivector<char>& data);
 
     // Close the connection
     static void close(std::shared_ptr<TcpConnection> conn);
@@ -116,8 +111,7 @@ namespace OsSocket {
   // Used for performing simple, one-time calls to various APIs
   int connectUnmanagedTcpSocket(InetAddress addr);
 
-  bool
-  udpListenUnicast(int port, PacketCallback callback, bool setAsDefault = true);
+  bool udpListenUnicast(int port, PacketCallback callback, bool setAsDefault = true);
   void udpSend(InetAddress address, string_view data, int fd = -1);
   bool udpListenMulticast(InetAddress address, PacketCallback callback);
   void udpSendMulticast(InetAddress address, const std::string& data);

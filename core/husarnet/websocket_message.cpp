@@ -6,9 +6,7 @@
 #include "sodium.h"
 #include "websocket.h"
 
-size_t WebSocket::Message::parse(
-    etl::string_view& buffer,
-    WebSocket::Message& message)
+size_t WebSocket::Message::parse(etl::string_view& buffer, WebSocket::Message& message)
 {
   // Smallest possible message is 2 bytes long
   if(buffer.size() < 2)

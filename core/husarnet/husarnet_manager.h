@@ -27,9 +27,8 @@ class HusarnetManager {
 
  public:
   HusarnetManager();
-  HusarnetManager(const HusarnetManager&) =
-      delete;  // TODO add this to most of the singleton-ish classes in the
-               // codebase
+  HusarnetManager(const HusarnetManager&) = delete;  // TODO add this to most of the singleton-ish classes in the
+                                                     // codebase
 
   // Constructor initializes the port (so you won't be able to i.e. override the
   // environment variables)

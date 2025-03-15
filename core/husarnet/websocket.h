@@ -45,10 +45,8 @@ class WebSocket {
       PONG = 0xA,
     };
 
-    Message()
-        : flags({.fin = true}), opcode(Message::Opcode::TEXT), masked(true){};
-    Message(Message::Opcode opcode, bool masked)
-        : flags({.fin = true}), opcode(opcode), masked(masked){};
+    Message() : flags({.fin = true}), opcode(Message::Opcode::TEXT), masked(true){};
+    Message(Message::Opcode opcode, bool masked) : flags({.fin = true}), opcode(opcode), masked(masked){};
 
     // Parse message from buffer to provided message object
     // @returns number of bytes consumed, 0 if parser failure occurred
