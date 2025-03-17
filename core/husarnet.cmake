@@ -107,6 +107,10 @@ list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/husarnet/ports)
 file(GLOB husarnet_ports_SRC "${CMAKE_CURRENT_LIST_DIR}/husarnet/ports/*.cpp")
 list(APPEND husarnet_core_SRC ${husarnet_ports_SRC})
 
+list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/husarnet/dashboardapi)
+file(GLOB husarnet_dashboardapi_SRC "${CMAKE_CURRENT_LIST_DIR}/husarnet/dashboardapi/*.cpp")
+list(APPEND husarnet_core_SRC ${husarnet_dashboardapi_SRC})
+
 if(${BUILD_HTTP_CONTROL_API})
   list(APPEND husarnet_core_include_DIRS ${CMAKE_CURRENT_LIST_DIR}/husarnet/api_server)
   file(GLOB api_server_SRC "${CMAKE_CURRENT_LIST_DIR}/husarnet/api_server/*.cpp")

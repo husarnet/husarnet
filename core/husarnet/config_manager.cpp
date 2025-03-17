@@ -8,6 +8,7 @@
 
 #include "husarnet/husarnet_config.h"
 #include "husarnet/licensing.h"
+#include "husarnet/dashboardapi/response.h"
 
 #include "ngsocket_messages.h"
 
@@ -16,12 +17,11 @@ ConfigManager::ConfigManager(
     const ConfigEnv* configEnv)
     : hooksManager(hooksManager), configEnv(configEnv)
 {
-  this->configMutex.lock();
+  std::lock_guard lock(this->configMutex);
   if(!configEnv->getEnableControlplane()) {
-    allowEveryone = true;
+    this->allowEveryone = true;
     LOG_WARNING("ConfigManagerDev: control plane is disabled, any peer will be let through")
   }
-  this->configMutex.unlock();
 }
 
 void ConfigManager::getLicense()
@@ -36,7 +36,7 @@ void ConfigManager::getLicense()
 
   auto licenseJson = json::parse(bytes, nullptr, false);
   if(!isLicenseValid(licenseJson)) {
-    LOG_CRITICAL("license file downloaded from %s is invalid", tldAddress.c_str());
+    LOG_ERROR("license file downloaded from %s is invalid", tldAddress.c_str());
     return;
   }
 
@@ -46,7 +46,7 @@ void ConfigManager::getLicense()
 // TODO: discuss: might also be renamed to updateControlPlaneData
 void ConfigManager::updateLicenseData(const json& licenseJson)
 {
-  this->configMutex.lock();
+  std::lock_guard lock(this->configMutex);
   const auto& ebServerIps = licenseJson[LICENSE_EB_SERVERS_KEY].get<std::vector<std::string>>();
   this->ebAddresses.clear();
   for(auto& ipStr : ebServerIps) {
@@ -70,45 +70,31 @@ void ConfigManager::updateLicenseData(const json& licenseJson)
   for(auto& ip : baseServerIps) {
     this->baseAddresses.push_back(InternetAddress::parse(ip));
   }
-  this->configMutex.unlock();
 }
 
 HusarnetAddress ConfigManager::getApiAddress() const
 {
-  this->configMutex.lock();
+  std::lock_guard lock(this->configMutex);
   if(this->apiAddresses.empty()) {
     return {};
   }
   auto addr = this->apiAddresses[0];
-  this->configMutex.unlock();
   return addr;
 }
 
 HusarnetAddress ConfigManager::getEbAddress() const
 {
-  this->configMutex.lock();
+  std::lock_guard lock(this->configMutex);
   if(this->ebAddresses.empty()) {
     return {};
   }
   auto addr = this->ebAddresses[0];
-  this->configMutex.unlock();
-  return addr;
-}
-
-InternetAddress ConfigManager::getBaseAddress() const
-{
-  this->configMutex.lock();
-  if(this->baseAddresses.empty()) {
-    return {};
-  }
-  auto addr = this->baseAddresses[0];
-  this->configMutex.unlock();
   return addr;
 }
 
 void ConfigManager::updateGetConfigData(const json& configJson)
 {
-  this->configMutex.lock();
+  std::lock_guard lock(this->configMutex);
   LOG_INFO("ConfigManagerDev: updateGetConfigData started")
 
   if(configJson.contains(CONFIG_PEERS_KEY) && configJson[CONFIG_PEERS_KEY].is_array()) {
@@ -127,59 +113,24 @@ void ConfigManager::updateGetConfigData(const json& configJson)
       this->allowedPeers.insert(HusarnetAddress::parse(addr));
       // TODO: there is also hostname and aliases, which we will need to
       // insert into hosts file, but this will happen asynchronously (probably)
+      // TODO: handle set is full
     }
   }
 
   LOG_INFO("ConfigManagerDev: updateGetConfigData finished")
-  this->configMutex.unlock();
 }
 
 void ConfigManager::getGetConfig(json& configJson)
 {
-  auto apiAddress = this->getApiAddress();
-  auto [statusCode, bytes] = Port::httpGet(apiAddress.toString(), "/device/get_config");
+  auto apiResponse = dashboardapi::getConfig(this->getApiAddress());
 
-  if(statusCode != 200) {
-    LOG_ERROR(
-        "ConfigManagerDev: failed to obtain latest config (http request to %s was unsuccessful)",
-        apiAddress.toString().c_str());
-    return;
-  }
-
-  LOG_INFO("ConfigManagerDev: config: %s ", bytes.c_str());
-
-  auto apiResponse = json::parse(bytes);
-  if(this->isApiResponseSuccessful(apiResponse)) {
-    this->updateGetConfigData(apiResponse["payload"]);
+  if(apiResponse.isSuccessful()) {
+    this->updateGetConfigData(apiResponse.getPayloadJson());
+    configJson = apiResponse.getPayloadJson();
   } else {
     LOG_ERROR(
-        "ConfigManagerDev: API responded with error, details: %s", this->apiResponseToErrorString(apiResponse).c_str());
+        "ConfigManagerDev: API responded with error, details: %s", apiResponse.toString().c_str());
   }
-}
-
-// TODO: move those to own/class module
-bool ConfigManager::isApiResponseSuccessful(const json& jsonDoc) const
-{
-  return jsonDoc["type"].get<std::string>() == "success";
-}
-
-std::string ConfigManager::apiResponseToErrorString(const json& jsonDoc) const
-{
-  std::string result{};
-  if(jsonDoc["type"] == "user_error") {
-    result += "invalid request: ";
-  } else if(jsonDoc["type"] == "server_error") {
-    result += "server error: ";
-  } else {
-    result += "unknown api error: ";
-  }
-
-  auto errors = jsonDoc["errors"].get<std::vector<std::string>>();
-  for(auto& err : errors) {
-    result += err;
-  }
-
-  return result;
 }
 
 bool ConfigManager::readConfig(json& configJson)
@@ -216,23 +167,24 @@ bool ConfigManager::readCache(json& cacheJson)
 
 bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
 {
-  this->configMutex.lock();
+  std::lock_guard lock(this->configMutex);
   if(this->allowEveryone) {
-    this->configMutex.unlock();
     return true;
   }
   bool isAllowed = this->allowedPeers.contains(address);
-  this->configMutex.unlock();
   return isAllowed;
 }
 
 etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> ConfigManager::getBaseAddresses() const
 {
-  return this->baseAddresses;
+  std::lock_guard lock(this->configMutex);
+  auto addresses = this->baseAddresses;
+  return addresses;
 }
 
 etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT> ConfigManager::getMulticastDestinations(HusarnetAddress id)
 {
+  std::lock_guard lock(this->configMutex);
   // TODO: figure out if this check was even relevant
   //  if(!id == deviceIdFromIpAddress(multicastDestination)) {
   //    return {};
@@ -289,7 +241,7 @@ void ConfigManager::periodicThread()
   }
 
   while(true) {
-    std::unique_lock<etl::mutex> lk(this->cvMutex);
+    std::unique_lock lk(this->cvMutex);
     this->cv.wait_for(lk, std::chrono::seconds(configManagerPeriodInSeconds));
     LOG_INFO("ConfigManagerDev: periodic thread will download the config")
     this->getGetConfig(configJson);
@@ -310,8 +262,10 @@ void ConfigManager::waitInit() const
 {
   LOG_INFO("ConfigManagerDev: wait init started")
   // we need to at least have license information, like for example base server to connect to.
-  while(this->baseAddresses.empty() && this->apiAddresses.empty()) {
+  while(this->baseAddresses.empty()) {
     // busy waiting on purpose
+    // TODO: prbably needs a mutex unlock/lock too
+    // maybe also reconsider changing it to condition variable wait
   }
   LOG_INFO("ConfigManagerDev: wait init finished")
 }

@@ -87,6 +87,7 @@ class ConfigManager {
 
  public:
   ConfigManager(const HooksManager* hooksManager, const ConfigEnv* configEnv);
+  ConfigManager(const ConfigManager&) = delete;
 
   void periodicThread();  // Start as a thread - update license, flush cache to
                           // file, etc.
@@ -94,9 +95,6 @@ class ConfigManager {
                           // function
 
   void triggerGetConfig();  // Trigger an async get_config pull
-
-  bool isApiResponseSuccessful(const json& jsonDoc) const;
-  std::string apiResponseToErrorString(const json& jsonDoc) const;
 
   // User config manipulation
   bool userWhitelistAdd(const HusarnetAddress& address);
@@ -119,7 +117,6 @@ class ConfigManager {
   // Note: one day this will also carry some metadata about the base servers
   etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> getBaseAddresses() const;
 
-  InternetAddress getBaseAddress() const;
   HusarnetAddress getApiAddress() const;
   HusarnetAddress getEbAddress() const;
 };
