@@ -76,7 +76,7 @@ class ConfigManager {
 
   void getLicense();                                 // Actually do an HTTP call to TLD
   void updateLicenseData(const json& licenseJson);   // Transform JSON to internal structures
-  void getGetConfig();                               // Actually do an HTTP call to API
+  void getGetConfig(json& configJson);               // Actually do an HTTP call to API
   void updateGetConfigData(const json& configJson);  // Transform JSON to internal structures
 
   bool readConfig(json& jsonDoc);  // Read from disk and save to object if possible
@@ -85,21 +85,19 @@ class ConfigManager {
   bool writeConfig(const json& jsonDoc);  // If this fails we should propagate the error
   bool writeCache(const json& jsonDoc);   // It does not matter whether this fails
 
-  bool isApiResponseSuccessful(json& jsonDoc) const;
-
  public:
   ConfigManager(const HooksManager* hooksManager, const ConfigEnv* configEnv);
 
-  [[noreturn]] void periodicThread();  // Start as a thread - update license, flush cache to
-                                       // file, etc.
-  void waitInit() const;                     // Busy loop until valid enough metadata is available to
-                                       // function
+  void periodicThread();  // Start as a thread - update license, flush cache to
+                          // file, etc.
+  void waitInit() const;  // Busy loop until valid enough metadata is available to
+                          // function
 
   void triggerGetConfig();  // Trigger an async get_config pull
 
   bool isApiResponseSuccessful(const json& jsonDoc) const;
   std::string apiResponseToErrorString(const json& jsonDoc) const;
-  
+
   // User config manipulation
   bool userWhitelistAdd(const HusarnetAddress& address);
   bool userWhitelistRm(const HusarnetAddress& address);
@@ -118,11 +116,10 @@ class ConfigManager {
 
   // Those may change over time (license, get_config changes) so whoever
   // uses them is responsible for re-reading them periodically
-  const etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT>& getBaseAddresses()
-      const;  // Note: one day this will also carry some metadata
-              // about the base servers
-  const etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT>& getDashboardApiAddresses() const;
-  const etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT>& getEventbusAddresses() const;
+  // Note: one day this will also carry some metadata about the base servers
+  etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> getBaseAddresses() const;
 
-  HusarnetAddress getCurrentApiAddress() const;
+  InternetAddress getBaseAddress() const;
+  HusarnetAddress getApiAddress() const;
+  HusarnetAddress getEbAddress() const;
 };

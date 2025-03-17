@@ -10,8 +10,8 @@ void DashboardApiProxy::signAndForward(const httplib::Request& req, httplib::Res
   auto method = req.method;
   LOG_INFO("Forwarding request %s %s", method.c_str(), path.c_str());
 
-  auto dashboardApiAddresses = configManager->getDashboardApiAddresses();
-  if(dashboardApiAddresses.empty() || !dashboardApiAddresses[0].isFC94()) {
+  auto apiAddress = configManager->getApiAddress();
+  if(!apiAddress.isFC94()) {
     LOG_WARNING(
         "Not forwarding the request, as proxy does not have valid "
         "Dashboard API address");
@@ -35,9 +35,7 @@ void DashboardApiProxy::signAndForward(const httplib::Request& req, httplib::Res
   std::string query = httplib::detail::params_to_query_str(params);
   std::string pathWithQuery(path + "?" + query);
 
-  // Note: always taking first address. Will need new logic at the point we want
-  // multiple addresses support
-  httplib::Client httpClient(dashboardApiAddresses[0].toString());
+  httplib::Client httpClient(apiAddress.toString());
   httplib::Result result;
 
   if(method == "GET") {

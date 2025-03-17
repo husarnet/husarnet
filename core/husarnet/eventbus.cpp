@@ -36,13 +36,13 @@ void EventBus::periodic()
 
     this->_lastConnectionAttempt = currentTime;
 
+    const auto epIp = this->configManager->getEbAddress();
     // Connect to EB WS with Husarnet address from the license file
-    if(this->configManager->getEventbusAddresses().size() == 0)
+    if(!epIp.isFC94())
       return;
 
-    // TODO: handle multiple EB addresses
     InetAddress ebAddress = {
-        .ip = this->configManager->getEventbusAddresses()[0],
+        .ip = epIp,
         .port = 80,
     };
 
@@ -83,9 +83,9 @@ void EventBus::_handleGetConfig_ll()
   http.encode(buffer);
 
   // TODO: handle multiple API addresses
-  assert(this->configManager->getDashboardApiAddresses().size() > 0);
+  //  assert(this->configManager->getDashboardApiAddresses().size() > 0);
   InetAddress ebAddress = {
-      .ip = this->configManager->getDashboardApiAddresses()[0],
+      //      .ip = this->configManager->getDashboardApiAddresses()[0],
       .port = 80,
   };
 

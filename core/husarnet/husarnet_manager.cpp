@@ -77,16 +77,19 @@ void HusarnetManager::runHusarnet()
   stackUpperOnLower(compression, securityLayer);
   stackUpperOnLower(securityLayer, ngsocket);
 
-  Port::threadStart(
-      [this]() {
-        auto eventBus = new EventBus(this->myIdentity->getIpAddress(), this->configManager);
-        eventBus->init();
+  if(this->configEnv->getEnableControlplane()) {
+    // TODO: refactor according to earlier pattern
+    Port::threadStart(
+        [this]() {
+          auto eventBus = new EventBus(this->myIdentity->getIpAddress(), this->configManager);
+          eventBus->init();
 
-        while(true) {
-          eventBus->periodic();
-        }
-      },
-      "eb");
+          while(true) {
+            eventBus->periodic();
+          }
+        },
+        "eb");
+  }
 
 // In case of a "fat" platform - start the API server
 #ifdef HTTP_CONTROL_API
