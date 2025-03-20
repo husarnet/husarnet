@@ -3,9 +3,11 @@
 // License: specified in project_root/LICENSE.txt
 
 #include "response.h"
-#include "port_interface.h"
+
 #include "etl/base64.h"
 #include "etl/base64_encoder.h"
+#include "etl/string.h"
+#include "port_interface.h"
 
 namespace dashboardapi {
   Response::Response(int code, const std::string& bytes) : statusCode(code)
@@ -57,13 +59,26 @@ namespace dashboardapi {
 
   Response postHeartbeat(HusarnetAddress apiAddress, Identity* identity)
   {
+    std::string path("/device/manage/heartbeat");
     std::string body(R"({"user_agent":"husarnet-daemon-test"})");
-    auto [statusCode, bytes] =
-        Port::httpPost(apiAddress.toString(), "/device/get_config", R"({"user_agent":"husarnet-daemon-test"})");
-    Response res(statusCode, bytes);
 
-    // TODO: implement
-    
+    etl::base64_rfc4648_url_padding_encoder<44> pkEncoder;
+    auto pk = identity->getPubkey();
+    pkEncoder.encode_final(pk.begin(), pk.end());
+
+    etl::base64_rfc4648_url_padding_encoder<88> sigEncoder;
+    auto sig = identity->sign(body);
+    sigEncoder.encode_final(sig.begin(), sig.end());
+
+    // build query string
+    path.append("?pk=");
+    path.append(pkEncoder.begin(), pkEncoder.size());
+    path.append("&sig=");
+    path.append(sigEncoder.begin(), sigEncoder.size());
+
+    auto [statusCode, bytes] = Port::httpPost(apiAddress.toString(), path, body);
+
+    Response res(statusCode, bytes);
     return res;
   }
-}
+}  // namespace dashboardapi

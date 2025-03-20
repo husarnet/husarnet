@@ -11,6 +11,7 @@
 #include "husarnet/ports/port.h"
 
 #include "husarnet/compression_layer.h"
+#include "husarnet/dashboardapi/response.h"
 #include "husarnet/eventbus.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/ipaddress.h"
@@ -21,7 +22,6 @@
 #include "husarnet/peer_flags.h"
 #include "husarnet/security_layer.h"
 #include "husarnet/util.h"
-#include "husarnet/dashboardapi/response.h"
 
 #ifdef HTTP_CONTROL_API
 #include "husarnet/api_server/server.h"
@@ -59,15 +59,17 @@ void HusarnetManager::prepareHusarnet()
 
   // Spin off another thread for heartbeats - report being alive every minute or so
   if(this->configEnv->getEnableControlplane()) {
-    Port::threadStart([this]() {
-      while(true) {
-        const auto apiAddress = this->configManager->getApiAddress();
-        if (apiAddress.isValid()) {
-          dashboardapi::postHeartbeat(apiAddress, this->myIdentity);
-        }
-        Port::threadSleep(heartbeatPeriodMs);
-      }
-    }, "heartbeat");
+    Port::threadStart(
+        [this]() {
+          while(true) {
+            const auto apiAddress = this->configManager->getApiAddress();
+            if(apiAddress.isValid()) {
+              dashboardapi::postHeartbeat(apiAddress, this->myIdentity);
+            }
+            Port::threadSleep(heartbeatPeriodMs);
+          }
+        },
+        "heartbeat");
   }
 
   // Make our PeerFlags available early if the caller wants to change them

@@ -6,15 +6,13 @@
 #include <etl/string.h>
 #include <sockets.h>
 
+#include "husarnet/dashboardapi/response.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/licensing.h"
-#include "husarnet/dashboardapi/response.h"
 
 #include "ngsocket_messages.h"
 
-ConfigManager::ConfigManager(
-    HooksManager* hooksManager,
-    const ConfigEnv* configEnv)
+ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* configEnv)
     : hooksManager(hooksManager), configEnv(configEnv)
 {
   std::lock_guard lock(this->configMutex);
@@ -113,7 +111,7 @@ void ConfigManager::updateGetConfigData()
     etl::string<EMAIL_MAX_LENGTH> previousOwner = this->claimedBy;
     // upack ClaimInfo
     auto isClaimed = this->configJson[CONFIG_IS_CLAIMED_KEY].get<bool>();
-    if (isClaimed) {
+    if(isClaimed) {
       auto claimInfo = this->configJson[CONFIG_CLAIMINFO_KEY];
       auto ownerStr = claimInfo["owner"].get<std::string>();
       auto hostnameStr = claimInfo["hostname"].get<std::string>();
@@ -137,10 +135,10 @@ void ConfigManager::updateGetConfigData()
 
       LOG_INFO("ConfigManagerDev: parse %s", addrStr.c_str())
       auto addr = HusarnetAddress::parse(addrStr);
-      this->allowedPeers.insert(addr); // TODO: handle set is full
-      hostsEntries.insert({ peerHostname, addr});
+      this->allowedPeers.insert(addr);  // TODO: handle set is full
+      hostsEntries.insert({peerHostname, addr});
       for(auto& alias : aliases) {
-        hostsEntries.insert({ alias, addr});
+        hostsEntries.insert({alias, addr});
       }
       Port::updateHostsFile(hostsEntries);
       // TODO it would be best if the lock was freed before updateHostsFile
@@ -158,8 +156,7 @@ void ConfigManager::getGetConfig()
     this->storeGetConfig(apiResponse.getPayloadJson());
     this->updateGetConfigData();
   } else {
-    LOG_ERROR(
-        "ConfigManagerDev: API responded with error, details: %s", apiResponse.toString().c_str());
+    LOG_ERROR("ConfigManagerDev: API responded with error, details: %s", apiResponse.toString().c_str());
   }
 }
 
@@ -273,7 +270,7 @@ void ConfigManager::periodicThread()
     std::unique_lock lk(this->cvMutex);
     this->cv.wait_for(lk, std::chrono::seconds(configManagerPeriodInSeconds));
 
-    if (periodsCompleted % refreshLicenseAfterNumPeriods == 0) {
+    if(periodsCompleted % refreshLicenseAfterNumPeriods == 0) {
       LOG_INFO("ConfigManagerDev: refreshing the license")
       this->getLicense();
     }

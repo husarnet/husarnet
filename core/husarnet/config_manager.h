@@ -11,8 +11,8 @@
 
 #include "etl/mutex.h"
 #include "etl/set.h"
-#include "etl/vector.h"
 #include "etl/string.h"
+#include "etl/vector.h"
 #include "nlohmann/json.hpp"
 
 using namespace nlohmann;  // json
@@ -70,7 +70,7 @@ using namespace nlohmann;  // json
 #define ENV_TLD_FQDN "tldFqdn"
 
 constexpr int configManagerPeriodInSeconds = 60 * 10;  // fresh get_config every 10 min
-constexpr int refreshLicenseAfterNumPeriods = 5; // every N get_config refreshes, refresh license too
+constexpr int refreshLicenseAfterNumPeriods = 5;       // every N get_config refreshes, refresh license too
 
 class ConfigManager {
  private:
@@ -96,17 +96,17 @@ class ConfigManager {
   etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT> apiAddresses;
   etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT> ebAddresses;
 
-  etl::string<EMAIL_MAX_LENGTH> claimedBy; // empty string if not claimed
-  etl::string<HOSTNAME_MAX_LENGTH> hostname; // the one changeable from the web interface
+  etl::string<EMAIL_MAX_LENGTH> claimedBy;    // empty string if not claimed
+  etl::string<HOSTNAME_MAX_LENGTH> hostname;  // the one changeable from the web interface
 
-  void getLicense();                                 // Actually do an HTTP call to TLD
-  void updateLicenseData(const json& licenseJson);   // Transform JSON to internal structures
-  void getGetConfig();               // Actually do an HTTP call to API
+  void getLicense();                                // Actually do an HTTP call to TLD
+  void updateLicenseData(const json& licenseJson);  // Transform JSON to internal structures
+  void getGetConfig();                              // Actually do an HTTP call to API
   void storeGetConfig(const json& jsonDoc);
-  void updateGetConfigData();     // Transform JSON to internal structures
+  void updateGetConfigData();  // Transform JSON to internal structures
 
-  bool readConfig();  // Read from disk and save to object if possible
-  bool readCache(json& jsonDoc);   // Read from disk and save to object if possible
+  bool readConfig();              // Read from disk and save to object if possible
+  bool readCache(json& jsonDoc);  // Read from disk and save to object if possible
 
   bool writeConfig(const json& jsonDoc);  // If this fails we should propagate the error
   bool writeCache(const json& jsonDoc);   // It does not matter whether this fails
@@ -128,10 +128,10 @@ class ConfigManager {
 
   // Computed value getters
   json getDataForStatus() const;  // All sources combined into a giant JSON to
-                           // be returned by daemon API
-                           // Status will have to also get the live
-                           // data (like is connected to base, etc) -
-                           // ideally through the HusarnetManager
+                                  // be returned by daemon API
+                                  // Status will have to also get the live
+                                  // data (like is connected to base, etc) -
+                                  // ideally through the HusarnetManager
 
   bool isPeerAllowed(const HusarnetAddress& address) const;
 

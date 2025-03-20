@@ -53,6 +53,8 @@ const static std::string configDir = "/var/lib/husarnet/";
 const static std::string filesDir = configDir + "files/";
 #endif
 
+#include "httplib.h"
+
 static bool validateHostname(std::string hostname)
 {
   if(hostname.size() == 0)
@@ -416,7 +418,7 @@ namespace Port {
     return writeFile(path, data);
   }
 
-  __attribute__((weak)) HttpResult httpGet(const std::string& host, const std::string& path)
+  __attribute__((weak)) HttpResult httpGetNoLib(const std::string& host, const std::string& path)
   {
     // Host could be an IP address, let's check
     // If it's not, we need to resolve it
@@ -468,10 +470,31 @@ namespace Port {
     return {200, readBuffer.substr(pos, len - pos)};
   }
 
-  __attribute__((weak)) HttpResult httpPost(const std::string& host, const std::string& path, const std::string& body)
+  __attribute__((weak)) HttpResult httpGet(const std::string& host, const std::string& path)
   {
-    // TODO: implement
-    return {418, ""};
+    httplib::Client httpClient(host);
+    auto result = httpClient.Get(path);
+
+    if(result) {
+      return {result->status, result->body};
+    } else {
+      auto err = result.error();
+      LOG_ERROR("Can't contact host %s (error: %s)", httplib::to_string(err).c_str());
+    }
+    return {};
   }
 
+  __attribute__((weak)) HttpResult httpPost(const std::string& host, const std::string& path, const std::string& body)
+  {
+    httplib::Client httpClient(host);
+    auto result = httpClient.Post(path, body, "application/json");
+
+    if(result) {
+      return {result->status, result->body};
+    } else {
+      auto err = result.error();
+      LOG_ERROR("Can't contact host %s (error: %s)", httplib::to_string(err).c_str());
+    }
+    return {};
+  }
 }  // namespace Port

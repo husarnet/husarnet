@@ -18,12 +18,11 @@ namespace dashboardapi {
     ConfigManager* configManager;
 
    public:
-    Proxy(Identity* myIdentity)
-        : myIdentity(myIdentity)
+    Proxy(Identity* myIdentity) : myIdentity(myIdentity)
     {
     }
 
     void signAndForward(const httplib::Request& req, httplib::Response& res, const std::string& path);
   };
 
-}
+}  // namespace dashboardapi
