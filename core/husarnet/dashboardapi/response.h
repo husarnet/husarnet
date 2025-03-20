@@ -5,6 +5,7 @@
 
 #include <string>
 #include "husarnet/ipaddress.h"
+#include "husarnet/identity.h"
 #include "nlohmann/json.hpp"
 
 namespace dashboardapi {
@@ -21,4 +22,5 @@ namespace dashboardapi {
   };
 
   Response getConfig(HusarnetAddress apiAddress);
+  Response postHeartbeat(HusarnetAddress apiAddress, Identity* identity);
 }

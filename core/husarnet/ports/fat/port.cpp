@@ -467,4 +467,11 @@ namespace Port {
     // TODO: for now it is fake 200, we don't parse the resp headers, just body
     return {200, readBuffer.substr(pos, len - pos)};
   }
+
+  __attribute__((weak)) HttpResult httpPost(const std::string& host, const std::string& path, const std::string& body)
+  {
+    // TODO: implement
+    return {418, ""};
+  }
+
 }  // namespace Port

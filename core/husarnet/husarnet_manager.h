@@ -10,6 +10,8 @@
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
 
+constexpr int heartbeatPeriodMs = 1000 * 60;  // send heartbeat every minute
+
 class HusarnetManager {
  private:
   Identity* myIdentity = nullptr;

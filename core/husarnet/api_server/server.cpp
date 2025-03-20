@@ -150,7 +150,7 @@ void ApiServer::runThread()
     returnSuccess(
         req, res,
         json::object({
-            {"config", this->configManager->getStatus()},
+            {"config", this->configManager->getDataForStatus()},
             {"version", HUSARNET_VERSION},
             {"user_agent", HUSARNET_USER_AGENT},
         }));

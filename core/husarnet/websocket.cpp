@@ -97,7 +97,7 @@ void WebSocket::close()
     return;
   }
 
-  this->conn->close(conn);
+  OsSocket::TcpConnection::close(conn);
 
   // Explicitly decrement the reference count
   // Otherwise connection ptr will be destroyed after connecting to another
@@ -306,4 +306,9 @@ bool WebSocket::_sendRaw(etl::ivector<char>& data)
   }
 
   return true;
+}
+
+WebSocket::~WebSocket()
+{
+  this->close();
 }

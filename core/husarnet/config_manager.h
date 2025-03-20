@@ -12,6 +12,7 @@
 #include "etl/mutex.h"
 #include "etl/set.h"
 #include "etl/vector.h"
+#include "etl/string.h"
 #include "nlohmann/json.hpp"
 
 using namespace nlohmann;  // json
@@ -41,6 +42,17 @@ using namespace nlohmann;  // json
 #define USER_WHITELIST_SIZE_LIMIT 8
 #endif
 
+#ifndef EMAIL_MAX_LENGTH
+#define EMAIL_MAX_LENGTH 254
+#endif
+
+#ifndef HOSTNAME_MAX_LENGTH
+#define HOSTNAME_MAX_LENGTH 255
+#endif
+
+// TODO: or maybe take the value from limits.h I don't know
+// On Linux it's generally up to 63 chars but Windows can go bit crazy about them afair
+
 // JSON map keys
 #define USER_CONFIG_LAST_UPDATED "last_updated"
 #define USER_CONFIG_WHITELIST "whitelist"
@@ -50,15 +62,25 @@ using namespace nlohmann;  // json
 #define CACHE_GET_CONFIG "get_config"
 
 #define CONFIG_ENV_KEY "env"
+#define CONFIG_FEATURES_KEY "features"
 #define CONFIG_PEERS_KEY "peers"
+#define CONFIG_IS_CLAIMED_KEY "is_claimed"
+#define CONFIG_CLAIMINFO_KEY "claim_info"
+
 #define ENV_TLD_FQDN "tldFqdn"
 
 constexpr int configManagerPeriodInSeconds = 60 * 10;  // fresh get_config every 10 min
+constexpr int refreshLicenseAfterNumPeriods = 5; // every N get_config refreshes, refresh license too
 
 class ConfigManager {
  private:
-  const HooksManager* hooksManager;
+  HooksManager* hooksManager;
   const ConfigEnv* configEnv;
+
+  // TODO: these two might be taking up too much space for esp32 to handle
+  //   we might consider moving logic for storing them to port
+  json configJson;
+  json cacheJson;
 
   // flipped to true if control plane is disabled
   bool allowEveryone = false;
@@ -74,19 +96,23 @@ class ConfigManager {
   etl::vector<HusarnetAddress, DASHBOARD_API_ADDRESSES_LIMIT> apiAddresses;
   etl::vector<HusarnetAddress, EVENTBUS_ADDRESSES_LIMIT> ebAddresses;
 
+  etl::string<EMAIL_MAX_LENGTH> claimedBy; // empty string if not claimed
+  etl::string<HOSTNAME_MAX_LENGTH> hostname; // the one changeable from the web interface
+
   void getLicense();                                 // Actually do an HTTP call to TLD
   void updateLicenseData(const json& licenseJson);   // Transform JSON to internal structures
-  void getGetConfig(json& configJson);               // Actually do an HTTP call to API
-  void updateGetConfigData(const json& configJson);  // Transform JSON to internal structures
+  void getGetConfig();               // Actually do an HTTP call to API
+  void storeGetConfig(const json& jsonDoc);
+  void updateGetConfigData();     // Transform JSON to internal structures
 
-  bool readConfig(json& jsonDoc);  // Read from disk and save to object if possible
+  bool readConfig();  // Read from disk and save to object if possible
   bool readCache(json& jsonDoc);   // Read from disk and save to object if possible
 
   bool writeConfig(const json& jsonDoc);  // If this fails we should propagate the error
   bool writeCache(const json& jsonDoc);   // It does not matter whether this fails
 
  public:
-  ConfigManager(const HooksManager* hooksManager, const ConfigEnv* configEnv);
+  ConfigManager(HooksManager* hooksManager, const ConfigEnv* configEnv);
   ConfigManager(const ConfigManager&) = delete;
 
   void periodicThread();  // Start as a thread - update license, flush cache to
@@ -101,11 +127,11 @@ class ConfigManager {
   bool userWhitelistRm(const HusarnetAddress& address);
 
   // Computed value getters
-  const json getStatus() const;  // All sources combined into a giant JSON to
-                                 // be returned by daemon API
-                                 // Status will have to also get the live
-                                 // data (like is connected to base, etc) -
-                                 // ideally through the HusarnetManager
+  json getDataForStatus() const;  // All sources combined into a giant JSON to
+                           // be returned by daemon API
+                           // Status will have to also get the live
+                           // data (like is connected to base, etc) -
+                           // ideally through the HusarnetManager
 
   bool isPeerAllowed(const HusarnetAddress& address) const;
 

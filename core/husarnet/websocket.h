@@ -70,6 +70,7 @@ class WebSocket {
   using OnMessageDelegate = etl::delegate<void(WebSocket::Message&)>;
 
   WebSocket(){};
+  ~WebSocket();
 
   void connect(InetAddress addr, etl::istring& endpoint);
   void connect(InetAddress addr, const char* endpoint);

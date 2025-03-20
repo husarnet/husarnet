@@ -6,6 +6,8 @@
 #include <map>
 #include <vector>
 
+#include <response.h>
+
 #include "husarnet/ports/port.h"
 
 #include "husarnet/compression_layer.h"
@@ -19,6 +21,7 @@
 #include "husarnet/peer_flags.h"
 #include "husarnet/security_layer.h"
 #include "husarnet/util.h"
+#include "husarnet/dashboardapi/response.h"
 
 #ifdef HTTP_CONTROL_API
 #include "husarnet/api_server/server.h"
@@ -54,6 +57,19 @@ void HusarnetManager::prepareHusarnet()
   // separately
   this->myIdentity = Identity::init();
 
+  // Spin off another thread for heartbeats - report being alive every minute or so
+  if(this->configEnv->getEnableControlplane()) {
+    Port::threadStart([this]() {
+      while(true) {
+        const auto apiAddress = this->configManager->getApiAddress();
+        if (apiAddress.isValid()) {
+          dashboardapi::postHeartbeat(apiAddress, this->myIdentity);
+        }
+        Port::threadSleep(heartbeatPeriodMs);
+      }
+    }, "heartbeat");
+  }
+
   // Make our PeerFlags available early if the caller wants to change them
   this->myFlags = new PeerFlags();
 }
@@ -86,6 +102,7 @@ void HusarnetManager::runHusarnet()
 
           while(true) {
             eventBus->periodic();
+            Port::threadSleep(1000);
           }
         },
         "eb");
