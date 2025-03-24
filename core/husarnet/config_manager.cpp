@@ -22,7 +22,7 @@ ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* config
   }
 }
 
-void ConfigManager::getLicense()
+void ConfigManager::getLicenseJson()
 {
   auto tldAddress = this->configEnv->getTldFqdn();
   auto [statusCode, bytes] = Port::httpGet(tldAddress, "/license.json");
@@ -38,10 +38,13 @@ void ConfigManager::getLicense()
     return;
   }
 
-  {
-    std::lock_guard lgSlow(this->mutexSlow);
-    this->cacheJson[CACHE_LICENSE] = licenseJson;
-  }
+  this->storeLicense(licenseJson);
+}
+
+void ConfigManager::storeLicense(const nlohmann::json& jsonDoc)
+{
+  std::lock_guard lgSlow(this->mutexSlow);
+  this->cacheJson[CACHE_LICENSE] = jsonDoc;
 }
 
 // TODO: discuss: might also be renamed to updateControlPlaneData
@@ -117,14 +120,6 @@ void ConfigManager::updateGetConfigData()
   if(latestConfig.contains(CONFIG_PEERS_KEY) && latestConfig[CONFIG_PEERS_KEY].is_array()) {
     this->allowedPeers.clear();
 
-    // rebuild allowlist starting from infra servers
-    for(auto& addr : this->apiAddresses) {
-      this->allowedPeers.insert(addr);
-    }
-    for(auto& addr : this->ebAddresses) {
-      this->allowedPeers.insert(addr);
-    }
-
     etl::string<EMAIL_MAX_LENGTH> previousOwner = this->claimedBy;
     // upack ClaimInfo
     auto isClaimed = latestConfig[CONFIG_IS_CLAIMED_KEY].get<bool>();
@@ -134,6 +129,13 @@ void ConfigManager::updateGetConfigData()
       auto hostnameStr = claimInfo["hostname"].get<std::string>();
       this->claimedBy = etl::string<EMAIL_MAX_LENGTH>(ownerStr.c_str());
       this->hostname = etl::string<HOSTNAME_MAX_LENGTH>(hostnameStr.c_str());
+
+      auto featureFlags = latestConfig[CONFIG_FEATURES_KEY];
+      // legacy sync hostname feature
+      auto syncHostname = featureFlags["SyncHostname"].get<bool>();
+      if(syncHostname) {
+        Port::setSelfHostname(hostnameStr);
+      }
     } else {
       this->claimedBy = "";
     }
@@ -169,7 +171,7 @@ void ConfigManager::updateGetConfigData()
 void ConfigManager::storeGetConfig(const json& jsonDoc)
 {
   std::lock_guard lgSlow(this->mutexSlow);
-  this->configJson = jsonDoc;
+  this->cacheJson[CACHE_GET_CONFIG] = jsonDoc;
 }
 
 bool ConfigManager::readConfig()
@@ -212,6 +214,16 @@ bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
   if(this->allowEveryone) {
     return true;
   }
+  for(auto& apiAddr : this->apiAddresses) {
+    if(apiAddr == address) {
+      return true;
+    }
+  }
+  for(auto& ebAddr : this->ebAddresses) {
+    if(ebAddr == address) {
+      return true;
+    }
+  }
   return this->allowedPeers.contains(address);
 }
 
@@ -228,9 +240,6 @@ etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT> ConfigManager::getMul
   //  if(!id == deviceIdFromIpAddress(multicastDestination)) {
   //    return {};
   //  }
-
-  // TODO not sure what about infra addresses here
-  //   need to cut them up, this fact calls for bit different structure of the data
   auto result = etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT>();
   for(auto& peer : this->allowedPeers) {
     result.push_back(peer);
@@ -269,7 +278,7 @@ void ConfigManager::periodicThread()
     LOG_INFO("ConfigManagerDev: config read from disk successful")
   }
 
-  this->getLicense();
+  this->getLicenseJson();
   this->updateLicenseData();
 
   int periodsCompleted = 0;
@@ -279,7 +288,7 @@ void ConfigManager::periodicThread()
 
     if(periodsCompleted % refreshLicenseAfterNumPeriods == 0) {
       LOG_INFO("ConfigManagerDev: refreshing the license")
-      this->getLicense();
+      this->getLicenseJson();
       this->updateLicenseData();
     }
 

@@ -6,7 +6,6 @@
 
 #include "response.h"
 
-#include "etl/base64.h"
 #include "etl/base64_encoder.h"
 #include "etl/string.h"
 #include "port_interface.h"

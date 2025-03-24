@@ -100,10 +100,12 @@ class ConfigManager {
   etl::string<EMAIL_MAX_LENGTH> claimedBy;    // empty string if not claimed
   etl::string<HOSTNAME_MAX_LENGTH> hostname;  // the one changeable from the web interface
 
-  void getLicense();                                // Actually do an HTTP call to TLD
+  void getLicenseJson();     // HTTP call to TLD
+  void storeLicense(const json& jsonDoc); // save JSON doc
   void updateLicenseData();  // Transform JSON to internal structures
-  void getGetConfig();                              // Actually do an HTTP call to API
-  void storeGetConfig(const json& jsonDoc);
+
+  void getGetConfig();       // HTTP call to API
+  void storeGetConfig(const json& jsonDoc); // save JSON doc
   void updateGetConfigData();  // Transform JSON to internal structures
 
   bool readConfig();              // Read from disk and save to object if possible

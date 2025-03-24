@@ -49,7 +49,7 @@ void WebSocket::_connectSocket(InetAddress addr)
   LOG_INFO("WS: _connectSocket finished")
 
   if(this->conn == nullptr || this->conn->getFd() < 0) {
-    LOG_ERROR("WS connect failed: %s", strerror(errno));
+    LOG_ERROR("WS connect failed %d, %s", errno, strerror(errno));
     return;
   }
 
