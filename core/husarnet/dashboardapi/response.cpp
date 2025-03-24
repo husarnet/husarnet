@@ -2,6 +2,8 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 
+#include "husarnet/husarnet_config.h"
+
 #include "response.h"
 
 #include "etl/base64.h"
@@ -53,20 +55,28 @@ namespace dashboardapi {
   Response getConfig(HusarnetAddress apiAddress)
   {
     auto [statusCode, bytes] = Port::httpGet(apiAddress.toString(), "/device/get_config");
-    Response res(statusCode, bytes);
-    return res;
+    return { statusCode, bytes };
   }
+
+  // FIXME:
+  //  there _should_ be a compile-time function to calculate those in etl::base64
+  //  documentation even mentions such construct, unfortunately I couldn't find it in the lib sources
+  constexpr int base64EncodedPublicKeySize = 44;
+  constexpr int base64EncodedSignatureSize = 88;
 
   Response postHeartbeat(HusarnetAddress apiAddress, Identity* identity)
   {
     std::string path("/device/manage/heartbeat");
-    std::string body(R"({"user_agent":"husarnet-daemon-test"})");
 
-    etl::base64_rfc4648_url_padding_encoder<44> pkEncoder;
+    std::string body(R"({"user_agent":")");
+    body.append(HUSARNET_USER_AGENT);
+    body.append("\"}");
+
+    etl::base64_rfc4648_url_padding_encoder<base64EncodedPublicKeySize> pkEncoder;
     auto pk = identity->getPubkey();
     pkEncoder.encode_final(pk.begin(), pk.end());
 
-    etl::base64_rfc4648_url_padding_encoder<88> sigEncoder;
+    etl::base64_rfc4648_url_padding_encoder<base64EncodedSignatureSize> sigEncoder;
     auto sig = identity->sign(body);
     sigEncoder.encode_final(sig.begin(), sig.end());
 
@@ -77,8 +87,6 @@ namespace dashboardapi {
     path.append(sigEncoder.begin(), sigEncoder.size());
 
     auto [statusCode, bytes] = Port::httpPost(apiAddress.toString(), path, body);
-
-    Response res(statusCode, bytes);
-    return res;
+    return { statusCode, bytes };
   }
 }  // namespace dashboardapi

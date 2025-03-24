@@ -86,8 +86,9 @@ class ConfigManager {
   bool allowEveryone = false;
 
   // synchronization primitives
-  mutable etl::mutex configMutex;
   mutable etl::mutex cvMutex;
+  mutable etl::mutex mutexFast; // protects internal sets and vectors
+  mutable etl::mutex mutexSlow; // protects json documents
   std::condition_variable cv;
 
   etl::set<HusarnetAddress, ALLOWED_PEERS_LIMIT> allowedPeers;
@@ -100,16 +101,16 @@ class ConfigManager {
   etl::string<HOSTNAME_MAX_LENGTH> hostname;  // the one changeable from the web interface
 
   void getLicense();                                // Actually do an HTTP call to TLD
-  void updateLicenseData(const json& licenseJson);  // Transform JSON to internal structures
+  void updateLicenseData();  // Transform JSON to internal structures
   void getGetConfig();                              // Actually do an HTTP call to API
   void storeGetConfig(const json& jsonDoc);
   void updateGetConfigData();  // Transform JSON to internal structures
 
   bool readConfig();              // Read from disk and save to object if possible
-  bool readCache(json& jsonDoc);  // Read from disk and save to object if possible
+  bool readCache();  // Read from disk and save to object if possible
 
-  bool writeConfig(const json& jsonDoc);  // If this fails we should propagate the error
-  bool writeCache(const json& jsonDoc);   // It does not matter whether this fails
+  bool writeConfig();  // If this fails we should propagate the error
+  bool writeCache();   // It does not matter whether this fails
 
  public:
   ConfigManager(HooksManager* hooksManager, const ConfigEnv* configEnv);

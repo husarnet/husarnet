@@ -15,7 +15,7 @@
 ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* configEnv)
     : hooksManager(hooksManager), configEnv(configEnv)
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lgFast(this->mutexFast);
   if(!configEnv->getEnableControlplane()) {
     this->allowEveryone = true;
     LOG_WARNING("ConfigManagerDev: control plane is disabled, any peer will be let through")
@@ -38,13 +38,19 @@ void ConfigManager::getLicense()
     return;
   }
 
-  this->updateLicenseData(licenseJson);
+  {
+    std::lock_guard lgSlow(this->mutexSlow);
+    this->cacheJson[CACHE_LICENSE] = licenseJson;
+  }
 }
 
 // TODO: discuss: might also be renamed to updateControlPlaneData
-void ConfigManager::updateLicenseData(const json& licenseJson)
+void ConfigManager::updateLicenseData()
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lgSlow(this->mutexSlow);
+  std::lock_guard lgFast(this->mutexFast);
+  const auto& licenseJson = this->cacheJson[CACHE_LICENSE];
+
   const auto& ebServerIps = licenseJson[LICENSE_EB_SERVERS_KEY].get<std::vector<std::string>>();
   this->ebAddresses.clear();
   for(auto& ipStr : ebServerIps) {
@@ -68,13 +74,11 @@ void ConfigManager::updateLicenseData(const json& licenseJson)
   for(auto& ip : baseServerIps) {
     this->baseAddresses.push_back(InternetAddress::parse(ip));
   }
-
-  this->cacheJson["license"] = licenseJson;
 }
 
 HusarnetAddress ConfigManager::getApiAddress() const
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lgFast(this->mutexFast);
   if(this->apiAddresses.empty()) {
     return {};
   }
@@ -84,7 +88,7 @@ HusarnetAddress ConfigManager::getApiAddress() const
 
 HusarnetAddress ConfigManager::getEbAddress() const
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lgFast(this->mutexFast);
   if(this->ebAddresses.empty()) {
     return {};
   }
@@ -92,13 +96,26 @@ HusarnetAddress ConfigManager::getEbAddress() const
   return addr;
 }
 
+void ConfigManager::getGetConfig()
+{
+  auto apiResponse = dashboardapi::getConfig(this->getApiAddress());
+  if(apiResponse.isSuccessful()) {
+    this->storeGetConfig(apiResponse.getPayloadJson());
+    this->updateGetConfigData();
+  } else {
+    LOG_ERROR("ConfigManagerDev: API responded with error, details: %s", apiResponse.toString().c_str());
+  }
+}
+
 void ConfigManager::updateGetConfigData()
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lgSlow(this->mutexSlow);
+  std::lock_guard lgFast(this->mutexFast);
   LOG_INFO("ConfigManagerDev: updateGetConfigData started")
+  const auto& latestConfig = this->cacheJson[CACHE_GET_CONFIG];
 
-  if(this->configJson.contains(CONFIG_PEERS_KEY) && this->configJson[CONFIG_PEERS_KEY].is_array()) {
-    allowedPeers.clear();
+  if(latestConfig.contains(CONFIG_PEERS_KEY) && latestConfig[CONFIG_PEERS_KEY].is_array()) {
+    this->allowedPeers.clear();
 
     // rebuild allowlist starting from infra servers
     for(auto& addr : this->apiAddresses) {
@@ -110,9 +127,9 @@ void ConfigManager::updateGetConfigData()
 
     etl::string<EMAIL_MAX_LENGTH> previousOwner = this->claimedBy;
     // upack ClaimInfo
-    auto isClaimed = this->configJson[CONFIG_IS_CLAIMED_KEY].get<bool>();
+    auto isClaimed = latestConfig[CONFIG_IS_CLAIMED_KEY].get<bool>();
     if(isClaimed) {
-      auto claimInfo = this->configJson[CONFIG_CLAIMINFO_KEY];
+      auto claimInfo = latestConfig[CONFIG_CLAIMINFO_KEY];
       auto ownerStr = claimInfo["owner"].get<std::string>();
       auto hostnameStr = claimInfo["hostname"].get<std::string>();
       this->claimedBy = etl::string<EMAIL_MAX_LENGTH>(ownerStr.c_str());
@@ -127,7 +144,7 @@ void ConfigManager::updateGetConfigData()
     // TODO: add unclaimed hook
 
     std::map<std::string, HusarnetAddress> hostsEntries;
-    for(auto& peerInfo : this->configJson[CONFIG_PEERS_KEY]) {
+    for(auto& peerInfo : latestConfig[CONFIG_PEERS_KEY]) {
       // unpack PeerInfo structure
       auto addrStr = peerInfo["address"].get<std::string>();
       auto peerHostname = peerInfo["hostname"].get<std::string>();
@@ -149,26 +166,15 @@ void ConfigManager::updateGetConfigData()
   LOG_INFO("ConfigManagerDev: updateGetConfigData finished")
 }
 
-void ConfigManager::getGetConfig()
-{
-  auto apiResponse = dashboardapi::getConfig(this->getApiAddress());
-  if(apiResponse.isSuccessful()) {
-    this->storeGetConfig(apiResponse.getPayloadJson());
-    this->updateGetConfigData();
-  } else {
-    LOG_ERROR("ConfigManagerDev: API responded with error, details: %s", apiResponse.toString().c_str());
-  }
-}
-
 void ConfigManager::storeGetConfig(const json& jsonDoc)
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lgSlow(this->mutexSlow);
   this->configJson = jsonDoc;
 }
 
 bool ConfigManager::readConfig()
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lgSlow(this->mutexSlow);
   auto contents = Port::readStorage(StorageKey::config);
   if(contents.empty()) {
     LOG_INFO("ConfigManagerDev: saved config.json is empty/nonexistent");
@@ -183,8 +189,9 @@ bool ConfigManager::readConfig()
   return true;
 }
 
-bool ConfigManager::readCache(json& cacheJson)
+bool ConfigManager::readCache()
 {
+  std::lock_guard lgSlow(this->mutexSlow);
   auto contents = Port::readStorage(StorageKey::cache);
   if(contents.empty()) {
     LOG_INFO("ConfigManagerDev: saved cache.json is empty/nonexistent");
@@ -195,13 +202,13 @@ bool ConfigManager::readCache(json& cacheJson)
     LOG_INFO("ConfigManagerDev: saved cache.json is not a valid JSON, not reading");
     return false;
   }
-  cacheJson = parsedContents;
+  this->cacheJson = parsedContents;
   return true;
 }
 
 bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lgFast(this->mutexFast);
   if(this->allowEveryone) {
     return true;
   }
@@ -210,13 +217,13 @@ bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
 
 etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> ConfigManager::getBaseAddresses() const
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lgFast(this->mutexFast);
   return this->baseAddresses;
 }
 
 etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT> ConfigManager::getMulticastDestinations(HusarnetAddress id)
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lgFast(this->mutexFast);
   // TODO: figure out if this check was even relevant
   //  if(!id == deviceIdFromIpAddress(multicastDestination)) {
   //    return {};
@@ -233,39 +240,39 @@ etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT> ConfigManager::getMul
 
 json ConfigManager::getDataForStatus() const
 {
-  std::lock_guard lock(this->configMutex);
-
-  // TODO: implement. The idea is to dump every possible information that is available
-  // I know, we will be just keeping cache
-
-  return this->configJson;
+  std::lock_guard lgSlow(this->mutexSlow);
+  json combined;
+  combined["config"] = this->configJson;
+  combined["cache"] = this->cacheJson;
+  return combined;
 }
 
-bool ConfigManager::writeConfig(const json& configJson)
+bool ConfigManager::writeConfig()
 {
+  std::lock_guard lgSlow(this->mutexSlow);
   return Port::writeStorage(StorageKey::config, this->configJson.dump(JSON_INDENT_SPACES));
 }
 
-bool ConfigManager::writeCache(const json& cacheJson)
+bool ConfigManager::writeCache()
 {
+  std::lock_guard lgSlow(this->mutexSlow);
   return Port::writeStorage(StorageKey::cache, this->cacheJson.dump(JSON_INDENT_SPACES));
 }
 
 void ConfigManager::periodicThread()
 {
-  int periodsCompleted = 0;
-
+  // start with disk reads and slurp json docs into ram
+  if(this->readCache()) {
+    LOG_INFO("ConfigManagerDev: cache read from disk successful")
+  }
   if(this->readConfig()) {
     LOG_INFO("ConfigManagerDev: config read from disk successful")
-    this->updateGetConfigData();
-  }
-  if(this->readCache(cacheJson)) {
-    LOG_INFO("ConfigManagerDev: cache read from disk successful")
-    // TODO: determine cache structure
   }
 
   this->getLicense();
+  this->updateLicenseData();
 
+  int periodsCompleted = 0;
   while(true) {
     std::unique_lock lk(this->cvMutex);
     this->cv.wait_for(lk, std::chrono::seconds(configManagerPeriodInSeconds));
@@ -273,6 +280,7 @@ void ConfigManager::periodicThread()
     if(periodsCompleted % refreshLicenseAfterNumPeriods == 0) {
       LOG_INFO("ConfigManagerDev: refreshing the license")
       this->getLicense();
+      this->updateLicenseData();
     }
 
     if(this->configEnv->getEnableControlplane()) {
@@ -280,14 +288,14 @@ void ConfigManager::periodicThread()
       this->getGetConfig();
 
       // Flush to disk
-      if(this->writeConfig(configJson)) {
+      if(this->writeConfig()) {
         LOG_INFO("ConfigManagerDev: config write successful")
       } else {
         LOG_ERROR("ConfigManagerDev: config write failed")
       }
     }
 
-    this->writeCache(cacheJson);  // best-effort
+    this->writeCache();  // best-effort
     periodsCompleted++;
     LOG_INFO("ConfigManagerDev: periodic thread going to sleep")
   }
@@ -307,7 +315,7 @@ void ConfigManager::waitInit() const
 
 bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lock(this->mutexFast);
   if(this->userWhitelist.contains(address)) {
     return true;
   }
@@ -323,7 +331,7 @@ bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 
 bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
 {
-  std::lock_guard lock(this->configMutex);
+  std::lock_guard lock(this->mutexFast);
   if(this->userWhitelist.contains(address)) {
     this->userWhitelist.erase(address);
     this->allowedPeers.erase(address);

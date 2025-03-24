@@ -418,6 +418,7 @@ namespace Port {
     return writeFile(path, data);
   }
 
+  // TODO: this implementation is now unused on fat but something like this will be needed for esp
   __attribute__((weak)) HttpResult httpGetNoLib(const std::string& host, const std::string& path)
   {
     // Host could be an IP address, let's check
@@ -479,7 +480,7 @@ namespace Port {
       return {result->status, result->body};
     } else {
       auto err = result.error();
-      LOG_ERROR("Can't contact host %s (error: %s)", httplib::to_string(err).c_str());
+      LOG_ERROR("Can't contact host %s (error: %s)", host.c_str(), httplib::to_string(err).c_str());
     }
     return {};
   }
@@ -493,7 +494,7 @@ namespace Port {
       return {result->status, result->body};
     } else {
       auto err = result.error();
-      LOG_ERROR("Can't contact host %s (error: %s)", httplib::to_string(err).c_str());
+      LOG_ERROR("Can't contact host %s (error: %s)", host.c_str(), httplib::to_string(err).c_str());
     }
     return {};
   }
