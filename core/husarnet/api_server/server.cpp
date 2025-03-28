@@ -140,6 +140,7 @@ std::list<std::string> stringifyIpAddressList(const iterable_IpAddress_t& source
 
 void ApiServer::runThread()
 {
+  std::unique_lock<std::mutex> lk(mutex);
   httplib::Server svr;
 
   // Test endpoint
@@ -229,6 +230,8 @@ void ApiServer::runThread()
         bindAddress.toString().c_str(), configEnv->getDaemonApiPort());
   }
 
+  isReady = true;
+  lk.unlock();
   cv.notify_all();
 
   if(!svr.listen_after_bind()) {
@@ -240,5 +243,7 @@ void ApiServer::runThread()
 void ApiServer::waitStarted()
 {
   std::unique_lock<std::mutex> lk(mutex);
-  cv.wait(lk);
+  while(!isReady) {
+    cv.wait(lk);
+  }
 }
