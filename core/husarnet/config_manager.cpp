@@ -44,7 +44,7 @@ void ConfigManager::getLicenseJson()
 void ConfigManager::storeLicense(const nlohmann::json& jsonDoc)
 {
   std::lock_guard lgSlow(this->mutexSlow);
-  this->cacheJson[CACHE_LICENSE] = jsonDoc;
+  this->cacheJson[CACHE_KEY_LICENSE] = jsonDoc;
 }
 
 // TODO: discuss: might also be renamed to updateControlPlaneData
@@ -52,7 +52,7 @@ void ConfigManager::updateLicenseData()
 {
   std::lock_guard lgSlow(this->mutexSlow);
   std::lock_guard lgFast(this->mutexFast);
-  const auto& licenseJson = this->cacheJson[CACHE_LICENSE];
+  const auto& licenseJson = this->cacheJson[CACHE_KEY_LICENSE];
 
   const auto& ebServerIps = licenseJson[LICENSE_EB_SERVERS_KEY].get<std::vector<std::string>>();
   this->ebAddresses.clear();
@@ -115,42 +115,42 @@ void ConfigManager::updateGetConfigData()
   std::lock_guard lgSlow(this->mutexSlow);
   std::lock_guard lgFast(this->mutexFast);
   LOG_INFO("ConfigManagerDev: updateGetConfigData started")
-  const auto& latestConfig = this->cacheJson[CACHE_GET_CONFIG];
+  const auto& latestConfig = this->cacheJson[CACHE_KEY_GETCONFIG];
 
-  if(latestConfig.contains(CONFIG_PEERS_KEY) && latestConfig[CONFIG_PEERS_KEY].is_array()) {
+  if(latestConfig.contains(GETCONFIG_KEY_PEERS) && latestConfig[GETCONFIG_KEY_PEERS].is_array()) {
     this->allowedPeers.clear();
 
     etl::string<EMAIL_MAX_LENGTH> previousOwner = this->claimedBy;
     // upack ClaimInfo
-    auto isClaimed = latestConfig[CONFIG_IS_CLAIMED_KEY].get<bool>();
+    auto isClaimed = latestConfig[GETCONFIG_KEY_IS_CLAIMED].get<bool>();
     if(isClaimed) {
-      auto claimInfo = latestConfig[CONFIG_CLAIMINFO_KEY];
-      auto ownerStr = claimInfo["owner"].get<std::string>();
-      auto hostnameStr = claimInfo["hostname"].get<std::string>();
+      auto claimInfo = latestConfig[GETCONFIG_KEY_CLAIMINFO];
+      auto ownerStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_OWNER].get<std::string>();
+      auto hostnameStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_HOSTNAME].get<std::string>();
       this->claimedBy = etl::string<EMAIL_MAX_LENGTH>(ownerStr.c_str());
       this->hostname = etl::string<HOSTNAME_MAX_LENGTH>(hostnameStr.c_str());
 
-      auto featureFlags = latestConfig[CONFIG_FEATURES_KEY];
+      auto featureFlags = latestConfig[GETCONFIG_KEY_FEATUREFLAGS];
       // legacy sync hostname feature
-      auto syncHostname = featureFlags["SyncHostname"].get<bool>();
-      if(syncHostname) {
+      auto shouldSyncHostname = featureFlags[GETCONFIG_KEY_FEATUREFLAGS_SYNCHOSTNAME].get<bool>();
+      if(shouldSyncHostname) {
         Port::setSelfHostname(hostnameStr);
       }
     } else {
       this->claimedBy = "";
     }
 
-    if(previousOwner == "" && this->claimedBy != "") {
+    if(previousOwner.empty() && !this->claimedBy.empty()) {
       this->hooksManager->scheduleHook(HookType::claimed);
     }
     // TODO: add unclaimed hook
 
     std::map<std::string, HusarnetAddress> hostsEntries;
-    for(auto& peerInfo : latestConfig[CONFIG_PEERS_KEY]) {
+    for(auto& peerInfo : latestConfig[GETCONFIG_KEY_PEERS]) {
       // unpack PeerInfo structure
-      auto addrStr = peerInfo["address"].get<std::string>();
-      auto peerHostname = peerInfo["hostname"].get<std::string>();
-      auto aliases = peerInfo["aliases"].get<std::vector<std::string>>();
+      auto addrStr = peerInfo[GETCONFIG_KEY_PEERINFO_IP].get<std::string>();
+      auto peerHostname = peerInfo[GETCONFIG_KEY_PEERINFO_HOSTNAME].get<std::string>();
+      auto aliases = peerInfo[GETCONFIG_KEY_PEERINFO_ALIASES].get<std::vector<std::string>>();
 
       LOG_INFO("ConfigManagerDev: parse %s", addrStr.c_str())
       auto addr = HusarnetAddress::parse(addrStr);
@@ -171,12 +171,11 @@ void ConfigManager::updateGetConfigData()
 void ConfigManager::storeGetConfig(const json& jsonDoc)
 {
   std::lock_guard lgSlow(this->mutexSlow);
-  this->cacheJson[CACHE_GET_CONFIG] = jsonDoc;
+  this->cacheJson[CACHE_KEY_GETCONFIG] = jsonDoc;
 }
 
 bool ConfigManager::readConfig()
 {
-  std::lock_guard lgSlow(this->mutexSlow);
   auto contents = Port::readStorage(StorageKey::config);
   if(contents.empty()) {
     LOG_INFO("ConfigManagerDev: saved config.json is empty/nonexistent");
@@ -187,13 +186,20 @@ bool ConfigManager::readConfig()
     LOG_INFO("ConfigManagerDev: saved config.json is not a valid JSON, not reading");
     return false;
   }
-  this->configJson = parsedContents;
+  this->storeConfig(parsedContents);
   return true;
+}
+
+void ConfigManager::storeConfig(const nlohmann::json& jsonDoc)
+{
+  std::lock_guard lgSlow(this->mutexSlow);
+  if(jsonDoc.contains(USERCONFIG_KEY_WHITELIST) && jsonDoc[USERCONFIG_KEY_WHITELIST].is_array()) {
+    this->configJson[USERCONFIG_KEY_WHITELIST] = jsonDoc[USERCONFIG_KEY_WHITELIST];
+  }
 }
 
 bool ConfigManager::readCache()
 {
-  std::lock_guard lgSlow(this->mutexSlow);
   auto contents = Port::readStorage(StorageKey::cache);
   if(contents.empty()) {
     LOG_INFO("ConfigManagerDev: saved cache.json is empty/nonexistent");
@@ -204,8 +210,20 @@ bool ConfigManager::readCache()
     LOG_INFO("ConfigManagerDev: saved cache.json is not a valid JSON, not reading");
     return false;
   }
-  this->cacheJson = parsedContents;
+
+  this->storeCache(parsedContents);
   return true;
+}
+
+void ConfigManager::storeCache(const nlohmann::json& jsonDoc)
+{
+  std::lock_guard lgSlow(this->mutexSlow);
+  if(jsonDoc.contains(CACHE_KEY_GETCONFIG) && jsonDoc[CACHE_KEY_GETCONFIG].is_object()) {
+    this->cacheJson[CACHE_KEY_GETCONFIG] = jsonDoc[CACHE_KEY_GETCONFIG];
+  }
+  if(jsonDoc.contains(CACHE_KEY_LICENSE) && jsonDoc[CACHE_KEY_LICENSE].is_object()) {
+    this->cacheJson[CACHE_KEY_LICENSE] = jsonDoc[CACHE_KEY_LICENSE];
+  }
 }
 
 bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
@@ -251,8 +269,10 @@ json ConfigManager::getDataForStatus() const
 {
   std::lock_guard lgSlow(this->mutexSlow);
   json combined;
-  combined["config"] = this->configJson;
-  combined["cache"] = this->cacheJson;
+
+  combined["user_config"] = this->configJson;
+  combined["api_config"] = this->cacheJson[CACHE_KEY_GETCONFIG];
+  combined["license"] = this->cacheJson[CACHE_KEY_LICENSE];
   return combined;
 }
 

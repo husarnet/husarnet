@@ -54,20 +54,21 @@ using namespace nlohmann;  // json
 // On Linux it's generally up to 63 chars but Windows can go bit crazy about them afair
 
 // JSON map keys
-#define USER_CONFIG_LAST_UPDATED "last_updated"
-#define USER_CONFIG_WHITELIST "whitelist"
+#define USERCONFIG_KEY_WHITELIST "whitelist"
 
-#define CACHE_LAST_UPDATED "last_updated"
-#define CACHE_LICENSE "license"
-#define CACHE_GET_CONFIG "get_config"
+#define CACHE_KEY_LICENSE "license"
+#define CACHE_KEY_GETCONFIG "get_config"
 
-#define CONFIG_ENV_KEY "env"
-#define CONFIG_FEATURES_KEY "features"
-#define CONFIG_PEERS_KEY "peers"
-#define CONFIG_IS_CLAIMED_KEY "is_claimed"
-#define CONFIG_CLAIMINFO_KEY "claim_info"
-
-#define ENV_TLD_FQDN "tldFqdn"
+#define GETCONFIG_KEY_PEERS "peers"
+#define GETCONFIG_KEY_PEERINFO_IP "address"
+#define GETCONFIG_KEY_PEERINFO_HOSTNAME "hostname"
+#define GETCONFIG_KEY_PEERINFO_ALIASES "aliases"
+#define GETCONFIG_KEY_IS_CLAIMED "is_claimed"
+#define GETCONFIG_KEY_CLAIMINFO "claim_info"
+#define GETCONFIG_KEY_CLAIMINFO_OWNER "owner"
+#define GETCONFIG_KEY_CLAIMINFO_HOSTNAME "hostname"
+#define GETCONFIG_KEY_FEATUREFLAGS "features"
+#define GETCONFIG_KEY_FEATUREFLAGS_SYNCHOSTNAME "SyncHostname"
 
 constexpr int configManagerPeriodInSeconds = 60 * 10;  // fresh get_config every 10 min
 constexpr int refreshLicenseAfterNumPeriods = 5;       // every N get_config refreshes, refresh license too
@@ -77,13 +78,12 @@ class ConfigManager {
   HooksManager* hooksManager;
   const ConfigEnv* configEnv;
 
-  // TODO: these two might be taking up too much space for esp32 to handle
+  // TODO: these might be taking up too much space for esp32 to handle
   //   we might consider moving logic for storing them to port
   json configJson;
   json cacheJson;
 
-  // flipped to true if control plane is disabled
-  bool allowEveryone = false;
+  bool allowEveryone = false; // flipped to true if control plane is disabled
 
   // synchronization primitives
   mutable etl::mutex cvMutex;
@@ -108,8 +108,11 @@ class ConfigManager {
   void storeGetConfig(const json& jsonDoc); // save JSON doc
   void updateGetConfigData();  // Transform JSON to internal structures
 
-  bool readConfig();              // Read from disk and save to object if possible
-  bool readCache();  // Read from disk and save to object if possible
+  bool readConfig();
+  void storeConfig(const json& jsonDoc);
+
+  bool readCache();
+  void storeCache(const json& jsonDoc);
 
   bool writeConfig();  // If this fails we should propagate the error
   bool writeCache();   // It does not matter whether this fails
