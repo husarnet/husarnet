@@ -63,6 +63,7 @@ namespace dashboardapi {
   constexpr int base64EncodedPublicKeySize = 44;
   constexpr int base64EncodedSignatureSize = 88;
 
+  // TODO: generalize it
   Response postHeartbeat(HusarnetAddress apiAddress, Identity* identity)
   {
     std::string path("/device/manage/heartbeat");

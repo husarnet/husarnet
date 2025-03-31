@@ -295,7 +295,9 @@ namespace OsSocket {
 
   bool TcpConnection::write(std::shared_ptr<TcpConnection> conn, std::string& packet)
   {
-    if(conn->fd == -1)
+    // TODO: there is reproducible crash here coming from sendToBaseTcp
+    //   even though it checks !baseConnection earlier
+    if(!conn || conn->fd == -1)
       return false;
     assert(packet.size() > 0);
 
