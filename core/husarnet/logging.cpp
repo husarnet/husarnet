@@ -3,7 +3,15 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/logging.h"
 
+#include <cstdarg>
+#include <cstdio>
+#include <string>
+
 #include "husarnet/ports/port_interface.h"
+
+#include "husarnet/util.h"
+
+#include "magic_enum/magic_enum.hpp"
 
 // This is merely a starting/bootstrap log level. As soon as the config is
 // loaded, proper one will be set
@@ -16,23 +24,15 @@ LogLevel globalLogLevel = LogLevel::INFO;
 // This needs to live in a .cpp file due to __FILE__ macro usage and the way we
 // handle tempIncludes in CMake
 // cppcheck-suppress unusedFunction
-const std::string stripLogPathPrefix(const std::string& filename)
+const static std::string stripLogPathPrefix(const std::string& filename)
 {
   auto loggingFile = std::string(__FILE__);
-  auto prefix = loggingFile.substr(
-      0, loggingFile.length() -
-             std::string("/core/husarnet/logging.cpp").length() + 1);
+  auto prefix = loggingFile.substr(0, loggingFile.length() - std::string("/core/husarnet/logging.cpp").length() + 1);
   return filename.substr(prefix.length());
 }
 
 // TODO: replace buffer with std::string
-void log(
-    LogLevel level,
-    const std::string& filename,
-    int lineno,
-    const std::string& extra,
-    const char* format,
-    ...)
+void log(LogLevel level, const std::string& filename, int lineno, const std::string& extra, const char* format, ...)
 {
   if(globalLogLevel < level) {
     return;
@@ -58,13 +58,12 @@ void log(
   // duplicating it
 #ifndef ESP_PLATFORM
   message = Port::getHumanTime();
-  message += " " + padRight(8, level._to_string());
+  message += " " + padRight(8, std::string(magic_enum::enum_name(level)));
 #endif
 
 #if defined(DEBUG_BUILD) && not defined(ESP_PLATFORM)
   message += " " + padRight(80, userMessage);
-  message +=
-      " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
+  message += " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
 #else
   message += userMessage;
 #endif

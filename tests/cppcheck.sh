@@ -49,7 +49,6 @@ cppcheck \
     --config-exclude=json \
     --cppcheck-build-dir=${cppcheck_tmp_dir} \
     -I ${base_dir}/core \
-    -I ${base_dir}/build/tests/_deps/better_enums-src \
     ${base_dir}/daemon \
     ${base_dir}/core \
     ${tests_base}/unit

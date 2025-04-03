@@ -2,40 +2,27 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include <cstdarg>
-#include <cstdio>
-
-#include <enum.h>
-
-#include "husarnet/util.h"
-
-const std::string stripLogPathPrefix(const std::string& filename);
+#include <string>
 
 // Windows API is broken
 #undef ERROR
 
-BETTER_ENUM(
-    LogLevel,
-    int,
-    NONE, /* 0 */
-    CRITICAL /* 1 */,
-    ERROR /* 2 */,
-    WARNING /* 3 */,
-    INFO /* 4 */,
-    DEBUG /* 5 */);
+enum class LogLevel
+{
+  NONE = 0,
+  CRITICAL = 1,
+  ERROR = 2,
+  WARNING = 3,
+  INFO = 4,
+  DEBUG = 5,
+};
 
 extern LogLevel globalLogLevel;
 
 // Do not use this function directly
 // Do not use Port::log function directly either
 // Do use the LOG_* macros below
-void log(
-    LogLevel level,
-    const std::string& filename,
-    int lineno,
-    const std::string& extra,
-    const char* format,
-    ...);
+void log(LogLevel level, const std::string& filename, int lineno, const std::string& extra, const char* format, ...);
 
 // New log level aliases
 

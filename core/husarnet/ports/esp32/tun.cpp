@@ -46,10 +46,7 @@ typedef struct {
 extern "C" {
 err_t husarnet_netif_init(struct netif* netif);
 err_t husarnet_netif_input(struct pbuf* p, struct netif* inp);
-err_t husarnet_netif_output(
-    struct netif* netif,
-    struct pbuf* p,
-    const ip6_addr_t* ipaddr);
+err_t husarnet_netif_output(struct netif* netif, struct pbuf* p, const ip6_addr_t* ipaddr);
 }
 
 static struct netif* husarnet_netif;
@@ -102,10 +99,7 @@ void husarnet_netif_input(void* netif, void* buffer, size_t len, void* eb)
   return;
 }
 
-err_t husarnet_netif_output(
-    struct netif* netif,
-    struct pbuf* p,
-    const ip6_addr_t* ipaddr)
+err_t husarnet_netif_output(struct netif* netif, struct pbuf* p, const ip6_addr_t* ipaddr)
 {
   if(p->next != NULL) {
     LOG_ERROR("Packet chain is not supported");
@@ -113,8 +107,8 @@ err_t husarnet_netif_output(
   }
 
   // Send packet to be processed by the Husarnet stack
-  auto driver = static_cast<husarnet_esp_netif_driver_t*>(
-      esp_netif_get_io_driver(esp_netif_get_handle_from_netif_impl(netif)));
+  auto driver =
+      static_cast<husarnet_esp_netif_driver_t*>(esp_netif_get_io_driver(esp_netif_get_handle_from_netif_impl(netif)));
   if(xQueueSend(driver->tunTap->tunTapMsgQueue, &p, 0) != pdPASS) {
     LOG_ERROR("Failed to send packet to the Husarnet stack");
     return ESP_FAIL;
@@ -127,9 +121,7 @@ err_t husarnet_netif_output(
 }
 
 // External LwIP hook to route packets to the Husarnet interface
-extern "C" struct netif* lwip_hook_ip6_route(
-    const ip6_addr_t* src,
-    const ip6_addr_t* dest)
+extern "C" struct netif* lwip_hook_ip6_route(const ip6_addr_t* src, const ip6_addr_t* dest)
 {
   LWIP_UNUSED_ARG(src);
 
@@ -175,12 +167,9 @@ static esp_err_t husarnet_esp_netif_transmit(void* h, void* buffer, size_t len)
   return ESP_OK;
 }
 
-static esp_err_t husarnet_esp_netif_post_attach(
-    esp_netif_t* esp_netif,
-    void* args)
+static esp_err_t husarnet_esp_netif_post_attach(esp_netif_t* esp_netif, void* args)
 {
-  husarnet_esp_netif_driver_t* driver =
-      static_cast<husarnet_esp_netif_driver_t*>(args);
+  husarnet_esp_netif_driver_t* driver = static_cast<husarnet_esp_netif_driver_t*>(args);
 
   const esp_netif_driver_ifconfig_t driver_ifconfig = {
       .handle = driver,
@@ -199,8 +188,7 @@ static esp_err_t husarnet_esp_netif_post_attach(
 static husarnet_esp_netif_driver_t* husarnet_esp_netif_driver_init()
 {
   husarnet_esp_netif_driver_t* driver =
-      static_cast<husarnet_esp_netif_driver_t*>(
-          calloc(1, sizeof(husarnet_esp_netif_driver_t)));
+      static_cast<husarnet_esp_netif_driver_t*>(calloc(1, sizeof(husarnet_esp_netif_driver_t)));
   return driver;
 }
 
@@ -222,8 +210,7 @@ TunTap::TunTap(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
     abort();
   }
 
-  husarnet_netif =
-      static_cast<netif*>(esp_netif_get_netif_impl(husarnet_esp_netif));
+  husarnet_netif = static_cast<netif*>(esp_netif_get_netif_impl(husarnet_esp_netif));
 
   husarnet_esp_netif_driver_t* driver = husarnet_esp_netif_driver_init();
   driver->tunTap = this;
@@ -239,14 +226,11 @@ TunTap::TunTap(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
   }
 
   // Add IPv6 address
-  static_assert(
-      sizeof(esp_ip6_addr_t) == sizeof(ip6_addr_t),
-      "ESP-NETIF and LwIP IPv6 address size mismatch");
+  static_assert(sizeof(esp_ip6_addr_t) == sizeof(ip6_addr_t), "ESP-NETIF and LwIP IPv6 address size mismatch");
 
   esp_ip6_addr_t ip6_addr_esp;
   memcpy(&ip6_addr_esp, &(this->ipAddr), sizeof(esp_ip6_addr_t));
-  if(esp_netif_add_ip6_address(husarnet_esp_netif, ip6_addr_esp, true) !=
-     ESP_OK) {
+  if(esp_netif_add_ip6_address(husarnet_esp_netif, ip6_addr_esp, true) != ESP_OK) {
     LOG_ERROR("Failed to add IPv6 address");
     abort();
   }
@@ -271,7 +255,7 @@ TunTap::TunTap(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
   this->conn->pcb.raw->flags = RAW_FLAGS_HDRINCL;
 }
 
-void TunTap::onLowerLayerData(DeviceId source, string_view data)
+void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   // Input packet should contain IPv4/IPv6 header
   if(data.size() < 40) {
@@ -311,7 +295,7 @@ void TunTap::processQueuedPackets()
   while(xQueueReceive(tunTapMsgQueue, &p, 0) == pdPASS) {
     // Send packet to the Husarnet stack
     string_view packet((char*)p->payload, p->len);
-    sendToLowerLayer(BadDeviceId, packet);
+    sendToLowerLayer(IpAddress(), packet);
 
     pbuf_free(p);
   }

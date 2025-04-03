@@ -4,7 +4,7 @@
 #pragma once
 #include <functional>
 
-#include "husarnet/device_id.h"
+#include "husarnet/ipaddress.h"
 #include "husarnet/string_view.h"
 
 // This is a bit confusing unless you know a couple of assumptions, so here
@@ -24,36 +24,34 @@
 
 class FromUpperConsumer {
  public:
-  virtual void onUpperLayerData(DeviceId peerId, string_view data) = 0;
+  virtual void onUpperLayerData(HusarnetAddress peerAddress, string_view data) = 0;
 };
 
 class ForUpperProducer {
  protected:
-  std::function<void(DeviceId peerId, string_view data)> fromUpperConsumer;
+  std::function<void(HusarnetAddress peerAddress, string_view data)> fromUpperConsumer;
 
  public:
   ForUpperProducer();
 
-  void setUpperLayerConsumer(
-      std::function<void(DeviceId peerId, string_view data)> func);
-  void sendToUpperLayer(DeviceId peerId, string_view data);
+  void setUpperLayerConsumer(std::function<void(HusarnetAddress peerAddress, string_view data)> func);
+  void sendToUpperLayer(HusarnetAddress peerAddress, string_view data);
 };
 
 class FromLowerConsumer {
  public:
-  virtual void onLowerLayerData(DeviceId peerId, string_view data) = 0;
+  virtual void onLowerLayerData(HusarnetAddress peerAddress, string_view data) = 0;
 };
 
 class ForLowerProducer {
  protected:
-  std::function<void(DeviceId peerId, string_view data)> fromLowerConsumer;
+  std::function<void(HusarnetAddress peerAddress, string_view data)> fromLowerConsumer;
 
  public:
   ForLowerProducer();
 
-  void setLowerLayerConsumer(
-      std::function<void(DeviceId peerId, string_view data)> func);
-  void sendToLowerLayer(DeviceId peerId, string_view data);
+  void setLowerLayerConsumer(std::function<void(HusarnetAddress peerAddress, string_view data)> func);
+  void sendToLowerLayer(HusarnetAddress peerAddress, string_view data);
 };
 
 class UpperLayer : public ForLowerProducer, public FromLowerConsumer {};

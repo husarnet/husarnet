@@ -8,10 +8,10 @@ source $(dirname "$0")/../utils.sh
 
 start_daemon
 
-websetup=$(curl app.husarnet.com/license.json | jq -r '.websetup_host')
+api=$(curl staging.husarnet.com/license.json | jq -r '.api_servers[0]')
+eb=$(curl staging.husarnet.com/license.json | jq -r '.eb_servers[0]')
 
-husarnet daemon whitelist add ${websetup}
-
-ping -c 10 ${websetup}
+ping -c 10 ${api}
+ping -c 10 ${eb}
 
 husarnet status

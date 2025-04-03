@@ -37,16 +37,13 @@ int WindowsNetworking::callWindowsCmd(std::string cmd) const
   return system(("\"" + cmd + "\"").c_str());
 }
 
-void WindowsNetworking::setupNetworkInterface(
-    HusarnetManager* manager,
-    std::string interfaceName)
+void WindowsNetworking::setupNetworkInterface(HusarnetManager* manager, std::string interfaceName)
 {
   std::string sourceNetshName = getNetshNameForGuid(interfaceName);
   LOG_WARNING("sourceNetshName: %s", sourceNetshName.c_str());
   if(netshName != sourceNetshName) {
     if(callWindowsCmd(
-           "netsh interface set interface name = \"" + sourceNetshName +
-           "\" newname = \"" + netshName + "\"") == 0) {
+           "netsh interface set interface name = \"" + sourceNetshName + "\" newname = \"" + netshName + "\"") == 0) {
       LOG_INFO("renamed successfully");
     } else {
       netshName = sourceNetshName;
@@ -59,59 +56,48 @@ void WindowsNetworking::setupNetworkInterface(
       "netsh interface ipv6 add neighbors " + quotedName +
       " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001 52-54-00-fc-94-4d");
 
-  IpAddress myIp = deviceIdToIpAddress(manager->getIdentity()->getDeviceId());
+  IpAddress myIp = manager->getIdentity()->getDeviceId();
 
   LOG_INFO("myIp is: %s", myIp.toString().c_str());
-  callWindowsCmd(
-      "netsh interface ipv6 add address " + quotedName + " " + myIp.toString() +
-      "/128");
+  callWindowsCmd("netsh interface ipv6 add address " + quotedName + " " + myIp.toString() + "/128");
   callWindowsCmd(
       "netsh interface ipv6 add route "
       "fc94:8385:160b:88d1:c2ec:af1b:06ac:0001/128 " +
       quotedName);
-  callWindowsCmd(
-      "netsh interface ipv6 add route fc94::/16 " + quotedName +
-      " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001");
+  callWindowsCmd("netsh interface ipv6 add route fc94::/16 " + quotedName + " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001");
 }
 
 void WindowsNetworking::insertFirewallRule(std::string firewallRuleName) const
 {
   LOG_INFO("Installing rule: %s in Windows Firewall", firewallRuleName.c_str());
 
-  std::string insertCmd =
-      "powershell New-NetFirewallRule -DisplayName " + firewallRuleName +
-      " -Direction "
-      "Inbound -Action Allow -LocalAddress fc94::/16 -RemoteAddress fc94::/16 "
-      "-InterfaceAlias \"\"\"" +
-      netshName + "\"\"\"";
+  std::string insertCmd = "powershell New-NetFirewallRule -DisplayName " + firewallRuleName +
+                          " -Direction "
+                          "Inbound -Action Allow -LocalAddress fc94::/16 -RemoteAddress fc94::/16 "
+                          "-InterfaceAlias \"\"\"" +
+                          netshName + "\"\"\"";
 
   callWindowsCmd(insertCmd);
 }
 
-void WindowsNetworking::deleteFirewallRules(
-    const std::string firewallRuleName) const
+void WindowsNetworking::deleteFirewallRules(const std::string firewallRuleName) const
 {
   // Remove-NetFirewallRule will remove ALL matching rules
-  std::string deleteCmd =
-      "powershell Remove-NetFirewallRule -DisplayName " + firewallRuleName;
+  std::string deleteCmd = "powershell Remove-NetFirewallRule -DisplayName " + firewallRuleName;
   callWindowsCmd(deleteCmd);
 }
 
-void WindowsNetworking::allowHusarnetThroughWindowsFirewall(
-    const std::string firewallRuleName)
+void WindowsNetworking::allowHusarnetThroughWindowsFirewall(const std::string firewallRuleName)
 {
   std::string checkCmd =
-      "powershell -command \"Get-NetFirewallRule -DisplayName " +
-      firewallRuleName + " 2>&1 >$null \"";
+      "powershell -command \"Get-NetFirewallRule -DisplayName " + firewallRuleName + " 2>&1 >$null \"";
   int returnCode = callWindowsCmd(checkCmd);
 
   if(returnCode == 0) {
     // Due to bug in earlier versions of Windows client, the rule was inserted
     // on each start of the service, which means users could have a lot of
     // redundant rules in their firewall. we delete them here to cleanup
-    LOG_WARNING(
-        "Firewall rule: %s already exists! Cleaning up...",
-        firewallRuleName.c_str());
+    LOG_WARNING("Firewall rule: %s already exists! Cleaning up...", firewallRuleName.c_str());
     deleteFirewallRules(firewallRuleName);
   }
   insertFirewallRule(firewallRuleName);

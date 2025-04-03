@@ -5,14 +5,11 @@
 #include <mutex>
 #include <string>
 
-#include "husarnet/device_id.h"
 #include "husarnet/layer_interfaces.h"
 #include "husarnet/ngsocket.h"
 #include "husarnet/string_view.h"
 
 #include "windef.h"
-
-class HusarnetManager;
 
 class TunTap : public UpperLayer {
  private:

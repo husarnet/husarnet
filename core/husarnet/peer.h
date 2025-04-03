@@ -9,7 +9,6 @@
 
 #include "husarnet/ports/port_interface.h"
 
-#include "husarnet/device_id.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/peer_flags.h"
 
@@ -22,7 +21,7 @@ class Peer {
   friend class SecurityLayer;
   friend class CompressionLayer;
 
-  DeviceId id;
+  HusarnetAddress id;
   Time lastPacket = 0;
   Time lastReestablish = 0;
 
@@ -59,7 +58,6 @@ class Peer {
   bool isTunelled();
   bool isSecure();
 
-  DeviceId getDeviceId();
   IpAddress getIpAddress();
   std::string getIpAddressString();
 

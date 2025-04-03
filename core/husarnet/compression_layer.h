@@ -4,33 +4,25 @@
 #pragma once
 #include <string>
 
-#include "husarnet/device_id.h"
-#include "husarnet/husarnet_manager.h"
+#include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
+#include "husarnet/peer_container.h"
+#include "husarnet/peer_flags.h"
 #include "husarnet/string_view.h"
-
-class ConfigStorage;
-class HusarnetManager;
-class PeerContainer;
 
 class CompressionLayer : public BidirectionalLayer {
  private:
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-private-field"
-  HusarnetManager* manager;
-#pragma clang diagnostic pop
-
-  ConfigStorage& config;
   PeerContainer* peerContainer;
+  PeerFlags* myFlags;
 
   std::string compressionBuffer;
   std::string cleartextBuffer;
 
-  bool shouldProceed(DeviceId source);
+  bool shouldProceed(HusarnetAddress source);
 
  public:
-  CompressionLayer(HusarnetManager* manager);
+  CompressionLayer(PeerContainer* peerContainer, PeerFlags* myFlags);
 
-  void onUpperLayerData(DeviceId peerId, string_view data);
-  void onLowerLayerData(DeviceId peerId, string_view data);
+  void onUpperLayerData(HusarnetAddress peerAddress, string_view data);
+  void onLowerLayerData(HusarnetAddress peerAddress, string_view data);
 };

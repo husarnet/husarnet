@@ -38,7 +38,6 @@
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_storage.h"
-#include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
@@ -133,22 +132,19 @@ namespace Port {
 
   UpperLayer* startTunTap(HusarnetManager* manager)
   {
-    std::string myIp =
-        deviceIdToIpAddress(manager->getIdentity()->getDeviceId()).str();
+    std::string myIp = manager->getIdentity()->getDeviceId().str();
 
     auto tunTap = new TunTap();
     auto interfaceName = tunTap->getName();
     LOG_INFO("our utun interface name is %s", interfaceName.c_str());
 
     if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||
-       system(("sysctl net.ipv6.conf." + interfaceName + ".disable_ipv6=0")
-                  .c_str()) != 0) {
+       system(("sysctl net.ipv6.conf." + interfaceName + ".disable_ipv6=0").c_str()) != 0) {
       LOG_WARNING("failed to enable IPv6 (may be harmless)");
     }
 
     system(("ifconfig " + interfaceName + " inet6 " + myIp).c_str());
-    system(
-        ("route -nv add -inet6 fc94::/16 -interface " + interfaceName).c_str());
+    system(("route -nv add -inet6 fc94::/16 -interface " + interfaceName).c_str());
     // TODO multicast, right?
 
     return tunTap;
@@ -157,8 +153,7 @@ namespace Port {
   std::string getSelfHostname()
   {
     const std::string hostnamePath = "/tmp/hostname";
-    const std::string command =
-        "scutil --get LocalHostName > " + hostnamePath + " 2>/dev/null";
+    const std::string command = "scutil --get LocalHostName > " + hostnamePath + " 2>/dev/null";
     std::system(command.c_str());
     if(!isFile(hostnamePath)) {
       LOG_WARNING(

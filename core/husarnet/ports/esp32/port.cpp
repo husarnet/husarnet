@@ -30,7 +30,6 @@
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/config_storage.h"
-#include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
@@ -72,8 +71,7 @@ static void taskProc(void* p)
 static std::string readNVS(const std::string& path)
 {
   size_t len;
-  esp_err_t err =
-      nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), len);
+  esp_err_t err = nvsHandle->get_item_size(nvs::ItemType::SZ, path.c_str(), len);
 
   if(err == ESP_ERR_NVS_NOT_FOUND) {
     return "";
@@ -130,27 +128,23 @@ namespace Port {
 
       // NVS partition was truncated and needs to be erased
       // Erase and retry init
-      if(err == ESP_ERR_NVS_NO_FREE_PAGES ||
-         err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      if(err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         LOG_INFO("Erasing NVS partition...");
         err = nvs_flash_erase();
         if(err != ESP_OK) {
-          LOG_CRITICAL(
-              "Unable to erase NVS. (Error: %s)", esp_err_to_name(err));
+          LOG_CRITICAL("Unable to erase NVS. (Error: %s)", esp_err_to_name(err));
           abort();
         }
 
         err = nvs_flash_init();
         if(err != ESP_OK) {
-          LOG_CRITICAL(
-              "Unable to reinitialize NVS. (Error: %s)", esp_err_to_name(err));
+          LOG_CRITICAL("Unable to reinitialize NVS. (Error: %s)", esp_err_to_name(err));
           abort();
         }
       }
 
       else if(err != ESP_OK) {
-        LOG_CRITICAL(
-            "Unable to initialize NVS. (Error: %s)", esp_err_to_name(err));
+        LOG_CRITICAL("Unable to initialize NVS. (Error: %s)", esp_err_to_name(err));
         abort();
       }
 
@@ -170,11 +164,7 @@ namespace Port {
     }
   }
 
-  void startThread(
-      std::function<void()> func,
-      const char* name,
-      int stack,
-      int priority)
+  void threadStart(std::function<void()> func, const char* name, int stack, int priority)
   {
     std::function<void()>* func1 = new std::function<void()>;
     *func1 = std::move(func);
@@ -184,9 +174,9 @@ namespace Port {
     }
   }
 
-  std::map<UserSetting, std::string> getEnvironmentOverrides()
+  std::map<std::string, std::string> getEnvironmentOverrides()
   {
-    return std::map<UserSetting, std::string>();
+    return std::map<std::string, std::string>();
   }
 
   void notifyReady()
@@ -314,10 +304,10 @@ namespace Port {
     return tunTap;
   }
 
-  void processSocketEvents(HusarnetManager* manager)
+  void processSocketEvents(void* tuntap)
   {
     OsSocket::runOnce(20);  // process socket events for at most so many ms
-    manager->getTunTap()->processQueuedPackets();
+    (TunTap*)tuntap->processQueuedPackets();
   }
 
   std::string getSelfHostname()
@@ -347,14 +337,12 @@ namespace Port {
 
     for(struct addrinfo* res = result; res != NULL; res = res->ai_next) {
       if(res->ai_family == AF_INET) {
-        auto addr = IpAddress::fromBinary4(
-            (uint32_t)((struct sockaddr_in*)res->ai_addr)->sin_addr.s_addr);
+        auto addr = IpAddress::fromBinary4((uint32_t)((struct sockaddr_in*)res->ai_addr)->sin_addr.s_addr);
         freeaddrinfo(result);
         return addr;
       }
       if(res->ai_family == AF_INET6) {
-        auto addr = IpAddress::fromBinary(
-            (char*)((struct sockaddr_in6*)res->ai_addr)->sin6_addr.s6_addr);
+        auto addr = IpAddress::fromBinary((char*)((struct sockaddr_in6*)res->ai_addr)->sin6_addr.s6_addr);
         freeaddrinfo(result);
         return addr;
       }

@@ -3,8 +3,6 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/compression_layer.h"
 
-#include "husarnet/config_storage.h"
-#include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
 #include "husarnet/peer.h"
 #include "husarnet/peer_container.h"
@@ -15,30 +13,24 @@
 #include "zstd.h"
 #endif
 
-CompressionLayer::CompressionLayer(HusarnetManager* manager)
-    : manager(manager), config(manager->getConfigStorage())
+CompressionLayer::CompressionLayer(PeerContainer* peerContainer, PeerFlags* myFlags)
+    : peerContainer(peerContainer), myFlags(myFlags)
 {
-  peerContainer = manager->getPeerContainer();
-
-  compressionBuffer.resize(2100);
-  cleartextBuffer.resize(2010);
+  this->compressionBuffer.resize(2100);
+  this->cleartextBuffer.resize(2010);
 
 #ifndef WITH_ZSTD
-  manager->getSelfFlags()->setFlag(PeerFlag::compression);
+  this->myFlags->setFlag(PeerFlag::compression);
 #endif
 }
 
-bool CompressionLayer::shouldProceed(DeviceId peerId)
+bool CompressionLayer::shouldProceed(HusarnetAddress peerAddress)
 {
 #ifndef WITH_ZSTD
   return false;
 #endif
 
-  if(!config.getUserSettingBool(UserSetting::enableCompression)) {
-    return false;
-  }
-
-  auto peer = peerContainer->getPeer(peerId);
+  auto peer = peerContainer->getPeer(peerAddress);
   if(!peer->flags.checkFlag(PeerFlag::compression)) {
     return false;
   }
@@ -46,10 +38,10 @@ bool CompressionLayer::shouldProceed(DeviceId peerId)
   return true;
 }
 
-void CompressionLayer::onUpperLayerData(DeviceId peerId, string_view data)
+void CompressionLayer::onUpperLayerData(HusarnetAddress peerAddress, string_view data)
 {
-  if(!shouldProceed(peerId)) {
-    sendToLowerLayer(peerId, data);
+  if(!shouldProceed(peerAddress)) {
+    sendToLowerLayer(peerAddress, data);
   }
   // TODO long term - this is left here merely as an example. Reference old code
   // and rewrite this #ifdef WITH_ZSTD
@@ -62,14 +54,14 @@ void CompressionLayer::onUpperLayerData(DeviceId peerId, string_view data)
   //     return;
   //   }
 
-  //   sendToLowerLayer(peerId, cleartextBuffer);
+  //   sendToLowerLayer(peerAddress, cleartextBuffer);
   // #endif
 }
 
-void CompressionLayer::onLowerLayerData(DeviceId peerId, string_view data)
+void CompressionLayer::onLowerLayerData(HusarnetAddress peerAddress, string_view data)
 {
-  if(!shouldProceed(peerId)) {
-    sendToUpperLayer(peerId, data);
+  if(!shouldProceed(peerAddress)) {
+    sendToUpperLayer(peerAddress, data);
   }
 
   // TODO long term - this is left here merely as an example. Reference old code

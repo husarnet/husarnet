@@ -3,13 +3,12 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/security_layer.h"
 
-#include <unordered_map>
-
 #include <sodium.h>
 
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
 
+#include "husarnet/husarnet_config.h"
 #include "husarnet/logging.h"
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
@@ -22,20 +21,19 @@ static fstring<32> mixFlags(fstring<32> key, uint64_t flags1, uint64_t flags2)
   return res;
 }
 
-SecurityLayer::SecurityLayer(HusarnetManager* manager) : manager(manager)
+SecurityLayer::SecurityLayer(Identity* myIdentity, PeerFlags* myFlags, PeerContainer* peerContainer)
+    : myIdentity(myIdentity), myFlags(myFlags), peerContainer(peerContainer)
 {
-  randombytes_buf(&helloseq, 8);
-  helloseq = helloseq & BOOT_ID_MASK;
-  decryptedBuffer.resize(2000);
-  ciphertextBuffer.resize(2100);
-  cleartextBuffer.resize(2010);
-
-  peerContainer = manager->getPeerContainer();
+  randombytes_buf(&this->helloseq, 8);
+  this->helloseq = this->helloseq & BOOT_ID_MASK;
+  this->decryptedBuffer.resize(2000);
+  this->ciphertextBuffer.resize(2100);
+  this->cleartextBuffer.resize(2010);
 }
 
-int SecurityLayer::getLatency(DeviceId peerId)
+int SecurityLayer::getLatency(HusarnetAddress peerAddress)
 {
-  Peer* peer = peerContainer->getOrCreatePeer(peerId);
+  Peer* peer = peerContainer->getOrCreatePeer(peerAddress);
   if(peer == nullptr) {
     return -1;
   }
@@ -52,13 +50,13 @@ int SecurityLayer::getLatency(DeviceId peerId)
   return peer->latency;
 }
 
-void SecurityLayer::handleHeartbeat(DeviceId source, fstring<8> ident)
+void SecurityLayer::handleHeartbeat(HusarnetAddress source, fstring<8> ident)
 {
   std::string packet = std::string("\5") + ident;
   sendToLowerLayer(source, packet);
 }
 
-void SecurityLayer::handleHeartbeatReply(DeviceId source, fstring<8> ident)
+void SecurityLayer::handleHeartbeatReply(HusarnetAddress source, fstring<8> ident)
 {
   Peer* peer = peerContainer->getOrCreatePeer(source);
   if(peer == nullptr)
@@ -71,20 +69,21 @@ void SecurityLayer::handleHeartbeatReply(DeviceId source, fstring<8> ident)
   }
 }
 
-void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
+void SecurityLayer::onLowerLayerData(HusarnetAddress peerAddress, string_view data)
 {
   if(data.size() >= decryptedBuffer.size())
     return;  // sanity check
 
+  // TODO Make a proper serializer/deserializer for this part of the protocol
   if(data[0] == 0) {  // data packet
     if(data.size() <= 25)
       return;
-    handleDataPacket(peerId, data);
+    handleDataPacket(peerAddress, data);
   } else if(data[0] == 1 || data[0] == 2 || data[0] == 3) {  // hello packet
     if(data.size() <= 25)
       return;
 
-    handleHelloPacket(peerId, data, (int)data[0]);
+    handleHelloPacket(peerAddress, data, (int)data[0]);
   } else if(data[0] == 4 || data[0] == 5) {  // heartbeat (hopefully they are
                                              // not cursed)
     if(data.size() < 9)
@@ -92,17 +91,16 @@ void SecurityLayer::onLowerLayerData(DeviceId peerId, string_view data)
 
     std::string ident = substr<1, 8>(data);
     if(data[0] == 4) {
-      handleHeartbeat(peerId, ident);
+      handleHeartbeat(peerAddress, ident);
     } else {
-      handleHeartbeatReply(peerId, ident);
+      handleHeartbeatReply(peerAddress, ident);
     }
   }
 }
 
-void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
+void SecurityLayer::handleDataPacket(HusarnetAddress peerId, string_view data)
 {
-  LOG_DEBUG(
-      "received data packet from peer: %s", deviceIdToString(peerId).c_str())
+  LOG_DEBUG("received data packet from peer: %s", peerId.toString().c_str())
   const int headerSize = 1 + 24 + 16;
   if(data.size() <= headerSize + 8)
     return;
@@ -113,9 +111,7 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
 
   if(!peer->negotiated) {
     sendHelloPacket(peer);
-    LOG_WARNING(
-        "received data packet before hello from peer: %s",
-        deviceIdToString(peerId).c_str());
+    LOG_WARNING("received data packet before hello from peer: %s", peerId.toString().c_str());
     return;
   }
 
@@ -132,15 +128,12 @@ void SecurityLayer::handleDataPacket(DeviceId peerId, string_view data)
   if(decryptedSize <= 8)
     return;
 
-  auto decryptedData =
-      string_view(decryptedBuffer).substr(8, decryptedSize - 8);
+  auto decryptedData = string_view(decryptedBuffer).substr(8, decryptedSize - 8);
 
   if(r == 0) {
     sendToUpperLayer(peerId, decryptedData);
   } else {
-    LOG_INFO(
-        "received forged message from peer: %s",
-        deviceIdToString(peerId).c_str());
+    LOG_INFO("received forged message from peer: %s", peerId.toString().c_str());
   }
 }
 
@@ -149,26 +142,22 @@ void SecurityLayer::sendHelloPacket(Peer* peer, int num, uint64_t helloseq)
   assert(num == 1 || num == 2 || num == 3);
   std::string packet;
   packet.push_back((char)num);
-  packet += manager->getIdentity()->getPubkey();
+  packet += this->myIdentity->getPubkey();
   packet += peer->kxPubkey;
-  packet += peer->id;
+  packet += peer->id.data;
   packet += pack(this->helloseq);
   packet += pack(helloseq);
-  packet += pack(manager->getSelfFlags()->asBin());
-  packet +=
-      NgSocketCrypto::sign(packet, "ng-kx-pubkey", manager->getIdentity());
+  packet += pack(this->myFlags->asBin());
+  packet += NgSocketCrypto::sign(packet, "ng-kx-pubkey", this->myIdentity);
   sendToLowerLayer(peer->id, packet);
 }
 
-void SecurityLayer::handleHelloPacket(
-    DeviceId target,
-    string_view data,
-    int helloNum)
+void SecurityLayer::handleHelloPacket(HusarnetAddress target, string_view data, int helloNum)
 {
   constexpr int dataLen = 65 + 16 + 16;
   if(data.size() < dataLen + 64)
     return;
-  LOG_INFO("hello %d from %s", helloNum, deviceIdToString(target).c_str());
+  LOG_INFO("hello %d from %s", helloNum, target.toString().c_str());
 
   Peer* peer = peerContainer->getOrCreatePeer(target);
   if(peer == nullptr)
@@ -184,29 +173,20 @@ void SecurityLayer::handleHelloPacket(
   if(data.size() >= 64 + 65 + 32 + 8) {
     flags_bin = unpack<uint64_t>(substr<65 + 32, 8>(data));
   }
-  LOG_DEBUG(
-      "peer flags: %llx (bits, not count)", (unsigned long long)flags_bin);
+  LOG_DEBUG("peer flags: %llx (bits, not count)", (unsigned long long)flags_bin);
 
-  if(targetId != manager->getIdentity()->getDeviceId()) {
-    LOG_INFO(
-        "misdirected hello packet received from peer: %s",
-        std::string(targetId).c_str());
+  if(targetId != this->myIdentity->getDeviceId()) {
+    LOG_INFO("misdirected hello packet received from peer: %s", std::string(targetId).c_str());
     return;
   }
 
   if(NgSocketCrypto::pubkeyToDeviceId(incomingPubkey) != target) {
-    LOG_INFO(
-        "forged hello packet received (invalid pubkey: %s)",
-        std::string(incomingPubkey).c_str());
+    LOG_INFO("forged hello packet received (invalid pubkey: %s)", std::string(incomingPubkey).c_str());
     return;
   }
 
-  if(!NgSocketCrypto::verifySignature(
-         data.substr(0, data.size() - 64), "ng-kx-pubkey", incomingPubkey,
-         signature)) {
-    LOG_CRITICAL(
-        "forged hello packet (invalid signature: %s)",
-        std::string(signature).c_str());
+  if(!NgSocketCrypto::verifySignature(data.substr(0, data.size() - 64), "ng-kx-pubkey", incomingPubkey, signature)) {
+    LOG_CRITICAL("forged hello packet (invalid signature: %s)", std::string(signature).c_str());
     return;
   }
 
@@ -227,28 +207,23 @@ void SecurityLayer::handleHelloPacket(
   int r;
   // key exchange is asymmetric, pretend that device with smaller ID is a
   // client
-  if(target < manager->getIdentity()->getDeviceId())
+  if(target < this->myIdentity->getDeviceId())
     r = crypto_kx_client_session_keys(
-        peer->rxKey.data(), peer->txKey.data(), peer->kxPubkey.data(),
-        peer->kxPrivkey.data(), peerKxPubkey.data());
+        peer->rxKey.data(), peer->txKey.data(), peer->kxPubkey.data(), peer->kxPrivkey.data(), peerKxPubkey.data());
   else
     r = crypto_kx_server_session_keys(
-        peer->rxKey.data(), peer->txKey.data(), peer->kxPubkey.data(),
-        peer->kxPrivkey.data(), peerKxPubkey.data());
+        peer->rxKey.data(), peer->txKey.data(), peer->kxPubkey.data(), peer->kxPrivkey.data(), peerKxPubkey.data());
 
   if(flags_bin != 0) {
     // we need to make sure both peers agree on flags - mix them into the key
     // exchange
-    peer->rxKey =
-        mixFlags(peer->rxKey, flags_bin, manager->getSelfFlags()->asBin());
-    peer->txKey =
-        mixFlags(peer->txKey, manager->getSelfFlags()->asBin(), flags_bin);
+    peer->rxKey = mixFlags(peer->rxKey, flags_bin, this->myFlags->asBin());
+    peer->txKey = mixFlags(peer->txKey, this->myFlags->asBin(), flags_bin);
   }
 
   if(r == 0) {
     LOG_DEBUG(
-        "negotiated session keys %s %s",
-        encodeHex(peer->rxKey.substr(0, 6)).c_str(),
+        "negotiated session keys %s %s", encodeHex(peer->rxKey.substr(0, 6)).c_str(),
         encodeHex(peer->txKey.substr(0, 6)).c_str());
     finishNegotiation(peer);
   } else {
@@ -264,9 +239,7 @@ void SecurityLayer::handleHelloPacket(
 
 void SecurityLayer::finishNegotiation(Peer* peer)
 {
-  LOG_INFO(
-      "established secure connection to %s",
-      peer->getIpAddressString().c_str());
+  LOG_INFO("established secure connection to %s", peer->getIpAddressString().c_str());
   peer->negotiated = true;
   for(auto& packet : peer->packetQueue) {
     queuedPackets--;
@@ -275,7 +248,7 @@ void SecurityLayer::finishNegotiation(Peer* peer)
   peer->packetQueue = std::vector<std::string>();
 }
 
-void SecurityLayer::onUpperLayerData(DeviceId target, string_view data)
+void SecurityLayer::onUpperLayerData(HusarnetAddress target, string_view data)
 {
   Peer* peer = peerContainer->getOrCreatePeer(target);
   if(peer == nullptr)
@@ -315,10 +288,8 @@ void SecurityLayer::doSendDataPacket(Peer* peer, string_view data)
   randombytes_buf(nonce, 24);
 
   crypto_secretbox_easy(
-      (unsigned char*)&ciphertextBuffer[25],
-      (const unsigned char*)cleartextBuffer.data(), cleartextSize,
+      (unsigned char*)&ciphertextBuffer[25], (const unsigned char*)cleartextBuffer.data(), cleartextSize,
       (const unsigned char*)nonce, peer->txKey.data());
 
-  sendToLowerLayer(
-      peer->id, string_view(ciphertextBuffer).substr(0, ciphertextSize));
+  sendToLowerLayer(peer->id, string_view(ciphertextBuffer).substr(0, ciphertextSize));
 }

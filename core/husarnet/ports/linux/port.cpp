@@ -40,8 +40,6 @@
 #include "husarnet/ports/linux/tun.h"
 #include "husarnet/ports/port.h"
 
-#include "husarnet/config_storage.h"
-#include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
@@ -112,7 +110,7 @@ static void getLocalIpv6Addresses(std::vector<IpAddress>& ret)
     std::string line = buf;
     if(line.size() < 32)
       continue;
-    auto ip = IpAddress::fromBinary(decodeHex(line.substr(0, 32)));
+    auto ip = IpAddress::fromBinaryString(decodeHex(line.substr(0, 32)));
     if(ip.isLinkLocal())
       continue;
     if(ip == IpAddress::fromBinary("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1"))
@@ -152,22 +150,16 @@ static void linkEnableIPv6(const std::string& interface)
   std::string path("/proc/sys/net/ipv6/conf/" + interface + "/disable_ipv6");
 
   if((fd = open(path.c_str(), O_WRONLY)) < 0) {
-    LOG_WARNING(
-        "Unable to open %s (err: %s). Might be harmless.", path.c_str(),
-        strerror(errno));
+    LOG_WARNING("Unable to open %s (err: %s). Might be harmless.", path.c_str(), strerror(errno));
     return;
   }
 
   if(dprintf(fd, "0") < 0) {
-    LOG_CRITICAL(
-        "Unable to write to %s (err: %s). Might be harmless.", path.c_str(),
-        strerror(errno));
+    LOG_CRITICAL("Unable to write to %s (err: %s). Might be harmless.", path.c_str(), strerror(errno));
   }
 
   if(close(fd) < 0) {
-    LOG_CRITICAL(
-        "Unable to close %s (err: %s). Might be harmless.", path.c_str(),
-        strerror(errno));
+    LOG_CRITICAL("Unable to close %s (err: %s). Might be harmless.", path.c_str(), strerror(errno));
   }
 }
 
@@ -204,9 +196,7 @@ namespace Port {
       }
 
       const char* msg = "READY=1";
-      if(sendto(
-             fd, msg, strlen(msg), MSG_NOSIGNAL, (sockaddr*)(&un),
-             sizeof(un)) <= 0) {
+      if(sendto(fd, msg, strlen(msg), MSG_NOSIGNAL, (sockaddr*)(&un), sizeof(un)) <= 0) {
         perror("systemd sendto");
       }
 
@@ -230,34 +220,27 @@ namespace Port {
     // Setup netlink socket
     ns = nl_socket_alloc();
     if((err = nl_connect(ns, NETLINK_ROUTE)) < 0) {
-      LOG_ERROR(
-          "Unable to connect to netlink socket (err: %s)", nl_geterror(err));
+      LOG_ERROR("Unable to connect to netlink socket (err: %s)", nl_geterror(err));
       nl_socket_free(ns);
       return IpAddress();
     }
 
     // Get network interface by name
     if((err = rtnl_link_get_kernel(ns, 0, interfaceName.c_str(), &link)) < 0) {
-      LOG_ERROR(
-          "Unable to get interface %s information (err: %s)",
-          interfaceName.c_str(), nl_geterror(err));
+      LOG_ERROR("Unable to get interface %s information (err: %s)", interfaceName.c_str(), nl_geterror(err));
       nl_socket_free(ns);
       return IpAddress();
     }
 
     // Get interface addresses into cache
     if((err = rtnl_addr_alloc_cache(ns, &addr_cache)) < 0) {
-      LOG_ERROR(
-          "Unable to get interface %s addresses (err: %s)",
-          interfaceName.c_str(), nl_geterror(err));
+      LOG_ERROR("Unable to get interface %s addresses (err: %s)", interfaceName.c_str(), nl_geterror(err));
       nl_socket_free(ns);
       return IpAddress();
     }
 
     if((ifindex = rtnl_link_get_ifindex(link)) < 0) {
-      LOG_ERROR(
-          "Unable to get interface %s index (err: %s)", interfaceName.c_str(),
-          nl_geterror(ifindex));
+      LOG_ERROR("Unable to get interface %s index (err: %s)", interfaceName.c_str(), nl_geterror(ifindex));
       nl_socket_free(ns);
       return IpAddress();
     }
@@ -269,14 +252,12 @@ namespace Port {
     nl_object* obj = nl_cache_get_first(addr_cache);
     while(obj != NULL) {
       struct rtnl_addr* addr = (struct rtnl_addr*)obj;
-      const char* addr_binary =
-          (const char*)nl_addr_get_binary_addr(rtnl_addr_get_local(addr));
+      const char* addr_binary = (const char*)nl_addr_get_binary_addr(rtnl_addr_get_local(addr));
       int addr_family = rtnl_addr_get_family(addr);
       IpAddress addr_ip{};
 
       // Find IPv4 or IPv6 address for given interface
-      if(rtnl_addr_get_ifindex(addr) == ifindex &&
-         (addr_family == AF_INET || addr_family == AF_INET6)) {
+      if(rtnl_addr_get_ifindex(addr) == ifindex && (addr_family == AF_INET || addr_family == AF_INET6)) {
         if(addr_family == AF_INET) {
           addr_ip = IpAddress::fromBinary4(addr_binary);
 
@@ -304,7 +285,7 @@ namespace Port {
 
     netlinkMutex.unlock();
 
-    if(ipv4) {
+    if(ipv4.isMappedV4()) {
       return ipv4;
     } else {
       return ipv6;
@@ -321,16 +302,13 @@ namespace Port {
     return ret;
   }
 
-  UpperLayer* startTunTap(HusarnetManager* manager)
+  UpperLayer* startTunTap(const HusarnetAddress& myAddress, std::string interfaceName)
   {
     struct nl_sock* ns;
     struct rtnl_link* link;
     struct nl_addr* addr;
     struct rtnl_addr* link_addr;
     int err;
-
-    IpAddress myIp = deviceIdToIpAddress(manager->getIdentity()->getDeviceId());
-    auto interfaceName = manager->getInterfaceName();
 
     netlinkMutex.lock();
 
@@ -366,7 +344,7 @@ namespace Port {
     }
 
     // Add a IP address to the TUN interface
-    addr = nl_addr_build(AF_INET6, (void*)myIp.toBinary().c_str(), 16);
+    addr = nl_addr_build(AF_INET6, (void*)(myAddress.toBinaryString().c_str()), 16);
     nl_addr_set_prefixlen(addr, 16);
 
     link_addr = rtnl_addr_alloc();
@@ -430,7 +408,7 @@ namespace Port {
 
     // Add multicast route
     nl_addr_put(addr);
-    addr = nl_addr_build(AF_INET6, multicastDestination.toBinary().c_str(), 16);
+    addr = nl_addr_build(AF_INET6, multicastDestination.toBinaryString().c_str(), 16);
     nl_addr_set_prefixlen(addr, 48);
 
     struct rtnl_route* route = rtnl_route_alloc();
@@ -447,9 +425,7 @@ namespace Port {
     rtnl_route_add_nexthop(route, nh);
 
     if((err = rtnl_route_add(ns, route, NLM_F_REPLACE)) < 0) {
-      LOG_CRITICAL(
-          "Failed to setup TUN device. Unable to add multicast route (err: %s)",
-          nl_geterror(err));
+      LOG_CRITICAL("Failed to setup TUN device. Unable to add multicast route (err: %s)", nl_geterror(err));
 
       rtnl_route_put(route);
       rtnl_link_put(link);

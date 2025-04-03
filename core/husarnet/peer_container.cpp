@@ -5,21 +5,23 @@
 
 #include <sodium.h>
 
-#include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-PeerContainer::PeerContainer(HusarnetManager* manager) : manager(manager)
+PeerContainer::PeerContainer(ConfigManager* configManager, Identity* identity)
+    : configManager(configManager), identity(identity)
 {
 }
 
-Peer* PeerContainer::createPeer(DeviceId id)
+Peer* PeerContainer::createPeer(HusarnetAddress id)
 {
-  if(!manager->isPeerAddressAllowed(deviceIdToIpAddress(id))) {
-    LOG_INFO("peer %s is not on the whitelist", deviceIdToString(id).c_str());
+  if(!this->configManager->isPeerAllowed(id)) {
+    LOG_INFO("peer %s is not on the whitelist", id.toString().c_str());
     return nullptr;
   }
   Peer* peer = new Peer;
+  // TODO honestly move this to Peer class (either constructor or some static
+  // method)
   peer->heartbeatIdent = generateRandomString(8);
   peer->id = id;
   crypto_kx_keypair(peer->kxPubkey.data(), peer->kxPrivkey.data());
@@ -27,17 +29,18 @@ Peer* PeerContainer::createPeer(DeviceId id)
   return peer;
 }
 
-Peer* PeerContainer::getPeer(DeviceId id)
+Peer* PeerContainer::getPeer(HusarnetAddress id)
 {
   if(cachedPeerId == id)
     return cachedPeer;
 
-  if(!manager->isPeerAddressAllowed(deviceIdToIpAddress(id))) {
-    LOG_INFO("peer %s is not on the whitelist", deviceIdToString(id).c_str());
+  if(!this->configManager->isPeerAllowed(id)) {
+    LOG_INFO("peer %s is not on the whitelist", id.toString().c_str());
     return nullptr;
   }
 
-  if(id == manager->getIdentity()->getDeviceId())
+  // Prevent self-connection (i.e. in case of multicast issue)
+  if(id == identity->getDeviceId())
     return nullptr;
 
   auto it = peers.find(id);
@@ -49,7 +52,7 @@ Peer* PeerContainer::getPeer(DeviceId id)
   return it->second;
 }
 
-Peer* PeerContainer::getOrCreatePeer(DeviceId id)
+Peer* PeerContainer::getOrCreatePeer(HusarnetAddress id)
 {
   Peer* peer = getPeer(id);
   if(peer == nullptr) {
@@ -58,7 +61,8 @@ Peer* PeerContainer::getOrCreatePeer(DeviceId id)
   return peer;
 }
 
-std::unordered_map<DeviceId, Peer*> PeerContainer::getPeers()
+// TODO: ympek: why are we returning a copy and not a reference here?
+std::unordered_map<HusarnetAddress, Peer*, iphash> PeerContainer::getPeers()
 {
   return peers;
 }

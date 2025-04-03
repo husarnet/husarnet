@@ -8,7 +8,7 @@ source $(dirname "$0")/../utils.sh
 
 function setup_hook_simple {
     hook_name=$1
-    
+
     mkdir -p /var/lib/husarnet/hook.${hook_name}.d
     cat << EOF > /var/lib/husarnet/hook.${hook_name}.d/01-test.sh
 #!/bin/bash
@@ -17,7 +17,7 @@ set -euo pipefail
 echo "INFO: ${hook_name} hook triggered" >> /tmp/hooks/hook.${hook_name}.d.log
 curl --silent --include --max-time 1 --retry-connrefused http://127.0.0.1:16216/api/status >> /tmp/hooks/hook.${hook_name}.d.log
 EOF
-    
+
     chmod +x /var/lib/husarnet/hook.${hook_name}.d/01-test.sh
 }
 
@@ -31,7 +31,7 @@ function abort {
 
 function verify_hook {
     hook_name=$1
-    
+
     if [ ! -f /tmp/hooks/hook.${hook_name}.d.log ]; then
         echo "ERROR: ${hook_name} hook was not triggered at all"
         abort

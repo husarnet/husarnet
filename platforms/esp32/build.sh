@@ -15,7 +15,9 @@ fi
 
 TARGET=$1
 
-build_dir="${base_dir}/build/build_${TARGET}"
+
+# These two have to be at the same level in the directory tree, otherwise ESP-IDF's cmake explodes
+build_dir="${base_dir}/build/esp32_${TARGET}"
 source_dir="${base_dir}/platforms/esp32"
 
 # Initialize ESP-IDF environment
@@ -27,7 +29,8 @@ fi
 pushd ${base_dir}
 
 # Build husarnet_core with GCC compiler
-# TODO: when the clang will be officially supported by ESP-IDF, switch to it
+# TODO when the clang will be officially supported by ESP-IDF, switch to it
+rm -rf ${build_dir} # Set target will try to do this anyway and fail it it exists but it's not fully populated
 idf.py -B ${build_dir} -C ${source_dir} set-target ${TARGET}
 idf.py -B ${build_dir} -C ${source_dir} build
 

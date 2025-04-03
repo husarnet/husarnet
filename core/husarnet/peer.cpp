@@ -31,14 +31,9 @@ bool Peer::isSecure()
   return negotiated;
 }
 
-DeviceId Peer::getDeviceId()
+HusarnetAddress Peer::getIpAddress()
 {
   return id;
-}
-
-IpAddress Peer::getIpAddress()
-{
-  return deviceIdToIpAddress(id);
 }
 
 std::string Peer::getIpAddressString()

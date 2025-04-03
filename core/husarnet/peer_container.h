@@ -2,23 +2,31 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include "husarnet/peer.h"
+#include <unordered_map>
 
-class HusarnetManager;
+#include "husarnet/config_manager.h"
+#include "husarnet/identity.h"
+#include "husarnet/ipaddress.h"
+#include "husarnet/peer.h"
 
 class PeerContainer {
  private:
-  HusarnetManager* manager;
+  ConfigManager* configManager;
+  Identity* identity;
 
-  std::unordered_map<DeviceId, Peer*> peers;
+  std::unordered_map<HusarnetAddress, Peer*, iphash> peers;
 
+  // TODO figure out whether this caching is still beneficial
   Peer* cachedPeer = nullptr;
-  DeviceId cachedPeerId;
+  HusarnetAddress cachedPeerId;
 
  public:
-  PeerContainer(HusarnetManager* manager);
-  Peer* createPeer(DeviceId id);
-  Peer* getPeer(DeviceId id);
-  Peer* getOrCreatePeer(DeviceId id);
-  std::unordered_map<DeviceId, Peer*> getPeers();
+  PeerContainer(ConfigManager* configManager, Identity* identity);
+
+  Peer* createPeer(HusarnetAddress id);
+  Peer* getPeer(HusarnetAddress id);
+  Peer* getOrCreatePeer(HusarnetAddress id);
+
+  std::unordered_map<HusarnetAddress, Peer*, iphash> getPeers();  // TODO change to ETL container // TODO see how it's
+                                                                  // used and optimize the shape
 };

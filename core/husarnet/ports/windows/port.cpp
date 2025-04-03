@@ -37,16 +37,13 @@ static std::vector<std::string> getExistingDeviceNames()
   DWORD i, ret, len;
   DWORD sub_keys = 0;
 
-  ret =
-      RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(key_name), 0, KEY_READ, &adapters);
+  ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(key_name), 0, KEY_READ, &adapters);
   if(ret != ERROR_SUCCESS) {
     LOG_ERROR("RegOpenKeyEx returned error");
     return {};
   }
 
-  ret = RegQueryInfoKey(
-      adapters, NULL, NULL, NULL, &sub_keys, NULL, NULL, NULL, NULL, NULL, NULL,
-      NULL);
+  ret = RegQueryInfoKey(adapters, NULL, NULL, NULL, &sub_keys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
   if(ret != ERROR_SUCCESS) {
     LOG_ERROR("RegQueryInfoKey returned error %u", ret);
     return {};
@@ -72,16 +69,14 @@ static std::vector<std::string> getExistingDeviceNames()
 
     /* Append it to NETWORK_ADAPTERS and open it */
     snprintf(new_key, sizeof new_key, "%s\\%s", key_name, key);
-    ret =
-        RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(new_key), 0, KEY_READ, &adapter);
+    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(new_key), 0, KEY_READ, &adapter);
     if(ret != ERROR_SUCCESS) {
       continue;
     }
 
     /* Check its values */
     len = sizeof data;
-    ret =
-        RegQueryValueEx(adapter, "ComponentId", NULL, NULL, (LPBYTE)data, &len);
+    ret = RegQueryValueEx(adapter, "ComponentId", NULL, NULL, (LPBYTE)data, &len);
     if(ret != ERROR_SUCCESS) {
       /* This value doesn't exist in this adapter tree */
       goto clean;
@@ -91,8 +86,7 @@ static std::vector<std::string> getExistingDeviceNames()
       DWORD type;
 
       len = sizeof data;
-      ret = RegQueryValueEx(
-          adapter, "NetCfgInstanceId", NULL, &type, (LPBYTE)data, &len);
+      ret = RegQueryValueEx(adapter, "NetCfgInstanceId", NULL, &type, (LPBYTE)data, &len);
       if(ret != ERROR_SUCCESS) {
         LOG_ERROR("RegQueryValueEx returned error %u", ret);
         goto clean;
@@ -109,12 +103,10 @@ static std::vector<std::string> getExistingDeviceNames()
   return names;
 }
 
-static std::string whatNewDeviceWasCreated(
-    std::vector<std::string> previousNames)
+static std::string whatNewDeviceWasCreated(std::vector<std::string> previousNames)
 {
   for(std::string name : getExistingDeviceNames()) {
-    if(std::find(previousNames.begin(), previousNames.end(), name) ==
-       previousNames.end()) {
+    if(std::find(previousNames.begin(), previousNames.end(), name) == previousNames.end()) {
       LOG_INFO("new device: %s", name.c_str());
       return name;
     }
@@ -152,8 +144,7 @@ static std::list<std::string> getAvailableScripts(const std::string& path)
       continue;
     }
 
-    if((entry.status().permissions() & std::filesystem::perms::owner_exec) !=
-       std::filesystem::perms::owner_exec) {
+    if((entry.status().permissions() & std::filesystem::perms::owner_exec) != std::filesystem::perms::owner_exec) {
       LOG_INFO((entry.path().string() + " is not executable").c_str());
       continue;
     }
@@ -173,14 +164,9 @@ namespace Port {
     fatInit();
   }
 
-  void startThread(
-      std::function<void()> func,
-      const char* name,
-      int stack,
-      int priority)
+  void threadStart(std::function<void()> func, const char* name, int stack, int priority)
   {
-    auto* f = new std::pair<const char*, std::function<void()>>(
-        name, std::move(func));
+    auto* f = new std::pair<const char*, std::function<void()>>(name, std::move(func));
     _beginthread(runThread, 0, f);
   }
 
@@ -192,11 +178,9 @@ namespace Port {
     envVarBuffer.resize(512);
 
     for(auto enumName : UserSetting::_names()) {
-      auto candidate =
-          "HUSARNET_" + strToUpper(camelCaseToUnderscores(enumName));
+      auto candidate = "HUSARNET_" + strToUpper(camelCaseToUnderscores(enumName));
 
-      DWORD envVarLength = GetEnvironmentVariable(
-          candidate.c_str(), &envVarBuffer[0], (DWORD)envVarBuffer.size());
+      DWORD envVarLength = GetEnvironmentVariable(candidate.c_str(), &envVarBuffer[0], (DWORD)envVarBuffer.size());
       if(GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
         continue;
       }
@@ -233,9 +217,8 @@ namespace Port {
 
       ret = GetAdaptersAddresses(
           AF_UNSPEC,
-          GAA_FLAG_INCLUDE_ALL_INTERFACES | GAA_FLAG_SKIP_FRIENDLY_NAME |
-              GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_MULTICAST |
-              GAA_FLAG_SKIP_ANYCAST,
+          GAA_FLAG_INCLUDE_ALL_INTERFACES | GAA_FLAG_SKIP_FRIENDLY_NAME | GAA_FLAG_SKIP_DNS_SERVER |
+              GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_ANYCAST,
           0, buffer, &buffer_size);
       if(ret != ERROR_BUFFER_OVERFLOW)
         break;
@@ -245,11 +228,9 @@ namespace Port {
     }
     PIP_ADAPTER_ADDRESSES current_adapter = buffer;
     while(current_adapter) {
-      PIP_ADAPTER_UNICAST_ADDRESS current =
-          current_adapter->FirstUnicastAddress;
+      PIP_ADAPTER_UNICAST_ADDRESS current = current_adapter->FirstUnicastAddress;
       while(current) {
-        auto ss =
-            reinterpret_cast<sockaddr_storage*>(current->Address.lpSockaddr);
+        auto ss = reinterpret_cast<sockaddr_storage*>(current->Address.lpSockaddr);
         InetAddress addr = OsSocket::ipFromSockaddr(*ss);
         result.push_back(addr.ip);
         current = current->Next;
@@ -268,8 +249,7 @@ namespace Port {
     auto deviceName = manager->getInterfaceName();
     // this should also work if deviceName is ""
     LOG_INFO("Windows interface ID is %s", deviceName.c_str());
-    if(std::find(existingDevices.begin(), existingDevices.end(), deviceName) ==
-       existingDevices.end()) {
+    if(std::find(existingDevices.begin(), existingDevices.end(), deviceName) == existingDevices.end()) {
       system("addtap.bat");
       auto newDeviceName = whatNewDeviceWasCreated(existingDevices);
       manager->setInterfaceName(newDeviceName);
@@ -285,8 +265,7 @@ namespace Port {
   {
     TCHAR buf[256];
     DWORD size = _countof(buf);
-    bool result =
-        GetComputerNameEx(ComputerNamePhysicalDnsHostname, buf, &size);
+    bool result = GetComputerNameEx(ComputerNamePhysicalDnsHostname, buf, &size);
     if(result) {
       return std::string(buf);
     }

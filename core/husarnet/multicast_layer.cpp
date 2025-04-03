@@ -9,18 +9,16 @@
 #include <stdint.h>
 
 #include "husarnet/fstring.h"
-#include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-MulticastLayer::MulticastLayer(HusarnetManager* manager) : manager(manager)
-
+MulticastLayer::MulticastLayer(HusarnetAddress myDeviceId, ConfigManager* configmanager)
+    : myDeviceId(myDeviceId), configManager(configmanager)
 {
-  deviceId = manager->getIdentity()->getDeviceId();
 }
 
-void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
+void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   std::string packet;
   if(data.size() < 2)
@@ -47,14 +45,14 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
     packet[4] = (char)(payloadSize >> 8);
     packet[5] = (char)(payloadSize & 0xFF);
     packet[6] = protocol;
-    packet[7] = 3;  // hop limit
-    packet += source;
+    packet[7] = 3;          // hop limit
+    packet += source.data;  // TODO: ympek: check if binary data is appended correctly
     packet += mcastAddr;
     packet += data.substr(19);
 
-    LOG_INFO("received multicast from %s", deviceIdToString(source).c_str());
+    LOG_INFO("received multicast from %s", source.toString().c_str());
 
-    sendToUpperLayer(BadDeviceId, packet);
+    sendToUpperLayer(IpAddress(), packet);
   } else {
     // unicast
     int payloadSize = (int)data.size() - 1;
@@ -65,19 +63,19 @@ void MulticastLayer::onLowerLayerData(DeviceId source, string_view data)
     packet[4] = (char)(payloadSize >> 8);
     packet[5] = (char)(payloadSize & 0xFF);
     packet[6] = protocol;
-    packet[7] = 3;  // hop limit
-    packet += source;
-    packet += deviceId;
+    packet[7] = 3;          // hop limit
+    packet += source.data;  // TODO : ympek : check if binary data is appended correctly
+    packet += this->myDeviceId.data;
     packet += data.substr(1);
 
     sendToUpperLayer(source, packet);
   }
 }
 
-void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
+void MulticastLayer::onUpperLayerData(HusarnetAddress target, string_view packet)
 {
   if(packet.size() <= 40) {
-    LOG_WARNING("truncated packet from %s", std::string(target).c_str());
+    LOG_WARNING("truncated packet from %s", target.toString().c_str());
     return;
   }
   int version = packet[0] >> 4;
@@ -97,8 +95,8 @@ void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
     msgData += dstAddress;
     msgData += packet.substr(40);
 
-    auto dst = manager->getMulticastDestinations(dstAddress);
-    for(DeviceId dest : dst) {
+    auto dst = this->configManager->getMulticastDestinations(dstAddress);
+    for(auto dest : dst) {
       sendToLowerLayer(dest, msgData);
     }
 
@@ -110,12 +108,11 @@ void MulticastLayer::onUpperLayerData(DeviceId target, string_view packet)
   if(dstAddress[0] == 0xfc && dstAddress[1] == 0x94) {
     // unicast
 
-    if(srcAddress != deviceId)
+    if(srcAddress != this->myDeviceId)
       return;
 
     string_view msgData = packet.substr(39);
-    *(char*)(&msgData[0]) =
-        (char)protocol;  // a bit hacky, but we assume we can modify `packet`
+    *(char*)(&msgData[0]) = (char)protocol;  // a bit hacky, but we assume we can modify `packet`
     sendToLowerLayer(dstAddress, msgData);
   }
 }

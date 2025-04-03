@@ -15,31 +15,16 @@
 #include "husarnet/ports/port_interface.h"
 #include "husarnet/ports/sockets.h"
 
-#include "husarnet/config_storage.h"
-#include "husarnet/device_id.h"
-#include "husarnet/fstring.h"
+#include "husarnet/config_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
-#include "husarnet/licensing.h"
-#include "husarnet/ngsocket.h"
-#include "husarnet/ngsocket_crypto.h"
 #include "husarnet/ngsocket_messages.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/queue.h"
 #include "husarnet/string_view.h"
 
 #include "enum.h"
-
-class HusarnetManager;
-class ConfigStorage;
-class Identity;
-class Peer;
-class PeerContainer;
-
-namespace OsSocket {
-  struct FramedTcpConnection;
-}  // namespace OsSocket
 
 const int REFRESH_TIMEOUT = 25 * 1000;
 const int NAT_INIT_TIMEOUT = 3 * 1000;
@@ -51,17 +36,15 @@ const int MAX_ADDRESSES = 10;
 const int MAX_SOURCE_ADDRESSES = 5;
 const int DEVICEID_LENGTH = 16;
 
-BETTER_ENUM(BaseConnectionType, int, NONE = 0, TCP = 1, UDP = 2)
+BETTER_ENUM(BaseConnectionType, int, NONE = 0, TCP = 1,
+            UDP = 2)  // TODO switch to magic_enum
 
 class NgSocket : public LowerLayer {
  private:
-  Identity* identity;
-  HusarnetManager* manager;
+  Identity* myIdentity;
   PeerContainer* peerContainer;
-  ConfigStorage& configStorage;
 
-  DeviceId deviceId;
-  fstring<32> pubkey;
+  ConfigManager* configManager;
 
   std::unordered_map<InetAddress, Peer*, iphash> peerSourceAddresses;
   std::vector<InetAddress> localAddresses;  // sorted
@@ -94,7 +77,7 @@ class NgSocket : public LowerLayer {
 
   InetAddress baseUdpAddress;
   std::vector<InetAddress> allBaseUdpAddresses;
-  std::shared_ptr<OsSocket::FramedTcpConnection> baseConnection;
+  std::shared_ptr<OsSocket::TcpConnection> baseConnection;
 
   Queue<std::function<void()>> workerQueue;
 
@@ -111,16 +94,14 @@ class NgSocket : public LowerLayer {
   void peerDataPacketReceived(InetAddress source, string_view data);
   void baseMessageReceivedUdp(const BaseToPeerMessage& msg);
   void baseMessageReceivedTcp(const BaseToPeerMessage& msg);
-  void changePeerTargetAddresses(
-      Peer* peer,
-      std::vector<InetAddress> addresses);
+  void changePeerTargetAddresses(Peer* peer, std::vector<InetAddress> addresses);
   void sendNatInitToBase();
   void sendLocalAddressesToBase();
   void sendMulticast();
   void multicastPacketReceived(InetAddress address, string_view packetView);
   void init();
   void resendInfoRequests();
-  void sendInfoRequestToBase(DeviceId id);
+  void sendInfoRequestToBase(HusarnetAddress id);
   std::string sign(const std::string& data, const std::string& kind);
   bool reloadLocalAddresses();
   void removeSourceAddress(Peer* peer, InetAddress address);
@@ -139,9 +120,9 @@ class NgSocket : public LowerLayer {
   void sendToPeer(InetAddress dest, const PeerToPeerMessage& msg);
 
  public:
-  NgSocket(HusarnetManager* manager);
+  NgSocket(Identity* myIdentity, PeerContainer* peerContainer, ConfigManager* configManager);
 
-  virtual void onUpperLayerData(DeviceId peerId, string_view data);
+  virtual void onUpperLayerData(HusarnetAddress peerAddress, string_view data);
   void periodic();
 
   BaseConnectionType getCurrentBaseConnectionType();

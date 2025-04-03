@@ -30,8 +30,6 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
-#include "husarnet/config_storage.h"
-#include "husarnet/device_id.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
@@ -39,7 +37,7 @@
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-#include "enum.h"
+#include "magic_enum/magic_enum_all.hpp"
 
 #ifndef PORT_WINDOWS
 extern char** environ;
@@ -48,24 +46,22 @@ extern char** environ;
 const static std::string hostnamePath = "/etc/hostname";
 
 #ifdef PORT_WINDOWS
-const static std::string configDir =
-    std::string(getenv("PROGRAMDATA")) + "\\Husarnet";
+const static std::string configDir = std::string(getenv("PROGRAMDATA")) + "\\Husarnet\\";
+const static std::string filesDir = configDir + "files\\";
 #else
 const static std::string configDir = "/var/lib/husarnet/";
+const static std::string filesDir = configDir + "files/";
 #endif
 
-const static std::string configPath = configDir + "config.json";
-const static std::string identityPath = configDir + "id";
-const static std::string apiSecretPath = configDir + "daemon_api_token";
-const static std::string licenseJsonPath = configDir + "license.json";
+#include "httplib.h"
 
 static bool validateHostname(std::string hostname)
 {
   if(hostname.size() == 0)
     return false;
   for(char c : hostname) {
-    bool ok = ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
-              ('0' <= c && c <= '9') || (c == '_' || c == '-' || c == '.');
+    bool ok = ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') ||
+              (c == '_' || c == '-' || c == '.');
     if(!ok) {
       return false;
     }
@@ -73,9 +69,7 @@ static bool validateHostname(std::string hostname)
   return true;
 }
 
-static std::string updateHostsFileInternal(
-    std::map<std::string, IpAddress> data,
-    std::string oldContent)
+static std::string updateHostsFileInternal(std::map<std::string, IpAddress> data, std::string oldContent)
 {
   const std::string marker = " # managed by Husarnet";
 
@@ -142,66 +136,30 @@ static void ares_wait(ares_channel channel)
   }
 }
 
-static void ares_local_callback(
-    void* arg,
-    int status,
-    int timeouts,
-    struct ares_addrinfo* addrinfo)
+static void ares_local_callback(void* arg, int status, int timeouts, struct ares_addrinfo* addrinfo)
 {
   struct ares_result* result = (struct ares_result*)arg;
   result->status = status;
 
   if(status != ARES_SUCCESS) {
-    LOG_ERROR(
-        "DNS resolution failed. c-ares status code: %i (%s)", status,
-        ares_strerror(status));
+    LOG_ERROR("DNS resolution failed. c-ares status code: %i (%s)", status, ares_strerror(status));
     return;
   }
 
   struct ares_addrinfo_node* node = addrinfo->nodes;
   while(node != NULL) {
     if(node->ai_family == AF_INET) {
-      result->address = IpAddress::fromBinary4(
-          reinterpret_cast<sockaddr_in*>(node->ai_addr)->sin_addr.s_addr);
+      result->address = IpAddress::fromBinary4(reinterpret_cast<sockaddr_in*>(node->ai_addr)->sin_addr.s_addr);
     }
     if(node->ai_family == AF_INET6) {
-      result->address = IpAddress::fromBinary(
-          (const char*)reinterpret_cast<sockaddr_in6*>(node->ai_addr)
-              ->sin6_addr.s6_addr);
+      result->address =
+          IpAddress::fromBinary((const char*)reinterpret_cast<sockaddr_in6*>(node->ai_addr)->sin6_addr.s6_addr);
     }
 
     node = node->ai_next;
   }
 
   ares_freeaddrinfo(addrinfo);
-}
-
-static std::list<std::string> listScripts(const std::string& path)
-{
-  std::list<std::string> result;
-  DIR* dir = opendir(path.c_str());
-  if(dir == NULL) {
-    return result;
-  }
-
-  struct dirent* ent;
-  while((ent = readdir(dir)) != NULL) {
-    std::string fileName = ent->d_name;
-    if(fileName == "." || fileName == "..") {
-      continue;
-    }
-
-    std::string filePath = path + "/" + fileName;
-    if(access(filePath.c_str(), X_OK) == 0) {
-      result.push_back(filePath);
-    } else {
-      LOG_WARNING(
-          "%s is not executable, skipping it as a hook", filePath.c_str());
-    }
-  }
-  closedir(dir);
-
-  return result;
 }
 
 namespace Port {
@@ -222,11 +180,7 @@ namespace Port {
     }
   }
 
-  __attribute__((weak)) void startThread(
-      std::function<void()> func,
-      const char* name,
-      int stack,
-      int priority)
+  __attribute__((weak)) void threadStart(std::function<void()> func, const char* name, int stack, int priority)
   {
     new std::thread([name, func]() {
       try {
@@ -241,35 +195,43 @@ namespace Port {
     });
   }
 
-  __attribute__((weak)) std::map<UserSetting, std::string>
-  getEnvironmentOverrides()
+  __attribute__((weak)) void threadSleep(Time ms)
   {
-    std::map<UserSetting, std::string> result;
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+  }
+
+  static etl::map<std::string, EnvKey, ENV_KEY_OPTIONS> envMap = {
+      etl::pair{std::string("HUSARNET_TLD_FQDN"), EnvKey::tldFqdn},
+      etl::pair{std::string("HUSARNET_LOG_VERBOSITY"), EnvKey::logVerbosity},
+      etl::pair{std::string("HUSARNET_ENABLE_HOOKS"), EnvKey::enableHooks},
+      etl::pair{std::string("HUSARNET_ENABLE_CONTROLPLANE"), EnvKey::enableControlPlane},
+      etl::pair{std::string("HUSARNET_DAEMON_INTERFACE"), EnvKey::daemonInterface},
+      etl::pair{std::string("HUSARNET_DAEMON_API_INTERFACE"), EnvKey::daemonApiInterface},
+      etl::pair{std::string("HUSARNET_DAEMON_API_HOST"), EnvKey::daemonApiHost},
+      etl::pair{std::string("HUSARNET_DAEMON_API_PORT"), EnvKey::daemonApiPort},
+  };
+
+  __attribute__((weak)) etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentOverrides()
+  {
+    etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> result;
     for(char** environ_ptr = environ; *environ_ptr != nullptr; environ_ptr++) {
-      for(auto enumName : UserSetting::_names()) {
-        auto candidate =
-            "HUSARNET_" + strToUpper(camelCaseToUnderscores(enumName));
+      std::vector<std::string> splitted = split(*environ_ptr, '=', 1);
+      if(splitted.size() == 1) {
+        continue;
+      }
 
-        std::vector<std::string> splitted = split(*environ_ptr, '=', 1);
-        if(splitted.size() == 1) {
-          continue;
-        }
+      auto key = strToUpper(splitted[0]);
+      auto value = splitted[1];
 
-        auto key = splitted[0];
-        auto value = splitted[1];
-
-        if(key == candidate) {
-          result[UserSetting::_from_string(enumName)] = value;
-        }
+      if(envMap.contains(key)) {
+        result[envMap[key]] = value;
       }
     }
 
     return result;
   }
 
-  __attribute__((weak)) void log(
-      const LogLevel level,
-      const std::string& message)
+  __attribute__((weak)) void log(const LogLevel level, const std::string& message)
   {
     fprintf(stderr, "%s\n", message.c_str());
     fflush(stderr);
@@ -278,8 +240,7 @@ namespace Port {
   __attribute__((weak)) int64_t getCurrentTime()
   {
     using namespace std::chrono;
-    milliseconds ms =
-        duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+    milliseconds ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     return ms.count();
   }
 
@@ -290,15 +251,13 @@ namespace Port {
     std::time_t timestamp = std::chrono::system_clock::to_time_t(now);
     std::tm localtime = *std::localtime(&timestamp);
 
-    return std::to_string(localtime.tm_year + 1900) + "-" +
-           padLeft(2, std::to_string(localtime.tm_mon + 1), '0') + "-" +
-           padLeft(2, std::to_string(localtime.tm_mday), '0') + "_" +
+    return std::to_string(localtime.tm_year + 1900) + "-" + padLeft(2, std::to_string(localtime.tm_mon + 1), '0') +
+           "-" + padLeft(2, std::to_string(localtime.tm_mday), '0') + "_" +
            padLeft(2, std::to_string(localtime.tm_hour), '0') + ":" +
-           padLeft(2, std::to_string(localtime.tm_min), '0') + ":" +
-           padLeft(2, std::to_string(localtime.tm_sec), '0');
+           padLeft(2, std::to_string(localtime.tm_min), '0') + ":" + padLeft(2, std::to_string(localtime.tm_sec), '0');
   }
 
-  __attribute__((weak)) void processSocketEvents(HusarnetManager* manager)
+  __attribute__((weak)) void processSocketEvents(void* tuntap)
   {
     OsSocket::runOnce(1000);  // process socket events for at most so many ms
   }
@@ -308,8 +267,8 @@ namespace Port {
 #ifndef PORT_WINDOWS
     auto hostname = readFile(hostnamePath);
 
-    if(hostname.has_value())
-      return rtrim(hostname.value());
+    if(!hostname.empty())
+      return rtrim(hostname);
 
     // On some platforms (i.e. OpenWRT) the hostname file does not exist
     LOG_WARNING(
@@ -346,9 +305,7 @@ namespace Port {
 
     // Using transform instead of simple write as it's writing to /etc and
     // transform has already all the necessary mechanisms for making it safe
-    transformFile(hostnamePath, [newHostname](const std::string& oldContent) {
-      return newHostname;
-    });
+    transformFile(hostnamePath, [newHostname](const std::string& oldContent) { return newHostname; });
 
     if(system("hostname -F /etc/hostname") != 0) {
       LOG_ERROR("cannot update hostname to %s", newHostname.c_str());
@@ -358,19 +315,16 @@ namespace Port {
     return true;
   }
 
-  __attribute__((weak)) void updateHostsFile(
-      const std::map<std::string, IpAddress>& data)
+  __attribute__((weak)) void updateHostsFile(const std::map<std::string, IpAddress>& data)
   {
 #ifdef PORT_WINDOWS
-    const std::string hostsFilePath =
-        std::string(getenv("windir")) + "/system32/drivers/etc/hosts";
+    const std::string hostsFilePath = std::string(getenv("windir")) + "/system32/drivers/etc/hosts";
 #else
     const std::string hostsFilePath = "/etc/hosts";
 #endif
 
-    transformFile(hostsFilePath, [data](const std::string& oldContent) {
-      return updateHostsFileInternal(data, oldContent);
-    });
+    transformFile(
+        hostsFilePath, [data](const std::string& oldContent) { return updateHostsFileInternal(data, oldContent); });
   }
 
   __attribute__((weak)) IpAddress resolveToIp(const std::string& hostname)
@@ -384,115 +338,162 @@ namespace Port {
     ares_channel channel;
 
     if(ares_init(&channel) != ARES_SUCCESS) {
-      LOG_ERROR(
-          "Unable to init ARES/DNS channel for domain: %s", hostname.c_str());
+      LOG_ERROR("Unable to init ARES/DNS channel for domain: %s", hostname.c_str());
       return IpAddress();
     }
 
     struct ares_addrinfo_hints hints = {};
     hints.ai_flags |= ARES_AI_NUMERICSERV | ARES_AI_NOSORT;
 
-    ares_getaddrinfo(
-        channel, hostname.c_str(), "443", &hints, ares_local_callback,
-        (void*)&result);
+    ares_getaddrinfo(channel, hostname.c_str(), "443", &hints, ares_local_callback, (void*)&result);
     ares_wait(channel);
+
+    LOG_DEBUG("DNS resolution for %s done, result: %s", hostname.c_str(), result.address.toString().c_str());
 
     return result.address;
   }
 
-  __attribute__((weak)) bool runScripts(const std::string& eventName)
+  __attribute__((weak)) bool runHook(HookType hookType)
   {
-    // TODO make this start each hook in a separate thread
-    auto path = Port::getConfigDir() + eventName;
-    auto scriptPaths = listScripts(path);
-    if(scriptPaths.empty()) {
+    auto hookName = std::string(magic_enum::enum_name(hookType));
+    auto path = filesDir + "hook_" + hookName;
+
+    if(access(path.c_str(), X_OK) != 0) {
+      LOG_INFO(("hook " + path + " not found or not executable").c_str());
       return false;
     }
 
-    LOG_DEBUG(("running hooks under path " + path).c_str());
-    for(auto& scriptPath : scriptPaths) {
-      LOG_INFO(("running " + scriptPath + " as a hook").c_str());
+    Port::threadStart(
+        [path, hookName]() {
+          // TODO probably can be replaced with execve or similar
+          LOG_DEBUG(("running " + hookName).c_str());
 
-      FILE* pipe = popen((scriptPath + " 2>&1").c_str(), "r");
-      if(!pipe) {
-        LOG_ERROR(("failed to run " + scriptPath).c_str());
-        continue;
-      }
+          FILE* pipe = popen((path + " 2>&1").c_str(), "r");
+          if(!pipe) {
+            LOG_ERROR(("failed to run " + path).c_str());
+          }
 
-      char buffer[1024];
-      std::string output;
+          char buffer[1024];
+          std::string output;
 
-      // nullptr here is a delimiter of subprocess end
-      while(fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        output += buffer;
-      }
+          // nullptr here is a delimiter of subprocess end
+          while(fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            output += buffer;
+          }
 
-      pclose(pipe);
+          std::istringstream iss(output);
+          std::string line;
+          while(std::getline(iss, line)) {
+            LOG_INFO((hookName + ": " + line).c_str());
+          }
 
-      std::istringstream iss(output);
-      std::string line;
-      while(std::getline(iss, line)) {
-        LOG_INFO((scriptPath + ": " + line).c_str());
-      }
+          auto ret = pclose(pipe);
 
-      LOG_INFO(("running " + scriptPath + " as a hook done").c_str());
-    }
-    LOG_DEBUG(("running hooks under path " + path + " done").c_str());
+          LOG_INFO((hookName + " finished with exit code: " + std::to_string(ret)).c_str());
+        },
+        hookName.c_str());
+
     return true;
   }
 
-  __attribute__((weak)) bool checkScriptsExist(const std::string& eventName)
-  {
-    auto path = Port::getConfigDir() + eventName;
+  static const etl::map<StorageKey, std::string, STORAGE_KEY_OPTIONS> storageMap = {
+      etl::pair{StorageKey::id, std::string("id")},
+      etl::pair{StorageKey::config, std::string("config.json")},
+      etl::pair{StorageKey::daemonApiToken, std::string("daemon_api_token")},
+      etl::pair{StorageKey::cache, std::string("cache.json")},
 
-    LOG_DEBUG(("checking for valid hooks under " + path).c_str());
-    auto scriptPaths = listScripts(path);
-    return !scriptPaths.empty();
+  };
+
+  __attribute__((weak)) std::string readStorage(StorageKey key)
+  {
+    auto path = configDir + storageMap.at(key);
+    return readFile(path);
   }
 
-  __attribute__((weak)) std::string getConfigDir()
+  __attribute__((weak)) bool writeStorage(StorageKey key, const std::string& data)
   {
-    return configDir;
+    auto path = configDir + storageMap.at(key);
+    return writeFile(path, data);
   }
 
-  __attribute__((weak)) std::string readLicenseJson()
+  // TODO: this implementation is now unused on fat but something like this will be needed for esp
+  __attribute__((weak)) HttpResult httpGetNoLib(const std::string& host, const std::string& path)
   {
-    return readFile(licenseJsonPath).value_or("{}");
+    // Host could be an IP address, let's check
+    // If it's not, we need to resolve it
+    auto ip = IpAddress::parse(host);
+    if(ip.isInvalid()) {
+      ip = Port::resolveToIp(host);
+    }
+
+    if(ip.isInvalid()) {
+      LOG_ERROR("Can't resolve %s to IP: requesting %s failed", host.c_str(), path.c_str());
+      return {-1, ""};
+    }
+
+    std::string req = {
+        "GET " + path +
+        " HTTP/1.1\n"
+        "Host: " +
+        host +
+        "\n"
+        "User-Agent: " +
+        HUSARNET_USER_AGENT +
+        "\n"
+        "Accept: application/json\n\n"};
+
+    InetAddress address{ip, 80};
+    int sockfd = OsSocket::connectUnmanagedTcpSocket(address);
+    if(sockfd < 0) {
+      LOG_ERROR("can't contact %s - is DNS resolution working properly?", host.c_str());
+      return {-1, ""};
+    }
+
+    std::string readBuffer;
+    readBuffer.resize(8192);
+
+    SOCKFUNC(send)(sockfd, req.data(), req.size(), 0);
+
+    // TODO add a while loop here
+    size_t len = SOCKFUNC(recv)(sockfd, (char*)readBuffer.data(), readBuffer.size(), 0);
+    size_t pos = readBuffer.find("\r\n\r\n");
+
+    if(pos == std::string::npos) {
+      LOG_CRITICAL("invalid response from the server: %s", readBuffer.c_str());
+    }
+    pos += 4;
+
+    LOG_INFO("JSON retrieved from %s, size %d", host.c_str(), len);
+
+    // TODO: for now it is fake 200, we don't parse the resp headers, just body
+    return {200, readBuffer.substr(pos, len - pos)};
   }
 
-  __attribute__((weak)) bool writeLicenseJson(const std::string& data)
+  __attribute__((weak)) HttpResult httpGet(const std::string& host, const std::string& path)
   {
-    return writeFile(licenseJsonPath, data);
+    httplib::Client httpClient(host);
+    auto result = httpClient.Get(path);
+
+    if(result) {
+      return {result->status, result->body};
+    } else {
+      auto err = result.error();
+      LOG_ERROR("Can't contact host %s (error: %s)", host.c_str(), httplib::to_string(err).c_str());
+    }
+    return {};
   }
 
-  __attribute__((weak)) std::string readConfig()
+  __attribute__((weak)) HttpResult httpPost(const std::string& host, const std::string& path, const std::string& body)
   {
-    return readFile(configPath).value_or("{}");
-  }
+    httplib::Client httpClient(host);
+    auto result = httpClient.Post(path, body, "application/json");
 
-  __attribute__((weak)) bool writeConfig(const std::string& data)
-  {
-    return writeFile(configPath, data);
+    if(result) {
+      return {result->status, result->body};
+    } else {
+      auto err = result.error();
+      LOG_ERROR("Can't contact host %s (error: %s)", host.c_str(), httplib::to_string(err).c_str());
+    }
+    return {};
   }
-
-  __attribute__((weak)) std::string readIdentity()
-  {
-    return readFile(identityPath).value_or("");
-  }
-
-  __attribute__((weak)) bool writeIdentity(const std::string& identity)
-  {
-    return writeFile(identityPath, identity);
-  }
-
-  __attribute__((weak)) std::string readApiSecret()
-  {
-    return readFile(apiSecretPath).value_or("");
-  }
-
-  __attribute__((weak)) bool writeApiSecret(const std::string& secret)
-  {
-    return writeFile(apiSecretPath, secret);
-  }
-
 }  // namespace Port

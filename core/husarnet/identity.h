@@ -4,31 +4,35 @@
 #pragma once
 #include <string>
 
-#include "husarnet/device_id.h"
 #include "husarnet/fstring.h"
+#include "husarnet/ipaddress.h"
 
 class Identity {
  private:
   fstring<32> pubkey;
   fstring<64> privkey;
 
-  DeviceId deviceId;
+  HusarnetAddress deviceId;
 
  public:
-  Identity();  // This will create BadDeviceId. Look below for methods that'll
-               // get you something actually usable
+  Identity();  // This will create an invalid identity - BadDeviceId. Look
+               // below for methods that'll get you something actually usable
 
-  fstring<32> getPubkey();
-  DeviceId getDeviceId();
-  IpAddress getIpAddress();
-
-  fstring<64> sign(const std::string& data);
   bool isValid();
 
+  fstring<32> getPubkey();
+  HusarnetAddress getDeviceId();
+  IpAddress getIpAddress();
+
+  fstring<64> sign(const std::string& data);  // Sign data with identity
+
   // This will make new Identity (and *not* recover the existing one)
-  static Identity create();
+  static Identity* create();
 
   // Those are meant to be saved and recovered from file
   std::string serialize();
-  static Identity deserialize(std::string);
+  static Identity* deserialize(const std::string& data);
+
+  static Identity* init();  // This will recover the identity from the file,
+                            // creating and saving if necessary
 };

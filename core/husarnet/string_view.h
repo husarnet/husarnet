@@ -6,6 +6,8 @@
 #include <cstring>
 #include <string>
 
+#include <etl/string_view.h>
+
 struct string_view {
   const char* m_data = nullptr;
   size_t m_size = 0;
@@ -16,6 +18,12 @@ struct string_view {
 
   // cppcheck-suppress noExplicitConstructor
   string_view(const std::string& s)
+  {
+    m_data = s.data();
+    m_size = s.size();
+  }
+
+  string_view(const etl::string_view& s)
   {
     m_data = s.data();
     m_size = s.size();

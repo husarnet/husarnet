@@ -3,30 +3,23 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 
-#include <list>
-#include <string>
-
-#include "husarnet/ipaddress.h"
-
 #include "nlohmann/json.hpp"
 
 using namespace nlohmann;  // json
 
-json retrieveLicenseJson(std::string dashboardHostname, bool abortOnFailure);
+#define LICENSE_VERSION_KEY "version"
+#define LICENSE_INSTALLATION_ID_KEY "installation_id"
+#define LICENSE_LICENSE_ID_KEY "license_id"
+#define LICENSE_NAME_KEY "name"
+#define LICENSE_MAX_DEVICES_KEY "max_devices"
+#define LICENSE_DASHBOARD_URL_KEY "dashboard_url"
+#define LICENSE_WEBSETUP_HOST_KEY "websetup_host"
+#define LICENSE_BASE_SERVER_ADDRESSES_KEY "base_server_addresses"
+#define LICENSE_ISSUED_KEY "issued"
+#define LICENSE_VALID_UNTIL_KEY "valid_until"
+#define LICENSE_API_SERVERS_KEY "api_servers"
+#define LICENSE_EB_SERVERS_KEY "eb_servers"
+#define LICENSE_SIGNATURE_KEY "signature"
+#define LICENSE_SIGNATURE_V2_KEY "signature_v2"
 
-class License {
-  std::string dashboardFqdn;
-  IpAddress websetupAddress;
-  std::vector<IpAddress> baseServerAddresses;
-  std::vector<IpAddress> dashboardApiAddresses;
-  std::vector<IpAddress> ebAddresses;
-
- public:
-  License(std::string dashboardHostname);
-  std::string getDashboardFqdn();
-  IpAddress getWebsetupAddress();
-  std::vector<IpAddress> getBaseServerAddresses();
-  std::vector<IpAddress> getDashboardApiAddresses();
-  std::vector<IpAddress> getEbAddresses();
-  static bool validateDashboard(std::string dashboardHostname);
-};
+bool isLicenseValid(const json& licenseJson);

@@ -30,8 +30,7 @@ static int openTun(std::string& name)
   int fd;
 
   memset(&ctlInfo, 0, sizeof(ctlInfo));
-  if(strlcpy(ctlInfo.ctl_name, UTUN_CONTROL_NAME, sizeof(ctlInfo.ctl_name)) >=
-     sizeof(ctlInfo.ctl_name)) {
+  if(strlcpy(ctlInfo.ctl_name, UTUN_CONTROL_NAME, sizeof(ctlInfo.ctl_name)) >= sizeof(ctlInfo.ctl_name)) {
     fprintf(stderr, "UTUN_CONTROL_NAME too long");
     return -1;
   }
@@ -96,7 +95,7 @@ void TunTap::onTunTapData()
   }
 
   string_view packet = string_view(tunBuffer).substr(0, size);
-  sendToLowerLayer(BadDeviceId, packet.substr(4));
+  sendToLowerLayer(IpAddress(), packet.substr(4));
 }
 
 TunTap::TunTap()

@@ -33,8 +33,7 @@ HusarnetClient::HusarnetClient()
   void* manager = static_cast<void*>(husarnetManager);
 
   BaseType_t res = xTaskCreate(
-      [](void* manager) { husarnetTask(manager); }, "husarnet_task", 16384,
-      manager, 7, &husarnetTaskHandle);
+      [](void* manager) { husarnetTask(manager); }, "husarnet_task", 16384, manager, 7, &husarnetTaskHandle);
 
   if(res != pdPASS) {
     LOG_ERROR("Failed to create Husarnet task");
@@ -64,7 +63,7 @@ void HusarnetClient::join(const char* hostname, const char* joinCode)
   xSemaphoreTake(Port::notifyReadySemaphore, portMAX_DELAY);
 
   // Join the network
-  husarnetManager->joinNetwork(joinCode, hostname);
+  // husarnetManager->joinNetwork(joinCode, hostname); // TODO implement this
 }
 
 void HusarnetClient::setDashboardFqdn(const char* fqdn)
@@ -74,8 +73,7 @@ void HusarnetClient::setDashboardFqdn(const char* fqdn)
     return;
   }
 
-  husarnetManager->getConfigStorage().setUserSetting(
-      UserSetting::dashboardFqdn, fqdn);
+  husarnetManager->getConfigStorage().setUserSetting(UserSetting::dashboardFqdn, fqdn);
 }
 
 std::vector<HusarnetPeer> HusarnetClient::listPeers()
@@ -114,10 +112,7 @@ HusarnetClient* husarnet_init()
   return new HusarnetClient();
 }
 
-void husarnet_join(
-    HusarnetClient* client,
-    const char* hostname,
-    const char* joinCode)
+void husarnet_join(HusarnetClient* client, const char* hostname, const char* joinCode)
 {
   client->join(hostname, joinCode);
 }
