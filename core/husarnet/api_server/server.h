@@ -7,9 +7,9 @@
 #include <mutex>
 #include <string>
 
-#include "husarnet/api_server/dashboard_api_proxy.h"
 #include "husarnet/config_env.h"
 #include "husarnet/config_manager.h"
+#include "husarnet/identity.h"
 #include "husarnet/ngsocket.h"
 
 #include "httplib.h"
@@ -24,8 +24,7 @@ class ApiServer {
  private:
   ConfigEnv* configEnv;
   ConfigManager* configManager;
-
-  DashboardApiProxy* proxy;
+  Identity* identity;
 
   std::mutex mutex;
   std::condition_variable cv;
@@ -43,7 +42,7 @@ class ApiServer {
   bool requireParams(const httplib::Request& req, httplib::Response& res, std::list<std::string> paramNames);
 
  public:
-  ApiServer(ConfigEnv* configEnv, ConfigManager* configManager, DashboardApiProxy* proxy);
+  ApiServer(ConfigEnv* configEnv, ConfigManager* configManager, Identity* identity);
 
   void runThread();
   void waitStarted();

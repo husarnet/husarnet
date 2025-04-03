@@ -381,8 +381,6 @@ namespace Port {
             output += buffer;
           }
 
-          pclose(pipe);
-
           std::istringstream iss(output);
           std::string line;
           while(std::getline(iss, line)) {

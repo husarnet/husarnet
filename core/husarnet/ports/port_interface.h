@@ -30,7 +30,7 @@ enum class EnvKey
   daemonApiPort,
 };
 
-#define ENV_KEY_OPTIONS 9
+#define ENV_KEY_OPTIONS 8
 
 enum class StorageKey
 {

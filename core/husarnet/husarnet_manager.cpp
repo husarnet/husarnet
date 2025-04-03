@@ -112,8 +112,7 @@ void HusarnetManager::runHusarnet()
 
 // In case of a "fat" platform - start the API server
 #ifdef HTTP_CONTROL_API
-  auto proxy = new DashboardApiProxy(this->myIdentity, this->configManager);
-  auto server = new ApiServer(this->configEnv, this->configManager, proxy);
+  auto server = new ApiServer(this->configEnv, this->configManager, this->myIdentity);
 
   Port::threadStart([server]() { server->runThread(); }, "daemon_api");
 

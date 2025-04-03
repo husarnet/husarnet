@@ -9,7 +9,6 @@
 
 #include <stdlib.h>
 
-#include "husarnet/api_server/dashboard_api_proxy.h"
 #include "husarnet/config_manager.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
@@ -24,8 +23,8 @@
 
 using namespace nlohmann;  // json
 
-ApiServer::ApiServer(ConfigEnv* configEnv, ConfigManager* configManager, DashboardApiProxy* proxy)
-    : configEnv(configEnv), configManager(configManager), proxy(proxy)
+ApiServer::ApiServer(ConfigEnv* configEnv, ConfigManager* configManager, Identity* identity)
+    : configEnv(configEnv), configManager(configManager), identity(identity)
 {
 }
 
@@ -77,8 +76,8 @@ static const std::string getDaemonApiToken()
           "Failed to write daemon API token to storage, you won't be able to "
           "use CLI (or daemon's API) to control the daemon!");
     }
+    return newToken;
   }
-
   return token;
 }
 
@@ -115,7 +114,57 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
     return;
   }
 
-  proxy->signAndForward(req, res, "/" + route);
+  auto method = req.method;
+  auto path = "/" + route;
+  LOG_INFO("Forwarding request %s %s", method.c_str(), path.c_str());
+  auto apiAddress = configManager->getApiAddress();
+  if(!apiAddress.isFC94()) {
+    LOG_WARNING(
+        "Not forwarding the request, as proxy does not have valid "
+        "Dashboard API address");
+
+    // construct response of the same shape as Dashboard API uses
+    nlohmann::json jsonResponse{
+        {"type", "server_error"},
+        {"errors", nlohmann::json::array({"request received by the daemon, but dashboard API "
+                                          "address is not known"})},
+        {"warnings", nlohmann::json::array()},
+        {"message", "error"}};
+
+    res.set_content(jsonResponse.dump(4), "application/json");
+    return;
+  }
+
+  httplib::Params params;
+  params.emplace("pk", httplib::detail::base64_encode(identity->getPubkey()));
+  params.emplace("sig", httplib::detail::base64_encode(identity->sign(req.body)));
+
+  std::string query = httplib::detail::params_to_query_str(params);
+  std::string pathWithQuery(path + "?" + query);
+
+  httplib::Client httpClient(apiAddress.toString());
+  httplib::Result result;
+
+  if(method == "GET") {
+    result = httpClient.Get(pathWithQuery);
+  } else if(method == "POST") {
+    result = httpClient.Post(pathWithQuery, req.body, "application/json");
+  } else if(method == "PUT") {
+    result = httpClient.Put(pathWithQuery, req.body, "application/json");
+  } else if(method == "DELETE") {
+    result = httpClient.Delete(pathWithQuery);
+  } else {
+    LOG_ERROR("Unsupported HTTP method: %s", method.c_str());
+    return;
+  }
+
+  if(result) {
+    res.set_content(result->body,
+                    "application/json");  // Dashboard API always returns valid JSON
+  } else {
+    auto err = result.error();
+    LOG_ERROR("Can't contact Dashboard API: %s", httplib::to_string(err).c_str());
+  }
 }
 
 template <typename iterable_InetAddress_t>

@@ -60,8 +60,7 @@ namespace dashboardapi {
   // FIXME:
   //  there _should_ be a compile-time function to calculate those in etl::base64
   //  documentation even mentions such construct, unfortunately I couldn't find it in the lib sources
-  constexpr int base64EncodedPublicKeySize = 44;
-  constexpr int base64EncodedSignatureSize = 88;
+
 
   // TODO: generalize it
   Response postHeartbeat(HusarnetAddress apiAddress, Identity* identity)
@@ -72,21 +71,31 @@ namespace dashboardapi {
     body.append(HUSARNET_USER_AGENT);
     body.append("\"}");
 
-    etl::base64_rfc4648_url_padding_encoder<base64EncodedPublicKeySize> pkEncoder;
-    auto pk = identity->getPubkey();
-    pkEncoder.encode_final(pk.begin(), pk.end());
-
-    etl::base64_rfc4648_url_padding_encoder<base64EncodedSignatureSize> sigEncoder;
-    auto sig = identity->sign(body);
-    sigEncoder.encode_final(sig.begin(), sig.end());
+    auto encodedPK = encodePublicKey(identity);
+    auto encodedSig = encodeSignature(identity, body);
 
     // build query string
     path.append("?pk=");
-    path.append(pkEncoder.begin(), pkEncoder.size());
+    path.append(encodedPK.begin(), encodedPK.size());
     path.append("&sig=");
-    path.append(sigEncoder.begin(), sigEncoder.size());
+    path.append(encodedSig.begin(), encodedSig.size());
 
     auto [statusCode, bytes] = Port::httpPost(apiAddress.toString(), path, body);
     return { statusCode, bytes };
   }
+
+  etl::string<base64EncodedPublicKeySize> encodePublicKey(Identity* identity) {
+    etl::base64_rfc4648_url_padding_encoder<base64EncodedPublicKeySize> pkEncoder;
+    auto pk = identity->getPubkey();
+    pkEncoder.encode_final(pk.begin(), pk.end());
+    return {pkEncoder.begin(), pkEncoder.size() };
+  }
+
+  etl::string<base64EncodedSignatureSize> encodeSignature(Identity* identity, const std::string& body) {
+    etl::base64_rfc4648_url_padding_encoder<base64EncodedSignatureSize> sigEncoder;
+    auto sig = identity->sign(body);
+    sigEncoder.encode_final(sig.begin(), sig.end());
+    return { sigEncoder.begin(), sigEncoder.size() };
+  }
+
 }  // namespace dashboardapi

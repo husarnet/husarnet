@@ -40,29 +40,11 @@ void packTo(T t, void* dst)
   memcpy(dst, &t, sizeof(T));
 }
 
-template <typename T>
-T unpack(std::string s)
+template <typename T, typename K>
+T unpack(K s)
 {
   if(s.size() != sizeof(T))
     abort();
-  T r;
-  memcpy(&r, s.data(), sizeof(T));
-  return r;
-}
-
-template <typename T>
-T unpack(etl::string_view s)
-{
-  if(s.size() != sizeof(T))
-    abort();
-  T r;
-  memcpy(&r, s.data(), sizeof(T));
-  return r;
-}
-
-template <typename T>
-T unpack(fstring<sizeof(T)> s)
-{
   T r;
   memcpy(&r, s.data(), sizeof(T));
   return r;

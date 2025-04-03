@@ -309,12 +309,11 @@ namespace OsSocket {
 
     ssize_t bytes_written = 0;
 
-    // Send data supporting partial writes
     do {
       ssize_t remaining = packet.size() - bytes_written;
       ssize_t n = SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
 
-      if(n < 0) {
+      if(n <= 0) {
         LOG_ERROR("WS send failed: %s", strerror(errno));
         return false;
       }
@@ -350,7 +349,7 @@ namespace OsSocket {
       ssize_t remaining = packet.size() - bytes_written;
       ssize_t n = SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
 
-      if(n < 0) {
+      if(n <= 0) {
         LOG_ERROR("TCP send failed: %s", strerror(errno));
         return false;
       }
