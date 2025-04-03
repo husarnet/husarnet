@@ -3,4 +3,4 @@
 // License: specified in project_root/LICENSE.txt
 package constants
 
-const Version string = "2.0.304"
+const Version string = "2.0.305"
