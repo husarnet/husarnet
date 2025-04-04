@@ -82,8 +82,8 @@ void HusarnetManager::runHusarnet()
   // ngsocket layers)
   this->peerContainer = new PeerContainer(this->configManager, this->myIdentity);
 
-  auto tunTap = Port::startTunTap(this->myIdentity->getIpAddress(), this->configEnv->getDaemonInterface());
-  this->tunTap = static_cast<TunTap*>(tunTap);
+  auto tt = Port::startTunTap(this->myIdentity->getIpAddress(), this->configEnv->getDaemonInterface());
+  this->tunTap = dynamic_cast<TunTap*>(tt);
 
   auto multicast = new MulticastLayer(this->myIdentity->getDeviceId(), this->configManager);
   auto compression = new CompressionLayer(this->peerContainer, this->myFlags);

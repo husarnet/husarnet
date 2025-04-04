@@ -10,7 +10,6 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/port_interface.h"
 
-#include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
@@ -37,7 +36,7 @@ int WindowsNetworking::callWindowsCmd(std::string cmd) const
   return system(("\"" + cmd + "\"").c_str());
 }
 
-void WindowsNetworking::setupNetworkInterface(HusarnetManager* manager, std::string interfaceName)
+void WindowsNetworking::setupNetworkInterface(HusarnetAddress myIp, const std::string& interfaceName)
 {
   std::string sourceNetshName = getNetshNameForGuid(interfaceName);
   LOG_WARNING("sourceNetshName: %s", sourceNetshName.c_str());
@@ -55,8 +54,6 @@ void WindowsNetworking::setupNetworkInterface(HusarnetManager* manager, std::str
   callWindowsCmd(
       "netsh interface ipv6 add neighbors " + quotedName +
       " fc94:8385:160b:88d1:c2ec:af1b:06ac:0001 52-54-00-fc-94-4d");
-
-  IpAddress myIp = manager->getIdentity()->getDeviceId();
 
   LOG_INFO("myIp is: %s", myIp.toString().c_str());
   callWindowsCmd("netsh interface ipv6 add address " + quotedName + " " + myIp.toString() + "/128");

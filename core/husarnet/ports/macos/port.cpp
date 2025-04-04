@@ -37,7 +37,6 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
-#include "husarnet/config_storage.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"
@@ -130,21 +129,21 @@ namespace Port {
     return ret;
   }
 
-  UpperLayer* startTunTap(HusarnetManager* manager)
+  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
-    std::string myIp = manager->getIdentity()->getDeviceId().str();
+    (void)interfaceName;  // ignore Linux-centric hnet0, setup utunX
 
     auto tunTap = new TunTap();
-    auto interfaceName = tunTap->getName();
-    LOG_INFO("our utun interface name is %s", interfaceName.c_str());
+    auto utunName = tunTap->getName();
+    LOG_INFO("our utun interface name is %s", utunName.c_str());
 
     if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||
-       system(("sysctl net.ipv6.conf." + interfaceName + ".disable_ipv6=0").c_str()) != 0) {
+       system(("sysctl net.ipv6.conf." + utunName + ".disable_ipv6=0").c_str()) != 0) {
       LOG_WARNING("failed to enable IPv6 (may be harmless)");
     }
 
-    system(("ifconfig " + interfaceName + " inet6 " + myIp).c_str());
-    system(("route -nv add -inet6 fc94::/16 -interface " + interfaceName).c_str());
+    system(("ifconfig " + utunName + " inet6 " + myAddress.toString()).c_str());
+    system(("route -nv add -inet6 fc94::/16 -interface " + utunName).c_str());
     // TODO multicast, right?
 
     return tunTap;
@@ -161,7 +160,11 @@ namespace Port {
           "macos-device");
       return "macos-device";
     }
-    return rtrim(readFile(hostnamePath).value_or("macos"));
+    auto hostname = readFile(hostnamePath);
+    if(!hostname.empty()) {
+      return hostname;
+    }
+    return "macos-device";
   }
 
   bool setSelfHostname(const std::string& newHostname)

@@ -302,7 +302,7 @@ namespace Port {
     return ret;
   }
 
-  UpperLayer* startTunTap(const HusarnetAddress& myAddress, std::string interfaceName)
+  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
     struct nl_sock* ns;
     struct rtnl_link* link;

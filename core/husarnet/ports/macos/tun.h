@@ -26,5 +26,5 @@ class TunTap : public UpperLayer {
   // is available...
   std::string getName();
 
-  void onLowerLayerData(DeviceId source, string_view data) override;
+  void onLowerLayerData(HusarnetAddress source, string_view data) override;
 };

@@ -83,12 +83,12 @@ class ConfigManager {
   json configJson;
   json cacheJson;
 
-  bool allowEveryone = false; // flipped to true if control plane is disabled
+  bool allowEveryone = false;  // flipped to true if control plane is disabled
 
   // synchronization primitives
   mutable etl::mutex cvMutex;
-  mutable etl::mutex mutexFast; // protects internal sets and vectors
-  mutable etl::mutex mutexSlow; // protects json documents
+  mutable etl::mutex mutexFast;  // protects internal sets and vectors
+  mutable etl::mutex mutexSlow;  // protects json documents
   std::condition_variable cv;
 
   etl::set<HusarnetAddress, ALLOWED_PEERS_LIMIT> allowedPeers;
@@ -100,13 +100,13 @@ class ConfigManager {
   etl::string<EMAIL_MAX_LENGTH> claimedBy;    // empty string if not claimed
   etl::string<HOSTNAME_MAX_LENGTH> hostname;  // the one changeable from the web interface
 
-  void getLicenseJson();     // HTTP call to TLD
-  void storeLicense(const json& jsonDoc); // save JSON doc
-  void updateLicenseData();  // Transform JSON to internal structures
+  void getLicenseJson();                   // HTTP call to TLD
+  void storeLicense(const json& jsonDoc);  // save JSON doc
+  void updateLicenseData();                // Transform JSON to internal structures
 
-  void getGetConfig();       // HTTP call to API
-  void storeGetConfig(const json& jsonDoc); // save JSON doc
-  void updateGetConfigData();  // Transform JSON to internal structures
+  void getGetConfig();                       // HTTP call to API
+  void storeGetConfig(const json& jsonDoc);  // save JSON doc
+  void updateGetConfigData();                // Transform JSON to internal structures
 
   bool readConfig();
   void storeConfig(const json& jsonDoc);

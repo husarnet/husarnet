@@ -3,7 +3,11 @@
 // License: specified in project_root/LICENSE.txt
 #include "husarnet/ipaddress.h"
 
+#ifdef _WIN32
+#include <winsock.h>
+#else
 #include <netinet/in.h>
+#endif
 
 // Default initialization sets one of "Documentation" Ipv6 reserved addresses (3fff::)
 // This value does not make sense in a real system, contrary to :: (all zeroes)

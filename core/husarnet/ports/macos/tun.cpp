@@ -103,7 +103,7 @@ TunTap::TunTap()
   tunBuffer.resize(4096);
   std::string tunName{};
   fd = openTun(tunName);
-  name = tunName;
+  this->name = tunName;
   if(fd == -1) {
     LOG_ERROR("Can't open utun device!");
   } else {
@@ -112,7 +112,7 @@ TunTap::TunTap()
   OsSocket::bindCustomFd(fd, std::bind(&TunTap::onTunTapData, this));
 }
 
-void TunTap::onLowerLayerData(DeviceId source, string_view data)
+void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   std::string wrapped{};
   // prepend bytes specific for utun/macos
@@ -127,5 +127,5 @@ void TunTap::onLowerLayerData(DeviceId source, string_view data)
 
 std::string TunTap::getName()
 {
-  return name;
+  return this->name;
 }

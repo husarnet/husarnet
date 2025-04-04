@@ -170,28 +170,6 @@ namespace Port {
     _beginthread(runThread, 0, f);
   }
 
-  std::map<UserSetting, std::string> getEnvironmentOverrides()
-  {
-    std::map<UserSetting, std::string> result;
-
-    std::string envVarBuffer;
-    envVarBuffer.resize(512);
-
-    for(auto enumName : UserSetting::_names()) {
-      auto candidate = "HUSARNET_" + strToUpper(camelCaseToUnderscores(enumName));
-
-      DWORD envVarLength = GetEnvironmentVariable(candidate.c_str(), &envVarBuffer[0], (DWORD)envVarBuffer.size());
-      if(GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
-        continue;
-      }
-
-      std::string value(&envVarBuffer[0], envVarLength);
-      result[UserSetting::_from_string(enumName)] = value;
-    }
-
-    return result;
-  }
-
   void notifyReady()
   {
     // Not implemented in Windows port.
@@ -243,21 +221,25 @@ namespace Port {
     return result;
   }
 
-  UpperLayer* startTunTap(HusarnetManager* manager)
+  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
+    // TODO: change this to wintun initialization
+    (void)interfaceName;  // ignore Linux-centric hnet0, setup OpenVPN adapter
     auto existingDevices = getExistingDeviceNames();
-    auto deviceName = manager->getInterfaceName();
+    auto deviceName = readStorage(StorageKey::windowsDeviceGuid);
     // this should also work if deviceName is ""
-    LOG_INFO("Windows interface ID is %s", deviceName.c_str());
     if(std::find(existingDevices.begin(), existingDevices.end(), deviceName) == existingDevices.end()) {
+      LOG_INFO("Creating new TAP adapter");
       system("addtap.bat");
-      auto newDeviceName = whatNewDeviceWasCreated(existingDevices);
-      manager->setInterfaceName(newDeviceName);
+      deviceName = whatNewDeviceWasCreated(existingDevices);
+      auto success = writeStorage(StorageKey::windowsDeviceGuid, deviceName);
+      if(!success) {
+        LOG_ERROR("Saving Windows interface ID failed")
+      }
     }
 
-    auto interfaceName = manager->getInterfaceName();
-    auto tunTap = new TunTap(manager, interfaceName);
-
+    LOG_INFO("Windows interface ID is %s", deviceName.c_str());
+    auto tunTap = new TunTap(myAddress, deviceName);
     return tunTap;
   }
 

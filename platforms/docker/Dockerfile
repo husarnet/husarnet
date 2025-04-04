@@ -5,7 +5,7 @@ ARG HUSARNET_ARCH
 RUN apt-get update -y
 
 COPY ./build/release/husarnet-linux-${HUSARNET_ARCH}.deb /tmp/husarnet.deb
-RUN apt install -y --no-install-recommends --no-install-suggests \
+RUN apt-get install -y --no-install-recommends --no-install-suggests \
     /tmp/husarnet.deb && rm -f /tmp/husarnet.deb
 
 COPY ./platforms/docker/husarnet-docker.sh /usr/bin/husarnet-docker

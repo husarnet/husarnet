@@ -7,18 +7,12 @@
 
 TEST_CASE("ipaddress parse/stringify")
 {
-  REQUIRE(IpAddress::parse("127.0.0.1").str() == "127.0.0.1");
-  REQUIRE(
-      IpAddress::parse("::").str() ==
-      "0000:0000:0000:0000:0000:0000:0000:0000");
-  REQUIRE(
-      IpAddress::parse("123:4567::90").str() ==
-      "0123:4567:0000:0000:0000:0000:0000:0090");
-  REQUIRE(
-      IpAddress::parse("1::1").str() ==
-      "0001:0000:0000:0000:0000:0000:0000:0001");
-  REQUIRE(IpAddress::parse("::ffff:5:6").str() == "0.5.0.6");
-  REQUIRE(!IpAddress::parse("xxx"));
+  REQUIRE(IpAddress::parse("127.0.0.1").toString() == "127.0.0.1");
+  REQUIRE(IpAddress::parse("::").toString() == "0000:0000:0000:0000:0000:0000:0000:0000");
+  REQUIRE(IpAddress::parse("123:4567::90").toString() == "0123:4567:0000:0000:0000:0000:0000:0090");
+  REQUIRE(IpAddress::parse("1::1").toString() == "0001:0000:0000:0000:0000:0000:0000:0001");
+  REQUIRE(IpAddress::parse("::ffff:5:6").toString() == "0.5.0.6");
+  REQUIRE(IpAddress::parse("xxx").isInvalid());
 }
 
 TEST_CASE("ipaddress classify")
@@ -37,8 +31,6 @@ TEST_CASE("inetaddress parse/stringify")
 {
   REQUIRE(InetAddress::parse("127.0.0.1:80").str() == "127.0.0.1:80");
   REQUIRE(!InetAddress::parse("127.0.0.1"));
-  REQUIRE(
-      InetAddress::parse("[::1]:80").str() ==
-      "[0000:0000:0000:0000:0000:0000:0000:0001]:80");
+  REQUIRE(InetAddress::parse("[::1]:80").str() == "[0000:0000:0000:0000:0000:0000:0000:0001]:80");
   REQUIRE(InetAddress::parse("[127.0.0.1]:80").str() == "127.0.0.1:80");
 }

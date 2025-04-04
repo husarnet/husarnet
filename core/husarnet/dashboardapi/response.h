@@ -5,6 +5,8 @@
 
 #include <string>
 
+#include <etl/string.h>
+
 #include "husarnet/identity.h"
 #include "husarnet/ipaddress.h"
 

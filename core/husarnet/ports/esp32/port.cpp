@@ -29,7 +29,6 @@
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
-#include "husarnet/config_storage.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/identity.h"

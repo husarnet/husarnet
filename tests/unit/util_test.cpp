@@ -10,9 +10,7 @@ TEST_CASE("split whitespace")
   REQUIRE(splitWhitespace("") == std::vector<std::string>{});
 
   REQUIRE(splitWhitespace("x") == std::vector<std::string>{"x"});
-  REQUIRE(
-      splitWhitespace("a b cc  d ") ==
-      std::vector<std::string>{"a", "b", "cc", "d"});
+  REQUIRE(splitWhitespace("a b cc  d ") == std::vector<std::string>{"a", "b", "cc", "d"});
 }
 
 TEST_CASE("split")
@@ -28,9 +26,7 @@ TEST_CASE("base64")
 {
   REQUIRE(
       base64Decode("/JQAAAAAAAAAAAAAAAAAAA") ==
-      std::string(
-          "\xfc\x94\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-          16));
+      std::string("\xfc\x94\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16));
   REQUIRE(
       base64Decode("s6P0S2M") == ("\xb3\xa3\xf4"
                                   "Kc"));

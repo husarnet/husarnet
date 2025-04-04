@@ -371,6 +371,7 @@ namespace Port {
           FILE* pipe = popen((path + " 2>&1").c_str(), "r");
           if(!pipe) {
             LOG_ERROR(("failed to run " + path).c_str());
+            return;
           }
 
           char buffer[1024];
@@ -401,7 +402,7 @@ namespace Port {
       etl::pair{StorageKey::config, std::string("config.json")},
       etl::pair{StorageKey::daemonApiToken, std::string("daemon_api_token")},
       etl::pair{StorageKey::cache, std::string("cache.json")},
-
+      etl::pair{StorageKey::windowsDeviceGuid, std::string("guid")},
   };
 
   __attribute__((weak)) std::string readStorage(StorageKey key)

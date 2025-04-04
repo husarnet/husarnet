@@ -30,7 +30,7 @@ class TunTap : public UpperLayer {
   void onTunTapData();
 
  public:
-  TunTap(HusarnetManager* manager, std::string name, bool isTap = false);
+  TunTap(const HusarnetAddress& myAddress, const std::string& interfaceName);
 
-  void onLowerLayerData(DeviceId source, string_view data) override;
+  void onLowerLayerData(HusarnetAddress source, string_view data) override;
 };

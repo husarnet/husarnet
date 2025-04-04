@@ -2,9 +2,9 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 
-#include "husarnet/husarnet_config.h"
-
 #include "response.h"
+
+#include "husarnet/husarnet_config.h"
 
 #include "etl/base64_encoder.h"
 #include "etl/string.h"
@@ -54,13 +54,12 @@ namespace dashboardapi {
   Response getConfig(HusarnetAddress apiAddress)
   {
     auto [statusCode, bytes] = Port::httpGet(apiAddress.toString(), "/device/get_config");
-    return { statusCode, bytes };
+    return {statusCode, bytes};
   }
 
   // FIXME:
   //  there _should_ be a compile-time function to calculate those in etl::base64
   //  documentation even mentions such construct, unfortunately I couldn't find it in the lib sources
-
 
   // TODO: generalize it
   Response postHeartbeat(HusarnetAddress apiAddress, Identity* identity)
@@ -81,21 +80,23 @@ namespace dashboardapi {
     path.append(encodedSig.begin(), encodedSig.size());
 
     auto [statusCode, bytes] = Port::httpPost(apiAddress.toString(), path, body);
-    return { statusCode, bytes };
+    return {statusCode, bytes};
   }
 
-  etl::string<base64EncodedPublicKeySize> encodePublicKey(Identity* identity) {
+  etl::string<base64EncodedPublicKeySize> encodePublicKey(Identity* identity)
+  {
     etl::base64_rfc4648_url_padding_encoder<base64EncodedPublicKeySize> pkEncoder;
     auto pk = identity->getPubkey();
     pkEncoder.encode_final(pk.begin(), pk.end());
-    return {pkEncoder.begin(), pkEncoder.size() };
+    return {pkEncoder.begin(), pkEncoder.size()};
   }
 
-  etl::string<base64EncodedSignatureSize> encodeSignature(Identity* identity, const std::string& body) {
+  etl::string<base64EncodedSignatureSize> encodeSignature(Identity* identity, const std::string& body)
+  {
     etl::base64_rfc4648_url_padding_encoder<base64EncodedSignatureSize> sigEncoder;
     auto sig = identity->sign(body);
     sigEncoder.encode_final(sig.begin(), sig.end());
-    return { sigEncoder.begin(), sigEncoder.size() };
+    return {sigEncoder.begin(), sigEncoder.size()};
   }
 
 }  // namespace dashboardapi

@@ -53,6 +53,10 @@ void ConfigManager::updateLicenseData()
   std::lock_guard lgSlow(this->mutexSlow);
   std::lock_guard lgFast(this->mutexFast);
   const auto& licenseJson = this->cacheJson[CACHE_KEY_LICENSE];
+  if(licenseJson.is_discarded() || licenseJson.is_null()) {
+    LOG_ERROR("ConfigManagerDev: no license information available");
+    return;
+  }
 
   const auto& ebServerIps = licenseJson[LICENSE_EB_SERVERS_KEY].get<std::vector<std::string>>();
   this->ebAddresses.clear();
