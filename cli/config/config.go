@@ -10,7 +10,6 @@ import (
 	"runtime"
 )
 
-var defaultDashboard = "prod.husarnet.com"
 var defaultDaemonAPIIp = "127.0.0.1"
 var defaultDaemonAPIPort int64 = 16216
 
@@ -28,10 +27,6 @@ func Init(cmd *cli.Command) {
 	husarnetDaemonAPIIp = cmd.String(DaemonApiAddressFlagName)
 	husarnetDaemonAPIPort = cmd.Int(DaemonApiPortFlagName)
 	daemonApiSecret = cmd.String(DaemonApiSecretFlagName)
-}
-
-func GetDefaultDashboardUrl() string {
-	return defaultDashboard
 }
 
 func GetDaemonApiIp() string {
@@ -55,6 +50,7 @@ func GetDaemonApiSecretPath() string {
 		sep := string(os.PathSeparator)
 		return os.ExpandEnv("${programdata}") + sep + "husarnet" + sep + "daemon_api_token"
 	}
+	// TODO: this path should be configurable
 	return "/var/lib/husarnet/daemon_api_token"
 }
 

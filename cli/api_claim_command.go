@@ -44,7 +44,7 @@ var claimCommand = &cli.Command{
 		token := args[0]
 
 		if strings.HasPrefix(token, "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a/") {
-			die("Provided token is old join code format, which is discontinued. Go to dashboard.husarnet.com to obtain a new one.")
+			printWarning("join codes with ipv6 address prefix are deprecated. You can omit the prefix")
 		}
 
 		params := types.ClaimParams{
