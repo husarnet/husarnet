@@ -31,7 +31,6 @@ class HusarnetManager {
   HusarnetManager();
   HusarnetManager(const HusarnetManager&) = delete;  // TODO add this to most of the singleton-ish classes in the
                                                      // codebase
-
   // Constructor initializes the port (so you won't be able to i.e. override the
   // environment variables)
   // prepareHusarnet - initializes most of the amenities - like the config
@@ -40,4 +39,5 @@ class HusarnetManager {
 
   void prepareHusarnet();
   void runHusarnet();
+  json getDataForStatus() const;
 };

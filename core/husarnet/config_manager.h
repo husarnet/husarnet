@@ -70,6 +70,14 @@ using namespace nlohmann;  // json
 #define GETCONFIG_KEY_FEATUREFLAGS "features"
 #define GETCONFIG_KEY_FEATUREFLAGS_SYNCHOSTNAME "SyncHostname"
 
+#define STATUS_KEY_APICONFIG "api_config"
+#define STATUS_KEY_USERCONFIG "user_config"
+#define STATUS_KEY_LICENSE "license"
+#define STATUS_KEY_BASECONNECTION "base_connection"
+#define STATUS_KEY_BASECONNECTION_TYPE "type"
+#define STATUS_KEY_BASECONNECTION_ADDRESS "address"
+#define STATUS_KEY_BASECONNECTION_PORT "port"
+
 constexpr int configManagerPeriodInSeconds = 60 * 10;  // fresh get_config every 10 min
 constexpr int refreshLicenseAfterNumPeriods = 5;       // every N get_config refreshes, refresh license too
 
@@ -80,8 +88,8 @@ class ConfigManager {
 
   // TODO: these might be taking up too much space for esp32 to handle
   //   we might consider moving logic for storing them to port
-  json configJson;
-  json cacheJson;
+  json configJson = json({});
+  json cacheJson = json({});
 
   bool allowEveryone = false;  // flipped to true if control plane is disabled
 

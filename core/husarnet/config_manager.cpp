@@ -274,9 +274,20 @@ json ConfigManager::getDataForStatus() const
   std::lock_guard lgSlow(this->mutexSlow);
   json combined;
 
-  combined["user_config"] = this->configJson;
-  combined["api_config"] = this->cacheJson[CACHE_KEY_GETCONFIG];
-  combined["license"] = this->cacheJson[CACHE_KEY_LICENSE];
+  combined[STATUS_KEY_USERCONFIG] = this->configJson;
+
+  if(this->cacheJson.contains(CACHE_KEY_GETCONFIG)) {
+    combined[STATUS_KEY_APICONFIG] = this->cacheJson[CACHE_KEY_GETCONFIG];
+  } else {
+    combined[STATUS_KEY_APICONFIG] = json({});
+  }
+
+  if(this->cacheJson.contains(CACHE_KEY_LICENSE)) {
+    combined[STATUS_KEY_LICENSE] = this->cacheJson[CACHE_KEY_LICENSE];
+  } else {
+    combined[STATUS_KEY_LICENSE] = json({});
+  }
+
   return combined;
 }
 

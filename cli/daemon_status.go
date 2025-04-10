@@ -161,7 +161,7 @@ func printWhitelist(status DaemonStatus, verbose bool) {
 				pterm.Printfln("Addresses from Base Server: %s", strings.Join(targetAddresses, " "))
 			}
 
-			if !peerData.UsedTargetAddress.Addr().IsUnspecified() && peerData.UsedTargetAddress.Addr() != status.BaseConnection.Address {
+			if !peerData.UsedTargetAddress.Addr().IsUnspecified() && peerData.UsedTargetAddress.Addr() != status.LiveData.BaseConnection.Address {
 				pterm.Printfln("Used destination address:   %v", peerData.UsedTargetAddress)
 			}
 		}
@@ -197,15 +197,13 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 
 	printStatusHeader("Feature flags")
 	printHooksStatus(status)
-
-	handleStandardResult(status.StdResult)
 	pterm.Println()
 
 	var baseServerDot, baseServerHelp, baseServerStatusReminder string
 
-	if status.BaseConnection.Type == "UDP" {
+	if status.LiveData.BaseConnection.Type == "UDP" {
 		baseServerDot = greenDot
-	} else if status.BaseConnection.Type == "TCP" {
+	} else if status.LiveData.BaseConnection.Type == "TCP" {
 		baseServerDot = yellowDot
 		baseServerHelp = "TCP is a fallback connection method. You'll get better results on UDP"
 		baseServerStatusReminder = "You can check on https://status.husarnet.com if there are any issues with our infrastructure"
@@ -216,7 +214,7 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 	}
 
 	printStatusHeader("Connection status")
-	printStatusLine(baseServerDot, "Base Server", pterm.Sprintf("%s:%v (%s)", status.BaseConnection.Address, status.BaseConnection.Port, status.BaseConnection.Type))
+	printStatusLine(baseServerDot, "Base Server", pterm.Sprintf("%s:%v (%s)", status.LiveData.BaseConnection.Address, status.LiveData.BaseConnection.Port, status.LiveData.BaseConnection.Type))
 	if baseServerHelp != "" {
 		printStatusHelp(baseServerDot, baseServerHelp)
 	}
@@ -238,7 +236,7 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 	printStatusHeader("Readiness")
 	printReadinessStatus(status.IsReady, "Is ready to handle data?")
 	printReadinessStatus(status.IsReadyToJoin, "Is ready to join?")
-	printReadinessStatus(status.IsJoined, "Is joined?")
+	printReadinessStatus(status.Config.Api.IsClaimed, "Is joined?")
 	pterm.Println()
 
 	if verbose {
@@ -297,13 +295,13 @@ func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 	if prevStatus.WebsetupAddress.Compare(currStatus.WebsetupAddress) != 0 {
 		return false
 	}
-	if prevStatus.BaseConnection.Address.Compare(currStatus.BaseConnection.Address) != 0 {
+	if prevStatus.LiveData.BaseConnection.Address.Compare(currStatus.LiveData.BaseConnection.Address) != 0 {
 		return false
 	}
-	if prevStatus.BaseConnection.Port != currStatus.BaseConnection.Port {
+	if prevStatus.LiveData.BaseConnection.Port != currStatus.LiveData.BaseConnection.Port {
 		return false
 	}
-	if prevStatus.BaseConnection.Type != currStatus.BaseConnection.Type {
+	if prevStatus.LiveData.BaseConnection.Type != currStatus.LiveData.BaseConnection.Type {
 		return false
 	}
 	if prevStatus.LocalIP.Compare(currStatus.LocalIP) != 0 {
@@ -319,9 +317,6 @@ func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 		return false
 	}
 	if prevStatus.IsReadyToJoin != currStatus.IsReadyToJoin {
-		return false
-	}
-	if !areStandardResultsEqual(prevStatus.StdResult, currStatus.StdResult) {
 		return false
 	}
 	if !areConnectionStatusesEqual(prevStatus.ConnectionStatus, currStatus.ConnectionStatus) {
@@ -341,13 +336,6 @@ func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 	}
 	return true
 
-}
-
-func areStandardResultsEqual(a, b StandardResult) bool {
-	if a.IsDirty != b.IsDirty {
-		return false
-	}
-	return true
 }
 
 func areConnectionStatusesEqual(a, b map[string]bool) bool {

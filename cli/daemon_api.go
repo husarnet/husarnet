@@ -29,11 +29,6 @@ func (response *DaemonResponse[ResultType]) IsOk() bool {
 
 type EmptyResult interface{}
 
-// This can be easily expanded upon to include aditinal data we may want to possibly return
-type StandardResult struct {
-	IsDirty bool `json:"is_dirty"`
-}
-
 type BaseConnectionStatus struct {
 	Address netip.Addr
 	Port    int
@@ -57,18 +52,29 @@ type PeerStatus struct {
 	UsedTargetAddress netip.AddrPort   `json:"used_target_address"`
 }
 
-type DaemonStatus struct {
-	StdResult StandardResult `json:"standard_result"`
+type DaemonLiveData struct {
+	BaseConnection BaseConnectionStatus `json:"base_connection"`
+}
 
-	Version       string
+type ApiConfig struct {
+	IsClaimed bool `json:"is_claimed"`
+}
+
+type DaemonConfig struct {
+	Api ApiConfig `json:"api_config"`
+}
+
+type DaemonStatus struct {
+	Version       string `json:"version"`
+	UserAgent     string `json:"user_agent"`
 	DashboardFQDN string `json:"dashboard_fqdn"`
 	HooksEnabled  bool   `json:"hooks_enabled"`
 
-	WebsetupAddress netip.Addr           `json:"websetup_address"`
-	BaseConnection  BaseConnectionStatus `json:"base_connection"`
-
-	LocalIP       netip.Addr `json:"local_ip"`
-	LocalHostname string     `json:"local_hostname"`
+	WebsetupAddress netip.Addr     `json:"websetup_address"`
+	LiveData        DaemonLiveData `json:"live"`
+	Config          DaemonConfig   `json:"config"`
+	LocalIP         netip.Addr     `json:"local_ip"`
+	LocalHostname   string         `json:"local_hostname"`
 
 	IsJoined         bool            `json:"is_joined"`
 	IsReady          bool            `json:"is_ready"`
@@ -226,12 +232,4 @@ func getDaemonRunningVersion() string {
 	}
 
 	return response.Result.Version
-}
-
-func handleStandardResult(res StandardResult) {
-	if res.IsDirty {
-		formatter := extractFormatter(redDot)
-		help := "Daemon's dirty flag is set. You need to restart husarnet-daemon in order to reflect the current settings (like the Dashboard URL)"
-		pterm.Printfln("%s %s", redDot, formatter(help))
-	}
 }

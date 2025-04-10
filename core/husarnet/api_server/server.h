@@ -20,10 +20,13 @@ namespace httplib {
   struct Response;
 }  // namespace httplib
 
+class HusarnetManager;
+
 class ApiServer {
  private:
   ConfigEnv* configEnv;
   ConfigManager* configManager;
+  HusarnetManager* husarnetManager;
   Identity* identity;
 
   std::mutex mutex;
@@ -42,7 +45,7 @@ class ApiServer {
   bool requireParams(const httplib::Request& req, httplib::Response& res, std::list<std::string> paramNames);
 
  public:
-  ApiServer(ConfigEnv* configEnv, ConfigManager* configManager, Identity* identity);
+  ApiServer(ConfigEnv* configEnv, ConfigManager* configManager, HusarnetManager* husarnetManager, Identity* identity);
 
   void runThread();
   void waitStarted();

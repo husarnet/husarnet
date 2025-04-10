@@ -24,6 +24,8 @@
 #include "husarnet/util.h"
 
 #ifdef HTTP_CONTROL_API
+#include <magic_enum/magic_enum.hpp>
+
 #include "husarnet/api_server/server.h"
 #endif
 
@@ -112,7 +114,7 @@ void HusarnetManager::runHusarnet()
 
 // In case of a "fat" platform - start the API server
 #ifdef HTTP_CONTROL_API
-  auto server = new ApiServer(this->configEnv, this->configManager, this->myIdentity);
+  auto server = new ApiServer(this->configEnv, this->configManager, this, this->myIdentity);
 
   Port::threadStart([server]() { server->runThread(); }, "daemon_api");
 
@@ -128,4 +130,21 @@ void HusarnetManager::runHusarnet()
 
     Port::processSocketEvents(this->tunTap);
   }
+}
+
+json HusarnetManager::getDataForStatus() const
+{
+  LOG_INFO("HusarnetManager: getDataForStatus");
+  json result;
+
+  auto baseConnectionType = this->ngsocket->getCurrentBaseConnectionType();
+  auto currentBaseAddress = this->ngsocket->getCurrentBaseAddress();
+
+  result[STATUS_KEY_BASECONNECTION] = json::object({
+      {STATUS_KEY_BASECONNECTION_TYPE, magic_enum::enum_name(baseConnectionType)},
+      {STATUS_KEY_BASECONNECTION_ADDRESS, currentBaseAddress.ip.toString()},
+      {STATUS_KEY_BASECONNECTION_PORT, currentBaseAddress.port},
+  });
+
+  return result;
 }

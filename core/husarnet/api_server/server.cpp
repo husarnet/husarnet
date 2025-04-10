@@ -23,8 +23,12 @@
 
 using namespace nlohmann;  // json
 
-ApiServer::ApiServer(ConfigEnv* configEnv, ConfigManager* configManager, Identity* identity)
-    : configEnv(configEnv), configManager(configManager), identity(identity)
+ApiServer::ApiServer(
+    ConfigEnv* configEnv,
+    ConfigManager* configManager,
+    HusarnetManager* husarnetManager,
+    Identity* identity)
+    : configEnv(configEnv), configManager(configManager), husarnetManager(husarnetManager), identity(identity)
 {
 }
 
@@ -201,6 +205,7 @@ void ApiServer::runThread()
         req, res,
         json::object({
             {"config", this->configManager->getDataForStatus()},
+            {"live", this->husarnetManager->getDataForStatus()},
             {"version", HUSARNET_VERSION},
             {"user_agent", HUSARNET_USER_AGENT},
         }));

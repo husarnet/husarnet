@@ -51,20 +51,16 @@ func waitDaemon() error {
 
 func waitBaseANY() error {
 	return waitAction("Waiting for Base server connection (any protocol)…", func(status *DaemonStatus) (bool, string) {
-		return status.BaseConnection.Type == "TCP" || status.BaseConnection.Type == "UDP", ""
+		return status.LiveData.BaseConnection.Type == "TCP" || status.LiveData.BaseConnection.Type == "UDP", ""
 	})
 }
 
 func waitBaseUDP() error {
-	return waitAction("Waiting for Base server connection (UDP)…", func(status *DaemonStatus) (bool, string) { return status.BaseConnection.Type == "UDP", "" })
-}
-
-func waitWebsetup() error {
-	return waitAction("Waiting for websetup connection…", func(status *DaemonStatus) (bool, string) { return status.ConnectionStatus["websetup"], "" })
+	return waitAction("Waiting for Base server connection (UDP)…", func(status *DaemonStatus) (bool, string) { return status.LiveData.BaseConnection.Type == "UDP", "" })
 }
 
 func waitJoined() error {
-	return waitAction("Waiting until the device is joined…", func(status *DaemonStatus) (bool, string) { return status.IsJoined, "" })
+	return waitAction("Waiting until the device is joined…", func(status *DaemonStatus) (bool, string) { return status.Config.Api.IsClaimed, "" })
 }
 
 func waitHost(hostnameOrIp string) error {

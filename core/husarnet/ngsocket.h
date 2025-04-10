@@ -36,8 +36,12 @@ const int MAX_ADDRESSES = 10;
 const int MAX_SOURCE_ADDRESSES = 5;
 const int DEVICEID_LENGTH = 16;
 
-BETTER_ENUM(BaseConnectionType, int, NONE = 0, TCP = 1,
-            UDP = 2)  // TODO switch to magic_enum
+enum class BaseConnectionType
+{
+  None,
+  TCP,
+  UDP
+};
 
 class NgSocket : public LowerLayer {
  private:

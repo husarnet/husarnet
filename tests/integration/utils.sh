@@ -21,7 +21,7 @@ function cleanup {
 }
 
 function start_daemon {
-    gdb -batch -ex "set env HUSARNET_DASHBOARD_FQDN = staging.husarnet.com" -ex "catch throw" -ex "run" -ex "bt full" -ex "quit" --args husarnet-daemon 2>&1 | tee /tmp/husarnet-daemon.log &
+    gdb -batch -ex "set env HUSARNET_TLD_FQDN = staging.husarnet.com" -ex "catch throw" -ex "run" -ex "bt full" -ex "quit" --args husarnet-daemon 2>&1 | tee /tmp/husarnet-daemon.log &
 
     # Those are redundant but we want to test as many items as possible
     echo "INFO: Waiting for deamon connectivity"

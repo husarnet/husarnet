@@ -81,7 +81,7 @@ BaseConnectionType NgSocket::getCurrentBaseConnectionType()
     return BaseConnectionType::TCP;
   }
 
-  return BaseConnectionType::NONE;
+  return BaseConnectionType::None;
 };
 
 InetAddress NgSocket::getCurrentBaseAddress()
