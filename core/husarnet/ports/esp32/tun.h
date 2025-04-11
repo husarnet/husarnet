@@ -4,6 +4,7 @@
 #pragma once
 #include <string>
 
+#include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
 #include "husarnet/ngsocket.h"
 #include "husarnet/string_view.h"
@@ -24,6 +25,6 @@ class TunTap : public UpperLayer {
 
   TunTap(ip6_addr_t ip, size_t queueSize);
   void processQueuedPackets();
-  void onLowerLayerData(DeviceId source, string_view data) override;
+  void onLowerLayerData(HusarnetAddress source, string_view data) override;
   ip6_addr_t getIp6Addr();
 };

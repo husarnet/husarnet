@@ -7,7 +7,6 @@
 #include "husarnet/config_manager.h"
 #include "husarnet/identity.h"
 
-#include "httplib.h"
 #include "nlohmann/json.hpp"
 
 namespace dashboardapi {
@@ -21,8 +20,6 @@ namespace dashboardapi {
     Proxy(Identity* myIdentity) : myIdentity(myIdentity)
     {
     }
-
-    void signAndForward(const httplib::Request& req, httplib::Response& res, const std::string& path);
   };
 
 }  // namespace dashboardapi

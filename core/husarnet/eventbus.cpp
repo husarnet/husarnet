@@ -27,6 +27,7 @@ void EventBus::periodic()
 {
   // (Re)connect to the EventBus server
   if(ws.getState() == WebSocket::State::SOCK_CLOSED) {
+    this->connected = false;
     LOG_INFO("websocket is closed, attempt reconnectinon");
     // Throttle connection attempts
     Time currentTime = Port::getCurrentTime();
@@ -49,6 +50,8 @@ void EventBus::periodic()
     std::string endpoint = "/device/" + this->myAddress.toString();
 
     this->ws.connect(ebAddress, endpoint.data());
+  } else if (ws.getState() == WebSocket::State::WS_OPEN) {
+    this->connected = true;
   }
 }
 
@@ -68,4 +71,9 @@ void EventBus::_handleMessage(WebSocket::Message& message)
   } else {
     LOG_WARNING("Unknown EB message: %s", data.data());
   }
+}
+
+bool EventBus::isConnected()
+{
+  return this->connected;
 }

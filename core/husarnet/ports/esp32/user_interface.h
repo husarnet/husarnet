@@ -3,6 +3,8 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 
+#include "husarnet/husarnet_manager.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 

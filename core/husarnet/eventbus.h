@@ -12,6 +12,7 @@ class EventBus {
   HusarnetAddress myAddress;
   ConfigManager* configManager;
   WebSocket ws;
+  bool connected = false;
 
   // Connection attempts throttling
   const Time CONNECTION_ATTEMPT_INTERVAL = 1000;
@@ -22,6 +23,7 @@ class EventBus {
 
   void init();
   void periodic();
+  bool isConnected();
 
   void _handleMessage(WebSocket::Message& message);
 };
