@@ -6,9 +6,9 @@
 
 #include "husarnet/husarnet_config.h"
 
-#include "etl/base64_encoder.h"
 #include "etl/string.h"
 #include "port_interface.h"
+#include "proxy.h"
 
 namespace dashboardapi {
   Response::Response(int code, const std::string& bytes) : statusCode(code)
@@ -70,8 +70,8 @@ namespace dashboardapi {
     body.append(HUSARNET_USER_AGENT);
     body.append("\"}");
 
-    auto encodedPK = encodePublicKey(identity);
-    auto encodedSig = encodeSignature(identity, body);
+    auto encodedPK = Proxy::encodePublicKey(identity);
+    auto encodedSig = Proxy::encodeSignature(identity, body);
 
     // build query string
     path.append("?pk=");
@@ -82,21 +82,4 @@ namespace dashboardapi {
     auto [statusCode, bytes] = Port::httpPost(apiAddress.toString(), path, body);
     return {statusCode, bytes};
   }
-
-  etl::string<base64EncodedPublicKeySize> encodePublicKey(Identity* identity)
-  {
-    etl::base64_rfc4648_url_padding_encoder<base64EncodedPublicKeySize> pkEncoder;
-    auto pk = identity->getPubkey();
-    pkEncoder.encode_final(pk.begin(), pk.end());
-    return {pkEncoder.begin(), pkEncoder.size()};
-  }
-
-  etl::string<base64EncodedSignatureSize> encodeSignature(Identity* identity, const std::string& body)
-  {
-    etl::base64_rfc4648_url_padding_encoder<base64EncodedSignatureSize> sigEncoder;
-    auto sig = identity->sign(body);
-    sigEncoder.encode_final(sig.begin(), sig.end());
-    return {sigEncoder.begin(), sigEncoder.size()};
-  }
-
 }  // namespace dashboardapi

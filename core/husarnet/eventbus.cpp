@@ -50,7 +50,7 @@ void EventBus::periodic()
     std::string endpoint = "/device/" + this->myAddress.toString();
 
     this->ws.connect(ebAddress, endpoint.data());
-  } else if (ws.getState() == WebSocket::State::WS_OPEN) {
+  } else if(ws.getState() == WebSocket::State::WS_OPEN) {
     this->connected = true;
   }
 }

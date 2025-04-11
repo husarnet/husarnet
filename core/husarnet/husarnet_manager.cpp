@@ -137,6 +137,8 @@ json HusarnetManager::getDataForStatus() const
   LOG_INFO("HusarnetManager: getDataForStatus");
   json result;
 
+  result[STATUS_KEY_LOCALIP] = this->myIdentity->getIpAddress().toString();
+
   auto baseConnectionType = this->ngsocket->getCurrentBaseConnectionType();
   auto currentBaseAddress = this->ngsocket->getCurrentBaseAddress();
 

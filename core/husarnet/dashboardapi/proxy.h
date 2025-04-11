@@ -10,16 +10,12 @@
 #include "nlohmann/json.hpp"
 
 namespace dashboardapi {
+  constexpr int base64EncodedPublicKeySize = 44;
+  constexpr int base64EncodedSignatureSize = 88;
 
   class Proxy {
-   private:
-    Identity* myIdentity;
-    ConfigManager* configManager;
-
    public:
-    Proxy(Identity* myIdentity) : myIdentity(myIdentity)
-    {
-    }
+    static etl::string<base64EncodedPublicKeySize> encodePublicKey(Identity* identity);
+    static etl::string<base64EncodedSignatureSize> encodeSignature(Identity* identity, const std::string& body);
   };
-
 }  // namespace dashboardapi

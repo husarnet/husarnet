@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 #include "husarnet/config_manager.h"
+#include "husarnet/dashboardapi/proxy.h"
 #include "husarnet/husarnet_config.h"
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/ipaddress.h"
@@ -140,8 +141,11 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
   }
 
   httplib::Params params;
-  params.emplace("pk", httplib::detail::base64_encode(identity->getPubkey()));
-  params.emplace("sig", httplib::detail::base64_encode(identity->sign(req.body)));
+  auto encodedPK = dashboardapi::Proxy::encodePublicKey(identity);
+  auto encodedSig = dashboardapi::Proxy::encodeSignature(identity, req.body);
+
+  params.emplace("pk", encodedPK.c_str());
+  params.emplace("sig", encodedSig.c_str());
 
   std::string query = httplib::detail::params_to_query_str(params);
   std::string pathWithQuery(path + "?" + query);

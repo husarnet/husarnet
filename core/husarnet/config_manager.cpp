@@ -22,7 +22,7 @@ ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* config
   }
 }
 
-void ConfigManager::getLicenseJson()
+void ConfigManager::getLicense()
 {
   auto tldAddress = this->configEnv->getTldFqdn();
   auto [statusCode, bytes] = Port::httpGet(tldAddress, "/license.json");
@@ -39,6 +39,7 @@ void ConfigManager::getLicenseJson()
   }
 
   this->storeLicense(licenseJson);
+  this->updateLicenseData();
 }
 
 void ConfigManager::storeLicense(const nlohmann::json& jsonDoc)
@@ -178,7 +179,7 @@ void ConfigManager::storeGetConfig(const json& jsonDoc)
   this->cacheJson[CACHE_KEY_GETCONFIG] = jsonDoc;
 }
 
-bool ConfigManager::readConfig()
+bool ConfigManager::readUserConfig()
 {
   auto contents = Port::readStorage(StorageKey::config);
   if(contents.empty()) {
@@ -190,15 +191,34 @@ bool ConfigManager::readConfig()
     LOG_INFO("ConfigManagerDev: saved config.json is not a valid JSON, not reading");
     return false;
   }
-  this->storeConfig(parsedContents);
+  this->storeUserConfig(parsedContents);
   return true;
 }
 
-void ConfigManager::storeConfig(const nlohmann::json& jsonDoc)
+void ConfigManager::storeUserConfig(const json& jsonDoc)
 {
   std::lock_guard lgSlow(this->mutexSlow);
   if(jsonDoc.contains(USERCONFIG_KEY_WHITELIST) && jsonDoc[USERCONFIG_KEY_WHITELIST].is_array()) {
-    this->configJson[USERCONFIG_KEY_WHITELIST] = jsonDoc[USERCONFIG_KEY_WHITELIST];
+    this->userConfigJson[USERCONFIG_KEY_WHITELIST] = jsonDoc[USERCONFIG_KEY_WHITELIST];
+  }
+}
+
+void ConfigManager::updateUserConfigData()
+{
+  std::lock_guard lgSlow(this->mutexSlow);
+  std::lock_guard lgFast(this->mutexFast);
+  if(this->userConfigJson.contains(USERCONFIG_KEY_WHITELIST) &&
+     this->userConfigJson[USERCONFIG_KEY_WHITELIST].is_array()) {
+    this->userWhitelist.clear();
+    auto entries = this->userConfigJson[USERCONFIG_KEY_WHITELIST].get<std::vector<std::string>>();
+    for(auto& entry : entries) {
+      auto addr = HusarnetAddress::parse(entry);
+      if(addr.isFC94()) {
+        this->userWhitelist.insert(addr);
+      } else {
+        LOG_WARNING("user whitelist contains invalid Husarnet address %s", entry.c_str());
+      }
+    }
   }
 }
 
@@ -246,6 +266,9 @@ bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
       return true;
     }
   }
+  if(this->userWhitelist.contains(address)) {
+    return true;
+  }
   return this->allowedPeers.contains(address);
 }
 
@@ -273,8 +296,7 @@ json ConfigManager::getDataForStatus() const
 {
   std::lock_guard lgSlow(this->mutexSlow);
   json combined;
-
-  combined[STATUS_KEY_USERCONFIG] = this->configJson;
+  combined[STATUS_KEY_USERCONFIG] = this->userConfigJson;
 
   if(this->cacheJson.contains(CACHE_KEY_GETCONFIG)) {
     combined[STATUS_KEY_APICONFIG] = this->cacheJson[CACHE_KEY_GETCONFIG];
@@ -287,14 +309,13 @@ json ConfigManager::getDataForStatus() const
   } else {
     combined[STATUS_KEY_LICENSE] = json({});
   }
-
   return combined;
 }
 
 bool ConfigManager::writeConfig()
 {
   std::lock_guard lgSlow(this->mutexSlow);
-  return Port::writeStorage(StorageKey::config, this->configJson.dump(JSON_INDENT_SPACES));
+  return Port::writeStorage(StorageKey::config, this->userConfigJson.dump(JSON_INDENT_SPACES));
 }
 
 bool ConfigManager::writeCache()
@@ -309,12 +330,12 @@ void ConfigManager::periodicThread()
   if(this->readCache()) {
     LOG_INFO("ConfigManagerDev: cache read from disk successful")
   }
-  if(this->readConfig()) {
-    LOG_INFO("ConfigManagerDev: config read from disk successful")
+  if(this->readUserConfig()) {
+    LOG_INFO("ConfigManagerDev: user config read from disk successful")
+    updateUserConfigData();
   }
 
-  this->getLicenseJson();
-  this->updateLicenseData();
+  this->getLicense();
 
   int periodsCompleted = 0;
   while(true) {
@@ -323,8 +344,7 @@ void ConfigManager::periodicThread()
 
     if(periodsCompleted % refreshLicenseAfterNumPeriods == 0) {
       LOG_INFO("ConfigManagerDev: refreshing the license")
-      this->getLicenseJson();
-      this->updateLicenseData();
+      this->getLicense();
     }
 
     if(this->configEnv->getEnableControlplane()) {
@@ -351,8 +371,6 @@ void ConfigManager::waitInit() const
   // we need to at least have license information, like for example base server to connect to.
   while(this->baseAddresses.empty()) {
     // busy waiting on purpose
-    // TODO: prbably needs a mutex unlock/lock too
-    // maybe also reconsider changing it to condition variable wait
   }
   LOG_INFO("ConfigManagerDev: wait init finished")
 }
@@ -361,7 +379,8 @@ bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 {
   std::lock_guard lock(this->mutexFast);
   if(this->userWhitelist.contains(address)) {
-    return true;
+    LOG_ERROR("ConfigManagerDev: IP is already whitelisted")
+    return false;
   }
   if(this->userWhitelist.full()) {
     LOG_ERROR("ConfigManagerDev: userWhitelist is full")
@@ -369,7 +388,6 @@ bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
   }
 
   this->userWhitelist.insert(address);
-  this->allowedPeers.insert(address);
   return true;
 }
 
@@ -378,9 +396,9 @@ bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
   std::lock_guard lock(this->mutexFast);
   if(this->userWhitelist.contains(address)) {
     this->userWhitelist.erase(address);
-    this->allowedPeers.erase(address);
     return true;
   }
+  LOG_ERROR("ConfigManagerDev: IP is not on the whitelist")
   return false;
 }
 
