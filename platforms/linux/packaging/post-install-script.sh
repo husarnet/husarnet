@@ -25,14 +25,6 @@ if [ ! -d ${husarnet_dir} ]; then
   mkdir -p ${husarnet_dir}
 fi
 
-if [ ! -f ${husarnet_dir}/id ]; then
-  husarnet-daemon --genid > ${husarnet_dir}/id # Identity has to exist
-fi
-
-if [ ! -f ${husarnet_dir}/daemon_api_token ]; then
-  head /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32 > ${husarnet_dir}/daemon_api_token
-fi
-
 # Daemon will refuse any config changes unless it's able to write to this file
 if [ ! -f ${husarnet_dir}/config.json ]; then
   echo "{}" > ${husarnet_dir}/config.json # Empty dictionary is a valid config
