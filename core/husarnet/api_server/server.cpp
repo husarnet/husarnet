@@ -70,7 +70,7 @@ void ApiServer::returnError(const httplib::Request& req, httplib::Response& res,
   res.set_content(doc.dump(4), "text/json");
 }
 
-static const std::string getDaemonApiToken()
+static const std::string getOrCreateDaemonApiToken()
 {
   auto token = Port::readStorage(StorageKey::daemonApiToken);
   if(token.empty()) {
@@ -88,7 +88,7 @@ static const std::string getDaemonApiToken()
 
 bool ApiServer::validateSecret(const httplib::Request& req, httplib::Response& res)
 {
-  if(!req.has_param("secret") || req.get_param_value("secret") != getDaemonApiToken()) {
+  if(!req.has_param("secret") || req.get_param_value("secret") != this->daemonApiToken) {
     returnInvalidQuery(req, res, "invalid control secret");
     return false;
   }
@@ -151,6 +151,11 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
   std::string pathWithQuery(path + "?" + query);
 
   httplib::Client httpClient(apiAddress.toString());
+  httpClient.set_connection_timeout(0, 5 * 1000000); // 5 sec
+  httpClient.set_read_timeout(5, 0); // 5 seconds
+  httpClient.set_write_timeout(5, 0); // 5 seconds
+  // TODO: add retries and figure out if timeout values are sane/useful
+
   httplib::Result result;
 
   if(method == "GET") {
@@ -172,6 +177,7 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
   } else {
     auto err = result.error();
     LOG_ERROR("Can't contact Dashboard API: %s", httplib::to_string(err).c_str());
+    res.status = 502;
   }
 }
 
@@ -199,6 +205,11 @@ void ApiServer::runThread()
 {
   std::unique_lock<std::mutex> lk(mutex);
   httplib::Server svr;
+
+  this->daemonApiToken = getOrCreateDaemonApiToken();
+  if(this->daemonApiToken.empty()) {
+    LOG_ERROR("was unable to generate daemon api token");
+  }
 
   // Test endpoint
   svr.Get(

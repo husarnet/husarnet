@@ -32,6 +32,7 @@ class ApiServer {
   std::mutex mutex;
   std::condition_variable cv;
   bool isReady = false;
+  std::string daemonApiToken;
 
   void returnSuccess(const httplib::Request& req, httplib::Response& res, nlohmann::json result);
   void returnSuccess(const httplib::Request& req, httplib::Response& res);
