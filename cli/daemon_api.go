@@ -27,8 +27,6 @@ func (response *DaemonResponse[ResultType]) IsOk() bool {
 	return response.Status == "success" || response.Status == "ok"
 }
 
-type EmptyResult interface{}
-
 type BaseConnectionStatus struct {
 	Address netip.Addr
 	Port    int
@@ -54,14 +52,34 @@ type PeerStatus struct {
 
 type DaemonLiveData struct {
 	BaseConnection BaseConnectionStatus `json:"base_connection"`
+	LocalIP        netip.Addr           `json:"local_ip"`
+}
+
+type ClaimInfo struct {
+	Owner    string `json:"owner"`
+	Hostname string `json:"hostname"`
 }
 
 type ApiConfig struct {
-	IsClaimed bool `json:"is_claimed"`
+	IsClaimed bool      `json:"is_claimed"`
+	ClaimInfo ClaimInfo `json:"claim_info"`
+	Peers     []string  `json:"peers"`
+}
+
+type LicenseData struct {
+	BaseServers []netip.Addr `json:"base_server_addresses"`
+	ApiServers  []netip.Addr `json:"api_servers"`
+	EbServers   []netip.Addr `json:"eb_servers"`
+}
+
+type UserConfig struct {
+	Whitelist []netip.Addr `json:"whitelist"`
 }
 
 type DaemonConfig struct {
-	Api ApiConfig `json:"api_config"`
+	Api     ApiConfig   `json:"api_config"`
+	License LicenseData `json:"license"`
+	User    UserConfig  `json:"user_config"`
 }
 
 type DaemonStatus struct {
@@ -73,7 +91,6 @@ type DaemonStatus struct {
 	WebsetupAddress netip.Addr     `json:"websetup_address"`
 	LiveData        DaemonLiveData `json:"live"`
 	Config          DaemonConfig   `json:"config"`
-	LocalIP         netip.Addr     `json:"local_ip"`
 	LocalHostname   string         `json:"local_hostname"`
 
 	IsJoined         bool            `json:"is_joined"`

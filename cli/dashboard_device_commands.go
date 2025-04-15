@@ -99,7 +99,7 @@ var dashboardDeviceUpdateCommand = &cli.Command{
 			// updating self. we can use our own IP as a parameter
 			status := getDaemonStatus()
 			// TODO: error here if we can't contact daemon
-			arg = status.LocalIP.StringExpanded()
+			arg = status.LiveData.LocalIP.StringExpanded()
 		}
 
 		uuid, err := determineDeviceUuid(arg)
@@ -234,7 +234,7 @@ func handleDeviceGroupOperation(cmd *cli.Command, op constants.DeviceOp) error {
 	} else {
 		status := getDaemonStatus()
 		// TODO: error here if we can't contact daemon
-		paramDevice = status.LocalIP.StringExpanded()
+		paramDevice = status.LiveData.LocalIP.StringExpanded()
 		paramGroup = cmd.Args().First()
 	}
 

@@ -122,7 +122,7 @@ func printWhitelist(status DaemonStatus, verbose bool) {
 			peerHostnames = append([]string{"(websetup)"}, peerHostnames...)
 		}
 
-		if peerAddress == status.LocalIP {
+		if peerAddress == status.LiveData.LocalIP {
 			peerHostnames = append([]string{"(localhost)"}, peerHostnames...)
 		}
 
@@ -195,10 +195,6 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 	printVersion(status.Version)
 	pterm.Println()
 
-	printStatusHeader("Feature flags")
-	printHooksStatus(status)
-	pterm.Println()
-
 	var baseServerDot, baseServerHelp, baseServerStatusReminder string
 
 	if status.LiveData.BaseConnection.Type == "UDP" {
@@ -233,6 +229,18 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 	}
 	pterm.Println()
 
+	printStatusHeader("Dashboard")
+	dashboardDot := redDot
+	dashboardHelp := "device not claimed by any Husarnet account (go to dashboard.husarnet.com to set up)"
+	if status.Config.Api.IsClaimed {
+		dashboardDot = greenDot
+		dashboardHelp = "The device is manageable in the Dashboard"
+		printStatusLine(dashboardDot, "Owner", status.Config.Api.ClaimInfo.Owner)
+	}
+	printStatusHelp(dashboardDot, dashboardHelp)
+
+	pterm.Println()
+
 	printStatusHeader("Readiness")
 	printReadinessStatus(status.IsReady, "Is ready to handle data?")
 	printReadinessStatus(status.IsReadyToJoin, "Is ready to join?")
@@ -262,7 +270,11 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 	// TODO long term - those two will need to query dashboard, but you still need a status to be near instant so set the timeouts to something line 200ms max
 	// printStatusLine(neutralDot, "Hostname", status.LocalHostname, "") TODO long term - get the hostname we're using on the Husarnet network
 	// printStatusLine(neutralDot, "Groups", status.LocalHostname, "") TODO long term - query dashboard (thus move this command to the compound one) for the grups current host is in
-	pterm.Printfln("%s Husarnet IP:\n%s", neutralDot, pterm.Bold.Sprint(status.LocalIP.StringExpanded()))
+	pterm.Printfln("%s Husarnet IP:\n%s", neutralDot, pterm.Bold.Sprint(status.LiveData.LocalIP.StringExpanded()))
+	pterm.Println()
+
+	printStatusHeader("Feature flags")
+	printHooksStatus(status)
 	pterm.Println()
 
 	printStatusHeader("Whitelist")
@@ -304,7 +316,7 @@ func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 	if prevStatus.LiveData.BaseConnection.Type != currStatus.LiveData.BaseConnection.Type {
 		return false
 	}
-	if prevStatus.LocalIP.Compare(currStatus.LocalIP) != 0 {
+	if prevStatus.LiveData.LocalIP.Compare(currStatus.LiveData.LocalIP) != 0 {
 		return false
 	}
 	if prevStatus.LocalHostname != currStatus.LocalHostname {

@@ -48,7 +48,7 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 				Sources: cli.EnvVars(utils.EnvVarName(config.DaemonApiPortFlagName)),
 				Action: func(ctx context.Context, cmd *cli.Command, v int64) error {
 					if v < 0 || v > 65535 {
-						return fmt.Errorf("invalid port %d", v)
+						return fmt.Errorf("invalid port number %d", v)
 					}
 					return nil
 				},
@@ -116,7 +116,6 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 			groupCommands,
 			deviceCommands,
 
-			daemonSetupServerCommand,
 			versionCommand,
 		},
 	}

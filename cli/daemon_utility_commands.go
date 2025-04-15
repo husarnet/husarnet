@@ -20,7 +20,7 @@ var daemonIpCommand = &cli.Command{
 
 		if cmd.Args().Len() == 0 {
 			status := getDaemonStatus()
-			pterm.Println(status.LocalIP.StringExpanded())
+			pterm.Println(status.LiveData.LocalIP.StringExpanded())
 		} else {
 			arg := cmd.Args().First()
 			// TODO we'll be using HostTable field, but it has to consider aliases too, which is not implemented

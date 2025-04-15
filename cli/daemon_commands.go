@@ -144,43 +144,6 @@ var daemonStatusCommand = &cli.Command{
 	},
 }
 
-var daemonSetupServerCommand = &cli.Command{
-	Name:      "setup-server",
-	Usage:     "Connect your Husarnet device to different instance of Husarnet infrastructure (eg. self-hosted instances)",
-	ArgsUsage: "[dashboard fqdn]",
-	Action: func(ctx context.Context, cmd *cli.Command) error {
-		requiredArgumentsNumber(cmd, 1)
-
-		domain := cmd.Args().Get(0)
-
-		callDaemonPost[EmptyResult]("/api/change-server", url.Values{
-			"domain": {domain},
-		})
-
-		printSuccess("Successfully requested a change to %s server", pterm.Bold.Sprint(domain))
-		printWarning("This action requires you to restart the daemon in order to use the new value")
-
-		if !askForConfirmation("Do you want to restart Husarnet daemon now?") {
-			dieEmpty()
-		}
-
-		if onWindows() {
-			runSubcommand(false, "nssm", "restart", "husarnet")
-			return nil
-		}
-
-		err := restartService()
-		if err != nil {
-			printWarning("Wasn't able to restart Husarnet Daemon. Try restarting the service manually.")
-			return err
-		}
-
-		waitDaemon()
-
-		return nil
-	},
-}
-
 var daemonWhitelistCommand = &cli.Command{
 	Name:     "whitelist",
 	Usage:    "Manage whitelist on the device.",
@@ -520,7 +483,6 @@ var daemonCommand = &cli.Command{
 		daemonStartCommand,
 		daemonStopCommand,
 		daemonRestartCommand,
-		daemonSetupServerCommand,
 		daemonWhitelistCommand,
 		daemonHooksCommand,
 		daemonGenIdCommand,
