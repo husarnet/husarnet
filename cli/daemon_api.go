@@ -60,10 +60,16 @@ type ClaimInfo struct {
 	Hostname string `json:"hostname"`
 }
 
+type PeerInfo struct {
+	Address  netip.Addr `json:"address"`
+	Hostname string     `json:"hostname"`
+	Aliases  []string   `json:"aliases"`
+}
+
 type ApiConfig struct {
-	IsClaimed bool      `json:"is_claimed"`
-	ClaimInfo ClaimInfo `json:"claim_info"`
-	Peers     []string  `json:"peers"`
+	IsClaimed bool       `json:"is_claimed"`
+	ClaimInfo ClaimInfo  `json:"claim_info"`
+	Peers     []PeerInfo `json:"peers"`
 }
 
 type LicenseData struct {

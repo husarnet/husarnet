@@ -293,7 +293,7 @@ func printStatusFollow(cmd *cli.Command) {
 			printStatus(cmd, currStatus)
 			prevStatus = currStatus
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(800 * time.Millisecond)
 	}
 }
 
