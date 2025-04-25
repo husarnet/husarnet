@@ -52,10 +52,6 @@ if(DEFINED FAIL_ON_WARNING)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wconversion")
 endif()
 
-if (DEFINED ESP_PLATFORM)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
-endif()
-
 # Configure the build
 set(BUILD_HTTP_CONTROL_API FALSE)
 
@@ -138,7 +134,7 @@ target_compile_definitions(${husarnet_core} PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PR
 if (DEFINED ESP_PLATFORM)
   idf_build_get_property(target IDF_TARGET)
   target_compile_definitions(${husarnet_core} PRIVATE IDF_TARGET=${target})
-  target_compile_options(${husarnet_core} PRIVATE -Wno-unknown-pragmas -Wno-missing-field-initializers)
+  target_compile_options(${husarnet_core} PRIVATE -Wno-unknown-pragmas -Wno-missing-field-initializers -fno-use-cxa-atexit -fno-exceptions)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
