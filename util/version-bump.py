@@ -57,7 +57,7 @@ def get_new_version_string_for_cpp_and_iss(new_ver):
 
 
 def get_new_version_string_for_go(new_ver):
-    return 'const Version string = "' + new_ver + '"'
+    return 'const CliVersion string = "' + new_ver + '"'
 
 
 def get_new_version_string_for_yaml(new_ver):
@@ -93,7 +93,7 @@ def main():
     )
     replace_in_file(
         get_new_version_string_for_go(new_ver),
-        "const Version string =",
+        "const CliVersion string =",
         cli_version_path,
         "\n",
     )

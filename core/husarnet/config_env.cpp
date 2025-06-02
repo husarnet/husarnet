@@ -38,7 +38,9 @@ json ConfigEnv::getJson() const
 
 std::string ConfigEnv::getTldFqdn() const
 {
-  return envPresentOrDefault(this->env, EnvKey::tldFqdn, "prod.husarnet.com");
+  return envPresentOrDefault(
+      this->env, EnvKey::tldFqdn,
+      "staging.husarnet.com");  // TODO change this to beta.husarnet.com and then to prod.husarnet.com
 }
 
 LogLevel ConfigEnv::getLogVerbosity() const

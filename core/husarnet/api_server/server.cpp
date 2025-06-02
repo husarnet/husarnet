@@ -151,9 +151,9 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
   std::string pathWithQuery(path + "?" + query);
 
   httplib::Client httpClient(apiAddress.toString());
-  httpClient.set_connection_timeout(0, 5 * 1000000); // 5 sec
-  httpClient.set_read_timeout(5, 0); // 5 seconds
-  httpClient.set_write_timeout(5, 0); // 5 seconds
+  httpClient.set_connection_timeout(0, 5 * 1000000);  // 5 sec
+  httpClient.set_read_timeout(5, 0);                  // 5 seconds
+  httpClient.set_write_timeout(5, 0);                 // 5 seconds
   // TODO: add retries and figure out if timeout values are sane/useful
 
   httplib::Result result;

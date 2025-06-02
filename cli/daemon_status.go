@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gobeam/stringy"
+	"github.com/husarnet/husarnet/cli/v2/constants"
 	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
 	u "github.com/rjNemo/underscore"
@@ -73,20 +74,20 @@ func printVersion(daemonVersion string) {
 
 	var versionDot, versionHelp string
 
-	if daemonVersion != cliVersion {
+	if daemonVersion != constants.CliVersion {
 		versionDot = redDot
 		versionHelp = "CLI and Husarnet Daemon versions differ! If you updated recently, restart the Daemon"
 	} else if daemonVersion != getDaemonBinaryVersion() {
 		versionDot = yellowDot
 		versionHelp = "Husarnet Daemon you're running and the one saved on a disk differ!"
-	} else if latestVersion != "" && cliVersion != latestVersion {
+	} else if latestVersion != "" && constants.CliVersion != latestVersion {
 		versionDot = yellowDot
 		versionHelp = "You're not running the latest version of Husarnet"
 	} else {
 		versionDot = greenDot
 	}
 
-	printStatusLine(versionDot, "CLI", cliVersion)
+	printStatusLine(versionDot, "CLI", constants.CliVersion)
 	printStatusLine(versionDot, "Daemon (running)", daemonVersion)
 	printStatusLine(versionDot, "Daemon (binary)", getDaemonBinaryVersion())
 	if latestVersion != "" {

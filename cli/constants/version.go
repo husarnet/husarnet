@@ -3,4 +3,10 @@
 // License: specified in project_root/LICENSE.txt
 package constants
 
-const Version string = "2.0.314"
+import (
+	"runtime"
+)
+
+const CliVersion string = "2.0.314"
+
+const UserAgent string = "Husarnet-CLI" + "," + runtime.GOOS + "," + runtime.GOARCH + "," + CliVersion

@@ -7,15 +7,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/husarnet/husarnet/cli/v2/config"
-	"github.com/husarnet/husarnet/cli/v2/constants"
-	"github.com/husarnet/husarnet/cli/v2/output"
-	"github.com/husarnet/husarnet/cli/v2/types"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"syscall"
+
+	"github.com/husarnet/husarnet/cli/v2/config"
+	"github.com/husarnet/husarnet/cli/v2/constants"
+	"github.com/husarnet/husarnet/cli/v2/output"
+	"github.com/husarnet/husarnet/cli/v2/types"
 )
 
 // TODO: currently the same function is used elsewhere, move it to utils
@@ -82,7 +83,7 @@ func callDashboardApi[responsePayloadType any](method, endpoint string) types.Ap
 		output.DieWithError(err)
 	}
 	// TODO: make cpp part respect this
-	request.Header.Set("User-Agent", "Husarnet CLI version "+constants.Version)
+	request.Header.Set("User-Agent", constants.UserAgent)
 	return performDashboardApiRequest[responsePayloadType](request)
 }
 

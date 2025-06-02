@@ -5,8 +5,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/husarnet/husarnet/cli/v2/requests"
-	"github.com/husarnet/husarnet/cli/v2/utils"
 	"net/netip"
 	"os"
 	"os/exec"
@@ -14,6 +12,9 @@ import (
 	"sort"
 	"strings"
 	"syscall"
+
+	"github.com/husarnet/husarnet/cli/v2/requests"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 
 	"github.com/pterm/pterm"
 )
@@ -27,7 +28,7 @@ func areSlicesEqual(first []string, second []string) bool {
 
 	// yes, inefficient implementation, but
 	// the func is only used in tests so far - so no worries yet
-	// it will be good refactoring excercise - always look on the bright side of life
+	// it will be good refactoring exercise - always look on the bright side of life
 	firstCopy := make([]string, count)
 	secondCopy := make([]string, count)
 	copy(firstCopy, first)
@@ -62,13 +63,13 @@ func onWindows() bool {
 }
 
 // re run the whole CLI invocation with sudo
-// note that this function replaces current process with a sudoed one so it won't return to your program in any casse
+// note that this function replaces current process with a sudoed one so it won't return to your program in any case
 func rerunWithSudoOrDie() {
 	if onWindows() {
 		dieEmpty()
 	}
 
-	if !askForConfirmation(runSelfWithSudoQuestion) {
+	if !askForConfirmation("This operation requires superuser access. Rerun with sudo?") {
 		dieEmpty()
 	}
 
@@ -282,5 +283,5 @@ func determineDeviceIP(identifier string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("Couldn't find device identified with '%s'", identifier)
+	return "", fmt.Errorf("couldn't find device identified with '%s'", identifier)
 }
