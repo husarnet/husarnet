@@ -29,7 +29,6 @@ common.manifestYamlDoc(
       build_windows_installer: common.jobs.build_windows_installer(self.ref) + self.base,
       run_tests: common.jobs.run_tests(self.ref) + self.base,
       run_integration_tests: common.jobs.run_integration_tests(self.ref, self.docker_project) + self.base,
-      build_and_test_esp32: common.jobs.build_and_test_esp32(self.ref) + self.base,
 
       release_nightly: common.jobs.release('nightly', self.ref) + self.base,
       build_docker: common.jobs.build_docker(self.docker_project, true, self.ref, self.build_type) + self.base,

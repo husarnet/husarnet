@@ -215,7 +215,7 @@
     build_windows_installer:: function(ref) {
       needs: ['build_windows'],
 
-      'runs-on': 'windows-2019',
+      'runs-on': 'windows-latest',
 
       steps: [
         $.steps.checkout(ref),

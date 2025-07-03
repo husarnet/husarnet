@@ -182,7 +182,7 @@ jobs:
   build_windows_installer:
     needs:
       - "build_windows"
-    runs-on: "windows-2019"
+    runs-on: "windows-latest"
     steps:
       - name: "Check out the repo"
         uses: "actions/checkout@v4"
