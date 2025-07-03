@@ -178,7 +178,12 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
     auto err = result.error();
     LOG_ERROR("Can't contact Dashboard API: %s", httplib::to_string(err).c_str());
     res.status = 502;
-  }
+    nlohmann::json jsonResponse{
+        {"type", "server_error"},
+        {"errors", nlohmann::json::array({httplib::to_string(err)})},
+        {"warnings", nlohmann::json::array()},
+        {"message", "error"}};
+    res.set_content(jsonResponse.dump(4), "application/json");  }
 }
 
 template <typename iterable_InetAddress_t>

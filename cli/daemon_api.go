@@ -89,15 +89,13 @@ type DaemonConfig struct {
 }
 
 type DaemonStatus struct {
-	Version       string `json:"version"`
-	UserAgent     string `json:"user_agent"`
-	DashboardFQDN string `json:"dashboard_fqdn"`
-	HooksEnabled  bool   `json:"hooks_enabled"`
+	Version   string         `json:"version"`
+	UserAgent string         `json:"user_agent"`
+	LiveData  DaemonLiveData `json:"live"`
+	Config    DaemonConfig   `json:"config"`
 
-	WebsetupAddress netip.Addr     `json:"websetup_address"`
-	LiveData        DaemonLiveData `json:"live"`
-	Config          DaemonConfig   `json:"config"`
-	LocalHostname   string         `json:"local_hostname"`
+	HooksEnabled  bool   `json:"hooks_enabled"`
+	LocalHostname string `json:"local_hostname"`
 
 	IsJoined         bool            `json:"is_joined"`
 	IsReady          bool            `json:"is_ready"`

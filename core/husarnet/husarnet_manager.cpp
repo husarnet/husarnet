@@ -106,7 +106,7 @@ void HusarnetManager::runHusarnet()
 
           while(true) {
             eventBus->periodic();
-            Port::threadSleep(1000);
+            Port::threadSleep(500);
           }
         },
         "eb");

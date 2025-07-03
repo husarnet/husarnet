@@ -70,7 +70,7 @@ using namespace nlohmann;  // json
 #define GETCONFIG_KEY_FEATUREFLAGS "features"
 #define GETCONFIG_KEY_FEATUREFLAGS_SYNCHOSTNAME "SyncHostname"
 
-#define STATUS_KEY_APICONFIG "api_config"
+#define STATUS_KEY_APICONFIG "dashboard"
 #define STATUS_KEY_USERCONFIG "user_config"
 #define STATUS_KEY_LICENSE "license"
 #define STATUS_KEY_LOCALIP "local_ip"
@@ -78,6 +78,9 @@ using namespace nlohmann;  // json
 #define STATUS_KEY_BASECONNECTION_TYPE "type"
 #define STATUS_KEY_BASECONNECTION_ADDRESS "address"
 #define STATUS_KEY_BASECONNECTION_PORT "port"
+#define STATUS_KEY_ENVIRONMENT "env"
+#define STATUS_KEY_ENVIRONMENT_INSTANCE_URL "instance_url"
+#define STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY "log_verbosity"
 
 constexpr int configManagerPeriodInSeconds = 60 * 10;  // fresh get_config every 10 min
 constexpr int refreshLicenseAfterNumPeriods = 5;       // every N get_config refreshes, refresh license too

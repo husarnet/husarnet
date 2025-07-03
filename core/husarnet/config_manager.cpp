@@ -309,6 +309,12 @@ json ConfigManager::getDataForStatus() const
   } else {
     combined[STATUS_KEY_LICENSE] = json({});
   }
+
+  combined[STATUS_KEY_ENVIRONMENT] = {
+      {STATUS_KEY_ENVIRONMENT_INSTANCE_URL, this->configEnv->getTldFqdn()},
+      {STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY, this->configEnv->getLogVerbosity()}
+  };
+
   return combined;
 }
 

@@ -4,6 +4,7 @@
 package main
 
 import (
+	"github.com/husarnet/husarnet/cli/v2/constants"
 	"net/netip"
 	"sort"
 	"strings"
@@ -73,20 +74,20 @@ func printVersion(daemonVersion string) {
 
 	var versionDot, versionHelp string
 
-	if daemonVersion != cliVersion {
+	if daemonVersion != constants.Version {
 		versionDot = redDot
 		versionHelp = "CLI and Husarnet Daemon versions differ! If you updated recently, restart the Daemon"
 	} else if daemonVersion != getDaemonBinaryVersion() {
 		versionDot = yellowDot
 		versionHelp = "Husarnet Daemon you're running and the one saved on a disk differ!"
-	} else if latestVersion != "" && cliVersion != latestVersion {
+	} else if latestVersion != "" && constants.Version != latestVersion {
 		versionDot = yellowDot
 		versionHelp = "You're not running the latest version of Husarnet"
 	} else {
 		versionDot = greenDot
 	}
 
-	printStatusLine(versionDot, "CLI", cliVersion)
+	printStatusLine(versionDot, "CLI", constants.Version)
 	printStatusLine(versionDot, "Daemon (running)", daemonVersion)
 	printStatusLine(versionDot, "Daemon (binary)", getDaemonBinaryVersion())
 	if latestVersion != "" {
@@ -117,10 +118,6 @@ func printWhitelist(status DaemonStatus, verbose bool) {
 		}
 
 		sort.Strings(peerHostnames)
-
-		if peerAddress == status.WebsetupAddress {
-			peerHostnames = append([]string{"(websetup)"}, peerHostnames...)
-		}
 
 		if peerAddress == status.LiveData.LocalIP {
 			peerHostnames = append([]string{"(localhost)"}, peerHostnames...)
@@ -299,12 +296,6 @@ func printStatusFollow(cmd *cli.Command) {
 
 func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 	if prevStatus.Version != currStatus.Version {
-		return false
-	}
-	if prevStatus.DashboardFQDN != currStatus.DashboardFQDN {
-		return false
-	}
-	if prevStatus.WebsetupAddress.Compare(currStatus.WebsetupAddress) != 0 {
 		return false
 	}
 	if prevStatus.LiveData.BaseConnection.Address.Compare(currStatus.LiveData.BaseConnection.Address) != 0 {

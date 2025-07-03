@@ -3,6 +3,4 @@
 // License: specified in project_root/LICENSE.txt
 package main
 
-const cliVersion string = "2.0.300"
-
 const runSelfWithSudoQuestion string = "This operation requires superuser access. Rerun with sudo?"
