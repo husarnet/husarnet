@@ -306,7 +306,6 @@ jobs:
     needs:
       - "run_tests"
       - "run_integration_tests"
-      - "build_and_test_esp32"
       - "build_linux"
       - "build_macos"
       - "build_windows_installer"

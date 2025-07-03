@@ -339,13 +339,15 @@
 
     release:: function(target, ref) {
       needs: [
-        'run_tests',
-        'run_integration_tests',
-        'build_and_test_esp32',
-        'build_linux',
-        'build_macos',
-        'build_windows_installer',
-      ],
+               'run_tests',
+               'run_integration_tests',
+             ]
+             + (if target == 'prod' then ['build_and_test_esp32'] else [])
+             + [
+               'build_linux',
+               'build_macos',
+               'build_windows_installer',
+             ],
 
       'runs-on': [
         'self-hosted',
