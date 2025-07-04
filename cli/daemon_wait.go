@@ -60,7 +60,7 @@ func waitBaseUDP() error {
 }
 
 func waitJoined() error {
-	return waitAction("Waiting until the device is joined…", func(status *DaemonStatus) (bool, string) { return status.Config.Api.IsClaimed, "" })
+	return waitAction("Waiting until the device is joined…", func(status *DaemonStatus) (bool, string) { return status.Config.Dashboard.IsClaimed, "" })
 }
 
 func waitHost(hostnameOrIp string) error {

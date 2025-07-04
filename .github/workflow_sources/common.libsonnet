@@ -458,12 +458,15 @@
     },
 
     release_docker:: function(namespace, ref) {
+
       needs: [
-        'run_tests',
-        'run_integration_tests',
-        'build_and_test_esp32',
-        'build_docker',
-      ],
+               'run_tests',
+               'run_integration_tests',
+             ]
+             + (if namespace == 'husarnet/husarnet' then ['build_and_test_esp32'] else [])
+             + [
+               'build_docker',
+             ],
 
       'runs-on': 'ubuntu-latest',
 

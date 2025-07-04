@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/husarnet/husarnet/cli/v2/constants"
 	"net/netip"
 	"sort"
@@ -215,6 +216,22 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 		printStatusHelp(baseServerDot, baseServerStatusReminder)
 	}
 
+	var dashboardConnectionDot, dashboardConnectionHelp string
+	if status.LiveData.DashboardConnection {
+		if status.Config.Dashboard.IsClaimed {
+			dashboardConnectionDot = greenDot
+			dashboardConnectionHelp = "connected"
+		} else {
+			dashboardConnectionDot = yellowDot
+			dashboardConnectionHelp = "not connected, ready to connect"
+		}
+	} else {
+		dashboardConnectionDot = redDot
+		dashboardConnectionHelp = "not connected"
+	}
+
+	printStatusLine(dashboardConnectionDot, "Dashboard", dashboardConnectionHelp)
+
 	if verbose {
 		for element, connectionStatus := range status.ConnectionStatus {
 			if element == "base" {
@@ -227,21 +244,14 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 	pterm.Println()
 
 	printStatusHeader("Dashboard")
-	dashboardDot := redDot
-	dashboardHelp := "device not claimed by any Husarnet account (go to dashboard.husarnet.com to set up)"
-	if status.Config.Api.IsClaimed {
-		dashboardDot = greenDot
-		dashboardHelp = "The device is manageable in the Dashboard"
-		printStatusLine(dashboardDot, "Owner", status.Config.Api.ClaimInfo.Owner)
+	if status.Config.Dashboard.IsClaimed {
+		printStatusHelp(greenDot, fmt.Sprintf("The device is manageable in the Dashboard (https://dashboard.%s)", status.Config.Env.InstanceFqdn))
+		printStatusLine(neutralDot, "Known as", status.Config.Dashboard.ClaimInfo.Hostname)
+		printStatusLine(neutralDot, "Claimed by", status.Config.Dashboard.ClaimInfo.Owner)
+	} else {
+		printStatusHelp(redDot, fmt.Sprintf("device not claimed by any Husarnet account (go to https://dashboard.%s to set up)", status.Config.Env.InstanceFqdn))
 	}
-	printStatusHelp(dashboardDot, dashboardHelp)
 
-	pterm.Println()
-
-	printStatusHeader("Readiness")
-	printReadinessStatus(status.IsReady, "Is ready to handle data?")
-	printReadinessStatus(status.IsReadyToJoin, "Is ready to join?")
-	printReadinessStatus(status.Config.Api.IsClaimed, "Is joined?")
 	pterm.Println()
 
 	if verbose {

@@ -78,8 +78,9 @@ using namespace nlohmann;  // json
 #define STATUS_KEY_BASECONNECTION_TYPE "type"
 #define STATUS_KEY_BASECONNECTION_ADDRESS "address"
 #define STATUS_KEY_BASECONNECTION_PORT "port"
+#define STATUS_KEY_DASHBOARDCONNECTION "dashboard_connection"
 #define STATUS_KEY_ENVIRONMENT "env"
-#define STATUS_KEY_ENVIRONMENT_INSTANCE_URL "instance_url"
+#define STATUS_KEY_ENVIRONMENT_INSTANCE_FQDN "instance_fqdn"
 #define STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY "log_verbosity"
 
 constexpr int configManagerPeriodInSeconds = 60 * 10;  // fresh get_config every 10 min

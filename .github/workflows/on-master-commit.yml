@@ -223,7 +223,6 @@ jobs:
     needs:
       - "run_tests"
       - "run_integration_tests"
-      - "build_and_test_esp32"
       - "build_docker"
       - "bump_version"
       - "build_builder"

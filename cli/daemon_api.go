@@ -51,8 +51,9 @@ type PeerStatus struct {
 }
 
 type DaemonLiveData struct {
-	BaseConnection BaseConnectionStatus `json:"base_connection"`
-	LocalIP        netip.Addr           `json:"local_ip"`
+	BaseConnection      BaseConnectionStatus `json:"base_connection"`
+	DashboardConnection bool                 `json:"dashboard_connection"`
+	LocalIP             netip.Addr           `json:"local_ip"`
 }
 
 type ClaimInfo struct {
@@ -66,10 +67,16 @@ type PeerInfo struct {
 	Aliases  []string   `json:"aliases"`
 }
 
-type ApiConfig struct {
-	IsClaimed bool       `json:"is_claimed"`
-	ClaimInfo ClaimInfo  `json:"claim_info"`
-	Peers     []PeerInfo `json:"peers"`
+type DeviceFeatures struct {
+	AccountAdmin bool `json:"AccountAdmin"`
+	SyncHostname bool `json:"SyncHostname"`
+}
+
+type DashboardConfig struct {
+	IsClaimed bool           `json:"is_claimed"`
+	ClaimInfo ClaimInfo      `json:"claim_info"`
+	Features  DeviceFeatures `json:"features"`
+	Peers     []PeerInfo     `json:"peers"`
 }
 
 type LicenseData struct {
@@ -82,10 +89,16 @@ type UserConfig struct {
 	Whitelist []netip.Addr `json:"whitelist"`
 }
 
+type EnvConfig struct {
+	InstanceFqdn string `json:"instance_fqdn"`
+	LogVerbosity int    `json:"log_verbosity"`
+}
+
 type DaemonConfig struct {
-	Api     ApiConfig   `json:"api_config"`
-	License LicenseData `json:"license"`
-	User    UserConfig  `json:"user_config"`
+	Dashboard DashboardConfig `json:"dashboard"`
+	Env       EnvConfig       `json:"env"`
+	License   LicenseData     `json:"license"`
+	User      UserConfig      `json:"user_config"`
 }
 
 type DaemonStatus struct {

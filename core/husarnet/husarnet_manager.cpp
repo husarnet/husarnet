@@ -91,6 +91,7 @@ void HusarnetManager::runHusarnet()
   auto compression = new CompressionLayer(this->peerContainer, this->myFlags);
   this->securityLayer = new SecurityLayer(this->myIdentity, this->myFlags, this->peerContainer);
   this->ngsocket = new NgSocket(this->myIdentity, this->peerContainer, this->configManager);
+  this->eventBus = new EventBus(this->myIdentity->getIpAddress(), this->configManager);
 
   stackUpperOnLower(tunTap, multicast);
   stackUpperOnLower(multicast, compression);
@@ -98,14 +99,11 @@ void HusarnetManager::runHusarnet()
   stackUpperOnLower(securityLayer, ngsocket);
 
   if(this->configEnv->getEnableControlplane()) {
-    // TODO: refactor according to earlier pattern
+    this->eventBus->init();
     Port::threadStart(
         [this]() {
-          auto eventBus = new EventBus(this->myIdentity->getIpAddress(), this->configManager);
-          eventBus->init();
-
           while(true) {
-            eventBus->periodic();
+            this->eventBus->periodic();
             Port::threadSleep(500);
           }
         },
@@ -147,6 +145,8 @@ json HusarnetManager::getDataForStatus() const
       {STATUS_KEY_BASECONNECTION_ADDRESS, currentBaseAddress.ip.toString()},
       {STATUS_KEY_BASECONNECTION_PORT, currentBaseAddress.port},
   });
+
+  result[STATUS_KEY_DASHBOARDCONNECTION] = this->eventBus->isConnected();
 
   return result;
 }

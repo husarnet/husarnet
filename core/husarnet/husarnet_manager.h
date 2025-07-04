@@ -9,6 +9,7 @@
 #include "husarnet/ngsocket.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
+#include "husarnet/eventbus.h"
 
 constexpr int heartbeatPeriodMs = 1000 * 60;  // send heartbeat every minute
 
@@ -19,6 +20,7 @@ class HusarnetManager {
   ConfigEnv* configEnv = nullptr;
   ConfigManager* configManager = nullptr;
   HooksManager* hooksManager = nullptr;
+  EventBus* eventBus = nullptr;
 
   PeerFlags* myFlags = nullptr;
   PeerContainer* peerContainer = nullptr;
