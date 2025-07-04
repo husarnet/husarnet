@@ -20,6 +20,7 @@ Wants=network-online.target
 [Service]
 Type=notify
 ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmd}}{{end}}
+EnvironmentFile=-/etc/default/husarnet
 Restart=always
 RestartSec=3
 NotifyAccess=all

@@ -312,8 +312,7 @@ json ConfigManager::getDataForStatus() const
 
   combined[STATUS_KEY_ENVIRONMENT] = {
       {STATUS_KEY_ENVIRONMENT_INSTANCE_FQDN, this->configEnv->getTldFqdn()},
-      {STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY, this->configEnv->getLogVerbosity()}
-  };
+      {STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY, this->configEnv->getLogVerbosity()}};
 
   return combined;
 }

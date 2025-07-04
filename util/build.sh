@@ -48,5 +48,5 @@ if [ "$platform" == "all" ] || [ "$platform" == "esp32" ]; then
     else
         esp_architecture="${architecture}"
     fi
-    docker_builder /app/platforms/esp32/build.sh ${esp_architecture}
+# TODO re add this   docker_builder /app/platforms/esp32/build.sh ${esp_architecture}
 fi

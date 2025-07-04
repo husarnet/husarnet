@@ -201,7 +201,7 @@ namespace Port {
   }
 
   static etl::map<std::string, EnvKey, ENV_KEY_OPTIONS> envMap = {
-      etl::pair{std::string("HUSARNET_TLD_FQDN"), EnvKey::tldFqdn},
+      etl::pair{std::string("HUSARNET_INSTANCE_FQDN"), EnvKey::tldFqdn},
       etl::pair{std::string("HUSARNET_LOG_VERBOSITY"), EnvKey::logVerbosity},
       etl::pair{std::string("HUSARNET_ENABLE_HOOKS"), EnvKey::enableHooks},
       etl::pair{std::string("HUSARNET_ENABLE_CONTROLPLANE"), EnvKey::enableControlPlane},

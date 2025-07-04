@@ -4,12 +4,12 @@
 #pragma once
 #include "husarnet/config_env.h"
 #include "husarnet/config_manager.h"
+#include "husarnet/eventbus.h"
 #include "husarnet/hooks_manager.h"
 #include "husarnet/identity.h"
 #include "husarnet/ngsocket.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
-#include "husarnet/eventbus.h"
 
 constexpr int heartbeatPeriodMs = 1000 * 60;  // send heartbeat every minute
 
