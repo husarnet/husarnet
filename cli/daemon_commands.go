@@ -180,7 +180,7 @@ var daemonWhitelistCommand = &cli.Command{
 			ArgsUsage: " ", // No arguments needed
 			Action: func(ctx context.Context, cmd *cli.Command) error {
 				status := getDaemonStatus()
-				printWhitelist(status, false)
+				printWhitelist(status, mapifyPeers(status.LiveData.Peers))
 
 				return nil
 			},

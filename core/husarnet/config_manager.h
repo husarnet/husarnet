@@ -82,6 +82,9 @@ using namespace nlohmann;  // json
 #define STATUS_KEY_ENVIRONMENT "env"
 #define STATUS_KEY_ENVIRONMENT_INSTANCE_FQDN "instance_fqdn"
 #define STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY "log_verbosity"
+#define STATUS_KEY_LIVEPEERS "peers"
+#define STATUS_KEY_HEALTH "health"
+#define STATUS_KEY_HEALTH_SUMMARY "summary"
 
 constexpr int configManagerPeriodInSeconds = 60 * 10;  // fresh get_config every 10 min
 constexpr int refreshLicenseAfterNumPeriods = 5;       // every N get_config refreshes, refresh license too

@@ -146,7 +146,27 @@ json HusarnetManager::getDataForStatus() const
       {STATUS_KEY_BASECONNECTION_PORT, currentBaseAddress.port},
   });
 
+  bool isEventBusConnected = this->eventBus->isConnected();
   result[STATUS_KEY_DASHBOARDCONNECTION] = this->eventBus->isConnected();
 
+  bool healthSummary = (baseConnectionType != BaseConnectionType::None) && isEventBusConnected;
+  result[STATUS_KEY_HEALTH] = json::object({
+    {STATUS_KEY_HEALTH_SUMMARY, healthSummary}
+  });
+
+  // add peers from peerContainer
+  result[STATUS_KEY_LIVEPEERS] = json::array();
+  auto peers = this->peerContainer->getPeers();
+  for(auto& [peerId, rawPeer] : peers) {
+    json newPeer = {
+        {"address", rawPeer->getIpAddress().toString()},
+        {"is_active", rawPeer->isActive()},
+        {"is_reestablishing", rawPeer->isReestablishing()},
+        {"is_tunelled", rawPeer->isTunelled()},
+        {"is_secure", rawPeer->isSecure()},
+    };
+
+    result[STATUS_KEY_LIVEPEERS].push_back(newPeer);
+  }
   return result;
 }

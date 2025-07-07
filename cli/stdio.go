@@ -13,6 +13,8 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+type FormatterFunc func(...interface{}) string
+
 var redFormatter = pterm.Red
 var yellowFormatter = pterm.Yellow
 var greenFormatter = pterm.Green

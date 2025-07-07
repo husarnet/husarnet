@@ -51,20 +51,31 @@ type PeerStatus struct {
 }
 
 type DaemonLiveData struct {
+	Health              DaemonHealth         `json:"health"`
 	BaseConnection      BaseConnectionStatus `json:"base_connection"`
 	DashboardConnection bool                 `json:"dashboard_connection"`
 	LocalIP             netip.Addr           `json:"local_ip"`
+	Peers               []DaemonPeerInfo     `json:"peers"`
 }
 
 type ClaimInfo struct {
-	Owner    string `json:"owner"`
-	Hostname string `json:"hostname"`
+	Owner    string   `json:"owner"`
+	Hostname string   `json:"hostname"`
+	Aliases  []string `json:"aliases"`
 }
 
-type PeerInfo struct {
+type DashboardPeerInfo struct {
 	Address  netip.Addr `json:"address"`
 	Hostname string     `json:"hostname"`
 	Aliases  []string   `json:"aliases"`
+}
+
+type DaemonPeerInfo struct {
+	Address          netip.Addr `json:"address"`
+	IsActive         bool       `json:"is_active"`
+	IsReestablishing bool       `json:"is_reestablishing"`
+	IsTunelled       bool       `json:"is_tunelled"`
+	IsSecure         bool       `json:"is_secure"`
 }
 
 type DeviceFeatures struct {
@@ -73,10 +84,10 @@ type DeviceFeatures struct {
 }
 
 type DashboardConfig struct {
-	IsClaimed bool           `json:"is_claimed"`
-	ClaimInfo ClaimInfo      `json:"claim_info"`
-	Features  DeviceFeatures `json:"features"`
-	Peers     []PeerInfo     `json:"peers"`
+	IsClaimed bool                `json:"is_claimed"`
+	ClaimInfo ClaimInfo           `json:"claim_info"`
+	Features  DeviceFeatures      `json:"features"`
+	Peers     []DashboardPeerInfo `json:"peers"`
 }
 
 type LicenseData struct {
@@ -101,6 +112,10 @@ type DaemonConfig struct {
 	User      UserConfig      `json:"user_config"`
 }
 
+type DaemonHealth struct {
+	Summary bool `json:"summary"`
+}
+
 type DaemonStatus struct {
 	Version   string         `json:"version"`
 	UserAgent string         `json:"user_agent"`
@@ -115,7 +130,6 @@ type DaemonStatus struct {
 	IsReadyToJoin    bool            `json:"is_ready_to_join"`
 	ConnectionStatus map[string]bool `json:"connection_status"`
 
-	Whitelist    []netip.Addr
 	UserSettings map[string]string     `json:"user_settings"` // TODO long-term - think about a better structure (more importantly enums) to hold this if needed
 	HostTable    map[string]netip.Addr `json:"host_table"`
 	Peers        []PeerStatus

@@ -7,26 +7,147 @@ import (
 	"fmt"
 	"github.com/husarnet/husarnet/cli/v2/constants"
 	"net/netip"
-	"sort"
 	"strings"
 	"time"
 
-	"github.com/gobeam/stringy"
 	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
-	u "github.com/rjNemo/underscore"
 	"github.com/urfave/cli/v3"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
-func printStatusHeader(text string) {
-	pterm.Underscore.Println(text)
+func printStatus(cmd *cli.Command, status DaemonStatus) {
+	isHealthy := status.LiveData.Health.Summary
+	verbose := verboseLogs || cmd.Bool("verbose")
+
+	if !isHealthy {
+		if !verbose {
+			pterm.Println("Note: --verbose flag enabled by default as the daemon state is unhealthy")
+			pterm.Println()
+		}
+		verbose = true
+	}
+
+	if verbose {
+		printVerboseStatus(cmd, status)
+	}
+
+	// section DASHBOARD
+	dashboardUrl := fmt.Sprintf("https://dashboard.%s", status.Config.Env.InstanceFqdn)
+
+	printStatusHeader("Dashboard")
+	if status.Config.Dashboard.IsClaimed {
+		printStatusLine(greenFormatter, "URL", dashboardUrl)
+		printStatusLine(neutralFormatter, "Claimed by", status.Config.Dashboard.ClaimInfo.Owner)
+		printStatusLine(
+			neutralFormatter,
+			"Device known as",
+			formatHostnameWithAliases(status.Config.Dashboard.ClaimInfo.Hostname, status.Config.Dashboard.ClaimInfo.Aliases),
+		)
+		// TODO later: add information about the group(s) the device is in, currently api does not expose it
+	} else {
+		printStatusLine(redFormatter, "URL", dashboardUrl)
+		printStatusLine(neutralFormatter, "Claimed by", "none")
+	}
+	pterm.Println()
+
+	// section THIS DEVICE
+	printStatusHeader("This device")
+	if status.LiveData.Health.Summary {
+		printStatusLine(greenFormatter, "Health", "healthy")
+	} else {
+		printStatusLine(redFormatter, "Health", "unhealthy")
+	}
+	printStatusLine(neutralFormatter, "User agent", status.UserAgent)
+	printIndentedL1(pterm.Bold.Sprint(status.LiveData.LocalIP.StringExpanded()))
+	pterm.Println()
+
+	// section PEERS
+	peerMap := mapifyPeers(status.LiveData.Peers)
+	printStatusHeader("Peers")
+	if len(status.Config.Dashboard.Peers) == 0 {
+		printIndentedL1("No peers yet")
+	} else {
+		for _, peer := range status.Config.Dashboard.Peers {
+			firstLine := formatPeerInfo(peer.Address.StringExpanded(), peerMap)
+			secondLine := "Hostnames: " + formatHostnameWithAliases(peer.Hostname, peer.Aliases)
+			printIndentedL1(firstLine)
+			printIndentedL1(secondLine)
+			pterm.Println()
+		}
+	}
+
+	// section LOCAL WHITELIST (only visible if not empty)
+	if len(status.Config.User.Whitelist) > 0 {
+		printWhitelist(status, peerMap)
+	}
 }
 
-func printStatusLine(dot, name, value string) {
-	formatter := extractFormatter(dot)
+func printVerboseStatus(cmd *cli.Command, status DaemonStatus) {
+	printStatusHeader("Version")
+	printVersion(status.Version)
+	pterm.Println()
 
+	printStatusHeader("Healthchecks")
+	printIndentedL1("Base servers")
+	for _, server := range status.Config.License.BaseServers {
+		currentOrBackup := "backup"
+		if status.LiveData.BaseConnection.Address == server {
+			currentOrBackup = "current"
+		}
+		printIndentedL2(pterm.Sprintf("%s, %s, %s", server.String(), status.LiveData.BaseConnection.Type, currentOrBackup))
+	}
+
+	printIndentedL1("API servers")
+	for _, server := range status.Config.License.ApiServers {
+		currentOrBackup := "current"
+		printIndentedL2(pterm.Sprintf("%s healthy, %s", server.StringExpanded(), currentOrBackup))
+	}
+
+	printIndentedL1("Event Bus")
+	for _, server := range status.Config.License.EbServers {
+		currentOrBackup := "current"
+		printIndentedL2(pterm.Sprintf("%s healthy, %s", server.StringExpanded(), currentOrBackup))
+	}
+	pterm.Println()
+
+	printStatusHeader("Local flags")
+	printHooksStatus(status)
+	pterm.Println()
+
+	printStatusHeader("Remote flags")
+	printStatusLine(neutralFormatter, "AccountAdmin", enabledOrDisabled(status.Config.Dashboard.Features.AccountAdmin))
+	printStatusLine(neutralFormatter, "SyncHostname", enabledOrDisabled(status.Config.Dashboard.Features.SyncHostname))
+	pterm.Println()
+}
+
+func enabledOrDisabled(f bool) string {
+	if f {
+		return "enabled"
+	}
+	return "disabled"
+}
+
+func printIndentedL1(line string) {
+	pterm.Printfln("  %s", line)
+}
+
+func printIndentedL2(line string) {
+	pterm.Printfln("    %s", line)
+}
+
+func mapifyPeers(peers []DaemonPeerInfo) map[string]DaemonPeerInfo {
+	out := make(map[string]DaemonPeerInfo)
+	for _, peer := range peers {
+		out[peer.Address.StringExpanded()] = peer
+	}
+	return out
+}
+
+func printStatusHeader(text string) {
+	pterm.Println(text)
+}
+
+func printStatusLine(formatter FormatterFunc, name, value string) {
 	fill := ""
 	desiredLength := 25
 
@@ -40,253 +161,93 @@ func printStatusLine(dot, name, value string) {
 		merger = " "
 	}
 
-	pterm.Printfln("%s %s%s%s %s", dot, name, merger, fill, formatter(value))
-}
-
-func printStatusHelp(dot, help string) {
-	formatter := extractFormatter(dot)
-	pterm.Printfln("%s %s", dot, formatter(help))
-}
-
-func printBoolStatus(status bool, name, trueString, falseString string) {
-	var dot, value string
-
-	if status {
-		dot = greenDot
-		value = trueString
-	} else {
-		dot = redDot
-		value = falseString
-	}
-
-	printStatusLine(dot, name, value)
-}
-
-func printConnectionStatus(status bool, name string) {
-	printBoolStatus(status, name, "connected", "not connected")
-}
-
-func printReadinessStatus(status bool, name string) {
-	printBoolStatus(status, name, "yes", "no")
+	pterm.Printfln("  %s%s%s %s", name, merger, fill, formatter(value))
 }
 
 func printVersion(daemonVersion string) {
 	latestVersion := "" // TODO long term - get this from the announcements info
 
-	var versionDot, versionHelp string
+	var versionFormatter FormatterFunc
+	var versionHelp string
 
 	if daemonVersion != constants.Version {
-		versionDot = redDot
-		versionHelp = "CLI and Husarnet Daemon versions differ! If you updated recently, restart the Daemon"
+		versionFormatter = redFormatter
+		versionHelp = "CLI and Husarnet Daemon versions differ. If you updated recently, restart the Daemon"
 	} else if daemonVersion != getDaemonBinaryVersion() {
-		versionDot = yellowDot
-		versionHelp = "Husarnet Daemon you're running and the one saved on a disk differ!"
+		versionFormatter = yellowFormatter
+		versionHelp = "Husarnet Daemon you're running and the one saved on a disk differ"
 	} else if latestVersion != "" && constants.Version != latestVersion {
-		versionDot = yellowDot
+		versionFormatter = yellowFormatter
 		versionHelp = "You're not running the latest version of Husarnet"
 	} else {
-		versionDot = greenDot
+		versionFormatter = greenFormatter
 	}
 
-	printStatusLine(versionDot, "CLI", constants.Version)
-	printStatusLine(versionDot, "Daemon (running)", daemonVersion)
-	printStatusLine(versionDot, "Daemon (binary)", getDaemonBinaryVersion())
+	printStatusLine(versionFormatter, "CLI", constants.Version)
+	printStatusLine(versionFormatter, "Daemon (running)", daemonVersion)
+	printStatusLine(versionFormatter, "Daemon (binary)", getDaemonBinaryVersion())
 	if latestVersion != "" {
-		printStatusLine(versionDot, "Latest", latestVersion)
+		printStatusLine(versionFormatter, "Latest", latestVersion)
 	}
 	if versionHelp != "" {
-		printStatusHelp(versionDot, versionHelp)
+		printIndentedL1(versionFormatter(versionHelp))
 	}
 }
 
-func printWhitelist(status DaemonStatus, verbose bool) {
-	sort.Slice(status.Whitelist, func(i, j int) bool { return status.Whitelist[i].String() < status.Whitelist[j].String() })
-
-	for _, peerAddress := range status.Whitelist {
-		var peerHostnames []string
-		for hostname, hostTableAddress := range status.HostTable {
-			if peerAddress == hostTableAddress {
-				peerHostnames = append(peerHostnames, hostname)
-			}
+func formatPeerInfo(ip string, peerMap map[string]DaemonPeerInfo) string {
+	line := ip
+	if info, ok := peerMap[ip]; ok {
+		activity := "inactive"
+		if info.IsActive {
+			activity = "active"
 		}
-
-		var peerData PeerStatus
-		for _, peer := range status.Peers {
-			if peer.HusarnetAddress != peerAddress {
-				continue
-			}
-			peerData = peer
+		connection := greenFormatter("peer to peer")
+		if info.IsTunelled {
+			connection = yellowFormatter("tunelled")
 		}
+		line += " " + activity + ", " + connection
+	} else {
+		line += " unknown"
+	}
+	return line
+}
 
-		sort.Strings(peerHostnames)
+func formatHostnameWithAliases(hostname string, aliases []string) string {
+	var out string
+	if len(aliases) > 0 {
+		out += pterm.Bold.Sprint(hostname)
+		out += ", "
+		out += strings.Join(aliases, ", ")
+	} else {
+		out += hostname
+	}
+	return out
+}
 
-		if peerAddress == status.LiveData.LocalIP {
-			peerHostnames = append([]string{"(localhost)"}, peerHostnames...)
-		}
-
-		pterm.Printfln("%s %s", peerAddress.StringExpanded(), strings.Join(peerHostnames, " "))
-
-		if peerData.IsActive {
-			pterm.Printf("%s active   ", greenDot)
-		} else {
-			pterm.Printf("%s inactive ", neutralDot)
-		}
-
-		pterm.Print("  ") // Spacing
-
-		if peerData.IsSecure {
-			pterm.Printf("%s secure       ", greenDot)
-		} else {
-			pterm.Printf("%s no data flow ", neutralDot)
-		}
-
-		pterm.Print("  ") // Spacing
-
-		if peerData.IsTunelled {
-			pterm.Printf("%s tunelled     ", yellowDot)
-		} else {
-			pterm.Printf("%s peer to peer ", greenDot)
-		}
-
-		pterm.Println()
-
-		if verbose {
-			if len(peerData.TargetAddresses) > 0 {
-				targetAddresses := u.Map(peerData.TargetAddresses, func(it netip.AddrPort) string { return it.String() })
-				targetAddresses = removeDuplicates(targetAddresses)
-				sort.Strings(targetAddresses)
-
-				pterm.Printfln("Addresses from Base Server: %s", strings.Join(targetAddresses, " "))
-			}
-
-			if !peerData.UsedTargetAddress.Addr().IsUnspecified() && peerData.UsedTargetAddress.Addr() != status.LiveData.BaseConnection.Address {
-				pterm.Printfln("Used destination address:   %v", peerData.UsedTargetAddress)
-			}
-		}
-
-		pterm.Println()
+func printWhitelist(status DaemonStatus, peerMap map[string]DaemonPeerInfo) {
+	printStatusHeader("Local whitelist")
+	for _, peerAddr := range status.Config.User.Whitelist {
+		printIndentedL1(formatPeerInfo(peerAddr.StringExpanded(), peerMap))
 	}
 }
 
 func printHooksStatus(status DaemonStatus) {
-	var dot, value, help string
+	var formatter FormatterFunc
+	var value, help string
 
 	if status.HooksEnabled {
-		dot = greenDot
+		formatter = greenFormatter
 		value = "enabled"
 	} else {
-		dot = yellowDot
+		formatter = yellowFormatter
 		value = "disabled"
 		help = "Disabled hooks are not a reason to panic, unless your setup needs them"
 	}
 
-	printStatusLine(dot, "Hooks", value)
+	printStatusLine(formatter, "Hooks", value)
 	if help != "" {
-		printStatusHelp(dot, help)
+		printIndentedL1(help)
 	}
-}
-
-func printStatus(cmd *cli.Command, status DaemonStatus) {
-	verbose := verboseLogs || cmd.Bool("verbose")
-
-	printStatusHeader("Version")
-	printVersion(status.Version)
-	pterm.Println()
-
-	var baseServerDot, baseServerHelp, baseServerStatusReminder string
-
-	if status.LiveData.BaseConnection.Type == "UDP" {
-		baseServerDot = greenDot
-	} else if status.LiveData.BaseConnection.Type == "TCP" {
-		baseServerDot = yellowDot
-		baseServerHelp = "TCP is a fallback connection method. You'll get better results on UDP"
-		baseServerStatusReminder = "You can check on https://status.husarnet.com if there are any issues with our infrastructure"
-	} else {
-		baseServerDot = redDot
-		baseServerHelp = "There's no Base Server connection - Husarnet will not be fully functional"
-		baseServerStatusReminder = "You can check on https://status.husarnet.com if there are any issues with our infrastructure"
-	}
-
-	printStatusHeader("Connection status")
-	printStatusLine(baseServerDot, "Base Server", pterm.Sprintf("%s:%v (%s)", status.LiveData.BaseConnection.Address, status.LiveData.BaseConnection.Port, status.LiveData.BaseConnection.Type))
-	if baseServerHelp != "" {
-		printStatusHelp(baseServerDot, baseServerHelp)
-	}
-	if baseServerStatusReminder != "" {
-		printStatusHelp(baseServerDot, baseServerStatusReminder)
-	}
-
-	var dashboardConnectionDot, dashboardConnectionHelp string
-	if status.LiveData.DashboardConnection {
-		if status.Config.Dashboard.IsClaimed {
-			dashboardConnectionDot = greenDot
-			dashboardConnectionHelp = "connected"
-		} else {
-			dashboardConnectionDot = yellowDot
-			dashboardConnectionHelp = "not connected, ready to connect"
-		}
-	} else {
-		dashboardConnectionDot = redDot
-		dashboardConnectionHelp = "not connected"
-	}
-
-	printStatusLine(dashboardConnectionDot, "Dashboard", dashboardConnectionHelp)
-
-	if verbose {
-		for element, connectionStatus := range status.ConnectionStatus {
-			if element == "base" {
-				continue // We already covered base server in detail
-			}
-
-			printConnectionStatus(connectionStatus, cases.Title(language.English).String(element))
-		}
-	}
-	pterm.Println()
-
-	printStatusHeader("Dashboard")
-	if status.Config.Dashboard.IsClaimed {
-		printStatusHelp(greenDot, fmt.Sprintf("The device is manageable in the Dashboard (https://dashboard.%s)", status.Config.Env.InstanceFqdn))
-		printStatusLine(neutralDot, "Known as", status.Config.Dashboard.ClaimInfo.Hostname)
-		printStatusLine(neutralDot, "Claimed by", status.Config.Dashboard.ClaimInfo.Owner)
-	} else {
-		printStatusHelp(redDot, fmt.Sprintf("device not claimed by any Husarnet account (go to https://dashboard.%s to set up)", status.Config.Env.InstanceFqdn))
-	}
-
-	pterm.Println()
-
-	if verbose {
-		printStatusHeader("User settings")
-
-		settingKeys := []string{}
-		for k := range status.UserSettings {
-			settingKeys = append(settingKeys, k)
-		}
-		sort.Strings(settingKeys)
-
-		for _, settingName := range settingKeys {
-			settingValue := status.UserSettings[settingName]
-			settingName = stringy.New(settingName).SnakeCase().ToUpper()
-			printStatusLine(neutralDot, settingName, settingValue)
-		}
-		pterm.Println()
-		pterm.Printfln("If you want to override any of those variables, prefix them with %s and provide as an environment variable to %s", pterm.Bold.Sprint("HUSARNET_"), pterm.Bold.Sprint("husarnet-daemon"))
-		pterm.Println()
-	}
-
-	printStatusHeader("Local")
-	// TODO long term - those two will need to query dashboard, but you still need a status to be near instant so set the timeouts to something line 200ms max
-	// printStatusLine(neutralDot, "Hostname", status.LocalHostname, "") TODO long term - get the hostname we're using on the Husarnet network
-	// printStatusLine(neutralDot, "Groups", status.LocalHostname, "") TODO long term - query dashboard (thus move this command to the compound one) for the grups current host is in
-	pterm.Printfln("%s Husarnet IP:\n%s", neutralDot, pterm.Bold.Sprint(status.LiveData.LocalIP.StringExpanded()))
-	pterm.Println()
-
-	printStatusHeader("Feature flags")
-	printHooksStatus(status)
-	pterm.Println()
-
-	printStatusHeader("Whitelist")
-	printWhitelist(status, verbose)
-
 }
 
 func printStatusFollow(cmd *cli.Command) {
@@ -335,7 +296,7 @@ func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
 	if !areConnectionStatusesEqual(prevStatus.ConnectionStatus, currStatus.ConnectionStatus) {
 		return false
 	}
-	if !areAddressListsEqual(prevStatus.Whitelist, currStatus.Whitelist) {
+	if !areAddressListsEqual(prevStatus.Config.User.Whitelist, currStatus.Config.User.Whitelist) {
 		return false
 	}
 	if !areUserSettingsEqual(prevStatus.UserSettings, currStatus.UserSettings) {
