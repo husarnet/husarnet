@@ -48,11 +48,11 @@ var claimCommand = &cli.Command{
 		}
 
 		params := types.ClaimParams{
-			ClaimToken: args[0],
-			Hostname:   cmd.String("hostname"),
-			Aliases:    cmd.StringSlice("alias"),
-			Comment:    cmd.String("comment"),
-			Emoji:      cmd.String("emoji"),
+			Code:     args[0],
+			Hostname: cmd.String("hostname"),
+			Aliases:  cmd.StringSlice("alias"),
+			Comment:  cmd.String("comment"),
+			Emoji:    cmd.String("emoji"),
 		}
 
 		resp, err := requests.Claim(params)
