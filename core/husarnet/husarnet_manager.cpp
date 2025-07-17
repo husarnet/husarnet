@@ -49,17 +49,18 @@ void HusarnetManager::prepareHusarnet()
   this->hooksManager = new HooksManager(this->configEnv->getEnableHooks());
   Port::threadStart([this]() { this->hooksManager->periodicThread(); }, "hooks");
 
-  this->configManager = new ConfigManager(this->hooksManager, this->configEnv);
+  // Identity is not handled through the config so we need to initialize it
+  // separately
+  this->myIdentity = Identity::init();
+
+  // Initialize ConfigManager which will read what's on the disk and try fetching license and config
+  this->configManager = new ConfigManager(this->hooksManager, this->configEnv, this->myIdentity->getIpAddress());
   Port::threadStart([this]() { this->configManager->periodicThread(); }, "config");
   this->configManager->waitInit();  // blocks until we know where (and if) to connect
 
   // At this point we have working settings/configuration and logs
 
-  // Identity is not handled through the config so we need to initialize it
-  // separately
-  this->myIdentity = Identity::init();
-
-  // Spin off another thread for heartbeats - report being alive every minute or so
+  // Spin off another thread for heartbeats - report being alive to Dashboard every now and then
   if(this->configEnv->getEnableControlplane()) {
     Port::threadStart(
         [this]() {
@@ -150,9 +151,7 @@ json HusarnetManager::getDataForStatus() const
   result[STATUS_KEY_DASHBOARDCONNECTION] = this->eventBus->isConnected();
 
   bool healthSummary = (baseConnectionType != BaseConnectionType::None) && isEventBusConnected;
-  result[STATUS_KEY_HEALTH] = json::object({
-    {STATUS_KEY_HEALTH_SUMMARY, healthSummary}
-  });
+  result[STATUS_KEY_HEALTH] = json::object({{STATUS_KEY_HEALTH_SUMMARY, healthSummary}});
 
   // add peers from peerContainer
   result[STATUS_KEY_LIVEPEERS] = json::array();

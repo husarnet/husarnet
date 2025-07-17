@@ -2,6 +2,7 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
+#include <chrono>
 #include <condition_variable>
 #include <string>
 
@@ -86,13 +87,17 @@ using namespace nlohmann;  // json
 #define STATUS_KEY_HEALTH "health"
 #define STATUS_KEY_HEALTH_SUMMARY "summary"
 
-constexpr int configManagerPeriodInSeconds = 60 * 10;  // fresh get_config every 10 min
-constexpr int refreshLicenseAfterNumPeriods = 5;       // every N get_config refreshes, refresh license too
+constexpr int periodicThreadIntervalMs = 800;
+constexpr auto getConfigRefreshPeriod = std::chrono::minutes(10);
+constexpr auto licenseRefreshPeriod = std::chrono::minutes(30);
+
+using TimePoint = std::chrono::time_point<std::chrono::steady_clock>;
 
 class ConfigManager {
  private:
   HooksManager* hooksManager;
   const ConfigEnv* configEnv;
+  const HusarnetAddress ourIp;  // the IP address of this device; ConfigManager needs to know it to put it into hosts
 
   // TODO: these might be taking up too much space for esp32 to handle
   //   we might consider moving logic for storing them to port
@@ -106,6 +111,9 @@ class ConfigManager {
   mutable etl::mutex mutexSlow;  // protects json documents
   mutable etl::mutex cvMutex;    // used for condition_variable only
   std::condition_variable cv;
+
+  TimePoint lastLicenseUpdate;
+  TimePoint lastGetConfigUpdate;
 
   etl::set<HusarnetAddress, ALLOWED_PEERS_LIMIT> allowedPeers;
   etl::set<HusarnetAddress, USER_WHITELIST_SIZE_LIMIT> userWhitelist;
@@ -134,8 +142,10 @@ class ConfigManager {
   bool writeConfig();  // If this fails we should propagate the error
   bool writeCache();   // It does not matter whether this fails
 
+  void resetLicenseTimer();
+
  public:
-  ConfigManager(HooksManager* hooksManager, const ConfigEnv* configEnv);
+  ConfigManager(HooksManager* hooksManager, const ConfigEnv* configEnv, HusarnetAddress ourIp);
   ConfigManager(const ConfigManager&) = delete;
 
   void periodicThread();  // Start as a thread - update license, flush cache to

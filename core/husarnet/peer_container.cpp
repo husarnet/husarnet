@@ -16,7 +16,7 @@ PeerContainer::PeerContainer(ConfigManager* configManager, Identity* identity)
 Peer* PeerContainer::createPeer(HusarnetAddress id)
 {
   if(!this->configManager->isPeerAllowed(id)) {
-    LOG_INFO("peer %s is not on the whitelist", id.toString().c_str());
+    LOG_INFO("peer %s is not allowed", id.toString().c_str());
     return nullptr;
   }
   Peer* peer = new Peer;
@@ -35,7 +35,7 @@ Peer* PeerContainer::getPeer(HusarnetAddress id)
     return cachedPeer;
 
   if(!this->configManager->isPeerAllowed(id)) {
-    LOG_INFO("peer %s is not on the whitelist", id.toString().c_str());
+    LOG_INFO("peer %s is not allowed", id.toString().c_str());
     return nullptr;
   }
 

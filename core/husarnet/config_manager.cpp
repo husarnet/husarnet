@@ -12,8 +12,8 @@
 
 #include "ngsocket_messages.h"
 
-ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* configEnv)
-    : hooksManager(hooksManager), configEnv(configEnv)
+ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* configEnv, HusarnetAddress ourIp)
+    : hooksManager(hooksManager), configEnv(configEnv), ourIp(ourIp)
 {
   std::lock_guard lgFast(this->mutexFast);
   if(!configEnv->getEnableControlplane()) {
@@ -40,6 +40,7 @@ void ConfigManager::getLicense()
 
   this->storeLicense(licenseJson);
   this->updateLicenseData();
+  this->lastLicenseUpdate = std::chrono::steady_clock::now();
 }
 
 void ConfigManager::storeLicense(const nlohmann::json& jsonDoc)
@@ -110,6 +111,7 @@ void ConfigManager::getGetConfig()
   if(apiResponse.isSuccessful()) {
     this->storeGetConfig(apiResponse.getPayloadJson());
     this->updateGetConfigData();
+    this->lastGetConfigUpdate = std::chrono::steady_clock::now();
   } else {
     LOG_ERROR("ConfigManagerDev: API responded with error, details: %s", apiResponse.toString().c_str());
   }
@@ -164,10 +166,12 @@ void ConfigManager::updateGetConfigData()
       for(auto& alias : aliases) {
         hostsEntries.insert({alias, addr});
       }
-      Port::updateHostsFile(hostsEntries);
       // TODO it would be best if the lock was freed before updateHostsFile
       // but that's for later
     }
+    // add also our own address as husarnet-local
+    hostsEntries.insert({"husarnet-local", this->ourIp});
+    Port::updateHostsFile(hostsEntries);
   }
 
   LOG_INFO("ConfigManagerDev: updateGetConfigData finished")
@@ -342,18 +346,19 @@ void ConfigManager::periodicThread()
 
   this->getLicense();
 
-  int periodsCompleted = 0;
   while(true) {
     std::unique_lock lk(this->cvMutex);
-    this->cv.wait_for(lk, std::chrono::seconds(configManagerPeriodInSeconds));
+    this->cv.wait_for(lk, std::chrono::milliseconds(periodicThreadIntervalMs));
 
-    if(periodsCompleted % refreshLicenseAfterNumPeriods == 0) {
-      LOG_INFO("ConfigManagerDev: refreshing the license")
+    TimePoint now = std::chrono::steady_clock::now();
+
+    if((now - this->lastLicenseUpdate) > licenseRefreshPeriod) {
+      LOG_INFO("ConfigManagerDev: periodic thread: will redownload the license")
       this->getLicense();
     }
 
-    if(this->configEnv->getEnableControlplane()) {
-      LOG_INFO("ConfigManagerDev: periodic thread will download the config")
+    if(this->configEnv->getEnableControlplane() && (now - this->lastGetConfigUpdate) > getConfigRefreshPeriod) {
+      LOG_ERROR("ConfigManagerDev: periodic thread: will request the config from the control plane");
       this->getGetConfig();
 
       // Flush to disk
@@ -362,11 +367,9 @@ void ConfigManager::periodicThread()
       } else {
         LOG_ERROR("ConfigManagerDev: config write failed")
       }
-    }
 
-    this->writeCache();  // best-effort
-    periodsCompleted++;
-    LOG_INFO("ConfigManagerDev: periodic thread going to sleep")
+      this->writeCache();  // best-effort
+    }
   }
 }
 
@@ -409,6 +412,7 @@ bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
 
 void ConfigManager::triggerGetConfig()
 {
-  LOG_INFO("ConfigManagerDev: get_config ordered by control plane")
+  LOG_INFO("ConfigManagerDev: get_config ordered by control plane, resetting timer")
+  this->lastGetConfigUpdate = TimePoint{};
   this->cv.notify_one();
 }
