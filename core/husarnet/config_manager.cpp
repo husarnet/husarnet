@@ -13,7 +13,11 @@
 #include "ngsocket_messages.h"
 
 ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* configEnv, HusarnetAddress ourIp)
-    : hooksManager(hooksManager), configEnv(configEnv), ourIp(ourIp)
+    : hooksManager(hooksManager),
+      configEnv(configEnv),
+      ourIp(ourIp),
+      lastLicenseUpdate(std::chrono::steady_clock::now() - (licenseRefreshPeriod * 2)),
+      lastGetConfigUpdate(std::chrono::steady_clock::now() - (getConfigRefreshPeriod * 2))
 {
   std::lock_guard lgFast(this->mutexFast);
   if(!configEnv->getEnableControlplane()) {
