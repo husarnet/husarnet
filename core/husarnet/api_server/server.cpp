@@ -109,6 +109,7 @@ bool ApiServer::requireParams(const httplib::Request& req, httplib::Response& re
 
 void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httplib::Response& res)
 {
+  LOG_INFO("received request to forward");
   if(!validateSecret(req, res)) {
     return;
   }
@@ -140,51 +141,65 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
     return;
   }
 
-  httplib::Params params;
   auto encodedPK = dashboardapi::Proxy::encodePublicKey(identity);
   auto encodedSig = dashboardapi::Proxy::encodeSignature(identity, req.body);
-
+  httplib::Params params;
   params.emplace("pk", encodedPK.c_str());
   params.emplace("sig", encodedSig.c_str());
 
   std::string query = httplib::detail::params_to_query_str(params);
   std::string pathWithQuery(path + "?" + query);
 
-  httplib::Client httpClient(apiAddress.toString());
-  httpClient.set_connection_timeout(0, 5 * 1000000);  // 5 sec
-  httpClient.set_read_timeout(5, 0);                  // 5 seconds
-  httpClient.set_write_timeout(5, 0);                 // 5 seconds
-  // TODO: add retries and figure out if timeout values are sane/useful
+  // we allow a couple of retries in case the Dashboard API connection is not well established at the time of Daemon API request
+  auto attemptRequest = [apiAddress, method, pathWithQuery](const httplib::Request& req) {
+    httplib::Client httpClient(apiAddress.toString());
+    httpClient.set_connection_timeout(0, 5 * 1000000);  // 5 sec
+    httpClient.set_read_timeout(5, 0);                  // 5 seconds
+    httpClient.set_write_timeout(5, 0);                 // 5 seconds
 
-  httplib::Result result;
+    httplib::Result result;
 
-  if(method == "GET") {
-    result = httpClient.Get(pathWithQuery);
-  } else if(method == "POST") {
-    result = httpClient.Post(pathWithQuery, req.body, "application/json");
-  } else if(method == "PUT") {
-    result = httpClient.Put(pathWithQuery, req.body, "application/json");
-  } else if(method == "DELETE") {
-    result = httpClient.Delete(pathWithQuery);
-  } else {
-    LOG_ERROR("Unsupported HTTP method: %s", method.c_str());
-    return;
+    if(method == "GET") {
+      result = httpClient.Get(pathWithQuery);
+    } else if(method == "POST") {
+      result = httpClient.Post(pathWithQuery, req.body, "application/json");
+    } else if(method == "PUT") {
+      result = httpClient.Put(pathWithQuery, req.body, "application/json");
+    } else if(method == "DELETE") {
+      result = httpClient.Delete(pathWithQuery);
+    } else {
+      LOG_ERROR("Unsupported HTTP method: %s", method.c_str());
+    }
+    return result;
+  };
+
+  const int maxRetries = 3;
+  int retriesLeft = maxRetries;
+
+  httplib::Result attemptResult;
+  while(retriesLeft > 0) {
+    retriesLeft--;
+    LOG_DEBUG("api_server: request to API, attempt no. %d", maxRetries - retriesLeft)
+    attemptResult = attemptRequest(req);
+
+    if(attemptResult) {
+      res.set_content(attemptResult->body,
+                      "application/json");  // Dashboard API always returns valid JSON
+      LOG_DEBUG("API request successful, needed attempts: %d", maxRetries - retriesLeft)
+      return;
+    }
+    Port::threadSleep(1500);
   }
 
-  if(result) {
-    res.set_content(result->body,
-                    "application/json");  // Dashboard API always returns valid JSON
-  } else {
-    auto err = result.error();
-    LOG_ERROR("Can't contact Dashboard API: %s", httplib::to_string(err).c_str());
-    res.status = 502;
-    nlohmann::json jsonResponse{
-        {"type", "server_error"},
-        {"errors", nlohmann::json::array({httplib::to_string(err)})},
-        {"warnings", nlohmann::json::array()},
-        {"message", "error"}};
-    res.set_content(jsonResponse.dump(4), "application/json");
-  }
+  auto err = attemptResult.error();
+  LOG_ERROR("Can't contact Dashboard API, number of retries exhausted: %s", httplib::to_string(err).c_str());
+  res.status = 503;
+  nlohmann::json jsonResponse{
+      {"type", "server_error"},
+      {"errors", nlohmann::json::array({httplib::to_string(err)})},
+      {"warnings", nlohmann::json::array()},
+      {"message", "error"}};
+  res.set_content(jsonResponse.dump(4), "application/json");
 }
 
 template <typename iterable_InetAddress_t>
