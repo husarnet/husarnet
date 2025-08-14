@@ -533,7 +533,7 @@ namespace OsSocket {
     int maxfd = 0;
 
     for(auto conn : tcpConnections) {
-      if(conn->fd <= 0)
+      if(!conn || conn->fd <= 0)
         continue;
       FD_SET(conn->fd, &readset);
       maxfd = std::max(conn->fd, maxfd);
@@ -590,7 +590,7 @@ namespace OsSocket {
     }
 
     for(auto conn : tcpConnections) {
-      if(conn->fd == -1)
+      if(!conn || conn->fd == -1)
         continue;
 
       if(FD_ISSET(conn->fd, &readset)) {
@@ -600,6 +600,9 @@ namespace OsSocket {
 
     // Execute error callbacks on errored connections
     for(auto conn : tcpConnections) {
+      if(!conn) {
+        continue;
+      }
       if(conn->_hasErrored) {
         conn->errorCallback(conn);
       }
@@ -609,7 +612,12 @@ namespace OsSocket {
     tcpConnections.erase(
         std::remove_if(
             tcpConnections.begin(), tcpConnections.end(),
-            [](std::shared_ptr<TcpConnection> conn) { return conn->_hasErrored; }),
+            [](std::shared_ptr<TcpConnection> conn) {
+              if(conn) {
+                return conn->_hasErrored;
+              }
+              return true;
+            }),
         tcpConnections.end());
   }
 

@@ -362,7 +362,7 @@ void ConfigManager::periodicThread()
     }
 
     if(this->configEnv->getEnableControlplane() && (now - this->lastGetConfigUpdate) > getConfigRefreshPeriod) {
-      LOG_ERROR("ConfigManagerDev: periodic thread: will request the config from the control plane");
+      LOG_INFO("ConfigManagerDev: periodic thread: will request the config from the control plane");
       this->getGetConfig();
 
       // Flush to disk
