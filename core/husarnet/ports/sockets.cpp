@@ -536,7 +536,7 @@ const bool useV6 = true;
     int maxfd = 0;
 
     for(auto conn : tcpConnections) {
-      if(conn->fd <= 0)
+      if(!conn || conn->fd <= 0)
         continue;
       FD_SET(conn->fd, &readset);
       maxfd = std::max(conn->fd, maxfd);
@@ -593,7 +593,7 @@ const bool useV6 = true;
     }
 
     for(auto conn : tcpConnections) {
-      if(conn->fd == -1)
+      if(!conn || conn->fd == -1)
         continue;
 
       if(FD_ISSET(conn->fd, &readset)) {
@@ -603,6 +603,9 @@ const bool useV6 = true;
 
     // Execute error callbacks on errored connections
     for(auto conn : tcpConnections) {
+      if(!conn) {
+        continue;
+      }
       if(conn->_hasErrored) {
         conn->errorCallback(conn);
       }
@@ -612,7 +615,12 @@ const bool useV6 = true;
     tcpConnections.erase(
         std::remove_if(
             tcpConnections.begin(), tcpConnections.end(),
-            [](std::shared_ptr<TcpConnection> conn) { return conn->_hasErrored; }),
+            [](std::shared_ptr<TcpConnection> conn) {
+              if(conn) {
+                return conn->_hasErrored;
+              }
+              return true;
+            }),
         tcpConnections.end());
   }
 
