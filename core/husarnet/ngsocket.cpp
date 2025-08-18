@@ -497,7 +497,7 @@ void NgSocket::init()
   Port::threadStart(
       [this]() { this->workerLoop(); }, "hnet_ng",
       /*stack=*/8000,
-      NGSOCKET_TASK_PRIORITY);  // TODO figure whether this is still useful
+      NGSOCKET_TASK_PRIORITY);
 
   LOG_INFO("ngsocket %s listening on %d", this->myIdentity->getDeviceId().toString().c_str(), sourcePort);
 }

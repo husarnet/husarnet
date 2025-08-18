@@ -10,13 +10,14 @@
 
 namespace OsSocket {
 
-#ifdef ENABLE_IPV6
+//TODO: remove INET
+// #ifdef ENABLE_IPV6
 #define AF_INETx AF_INET6
-  const bool useV6 = true;
-#else
-#define AF_INETx AF_INET
-  const bool useV6 = false;
-#endif
+const bool useV6 = true;
+// #else
+// #define AF_INETx AF_INET
+//   const bool useV6 = false;
+// #endif
 
   struct sockaddr_in6 makeSockaddr(InetAddress addr, bool v6 = useV6)
   {
@@ -44,7 +45,9 @@ namespace OsSocket {
     if(st.ss_family == AF_INET) {
       struct sockaddr_in* st4 = (sockaddr_in*)(&st);
       InetAddress r{};
-      r.ip.data[10] = 0xFF;  // ipv4-mapped ipv6
+      r.ip.data[0]  = 0; // ipv4-mapped ipv6
+      r.ip.data[0]  = 0;
+      r.ip.data[10] = 0xFF;
       r.ip.data[11] = 0xFF;
       memcpy((char*)r.ip.data.data() + 12, &st4->sin_addr, 4);
       r.port = htons(st4->sin_port);

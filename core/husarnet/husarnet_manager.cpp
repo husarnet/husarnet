@@ -47,7 +47,10 @@ void HusarnetManager::prepareHusarnet()
                                                    // if not a debug build
 
   this->hooksManager = new HooksManager(this->configEnv->getEnableHooks());
-  Port::threadStart([this]() { this->hooksManager->periodicThread(); }, "hooks");
+
+  if (this->hooksManager->isEnabled()) { 
+    Port::threadStart([this]() { this->hooksManager->periodicThread(); }, "hooks", 8000);
+  }
 
   // Identity is not handled through the config so we need to initialize it
   // separately
@@ -55,25 +58,10 @@ void HusarnetManager::prepareHusarnet()
 
   // Initialize ConfigManager which will read what's on the disk and try fetching license and config
   this->configManager = new ConfigManager(this->hooksManager, this->configEnv, this->myIdentity->getIpAddress());
-  Port::threadStart([this]() { this->configManager->periodicThread(); }, "config");
+  Port::threadStart([this]() { this->configManager->periodicThread(); }, "config", 24000, CONFIG_MANAGER_TASK_PRIORITY);
   this->configManager->waitInit();  // blocks until we know where (and if) to connect
 
   // At this point we have working settings/configuration and logs
-
-  // Spin off another thread for heartbeats - report being alive to Dashboard every now and then
-  if(this->configEnv->getEnableControlplane()) {
-    Port::threadStart(
-        [this]() {
-          while(true) {
-            const auto apiAddress = this->configManager->getApiAddress();
-            if(apiAddress.isValid()) {
-              dashboardapi::postHeartbeat(apiAddress, this->myIdentity);
-            }
-            Port::threadSleep(heartbeatPeriodMs);
-          }
-        },
-        "heartbeat");
-  }
 
   // Make our PeerFlags available early if the caller wants to change them
   this->myFlags = new PeerFlags();
@@ -86,7 +74,7 @@ void HusarnetManager::runHusarnet()
   this->peerContainer = new PeerContainer(this->configManager, this->myIdentity);
 
   auto tt = Port::startTunTap(this->myIdentity->getIpAddress(), this->configEnv->getDaemonInterface());
-  this->tunTap = dynamic_cast<TunTap*>(tt);
+  this->tunTap = static_cast<TunTap*>(tt);
 
   auto multicast = new MulticastLayer(this->myIdentity->getDeviceId(), this->configManager);
   auto compression = new CompressionLayer(this->peerContainer, this->myFlags);
@@ -100,15 +88,35 @@ void HusarnetManager::runHusarnet()
   stackUpperOnLower(securityLayer, ngsocket);
 
   if(this->configEnv->getEnableControlplane()) {
-    this->eventBus->init();
     Port::threadStart(
         [this]() {
+          this->eventBus->init();
+
           while(true) {
             this->eventBus->periodic();
             Port::threadSleep(500);
           }
         },
-        "eb");
+        "eb",
+        /*stack=*/16000,
+        EVENTBUS_TASK_PRIORITY);
+  }
+
+  // Spin off another thread for heartbeats - report being alive to Dashboard every now and then
+  if(this->configEnv->getEnableControlplane()) {
+    Port::threadStart(
+        [this]() {
+          while(true) {
+            const auto apiAddress = this->configManager->getApiAddress();
+            if(apiAddress.isValid()) {
+              dashboardapi::postHeartbeat(apiAddress, this->myIdentity);
+            }
+            Port::threadSleep(heartbeatPeriodMs);
+          }
+        },
+        "heartbeat",
+        16000,
+        HEARTBEAT_TASK_PRIORITY);
   }
 
 // In case of a "fat" platform - start the API server
@@ -130,6 +138,8 @@ void HusarnetManager::runHusarnet()
     Port::processSocketEvents(this->tunTap);
   }
 }
+
+#ifdef HTTP_CONTROL_API
 
 json HusarnetManager::getDataForStatus() const
 {
@@ -169,3 +179,5 @@ json HusarnetManager::getDataForStatus() const
   }
   return result;
 }
+
+#endif

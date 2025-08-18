@@ -44,7 +44,7 @@ std::string ConfigEnv::getTldFqdn() const
 LogLevel ConfigEnv::getLogVerbosity() const
 {
 #if defined(ESP_PLATFORM)
-  LogLevel def = CONFIG_HUSARNET_LOG_LEVEL;
+  LogLevel def = static_cast<LogLevel>(CONFIG_LOG_DEFAULT_LEVEL);
 #elif defined(DEBUG_BUILD)
   auto def = LogLevel::DEBUG;
 #else

@@ -357,17 +357,17 @@ void ConfigManager::periodicThread()
     TimePoint now = std::chrono::steady_clock::now();
 
     if((now - this->lastLicenseUpdate) > licenseRefreshPeriod) {
-      LOG_INFO("ConfigManagerDev: periodic thread: will redownload the license")
+      LOG_DEBUG("ConfigManagerDev: periodic thread: will redownload the license")
       this->getLicense();
     }
 
     if(this->configEnv->getEnableControlplane() && (now - this->lastGetConfigUpdate) > getConfigRefreshPeriod) {
-      LOG_ERROR("ConfigManagerDev: periodic thread: will request the config from the control plane");
+      LOG_DEBUG("ConfigManagerDev: periodic thread: will request the config from the control plane");
       this->getGetConfig();
 
       // Flush to disk
       if(this->writeConfig()) {
-        LOG_INFO("ConfigManagerDev: config write successful")
+        LOG_DEBUG("ConfigManagerDev: config write successful")
       } else {
         LOG_ERROR("ConfigManagerDev: config write failed")
       }

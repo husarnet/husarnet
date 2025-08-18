@@ -14,7 +14,7 @@
 constexpr int heartbeatPeriodMs = 1000 * 60;  // send heartbeat every minute
 
 class HusarnetManager {
- private:
+ public:
   Identity* myIdentity = nullptr;
 
   ConfigEnv* configEnv = nullptr;
@@ -28,8 +28,7 @@ class HusarnetManager {
   TunTap* tunTap = nullptr;
   SecurityLayer* securityLayer = nullptr;
   NgSocket* ngsocket = nullptr;
-
- public:
+  
   HusarnetManager();
   HusarnetManager(const HusarnetManager&) = delete;  // TODO add this to most of the singleton-ish classes in the
                                                      // codebase
@@ -41,5 +40,7 @@ class HusarnetManager {
 
   void prepareHusarnet();
   void runHusarnet();
+  #ifdef HTTP_CONTROL_API
   json getDataForStatus() const;
+  #endif
 };

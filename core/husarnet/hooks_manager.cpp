@@ -17,13 +17,13 @@ HooksManager::HooksManager(bool enableHooks)
 
 void HooksManager::scheduleHook(const HookType hookType)
 {
+  etl::lock_guard<etl::mutex> lock(this->mutex);
+  
   if(!this->enabled) {
     return;
   }
 
-  this->mutex.lock();
   this->hookTimers[hookType] = HOOKS_BUMP_TIME;
-  this->mutex.unlock();
 }
 
 void HooksManager::periodicThread()
@@ -50,4 +50,10 @@ void HooksManager::periodicThread()
 
     Port::threadSleep(HOOKS_PERIOD);
   }
+}
+
+bool HooksManager::isEnabled()
+{
+  etl::lock_guard<etl::mutex> lock(this->mutex);
+  return this->enabled;
 }

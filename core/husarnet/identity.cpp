@@ -23,6 +23,7 @@ fstring<32> Identity::getPubkey()
   return this->pubkey;
 }
 
+//TODO: redundant, remove when reworking the ngSocket
 HusarnetAddress Identity::getDeviceId()
 {
   return this->deviceId;

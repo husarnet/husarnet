@@ -50,13 +50,18 @@
 #include "nvs_flash.h"
 #include "nvs_handle.hpp"
 
-#define NVS_HOSTNAME_KEY "hostname"
-#define NVS_IDENTITY_KEY "id"
-#define NVS_CONFIG_KEY "config"
-#define NVS_LICENSE_KEY "license"
-#define NVS_API_SECRET_KEY "api_secret"
 
 static const char* LOG_TAG = "husarnet";
+static const char NVS_HOSTNAME_KEY[] = "hostname";
+
+static const etl::map<StorageKey, std::string, STORAGE_KEY_OPTIONS> storageMap = {
+    etl::pair{StorageKey::id, std::string("id")},
+    etl::pair{StorageKey::config, std::string("config.json")},
+    etl::pair{StorageKey::daemonApiToken, std::string("daemon_api_token")},
+    etl::pair{StorageKey::cache, std::string("cache.json")},
+    etl::pair{StorageKey::windowsDeviceGuid, std::string("guid")},
+};
+
 std::unique_ptr<nvs::NVSHandle> nvsHandle;
 
 static void taskProc(void* p)
@@ -163,6 +168,12 @@ namespace Port {
     }
   }
 
+  void die(std::string msg)
+  {
+    LOG_CRITICAL("Fatal error: %s", msg.c_str());
+    abort();
+  }
+
   void threadStart(std::function<void()> func, const char* name, int stack, int priority)
   {
     std::function<void()>* func1 = new std::function<void()>;
@@ -173,9 +184,17 @@ namespace Port {
     }
   }
 
-  std::map<std::string, std::string> getEnvironmentOverrides()
+  void threadSleep(Time ms)
   {
-    return std::map<std::string, std::string>();
+    vTaskDelay(pdMS_TO_TICKS(ms));
+  }
+
+  etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentOverrides()
+  {
+    // {EnvKey::tldFqdn, CONFIG_HUSARNET_FQDN};
+    return etl::map<EnvKey, std::string, ENV_KEY_OPTIONS>{
+        {EnvKey::tldFqdn, CONFIG_HUSARNET_FQDN}
+    };
   }
 
   void notifyReady()
@@ -189,19 +208,19 @@ namespace Port {
     esp_log_level_t esp_level;
 
     switch(level) {
-      case +LogLevel::DEBUG:
+      case LogLevel::DEBUG:
         esp_level = ESP_LOG_DEBUG;
         break;
-      case +LogLevel::INFO:
+      case LogLevel::INFO:
         esp_level = ESP_LOG_INFO;
         break;
-      case +LogLevel::WARNING:
+      case LogLevel::WARNING:
         esp_level = ESP_LOG_WARN;
         break;
-      case +LogLevel::ERROR:
+      case LogLevel::ERROR:
         esp_level = ESP_LOG_ERROR;
         break;
-      case +LogLevel::CRITICAL:
+      case LogLevel::CRITICAL:
         esp_level = ESP_LOG_ERROR;
         break;
       default:
@@ -212,7 +231,7 @@ namespace Port {
     ESP_LOG_LEVEL(esp_level, LOG_TAG, "%s", message.c_str());
   }
 
-  int64_t getCurrentTime()
+  Time getCurrentTime()
   {
     return xTaskGetTickCount() * portTICK_PERIOD_MS;
   }
@@ -294,10 +313,11 @@ namespace Port {
     return ret;
   }
 
-  UpperLayer* startTunTap(HusarnetManager* manager)
+  // On the ESP32 platform network interface name is always "hn0"
+  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
     ip6_addr_t ip;
-    memcpy(ip.addr, manager->getIdentity()->getDeviceId().data(), 16);
+    memcpy(ip.addr, myAddress.data.data(), 16);
 
     auto tunTap = new TunTap(ip, 32);
     return tunTap;
@@ -306,7 +326,7 @@ namespace Port {
   void processSocketEvents(void* tuntap)
   {
     OsSocket::runOnce(20);  // process socket events for at most so many ms
-    (TunTap*)tuntap->processQueuedPackets();
+    static_cast<TunTap*>(tuntap)->processQueuedPackets();
   }
 
   std::string getSelfHostname()
@@ -352,6 +372,11 @@ namespace Port {
     return IpAddress();
   }
 
+  bool runHook(HookType hookType)
+  {
+    return false;
+  }
+
   // TODO long-term: implement hooks using FreeRTOS notifications
   bool runScripts(const std::string& path)
   {
@@ -364,43 +389,203 @@ namespace Port {
     return false;
   }
 
-  std::string readIdentity()
+  std::string readStorage(StorageKey key)
   {
-    return readNVS(NVS_IDENTITY_KEY);
+    return readNVS(storageMap.at(key));
   }
 
-  bool writeIdentity(const std::string& data)
+  bool writeStorage(StorageKey key, const std::string& data)
   {
-    return writeNVS(NVS_IDENTITY_KEY, data);
+    return writeNVS(storageMap.at(key), data);
   }
 
-  std::string readConfig()
+  static HttpResult httpSendRecv(const IpAddress& ip, HTTPMessage& message)
   {
-    return readNVS(NVS_CONFIG_KEY);
+    if (ip.isInvalid()) {
+      LOG_ERROR("Invalid ip address");
+      return {-1, ""};
+    }
+    
+    InetAddress address{ip, 80};
+
+    // TODO: streaming write to socket
+    etl::vector<char, 4096> buffer;
+    if (!message.encode(buffer))
+    {
+      LOG_ERROR("Failed to encode HTTP message");
+      return {-1, ""};
+    }
+
+    int sockfd = OsSocket::connectUnmanagedTcpSocket(address);
+
+    if(sockfd < 0) {
+      LOG_ERROR("can't contact %s - is DNS resolution working properly?", ip.toString().c_str());
+      return {-1, ""};
+    }
+
+    assert(buffer.size() > 0);
+
+    // Send the request
+    ssize_t bytes_written = 0;
+
+    do {
+      ssize_t remaining = buffer.size() - bytes_written;
+      ssize_t n = SOCKFUNC(send)(sockfd, buffer.data() + bytes_written, remaining, 0);
+
+      if(n <= 0) {
+        LOG_ERROR("Failed to send HTTP request");
+        SOCKFUNC(close)(sockfd);
+        return {-1, ""};
+      }
+
+      bytes_written += n;
+    } while(bytes_written != buffer.size());
+
+    // Receive the response
+    buffer.clear();
+    buffer.resize(buffer.capacity());
+    ssize_t n = SOCKFUNC(recv)(sockfd, buffer.data(), buffer.size(), 0);
+    if(n <= 0) {
+      LOG_ERROR("Failed to receive HTTP response");
+      SOCKFUNC(close)(sockfd);
+      return {-1, ""};
+    }
+
+    // Close the socket
+    SOCKFUNC(close)(sockfd);
+
+    // Parse the response
+    etl::string_view buffer_view(buffer.data(), n);
+    auto result = message.parse(buffer_view);
+
+    if(result == HTTPMessage::Result::OK) {
+      LOG_INFO("HTTP response received");
+      return
+      {
+        static_cast<int>(message.response.statusCode),
+        std::string(message.body.data(), message.body.size())
+      };
+    }
+
+    LOG_ERROR("Failed to parse HTTP response");
+    return {-1, ""};
   }
 
-  bool writeConfig(const std::string& data)
+  HttpResult httpGet(const std::string& host, const std::string& path)
   {
-    return writeNVS(NVS_CONFIG_KEY, data);
+    HTTPMessage message;
+    message.request.method = "GET";
+    message.request.endpoint = etl::string<128>(path.c_str());
+    assert(message.request.endpoint.is_truncated() == false);
+
+    message.headers.emplace("Host", host);
+    message.headers.emplace("User-Agent", HUSARNET_USER_AGENT);
+
+    LOG_WARNING("%s", host.c_str());
+    auto ip = IpAddress::parse(host);
+    if(ip.isInvalid()) {
+      ip = Port::resolveToIp(host);
+    }
+
+    if(ip.isInvalid()) {
+      LOG_ERROR("Can't resolve %s to IP", host.c_str());
+      return {-1, ""};
+    }
+
+    return httpSendRecv(ip, message);
   }
 
-  std::string readLicenseJson()
+  HttpResult httpGet(const IpAddress& ip, const std::string& path)
   {
-    return readNVS(NVS_LICENSE_KEY);
+    HTTPMessage message;
+    message.request.method = "GET";
+    message.request.endpoint = etl::string<128>(path.c_str());
+    assert(message.request.endpoint.is_truncated() == false);
+
+    message.headers.emplace("Host", ip.toString());
+    message.headers.emplace("User-Agent", HUSARNET_USER_AGENT);
+
+    return httpSendRecv(ip, message);
   }
 
-  bool writeLicenseJson(const std::string& data)
+  HttpResult httpPost(const std::string& host, const std::string& path, const std::string& body)
   {
-    return writeNVS(NVS_LICENSE_KEY, data);
+    HTTPMessage message;
+    message.request.method = "POST";
+    message.request.endpoint = etl::string<256>(path.c_str());
+    assert(message.request.endpoint.is_truncated() == false);
+
+    message.headers.emplace("Host", host);
+    message.headers.emplace("User-Agent", HUSARNET_USER_AGENT);
+    message.headers.emplace("Content-Type", "application/json");
+    message.body = etl::string_view(body.c_str(), body.size());
+
+    LOG_WARNING("%s", host.c_str());
+    auto ip = IpAddress::parse(host);
+    if(ip.isInvalid()) {
+      ip = Port::resolveToIp(host);
+    }
+
+    if(ip.isInvalid()) {
+      LOG_ERROR("Can't resolve %s to IP", host.c_str());
+      return {-1, ""};
+    }
+
+    return httpSendRecv(ip, message);
   }
 
-  std::string readApiSecret()
+  HttpResult httpPost(const IpAddress& ip, const std::string& path, const std::string& body)
   {
-    return readNVS(NVS_API_SECRET_KEY);
+    HTTPMessage message;
+    message.request.method = "POST";
+    message.request.endpoint = etl::string<256>(path.c_str());
+    assert(message.request.endpoint.is_truncated() == false);
+
+    message.headers.emplace("Host", ip.toString());
+    message.headers.emplace("User-Agent", HUSARNET_USER_AGENT);
+    message.headers.emplace("Content-Type", "application/json");
+    message.body = etl::string_view(body.c_str(), body.size());
+
+    return httpSendRecv(ip, message);
   }
 
-  bool writeApiSecret(const std::string& data)
-  {
-    return writeNVS(NVS_API_SECRET_KEY, data);
-  }
+  // std::string readIdentity()
+  // {
+  //   return readNVS(NVS_IDENTITY_KEY);
+  // }
+
+  // bool writeIdentity(const std::string& data)
+  // {
+  //   return writeNVS(NVS_IDENTITY_KEY, data);
+  // }
+
+  // std::string readConfig()
+  // {
+  //   return readNVS(NVS_CONFIG_KEY);
+  // }
+
+  // bool writeConfig(const std::string& data)
+  // {
+  //   return writeNVS(NVS_CONFIG_KEY, data);
+  // }
+
+  // std::string readLicenseJson()
+  // {
+  //   return readNVS(NVS_LICENSE_KEY);
+  // }
+
+  // bool writeLicenseJson(const std::string& data)
+  // {
+  //   return writeNVS(NVS_LICENSE_KEY, data);
+  // }
+
+  // std::string readApiSecret()
+  // {
+  //   return readNVS(NVS_API_SECRET_KEY);
+  // }
+
+  // bool writeApiSecret(const std::string& data)
+  // {
+  //   return writeNVS(NVS_API_SECRET_KEY, data);
+  // }
 }  // namespace Port
