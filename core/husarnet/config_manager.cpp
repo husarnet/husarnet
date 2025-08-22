@@ -16,8 +16,8 @@ ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* config
     : hooksManager(hooksManager),
       configEnv(configEnv),
       ourIp(ourIp),
-      lastLicenseUpdate(std::chrono::steady_clock::now() - (licenseRefreshPeriod * 2)),
-      lastGetConfigUpdate(std::chrono::steady_clock::now() - (getConfigRefreshPeriod * 2))
+  nextLicenseUpdate(std::chrono::steady_clock::now()),
+  nextGetConfigUpdate(std::chrono::steady_clock::now())
 {
   std::lock_guard lgFast(this->mutexFast);
   if(!configEnv->getEnableControlplane()) {
@@ -44,7 +44,7 @@ void ConfigManager::getLicense()
 
   this->storeLicense(licenseJson);
   this->updateLicenseData();
-  this->lastLicenseUpdate = std::chrono::steady_clock::now();
+  this->nextLicenseUpdate = std::chrono::steady_clock::now() + licenseRefreshPeriod;
 }
 
 void ConfigManager::storeLicense(const nlohmann::json& jsonDoc)
@@ -115,7 +115,7 @@ void ConfigManager::getGetConfig()
   if(apiResponse.isSuccessful()) {
     this->storeGetConfig(apiResponse.getPayloadJson());
     this->updateGetConfigData();
-    this->lastGetConfigUpdate = std::chrono::steady_clock::now();
+    this->nextGetConfigUpdate = std::chrono::steady_clock::now() + getConfigRefreshPeriod;
   } else {
     LOG_ERROR("ConfigManagerDev: API responded with error, details: %s", apiResponse.toString().c_str());
   }
@@ -362,12 +362,12 @@ void ConfigManager::periodicThread()
 
     TimePoint now = std::chrono::steady_clock::now();
 
-    if((now - this->lastLicenseUpdate) > licenseRefreshPeriod) {
+    if(now >= this->nextLicenseUpdate) {
       LOG_DEBUG("ConfigManagerDev: periodic thread: will redownload the license")
       this->getLicense();
     }
 
-    if(this->configEnv->getEnableControlplane() && (now - this->lastGetConfigUpdate) > getConfigRefreshPeriod) {
+    if(this->configEnv->getEnableControlplane() && now >= this->nextGetConfigUpdate) {
       LOG_DEBUG("ConfigManagerDev: periodic thread: will request the config from the control plane");
       this->getGetConfig();
 
@@ -423,6 +423,6 @@ bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
 void ConfigManager::triggerGetConfig()
 {
   LOG_INFO("ConfigManagerDev: get_config ordered by control plane, resetting timer")
-  this->lastGetConfigUpdate = TimePoint{};
+  this->nextGetConfigUpdate = std::chrono::steady_clock::now();
   this->cv.notify_one();
 }

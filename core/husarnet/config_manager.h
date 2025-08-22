@@ -113,8 +113,8 @@ class ConfigManager {
   mutable etl::mutex cvMutex;    // used for condition_variable only
   std::condition_variable cv;
 
-  TimePoint lastLicenseUpdate;
-  TimePoint lastGetConfigUpdate;
+  TimePoint nextLicenseUpdate;
+  TimePoint nextGetConfigUpdate;
 
   etl::set<HusarnetAddress, ALLOWED_PEERS_LIMIT> allowedPeers;
   etl::set<HusarnetAddress, USER_WHITELIST_SIZE_LIMIT> userWhitelist;
