@@ -387,8 +387,9 @@ void ConfigManager::waitInit() const
 {
   LOG_INFO("ConfigManagerDev: wait init started")
   // we need to at least have license information, like for example base server to connect to.
+  // wait until license is downloaded and base addresses are known
   while(this->baseAddresses.empty()) {
-    // busy waiting on purpose
+    Port::threadSleep(20);
   }
   LOG_INFO("ConfigManagerDev: wait init finished")
 }
