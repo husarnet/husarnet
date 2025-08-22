@@ -459,7 +459,6 @@ namespace Port {
     auto result = message.parse(buffer_view);
 
     if(result == HTTPMessage::Result::OK) {
-      LOG_INFO("HTTP response received");
       return
       {
         static_cast<int>(message.response.statusCode),
@@ -481,7 +480,6 @@ namespace Port {
     message.headers.emplace("Host", host);
     message.headers.emplace("User-Agent", HUSARNET_USER_AGENT);
 
-    LOG_WARNING("%s", host.c_str());
     auto ip = IpAddress::parse(host);
     if(ip.isInvalid()) {
       ip = Port::resolveToIp(host);
@@ -520,7 +518,6 @@ namespace Port {
     message.headers.emplace("Content-Type", "application/json");
     message.body = etl::string_view(body.c_str(), body.size());
 
-    LOG_WARNING("%s", host.c_str());
     auto ip = IpAddress::parse(host);
     if(ip.isInvalid()) {
       ip = Port::resolveToIp(host);

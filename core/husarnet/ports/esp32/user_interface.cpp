@@ -113,9 +113,7 @@ void HusarnetClient::join(const char* hostname, const char* joinCode)
 
 bool HusarnetClient::isJoined()
 {
-  // TODO: implement
-  // return husarnetManager->isJoined();
-  return true;
+  return husarnetManager->configManager->isClaimed();
 }
 
 std::string HusarnetClient::getIpAddress()

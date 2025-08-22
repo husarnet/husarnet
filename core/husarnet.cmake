@@ -375,7 +375,7 @@ endif()
 
 FetchContent_Declare(
   etl
-  URL https://github.com/ETLCPP/etl/archive/refs/tags/20.39.3.zip
+  URL https://github.com/ETLCPP/etl/archive/refs/tags/20.42.2.zip
 )
 
 FetchContent_MakeAvailable(etl)

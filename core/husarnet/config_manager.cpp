@@ -133,8 +133,8 @@ void ConfigManager::updateGetConfigData()
 
     etl::string<EMAIL_MAX_LENGTH> previousOwner = this->claimedBy;
     // upack ClaimInfo
-    auto isClaimed = latestConfig[GETCONFIG_KEY_IS_CLAIMED].get<bool>();
-    if(isClaimed) {
+    this->claimed = latestConfig[GETCONFIG_KEY_IS_CLAIMED].get<bool>();
+    if(this->claimed) {
       auto claimInfo = latestConfig[GETCONFIG_KEY_CLAIMINFO];
       auto ownerStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_OWNER].get<std::string>();
       auto hostnameStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_HOSTNAME].get<std::string>();
@@ -278,6 +278,12 @@ bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
     return true;
   }
   return this->allowedPeers.contains(address);
+}
+
+bool ConfigManager::isClaimed() const
+{
+  std::lock_guard lgFast(this->mutexFast);
+  return this->claimed;
 }
 
 etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> ConfigManager::getBaseAddresses() const

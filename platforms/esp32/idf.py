@@ -7,4 +7,4 @@
 # correct build and source dirs for our repo. It should
 # be called instead of idf.py in the root of the repo.
 
-idf.py -B build/build_esp32 -C platforms/esp32/ "$@"
+idf.py -B build/esp32 -C platforms/esp32/ "$@"
