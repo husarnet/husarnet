@@ -431,6 +431,11 @@ namespace Port {
     return {};
   }
 
+  __attribute__((weak)) HttpResult httpGet(const IpAddress& ip, const std::string& path)
+  {
+    return Port::httpGet(ip.toString(), path);
+  }
+
   __attribute__((weak)) HttpResult httpPost(const std::string& host, const std::string& path, const std::string& body)
   {
     httplib::Client httpClient(host);
@@ -443,5 +448,10 @@ namespace Port {
       LOG_ERROR("Can't contact host %s (error: %s)", host.c_str(), httplib::to_string(err).c_str());
     }
     return {};
+  }
+
+  HttpResult httpPost(const IpAddress& ip, const std::string& path, const std::string& body)
+  {
+    return Port::httpPost(ip.toString(), path, body);
   }
 }  // namespace Port

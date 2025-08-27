@@ -1,11 +1,10 @@
-from dataclasses import dataclass
-from typing import Callable, Dict, Any
+from typing import Callable
+
 import pytest
-from pytest import Config
 from pytest_embedded_idf.dut import IdfDut
 from pytest_helpers import *
 
-WEBSETUP_IP = "fc94:b01d:1803:8dd8:b293:5c7d:7639:932a"
+API_IP = "fc94:cfa1:6f6a:74bd:7532:79c7:9752:cf5b"
 INTERNET_PING_IP = "1.1.1.1"
 LAN_PING_IP = get_lan_ip()
 HUSARNET_PING_IP = get_husarnet_ip()
@@ -57,8 +56,8 @@ def test_first_join(
   
   dut.expect_unity_test_output(timeout=90)  
   
-  # Ping websetup to ensure that the Husarnet connection is working
-  launch_test_ping(dut, log_performance, "websetup_ping", WEBSETUP_IP, data_size=64)
+  # Ping api to ensure that the Husarnet connection is working
+  launch_test_ping(dut, log_performance, "api_ping", API_IP, data_size=64)
   
 @pytest.mark.esp32
 @pytest.mark.lan8720

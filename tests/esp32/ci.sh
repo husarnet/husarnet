@@ -54,11 +54,12 @@ echo "INFO: Cleaning up"
 sudo pkill husarnet-daemon
 echo "WARNING: This 'killed' message is a good thing! We're calling it on purpose"
 
-husarnet dashboard login "${dashboard_login}" "${dashboard_pass}"
-husarnet dashboard rm ${runner_hostname} "${network_name}"
-husarnet dashboard rm ${esp32_hostname} "${network_name}"
-husarnet dashboard device rm "${runner_hostname}"
-husarnet dashboard device rm "${esp32_hostname}"
+# TODO: align to the new dashboard api
+# husarnet dashboard login "${dashboard_login}" "${dashboard_pass}"
+# husarnet dashboard rm ${runner_hostname} "${network_name}"
+# husarnet dashboard rm ${esp32_hostname} "${network_name}"
+# husarnet dashboard device rm "${runner_hostname}"
+# husarnet dashboard device rm "${esp32_hostname}"
 
 echo "INFO: Cleaned up successfully"
 
