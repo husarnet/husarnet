@@ -16,8 +16,8 @@ ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* config
     : hooksManager(hooksManager),
       configEnv(configEnv),
       ourIp(ourIp),
-      lastLicenseUpdate(std::chrono::steady_clock::now() - (licenseRefreshPeriod * 2)),
-      lastGetConfigUpdate(std::chrono::steady_clock::now() - (getConfigRefreshPeriod * 2))
+  nextLicenseUpdate(std::chrono::steady_clock::now()),
+  nextGetConfigUpdate(std::chrono::steady_clock::now())
 {
   std::lock_guard lgFast(this->mutexFast);
   if(!configEnv->getEnableControlplane()) {
@@ -44,7 +44,7 @@ void ConfigManager::getLicense()
 
   this->storeLicense(licenseJson);
   this->updateLicenseData();
-  this->lastLicenseUpdate = std::chrono::steady_clock::now();
+  this->nextLicenseUpdate = std::chrono::steady_clock::now() + licenseRefreshPeriod;
 }
 
 void ConfigManager::storeLicense(const nlohmann::json& jsonDoc)
@@ -115,7 +115,7 @@ void ConfigManager::getGetConfig()
   if(apiResponse.isSuccessful()) {
     this->storeGetConfig(apiResponse.getPayloadJson());
     this->updateGetConfigData();
-    this->lastGetConfigUpdate = std::chrono::steady_clock::now();
+    this->nextGetConfigUpdate = std::chrono::steady_clock::now() + getConfigRefreshPeriod;
   } else {
     LOG_ERROR("ConfigManagerDev: API responded with error, details: %s", apiResponse.toString().c_str());
   }
@@ -133,8 +133,8 @@ void ConfigManager::updateGetConfigData()
 
     etl::string<EMAIL_MAX_LENGTH> previousOwner = this->claimedBy;
     // upack ClaimInfo
-    auto isClaimed = latestConfig[GETCONFIG_KEY_IS_CLAIMED].get<bool>();
-    if(isClaimed) {
+    this->claimed = latestConfig[GETCONFIG_KEY_IS_CLAIMED].get<bool>();
+    if(this->claimed) {
       auto claimInfo = latestConfig[GETCONFIG_KEY_CLAIMINFO];
       auto ownerStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_OWNER].get<std::string>();
       auto hostnameStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_HOSTNAME].get<std::string>();
@@ -280,6 +280,12 @@ bool ConfigManager::isPeerAllowed(const HusarnetAddress& address) const
   return this->allowedPeers.contains(address);
 }
 
+bool ConfigManager::isClaimed() const
+{
+  std::lock_guard lgFast(this->mutexFast);
+  return this->claimed;
+}
+
 etl::vector<InternetAddress, BASE_ADDRESSES_LIMIT> ConfigManager::getBaseAddresses() const
 {
   std::lock_guard lgFast(this->mutexFast);
@@ -356,18 +362,18 @@ void ConfigManager::periodicThread()
 
     TimePoint now = std::chrono::steady_clock::now();
 
-    if((now - this->lastLicenseUpdate) > licenseRefreshPeriod) {
-      LOG_INFO("ConfigManagerDev: periodic thread: will redownload the license")
+    if(now >= this->nextLicenseUpdate) {
+      LOG_DEBUG("ConfigManagerDev: periodic thread: will redownload the license")
       this->getLicense();
     }
 
-    if(this->configEnv->getEnableControlplane() && (now - this->lastGetConfigUpdate) > getConfigRefreshPeriod) {
-      LOG_INFO("ConfigManagerDev: periodic thread: will request the config from the control plane");
+    if(this->configEnv->getEnableControlplane() && now >= this->nextGetConfigUpdate) {
+      LOG_DEBUG("ConfigManagerDev: periodic thread: will request the config from the control plane");
       this->getGetConfig();
 
       // Flush to disk
       if(this->writeConfig()) {
-        LOG_INFO("ConfigManagerDev: config write successful")
+        LOG_DEBUG("ConfigManagerDev: config write successful")
       } else {
         LOG_ERROR("ConfigManagerDev: config write failed")
       }
@@ -381,8 +387,9 @@ void ConfigManager::waitInit() const
 {
   LOG_INFO("ConfigManagerDev: wait init started")
   // we need to at least have license information, like for example base server to connect to.
+  // wait until license is downloaded and base addresses are known
   while(this->baseAddresses.empty()) {
-    // busy waiting on purpose
+    Port::threadSleep(20);
   }
   LOG_INFO("ConfigManagerDev: wait init finished")
 }
@@ -417,6 +424,6 @@ bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
 void ConfigManager::triggerGetConfig()
 {
   LOG_INFO("ConfigManagerDev: get_config ordered by control plane, resetting timer")
-  this->lastGetConfigUpdate = TimePoint{};
+  this->nextGetConfigUpdate = std::chrono::steady_clock::now();
   this->cv.notify_one();
 }

@@ -98,7 +98,9 @@ namespace Port {
     std::string bytes;
   };
   HttpResult httpGet(const std::string& url, const std::string& path);
+  HttpResult httpGet(const IpAddress& ip, const std::string& path);
   HttpResult httpPost(const std::string& url, const std::string& path, const std::string& body);
+  HttpResult httpPost(const IpAddress& ip, const std::string& path, const std::string& body);
 
   // Storage
   std::string readStorage(StorageKey key);  // Empty means error (or actually empty)

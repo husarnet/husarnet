@@ -23,6 +23,7 @@ fstring<32> Identity::getPubkey()
   return this->pubkey;
 }
 
+//TODO: redundant, remove when reworking the ngSocket
 HusarnetAddress Identity::getDeviceId()
 {
   return this->deviceId;
@@ -110,7 +111,7 @@ Identity* Identity::init()
   }
 
   if(!identity->isValid()) {
-    LOG_ERROR("Identity is invalid, generating a new one");
+    LOG_WARNING("Identity is invalid, generating a new one");
 
     identity = Identity::create();
 

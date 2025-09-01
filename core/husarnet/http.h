@@ -53,7 +53,7 @@ class HTTPMessage {
 
   struct {
     etl::string<7> method;
-    etl::string<128> endpoint;
+    etl::string<256> endpoint;
   } request;
 
   Type messageType = Type::UNDEFINED;
@@ -68,6 +68,7 @@ class HTTPMessage {
 
  private:
   // etl::variant<etl::ivector<char>, std::vector<char>> _buffer;
+  // TODO: etl with static alloc
   std::vector<char> _buffer;
   std::vector<char>::iterator _it;
 

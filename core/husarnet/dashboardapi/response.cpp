@@ -7,6 +7,7 @@
 #include "husarnet/husarnet_config.h"
 
 #include "etl/string.h"
+#include "etl/string_view.h"
 #include "port_interface.h"
 #include "proxy.h"
 
@@ -39,6 +40,9 @@ namespace dashboardapi {
       result += "invalid request: ";
     } else if(jsonDoc["type"] == "server_error") {
       result += "server error: ";
+    } else if(jsonDoc["type"] == nullptr)  {
+      result += "unknown error type null";
+      return result;
     } else {
       result += "unknown api error: ";
     }
@@ -53,7 +57,7 @@ namespace dashboardapi {
 
   Response getConfig(HusarnetAddress apiAddress)
   {
-    auto [statusCode, bytes] = Port::httpGet(apiAddress.toString(), "/device/get_config");
+    auto [statusCode, bytes] = Port::httpGet(apiAddress, "/device/get_config");
     return {statusCode, bytes};
   }
 
@@ -79,7 +83,32 @@ namespace dashboardapi {
     path.append("&sig=");
     path.append(encodedSig.begin(), encodedSig.size());
 
-    auto [statusCode, bytes] = Port::httpPost(apiAddress.toString(), path, body);
+    auto [statusCode, bytes] = Port::httpPost(apiAddress, path, body);
+    return {statusCode, bytes};
+  }
+
+  // Used only for platforms without CLI support (ESP-32).
+  // On fat platforms claims are done via the CLI.
+  Response postClaim(HusarnetAddress apiAddress, Identity* identity, const etl::string_view& code, const etl::string_view& hostname)
+  {
+    std::string path("/device/manage/claim");
+
+    std::string body(R"({"code":")");
+    body.append(code.data(), code.size());
+    body.append(R"(","hostname":")");
+    body.append(hostname.data(), hostname.size());
+    body.append(R"("})");
+
+    auto encodedPK = Proxy::encodePublicKey(identity);
+    auto encodedSig = Proxy::encodeSignature(identity, body);
+
+    // build query string
+    path.append("?pk=");
+    path.append(encodedPK.begin(), encodedPK.size());
+    path.append("&sig=");
+    path.append(encodedSig.begin(), encodedSig.size());
+
+    auto [statusCode, bytes] = Port::httpPost(apiAddress, path, body);
     return {statusCode, bytes};
   }
 }  // namespace dashboardapi

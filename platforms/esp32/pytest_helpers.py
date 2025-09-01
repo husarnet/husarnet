@@ -149,4 +149,4 @@ def get_lan_ip() -> str:
 def get_husarnet_ip() -> str:
   # Connect to the local Husarnet daemon API
   r = requests.get('http://127.0.0.1:16216/api/status')
-  return r.json()["result"]["local_ip"]
+  return r.json()["result"]["live"]["local_ip"]

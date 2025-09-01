@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.22.0)
-cmake_policy(SET CMP0135 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(GIT_DIR_LOOKUP_POLICY ALLOW_LOOKING_ABOVE_CMAKE_SOURCE_DIR) # ETL needs this
 
@@ -58,7 +57,7 @@ if(DEFINED FAIL_ON_WARNING)
 endif()
 
 if(DEFINED ESP_PLATFORM)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-use-cxa-atexit")
 endif()
 
 # Configure the build
@@ -151,7 +150,7 @@ target_compile_definitions(${husarnet_core} PRIVATE PORT_ARCH="${CMAKE_SYSTEM_PR
 if(DEFINED ESP_PLATFORM)
   idf_build_get_property(target IDF_TARGET)
   target_compile_definitions(${husarnet_core} PRIVATE IDF_TARGET=${target})
-  target_compile_options(${husarnet_core} PRIVATE -Wno-unknown-pragmas -Wno-missing-field-initializers)
+  target_compile_options(${husarnet_core} PRIVATE -Wno-unknown-pragmas -Wno-missing-field-initializers -fno-use-cxa-atexit -fno-exceptions)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -376,7 +375,7 @@ endif()
 
 FetchContent_Declare(
   etl
-  URL https://github.com/ETLCPP/etl/archive/refs/tags/20.39.3.zip
+  URL https://github.com/ETLCPP/etl/archive/refs/tags/20.42.2.zip
 )
 
 FetchContent_MakeAvailable(etl)

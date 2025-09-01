@@ -105,6 +105,7 @@ class ConfigManager {
   json cacheJson = json({});
 
   bool allowEveryone = false;  // flipped to true if control plane is disabled
+  bool claimed = false;  // true if the device is claimed by a user
 
   // synchronization primitives
   mutable etl::mutex mutexFast;  // protects internal sets and vectors
@@ -112,8 +113,8 @@ class ConfigManager {
   mutable etl::mutex cvMutex;    // used for condition_variable only
   std::condition_variable cv;
 
-  TimePoint lastLicenseUpdate;
-  TimePoint lastGetConfigUpdate;
+  TimePoint nextLicenseUpdate;
+  TimePoint nextGetConfigUpdate;
 
   etl::set<HusarnetAddress, ALLOWED_PEERS_LIMIT> allowedPeers;
   etl::set<HusarnetAddress, USER_WHITELIST_SIZE_LIMIT> userWhitelist;
@@ -167,6 +168,8 @@ class ConfigManager {
                                   // ideally through the HusarnetManager
 
   bool isPeerAllowed(const HusarnetAddress& address) const;
+
+  bool isClaimed() const;
 
   etl::vector<HusarnetAddress, MULTICAST_DESTINATIONS_LIMIT> getMulticastDestinations(
       HusarnetAddress id);  // This has to be a high performance method

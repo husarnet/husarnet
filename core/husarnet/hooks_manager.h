@@ -35,4 +35,6 @@ class HooksManager {
   void periodicThread();                       // Start this as a thread - will handle timers and
                                                // actually calling the hooks
   void scheduleHook(const HookType hookType);  // Threadsafe
+
+  bool isEnabled();
 };

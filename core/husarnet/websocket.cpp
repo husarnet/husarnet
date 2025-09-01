@@ -222,6 +222,9 @@ bool WebSocket::_sendClientHandshake()
   message.request.endpoint = this->serverEndpoint;
   assert(message.request.endpoint.is_truncated() == false);
 
+  // Host header should normally be set to full host:port value.
+  // As EventBus is available only over Husarnet, we can just use IPv6 address here.
+  // It WILL break if WS server is behind any kind of reverse proxy.
   message.headers.emplace("Host", this->serverAddr.str().c_str());
   message.headers.emplace("Upgrade", "websocket");
   message.headers.emplace("Connection", "Upgrade");

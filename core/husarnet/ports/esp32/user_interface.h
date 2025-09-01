@@ -3,12 +3,9 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 
-#include "husarnet/husarnet_manager.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
 #ifdef __cplusplus
+
+#include "husarnet/husarnet_manager.h"
 
 #include <string>
 #include <vector>
@@ -34,11 +31,12 @@ class HusarnetClient {
   // Network communication is available after a successful join.
   void join(const char* hostname, const char* joinCode);
 
+  //TODO: reintroduce
   // Sets the FQDN of the Husarnet Dashboard. Used for the self-hosted setup.
-  void setDashboardFqdn(const char* fqdn);
+  // void setDashboardFqdn(const char* fqdn);
 
   // Returns a list of peers connected to the device in Husarnet network.
-  std::vector<HusarnetPeer> listPeers();
+  // std::vector<HusarnetPeer> listPeers();
 
   // Returns true if the device is connected to Husarnet network.
   bool isJoined();
@@ -61,7 +59,6 @@ extern "C" {
 
 HusarnetClient* husarnet_init();
 void husarnet_join(HusarnetClient* client, const char* hostname, const char* joinCode);
-void husarnet_set_dashboard_fqdn(HusarnetClient* client, const char* fqdn);
 uint8_t husarnet_is_joined(HusarnetClient* client);
 uint8_t husarnet_get_ip_address(HusarnetClient* client, char* ip, size_t size);
 
