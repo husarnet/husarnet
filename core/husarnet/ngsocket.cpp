@@ -141,6 +141,7 @@ void NgSocket::periodicPeer(Peer* peer)
 
 void NgSocket::onUpperLayerData(HusarnetAddress peerAddress, string_view data)
 {
+  LOG_INFO("[ngsocket] upper layer data received")
   Peer* peer = peerContainer->getOrCreatePeer(peerAddress);
   if(peer != nullptr)
     sendDataToPeer(peer, data);
@@ -496,8 +497,7 @@ void NgSocket::init()
   // Passing std::bind crashes mingw_thread. The reason is not apparent.
   Port::threadStart(
       [this]() { this->workerLoop(); }, "hnet_ng",
-      /*stack=*/8000,
-      NGSOCKET_TASK_PRIORITY);
+      /*stack=*/8000, NGSOCKET_TASK_PRIORITY);
 
   LOG_INFO("ngsocket %s listening on %d", this->myIdentity->getDeviceId().toString().c_str(), sourcePort);
 }
@@ -768,7 +768,7 @@ std::string NgSocket::serializePeerToBaseMessage(const PeerToBaseMessage& msg)
 void NgSocket::udpPacketReceived(InetAddress source, string_view data)
 {
   LOG_DEBUG("udp received %s", source.str().c_str());
-  if(source == baseUdpAddress) {
+  if(isFromBaseServer(source)) {
     baseMessageReceivedUdp(parseBaseToPeerMessage(data));
   } else {
     if(data[0] == (char)PeerToPeerMessageKind::HELLO || data[0] == (char)PeerToPeerMessageKind::HELLO_REPLY) {
@@ -856,4 +856,12 @@ void NgSocket::sendToPeer(InetAddress dest, const PeerToPeerMessage& msg)
 {
   std::string serialized = serializePeerToPeerMessage(msg);
   udpSend(dest, std::move(serialized));
+}
+
+bool NgSocket::isFromBaseServer(InetAddress src)
+{
+  LOG_INFO(
+      "potatoes: let's compare src: %s baseUdp: %s", encodeHex(src.ip.data).c_str(),
+      encodeHex(baseUdpAddress.ip.data).c_str())
+  return src == baseUdpAddress;
 }

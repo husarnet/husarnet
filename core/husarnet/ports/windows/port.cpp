@@ -12,12 +12,12 @@
 
 #include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
-#include "husarnet/ports/windows/tun.h"
 
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
+#include "networking.h"
 #include "process.h"
 #include "shlwapi.h"
 #include "sysinfoapi.h"
@@ -103,18 +103,6 @@ static std::vector<std::string> getExistingDeviceNames()
   return names;
 }
 
-static std::string whatNewDeviceWasCreated(std::vector<std::string> previousNames)
-{
-  for(std::string name : getExistingDeviceNames()) {
-    if(std::find(previousNames.begin(), previousNames.end(), name) == previousNames.end()) {
-      LOG_INFO("new device: %s", name.c_str());
-      return name;
-    }
-  }
-  LOG_WARNING("no new device was created?");
-  abort();
-}
-
 thread_local const char* threadName = nullptr;
 
 static void runThread(void* arg)
@@ -158,9 +146,11 @@ static std::list<std::string> getAvailableScripts(const std::string& path)
 namespace Port {
   void init()
   {
+    LOG_INFO("potatoes: Port::init - initializing WinSock2, should be success");
     WSADATA wsaData;
     WSAStartup(0x202, &wsaData);
 
+    LOG_INFO("potatoes: Running fatInit too");
     fatInit();
   }
 
@@ -223,23 +213,11 @@ namespace Port {
 
   UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
-    // TODO: change this to wintun initialization
-    (void)interfaceName;  // ignore Linux-centric hnet0, setup OpenVPN adapter
-    auto existingDevices = getExistingDeviceNames();
-    auto deviceName = readStorage(StorageKey::windowsDeviceGuid);
-    // this should also work if deviceName is ""
-    if(std::find(existingDevices.begin(), existingDevices.end(), deviceName) == existingDevices.end()) {
-      LOG_INFO("Creating new TAP adapter");
-      system("addtap.bat");
-      deviceName = whatNewDeviceWasCreated(existingDevices);
-      auto success = writeStorage(StorageKey::windowsDeviceGuid, deviceName);
-      if(!success) {
-        LOG_ERROR("Saving Windows interface ID failed")
-      }
-    }
+    auto tunTap = new TunTap(myAddress);
 
-    LOG_INFO("Windows interface ID is %s", deviceName.c_str());
-    auto tunTap = new TunTap(myAddress, deviceName);
+    // WindowsNetworking windowsNetworking;
+    // windowsNetworking.setupNetworkInterface(myAddress, interfaceName);
+    // windowsNetworking.allowHusarnetThroughWindowsFirewall("AllowHusarnet");
     return tunTap;
   }
 

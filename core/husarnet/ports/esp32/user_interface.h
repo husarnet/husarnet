@@ -5,10 +5,10 @@
 
 #ifdef __cplusplus
 
-#include "husarnet/husarnet_manager.h"
-
 #include <string>
 #include <vector>
+
+#include "husarnet/husarnet_manager.h"
 
 using HusarnetPeer = std::pair<std::string, std::string>;
 
@@ -31,9 +31,9 @@ class HusarnetClient {
   // Network communication is available after a successful join.
   void join(const char* hostname, const char* joinCode);
 
-  //TODO: reintroduce
-  // Sets the FQDN of the Husarnet Dashboard. Used for the self-hosted setup.
-  // void setDashboardFqdn(const char* fqdn);
+  // TODO: reintroduce
+  //  Sets the FQDN of the Husarnet Dashboard. Used for the self-hosted setup.
+  //  void setDashboardFqdn(const char* fqdn);
 
   // Returns a list of peers connected to the device in Husarnet network.
   // std::vector<HusarnetPeer> listPeers();

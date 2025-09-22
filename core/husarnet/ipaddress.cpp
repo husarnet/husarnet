@@ -29,6 +29,11 @@ bool IpAddress::operator==(const fstring<16> other) const
 
 bool IpAddress::operator==(const IpAddress other) const
 {
+  if(isMappedV4() || other.isMappedV4()) {
+    // just compare lower bits
+    // TODO: this needs adjustment
+    return memcmp(data.data() + 12, other.data.data() + 12, 4) == 0;
+  }
   return data == other.data;
 }
 

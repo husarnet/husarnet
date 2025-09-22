@@ -10,24 +10,21 @@
 
 namespace OsSocket {
 
-//TODO: remove INET
-// #ifdef ENABLE_IPV6
 #define AF_INETx AF_INET6
-const bool useV6 = true;
-// #else
-// #define AF_INETx AF_INET
-//   const bool useV6 = false;
-// #endif
+  const bool useV6 = true;
 
   struct sockaddr_in6 makeSockaddr(InetAddress addr, bool v6 = useV6)
   {
+    LOG_INFO("making sockaddr from %s port %d", addr.ip.toString().c_str(), addr.port)
     if(v6) {
+      LOG_INFO("v6 is enabled")
       struct sockaddr_in6 s {};
       s.sin6_family = AF_INET6;
       s.sin6_port = htons(addr.port);
       memcpy(&s.sin6_addr, addr.ip.data.data(), 16);
       return s;
     } else {
+      LOG_INFO("v6 is disabled")
       struct sockaddr_in s {};
       s.sin_family = AF_INET;
       s.sin_port = htons(addr.port);
@@ -45,8 +42,8 @@ const bool useV6 = true;
     if(st.ss_family == AF_INET) {
       struct sockaddr_in* st4 = (sockaddr_in*)(&st);
       InetAddress r{};
-      r.ip.data[0]  = 0; // ipv4-mapped ipv6
-      r.ip.data[0]  = 0;
+      r.ip.data[0] = 0;  // ipv4-mapped ipv6
+      r.ip.data[0] = 0;
       r.ip.data[10] = 0xFF;
       r.ip.data[11] = 0xFF;
       memcpy((char*)r.ip.data.data() + 12, &st4->sin_addr, 4);
@@ -121,6 +118,9 @@ const bool useV6 = true;
 
     set_nonblocking(fd);
 
+    int off = 0;
+    setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&off, sizeof(off));
+
     auto sa = makeSockaddr(addr, useV6);
     socklen_t socklen = sizeof(sa);
     if(SOCKFUNC(bind)(fd, (sockaddr*)&sa, socklen) < 0) {
@@ -158,7 +158,8 @@ const bool useV6 = true;
     }
     auto sa = makeSockaddr(address);
     socklen_t socklen = sizeof(sa);
-    SOCKFUNC(sendto)(fd, data.data(), data.size(), 0, (sockaddr*)&sa, socklen);
+    auto ret = SOCKFUNC(sendto)(fd, data.data(), data.size(), 0, (sockaddr*)&sa, socklen);
+    LOG_INFO("sendto (udpSend) returned %d", ret);
   }
 
   bool udpListenMulticast(InetAddress address, PacketCallback callback)
@@ -480,13 +481,35 @@ const bool useV6 = true;
     auto sa = makeSockaddr(address);
     socklen_t socklen = sizeof(sa);
 
+    LOG_INFO("potatoes: what is the issue here? %u", sa.sin6_port)
+    char* addrstr = new char[50];
+    RtlIpv6AddressToStringA(&sa.sin6_addr, addrstr);
+    LOG_INFO("potatoes: will it print? %s", addrstr);
+
+    auto experiment = (sockaddr*)(&sa);
+    LOG_INFO("potatoes: will it print sa_data? %s", experiment->sa_data);
+    LOG_INFO("potatoes: will it print sa_family? %d", experiment->sa_family);
+    // neccessary for windows unless useV6 is proper
+    int off = 0;
+    setsockopt(conn->fd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&off, sizeof(off));
+
     int res = SOCKFUNC(connect)(conn->fd, (sockaddr*)(&sa), socklen);
 
+    LOG_INFO("potatoes: connect result value is %d, conn->fd is %u", res, conn->fd);
+    LOG_INFO("potatoes: check the error immediately: %d", WSAGetLastError());
+
+#ifndef PORT_WINDOWS
     if(res < 0 && errno != EINPROGRESS) {
-      LOG_ERROR("connection with the server (%s) failed", address.str().c_str());
+      LOG_ERROR("connection with the server (%s) failed, res %d, errno %d", address.str().c_str(), errno);
+#else
+    if(res < 0 && WSAGetLastError() != WSAEINPROGRESS && WSAGetLastError() != WSAEWOULDBLOCK) {
+      LOG_ERROR("connection with the server (%s) failed, errno %d", address.str().c_str(), WSAGetLastError());
+#endif
       SOCKFUNC_close(conn->fd);
       return nullptr;
     }
+
+    LOG_INFO("potatoes: obviously we had EWOULDBLOCK, verify this: %d", WSAGetLastError());
 
     fd_set fdset;
     FD_ZERO(&fdset);
@@ -497,7 +520,7 @@ const bool useV6 = true;
     };
 
     // Wait for the socket to become writable i.e. connect has succeeded
-    res = select(conn->fd + 1, NULL, &fdset, NULL, &tv);
+    res = SOCKFUNC(select)(conn->fd + 1, &fdset, &fdset, NULL, &tv);
 
     if(res <= 0) {
       LOG_ERROR("connection with the server (%s) failed (timeout)", address.str().c_str());
@@ -531,6 +554,7 @@ const bool useV6 = true;
 
   void runOnce(int timeout)
   {
+    LOG_INFO("potatoes: runOnce() called")
     fd_set readset;
     FD_ZERO(&readset);
     int maxfd = 0;

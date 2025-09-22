@@ -50,7 +50,6 @@
 #include "nvs_flash.h"
 #include "nvs_handle.hpp"
 
-
 static const char* LOG_TAG = "husarnet";
 static const char NVS_HOSTNAME_KEY[] = "hostname";
 
@@ -192,9 +191,7 @@ namespace Port {
   etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentOverrides()
   {
     // {EnvKey::tldFqdn, CONFIG_HUSARNET_FQDN};
-    return etl::map<EnvKey, std::string, ENV_KEY_OPTIONS>{
-        {EnvKey::tldFqdn, CONFIG_HUSARNET_FQDN}
-    };
+    return etl::map<EnvKey, std::string, ENV_KEY_OPTIONS>{{EnvKey::tldFqdn, CONFIG_HUSARNET_FQDN}};
   }
 
   void notifyReady()
@@ -401,17 +398,16 @@ namespace Port {
 
   static HttpResult httpSendRecv(const IpAddress& ip, HTTPMessage& message)
   {
-    if (ip.isInvalid()) {
+    if(ip.isInvalid()) {
       LOG_ERROR("Invalid ip address");
       return {-1, ""};
     }
-    
+
     InetAddress address{ip, 80};
 
     // TODO: streaming write to socket
     etl::vector<char, 4096> buffer;
-    if (!message.encode(buffer))
-    {
+    if(!message.encode(buffer)) {
       LOG_ERROR("Failed to encode HTTP message");
       return {-1, ""};
     }
@@ -459,11 +455,7 @@ namespace Port {
     auto result = message.parse(buffer_view);
 
     if(result == HTTPMessage::Result::OK) {
-      return
-      {
-        static_cast<int>(message.response.statusCode),
-        std::string(message.body.data(), message.body.size())
-      };
+      return {static_cast<int>(message.response.statusCode), std::string(message.body.data(), message.body.size())};
     }
 
     LOG_ERROR("Failed to parse HTTP response");

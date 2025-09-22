@@ -23,7 +23,7 @@ fstring<32> Identity::getPubkey()
   return this->pubkey;
 }
 
-//TODO: redundant, remove when reworking the ngSocket
+// TODO: redundant, remove when reworking the ngSocket
 HusarnetAddress Identity::getDeviceId()
 {
   return this->deviceId;
@@ -80,6 +80,7 @@ std::string Identity::serialize()
 
 Identity* Identity::deserialize(const std::string& data)
 {
+  LOG_INFO("Found identity and will deserialize it happily")
   std::stringstream buffer;
   auto identity = new Identity();
 
@@ -101,6 +102,7 @@ Identity* Identity::deserialize(const std::string& data)
 
 Identity* Identity::init()
 {
+  LOG_INFO("Initializing Identity")
   Identity* identity = new Identity();
 
   std::string id_string = Port::readStorage(StorageKey::id);

@@ -3,8 +3,8 @@
 // License: specified in project_root/LICENSE.txt
 #include "user_interface.h"
 
-#include "husarnet/husarnet_manager.h"
 #include "husarnet/dashboardapi/response.h"
+#include "husarnet/husarnet_manager.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -46,54 +46,47 @@ HusarnetClient::~HusarnetClient()
 
 void HusarnetClient::join(const char* hostname, const char* joinCode)
 {
-  auto callback =
-    [this, hostname, joinCode]() {
-      HusarnetManager* husarnetManager = this->husarnetManager;
+  auto callback = [this, hostname, joinCode]() {
+    HusarnetManager* husarnetManager = this->husarnetManager;
 
-      if(started) {
-        LOG_ERROR("Cannot join the network twice");
-        return;
-      }
+    if(started) {
+      LOG_ERROR("Cannot join the network twice");
+      return;
+    }
 
-      if (strlen(joinCode) == 0) {
-        LOG_ERROR("Join code cannot be empty");
-        return;
-      }
+    if(strlen(joinCode) == 0) {
+      LOG_ERROR("Join code cannot be empty");
+      return;
+    }
 
-      started = true;
+    started = true;
 
-      // Wait until networking stack is ready
-      xSemaphoreTake(Port::notifyReadySemaphore, portMAX_DELAY);
+    // Wait until networking stack is ready
+    xSemaphoreTake(Port::notifyReadySemaphore, portMAX_DELAY);
 
-      if (husarnetManager->configManager->getApiAddress().isInvalid()) {
-        LOG_ERROR("API address is not set. Cannot join the network.");
-        return;
-      }
+    if(husarnetManager->configManager->getApiAddress().isInvalid()) {
+      LOG_ERROR("API address is not set. Cannot join the network.");
+      return;
+    }
 
-      etl::string_view hostname_view(hostname);
-      if (hostname_view.empty())
-        hostname_view = etl::string_view(Port::getSelfHostname().data(), Port::getSelfHostname().size());
+    etl::string_view hostname_view(hostname);
+    if(hostname_view.empty())
+      hostname_view = etl::string_view(Port::getSelfHostname().data(), Port::getSelfHostname().size());
 
-      // Join the network
-      auto response = dashboardapi::postClaim(
-          husarnetManager->configManager->getApiAddress(),
-          husarnetManager->myIdentity,
-          etl::string_view(joinCode),
-          etl::string_view(hostname_view));
-      
-      if(!response.isSuccessful()) {
-        LOG_ERROR("Failed to join the network: %s", response.toString().c_str());
-        return;
-      }
+    // Join the network
+    auto response = dashboardapi::postClaim(
+        husarnetManager->configManager->getApiAddress(), husarnetManager->myIdentity, etl::string_view(joinCode),
+        etl::string_view(hostname_view));
 
-      LOG_INFO("Device claim successful");
+    if(!response.isSuccessful()) {
+      LOG_ERROR("Failed to join the network: %s", response.toString().c_str());
+      return;
+    }
+
+    LOG_INFO("Device claim successful");
   };
 
-  Port::threadStart(
-      callback,
-      "husarnet_join_task",
-      16384,
-      7);
+  Port::threadStart(callback, "husarnet_join_task", 16384, 7);
 }
 
 // TODO: reintroduce
@@ -138,11 +131,11 @@ void husarnet_join(HusarnetClient* client, const char* hostname, const char* joi
   client->join(hostname, joinCode);
 }
 
-//TODO: reintroduce
-// void husarnet_set_dashboard_fqdn(HusarnetClient* client, const char* fqdn)
-// {
-//   client->setDashboardFqdn(fqdn);
-// }
+// TODO: reintroduce
+//  void husarnet_set_dashboard_fqdn(HusarnetClient* client, const char* fqdn)
+//  {
+//    client->setDashboardFqdn(fqdn);
+//  }
 
 uint8_t husarnet_is_joined(HusarnetClient* client)
 {

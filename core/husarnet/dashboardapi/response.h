@@ -27,5 +27,9 @@ namespace dashboardapi {
 
   Response getConfig(HusarnetAddress apiAddress);
   Response postHeartbeat(HusarnetAddress apiAddress, Identity* identity);
-  Response postClaim(HusarnetAddress apiAddress, Identity* identity, const etl::string_view& code, const etl::string_view& hostname);
+  Response postClaim(
+      HusarnetAddress apiAddress,
+      Identity* identity,
+      const etl::string_view& code,
+      const etl::string_view& hostname);
 }  // namespace dashboardapi

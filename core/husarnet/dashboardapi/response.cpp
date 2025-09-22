@@ -40,7 +40,7 @@ namespace dashboardapi {
       result += "invalid request: ";
     } else if(jsonDoc["type"] == "server_error") {
       result += "server error: ";
-    } else if(jsonDoc["type"] == nullptr)  {
+    } else if(jsonDoc["type"] == nullptr) {
       result += "unknown error type null";
       return result;
     } else {
@@ -89,7 +89,11 @@ namespace dashboardapi {
 
   // Used only for platforms without CLI support (ESP-32).
   // On fat platforms claims are done via the CLI.
-  Response postClaim(HusarnetAddress apiAddress, Identity* identity, const etl::string_view& code, const etl::string_view& hostname)
+  Response postClaim(
+      HusarnetAddress apiAddress,
+      Identity* identity,
+      const etl::string_view& code,
+      const etl::string_view& hostname)
   {
     std::string path("/device/manage/claim");
 

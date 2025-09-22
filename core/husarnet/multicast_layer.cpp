@@ -16,10 +16,16 @@
 MulticastLayer::MulticastLayer(HusarnetAddress myDeviceId, ConfigManager* configmanager)
     : myDeviceId(myDeviceId), configManager(configmanager)
 {
+  if(myDeviceId.isFC94()) {
+    LOG_INFO("Yes, this is correct myDeviceId")
+  } else {
+    LOG_INFO("WRONG myDeviceId")
+  }
 }
 
 void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
 {
+  LOG_INFO("---------------------I would like to write to wintun:)");
   std::string packet;
   if(data.size() < 2)
     return;
@@ -54,6 +60,7 @@ void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
 
     sendToUpperLayer(IpAddress(), packet);
   } else {
+    LOG_INFO("received unicast transmission from %s", source.toString().c_str())
     // unicast
     int payloadSize = (int)data.size() - 1;
 
@@ -74,6 +81,7 @@ void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
 
 void MulticastLayer::onUpperLayerData(HusarnetAddress target, string_view packet)
 {
+  LOG_INFO("HERE WE GO - RECEIVED SOMETHING ON WINTUN");
   if(packet.size() <= 40) {
     LOG_WARNING("truncated packet from %s", target.toString().c_str());
     return;
@@ -107,9 +115,12 @@ void MulticastLayer::onUpperLayerData(HusarnetAddress target, string_view packet
 
   if(dstAddress[0] == 0xfc && dstAddress[1] == 0x94) {
     // unicast
-
+    LOG_INFO(
+        "[multicast_layer] unicast, we will see if for me %s / %s / %s", encodeHex(std::string(srcAddress)).c_str(),
+        encodeHex(std::string(this->myDeviceId.data)).c_str())
     if(srcAddress != this->myDeviceId)
       return;
+    LOG_INFO("[multicast_layer] OK, this for me")
 
     string_view msgData = packet.substr(39);
     *(char*)(&msgData[0]) = (char)protocol;  // a bit hacky, but we assume we can modify `packet`
