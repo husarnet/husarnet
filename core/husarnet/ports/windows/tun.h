@@ -25,7 +25,11 @@ static WINTUN_ALLOCATE_SEND_PACKET_FUNC* WintunAllocateSendPacket;
 static WINTUN_SEND_PACKET_FUNC* WintunSendPacket;
 
 // Adapter name will show up in Control panel -> Network Connections, in Wireshark, etc...
-constexpr LPCWSTR networkAdapterName = L"HusarnetNewImplementation";
+// Keeping both widechar and regular version of the string as constexpr
+// This might look ugly but saves me a lot of conversion headache
+#define NETWORK_ADAPTER_NAME "HusarnetNewImplementation"
+constexpr LPCWSTR networkAdapterNameSz = L"HusarnetNewImplementation";
+constexpr char networkAdapterNameStr[] = NETWORK_ADAPTER_NAME;
 // Rings capacity. As per Wintun docs: must be between WINTUN_MIN_RING_CAPACITY and WINTUN_MAX_RING_CAPACITY (incl.)
 // Must be a power of two.
 constexpr int ringCapacity = 0x400000;
@@ -39,8 +43,10 @@ public:
   TunTap& operator=(TunTap&&) = delete;
   ~TunTap();
   bool init();
-  bool start(HusarnetAddress);
-  bool wintunSend(BYTE* data, DWORD length);
+  bool start();
+  void startReaderThread(); // this is separate from interface bringup to reduce noise
+  bool isValid() const;
+  std::string getAdapterName();
 
 private:
   void acquireWintunAdapter();
@@ -48,7 +54,7 @@ private:
   void closeWintunAdapter();
   void onLowerLayerData(HusarnetAddress source, string_view data) override;
 
-  bool isValid;
+  bool valid;
   HMODULE wintunLib;
   WINTUN_ADAPTER_HANDLE wintunAdapter;
   WINTUN_SESSION_HANDLE wintunSession;

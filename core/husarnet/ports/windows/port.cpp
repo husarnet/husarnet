@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
-#include "husarnet/ports/port.h"
 
 #include <chrono>
 #include <condition_variable>
@@ -17,7 +16,6 @@
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-#include "networking.h"
 #include "process.h"
 #include "shlwapi.h"
 #include "sysinfoapi.h"
@@ -146,11 +144,9 @@ static std::list<std::string> getAvailableScripts(const std::string& path)
 namespace Port {
   void init()
   {
-    LOG_INFO("potatoes: Port::init - initializing WinSock2, should be success");
     WSADATA wsaData;
     WSAStartup(0x202, &wsaData);
 
-    LOG_INFO("potatoes: Running fatInit too");
     fatInit();
   }
 
@@ -214,10 +210,24 @@ namespace Port {
   UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
     auto tunTap = new TunTap(myAddress);
+    auto started = tunTap->start();
 
-    // WindowsNetworking windowsNetworking;
-    // windowsNetworking.setupNetworkInterface(myAddress, interfaceName);
-    // windowsNetworking.allowHusarnetThroughWindowsFirewall("AllowHusarnet");
+    if(!started) {
+      LOG_CRITICAL("TUN bringup failed; Husarnet won't work");
+    } else {
+      LOG_INFO("TUN config OK");
+    }
+
+    // these can take quite a few seconds
+    // but at the same time they're required for this stuff to even work,
+    // so we do it before starting reading from TUN
+    LOG_INFO("netsh adapter name is %s", tunTap->getAdapterName().c_str());
+    setupRoutingTable(tunTap->getAdapterName());
+    setupFirewall(tunTap->getAdapterName());
+
+    tunTap->startReaderThread();
+    LOG_INFO("started reading from TUN adapter")
+
     return tunTap;
   }
 
@@ -247,6 +257,11 @@ namespace Port {
     return true;
   }
 
+  int callWindowsCmd(std::string cmd)
+  {
+    return std::system(("\"" + cmd + "\"").c_str());
+  }
+
   bool runScripts(const std::string& eventName)
   {
     for(const auto& scriptPath : getAvailableScripts(eventName)) {
@@ -260,5 +275,40 @@ namespace Port {
   bool checkScriptsExist(const std::string& eventName)
   {
     return !getAvailableScripts(eventName).empty();
+  }
+
+  void setupRoutingTable(const std::string& netshName)
+  {
+    std::string quotedName = "\"" + netshName + "\"";
+    callWindowsCmd("netsh interface ipv6 add route fc94::/16 " + quotedName);
+  }
+
+  void insertFirewallRule(const std::string& netshName, const std::string& firewallRuleName)
+  {
+    LOG_INFO("Installing rule: %s in Windows Firewall", firewallRuleName.c_str());
+
+    std::string insertCmd = "powershell \"New-NetFirewallRule -DisplayName " + firewallRuleName +
+                            " -Direction Inbound -Action Allow"
+                            " -LocalAddress fc94::/16 -RemoteAddress fc94::/16 "
+                            "-InterfaceAlias " + netshName + " | Out-Null\"";
+
+    callWindowsCmd(insertCmd);
+  }
+
+  void deleteFirewallRules(const std::string& firewallRuleName)
+  {
+    // Remove-NetFirewallRule will remove ALL matching rules
+    std::string deleteCmd = "powershell \"Remove-NetFirewallRule -DisplayName " + firewallRuleName + " | Out-Null \"";
+    callWindowsCmd(deleteCmd);
+  }
+
+  void setupFirewall(const std::string& netshName)
+  {
+    const std::string firewallRuleName { "AllowHusarnet" };
+    // Due to bug in earlier versions of Windows client, the rule was inserted
+    // on each start of the service, which means users could have a lot of
+    // redundant rules in their firewall; that's why we start with the cleanup
+    deleteFirewallRules(firewallRuleName);
+    insertFirewallRule(netshName, firewallRuleName);
   }
 }  // namespace Port

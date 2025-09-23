@@ -141,7 +141,6 @@ void NgSocket::periodicPeer(Peer* peer)
 
 void NgSocket::onUpperLayerData(HusarnetAddress peerAddress, string_view data)
 {
-  LOG_INFO("[ngsocket] upper layer data received")
   Peer* peer = peerContainer->getOrCreatePeer(peerAddress);
   if(peer != nullptr)
     sendDataToPeer(peer, data);

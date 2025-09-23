@@ -131,7 +131,6 @@ void SecurityLayer::handleDataPacket(HusarnetAddress peerId, string_view data)
   auto decryptedData = string_view(decryptedBuffer).substr(8, decryptedSize - 8);
 
   if(r == 0) {
-    LOG_DEBUG("will send the (decrypted) data to upper layer, good")
     sendToUpperLayer(peerId, decryptedData);
   } else {
     LOG_INFO("received forged message from peer: %s", peerId.toString().c_str());

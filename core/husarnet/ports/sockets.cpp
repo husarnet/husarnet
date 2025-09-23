@@ -15,16 +15,13 @@ namespace OsSocket {
 
   struct sockaddr_in6 makeSockaddr(InetAddress addr, bool v6 = useV6)
   {
-    LOG_INFO("making sockaddr from %s port %d", addr.ip.toString().c_str(), addr.port)
     if(v6) {
-      LOG_INFO("v6 is enabled")
       struct sockaddr_in6 s {};
       s.sin6_family = AF_INET6;
       s.sin6_port = htons(addr.port);
       memcpy(&s.sin6_addr, addr.ip.data.data(), 16);
       return s;
     } else {
-      LOG_INFO("v6 is disabled")
       struct sockaddr_in s {};
       s.sin_family = AF_INET;
       s.sin_port = htons(addr.port);
@@ -481,22 +478,14 @@ namespace OsSocket {
     auto sa = makeSockaddr(address);
     socklen_t socklen = sizeof(sa);
 
-    LOG_INFO("potatoes: what is the issue here? %u", sa.sin6_port)
     char* addrstr = new char[50];
     RtlIpv6AddressToStringA(&sa.sin6_addr, addrstr);
-    LOG_INFO("potatoes: will it print? %s", addrstr);
 
-    auto experiment = (sockaddr*)(&sa);
-    LOG_INFO("potatoes: will it print sa_data? %s", experiment->sa_data);
-    LOG_INFO("potatoes: will it print sa_family? %d", experiment->sa_family);
     // neccessary for windows unless useV6 is proper
     int off = 0;
     setsockopt(conn->fd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&off, sizeof(off));
 
     int res = SOCKFUNC(connect)(conn->fd, (sockaddr*)(&sa), socklen);
-
-    LOG_INFO("potatoes: connect result value is %d, conn->fd is %u", res, conn->fd);
-    LOG_INFO("potatoes: check the error immediately: %d", WSAGetLastError());
 
 #ifndef PORT_WINDOWS
     if(res < 0 && errno != EINPROGRESS) {
@@ -508,8 +497,6 @@ namespace OsSocket {
       SOCKFUNC_close(conn->fd);
       return nullptr;
     }
-
-    LOG_INFO("potatoes: obviously we had EWOULDBLOCK, verify this: %d", WSAGetLastError());
 
     fd_set fdset;
     FD_ZERO(&fdset);

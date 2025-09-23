@@ -80,7 +80,6 @@ std::string Identity::serialize()
 
 Identity* Identity::deserialize(const std::string& data)
 {
-  LOG_INFO("Found identity and will deserialize it happily")
   std::stringstream buffer;
   auto identity = new Identity();
 
@@ -102,7 +101,6 @@ Identity* Identity::deserialize(const std::string& data)
 
 Identity* Identity::init()
 {
-  LOG_INFO("Initializing Identity")
   Identity* identity = new Identity();
 
   std::string id_string = Port::readStorage(StorageKey::id);
