@@ -37,9 +37,6 @@ void ForLowerProducer::sendToLowerLayer(HusarnetAddress peerId, string_view data
   fromLowerConsumer(peerId, data);
 }
 
-// tuntap, multicast
-// tuntap->setLowerLayerConsumer
-// tuntap->fromLowerConsumer = multicast::onUpperLayerData
 void stackUpperOnLower(UpperLayer* upper, LowerLayer* lower)
 {
   upper->setLowerLayerConsumer(

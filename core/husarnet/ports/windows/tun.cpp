@@ -41,8 +41,7 @@ SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMillisecon
       break;
   }
 
-  // TODO: try to observe first if the memory leaks
-  // free(logLineBuffer);
+  free(logLineBuffer);
 }
 
 TunTap::TunTap(const HusarnetAddress address) : valid(false), husarnetAddress(address)
@@ -153,21 +152,18 @@ void TunTap::acquireWintunAdapter()
     // TODO: consider the case when we regenerate ID (does the old GUID stay in the system and clutter somehow?)
     GUID myGuid;
     memcpy(&myGuid, &this->husarnetAddress, 16);
-    LOG_INFO("trying the create");
     this->wintunAdapter = WintunCreateAdapter(networkAdapterNameSz, L"WintunHusarnetTodoChange", &myGuid);
-    LOG_INFO("something happened %d", GetLastError());
     if(!this->wintunAdapter) {
-      LOG_INFO("inside if");
       DWORD errorCode = GetLastError();
       if(errorCode == ERROR_ACCESS_DENIED) {
-        LOG_INFO("ACCESS_DENIED while trying to open tunnel, are you Administrator? Error code: %d", errorCode);
+        LOG_ERROR("ACCESS_DENIED while trying to open tunnel, are you Administrator? Error code: %d", errorCode);
       } else if(errorCode == ERROR_ALREADY_EXISTS) {
-        LOG_INFO("ALREADY_EXISTS while trying to create wintun adapter");
+        LOG_ERROR("ALREADY_EXISTS while trying to create wintun adapter");
         // one last try to open it
         this->wintunAdapter = WintunOpenAdapter(networkAdapterNameSz);
         if(!this->wintunAdapter) {
           LOG_INFO("can't open adapter");
-        } // TODO: uhhhh
+        } // TODO: figure out why this sometimes happens (wintun does not teardown cleanly after killing process?)
       }
       else {
         LOG_ERROR("Unable to create wintun adapter. Error code : %d", errorCode);
@@ -188,7 +184,7 @@ void TunTap::assignIpAddressToAdapter(HusarnetAddress addr)
   AddressRow.Address.Ipv6.sin6_family = AF_INET6;
   memcpy(AddressRow.Address.Ipv6.sin6_addr.s6_addr, addr.data.data(), sizeof(addr));
   AddressRow.OnLinkPrefixLength = 32;
-  AddressRow.DadState = IpDadStatePreferred;  // TODO: nie wiem co to
+  AddressRow.DadState = IpDadStatePreferred;
   auto LastError = CreateUnicastIpAddressEntry(&AddressRow);
   if(LastError != ERROR_SUCCESS && LastError != ERROR_OBJECT_ALREADY_EXISTS) {
     std::cout << "WintunManager: cannot assign IP addr to interface" << std::endl;

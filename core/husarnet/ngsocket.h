@@ -123,8 +123,6 @@ class NgSocket : public LowerLayer {
   void sendToBaseTcp(const PeerToBaseMessage& msg);
   void sendToPeer(InetAddress dest, const PeerToPeerMessage& msg);
 
-  bool isFromBaseServer(InetAddress src);
-
  public:
   NgSocket(Identity* myIdentity, PeerContainer* peerContainer, ConfigManager* configManager);
 

@@ -16,11 +16,6 @@
 MulticastLayer::MulticastLayer(HusarnetAddress myDeviceId, ConfigManager* configmanager)
     : myDeviceId(myDeviceId), configManager(configmanager)
 {
-  if(myDeviceId.isFC94()) {
-    LOG_INFO("Yes, this is correct myDeviceId")
-  } else {
-    LOG_INFO("WRONG myDeviceId")
-  }
 }
 
 void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
@@ -59,7 +54,6 @@ void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
 
     sendToUpperLayer(IpAddress(), packet);
   } else {
-    LOG_INFO("received unicast transmission from %s", source.toString().c_str())
     // unicast
     int payloadSize = (int)data.size() - 1;
 
@@ -113,6 +107,7 @@ void MulticastLayer::onUpperLayerData(HusarnetAddress target, string_view packet
 
   if(dstAddress[0] == 0xfc && dstAddress[1] == 0x94) {
     // unicast
+
     if(srcAddress != this->myDeviceId)
       return;
 

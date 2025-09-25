@@ -58,7 +58,6 @@ static const etl::map<StorageKey, std::string, STORAGE_KEY_OPTIONS> storageMap =
     etl::pair{StorageKey::config, std::string("config.json")},
     etl::pair{StorageKey::daemonApiToken, std::string("daemon_api_token")},
     etl::pair{StorageKey::cache, std::string("cache.json")},
-    etl::pair{StorageKey::windowsDeviceGuid, std::string("guid")},
 };
 
 std::unique_ptr<nvs::NVSHandle> nvsHandle;

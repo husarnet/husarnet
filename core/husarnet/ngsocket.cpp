@@ -767,7 +767,7 @@ std::string NgSocket::serializePeerToBaseMessage(const PeerToBaseMessage& msg)
 void NgSocket::udpPacketReceived(InetAddress source, string_view data)
 {
   LOG_DEBUG("udp received %s", source.str().c_str());
-  if(isFromBaseServer(source)) {
+  if(source == baseUdpAddress) {
     baseMessageReceivedUdp(parseBaseToPeerMessage(data));
   } else {
     if(data[0] == (char)PeerToPeerMessageKind::HELLO || data[0] == (char)PeerToPeerMessageKind::HELLO_REPLY) {
@@ -855,12 +855,4 @@ void NgSocket::sendToPeer(InetAddress dest, const PeerToPeerMessage& msg)
 {
   std::string serialized = serializePeerToPeerMessage(msg);
   udpSend(dest, std::move(serialized));
-}
-
-bool NgSocket::isFromBaseServer(InetAddress src)
-{
-  LOG_INFO(
-      "potatoes: let's compare src: %s baseUdp: %s", encodeHex(src.ip.data).c_str(),
-      encodeHex(baseUdpAddress.ip.data).c_str())
-  return src == baseUdpAddress;
 }

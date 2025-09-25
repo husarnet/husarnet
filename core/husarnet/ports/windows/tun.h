@@ -28,7 +28,7 @@ static WINTUN_SEND_PACKET_FUNC* WintunSendPacket;
 // Keeping both widechar and regular version of the string as constexpr
 // This might look ugly but saves me a lot of conversion headache
 #define NETWORK_ADAPTER_NAME "HusarnetNewImplementation"
-constexpr LPCWSTR networkAdapterNameSz = L"HusarnetNewImplementation";
+constexpr LPCWSTR networkAdapterNameSz = L"" NETWORK_ADAPTER_NAME;
 constexpr char networkAdapterNameStr[] = NETWORK_ADAPTER_NAME;
 // Rings capacity. As per Wintun docs: must be between WINTUN_MIN_RING_CAPACITY and WINTUN_MAX_RING_CAPACITY (incl.)
 // Must be a power of two.

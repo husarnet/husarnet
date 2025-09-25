@@ -82,7 +82,7 @@ void HusarnetManager::runHusarnet()
   this->ngsocket = new NgSocket(this->myIdentity, this->peerContainer, this->configManager);
   this->eventBus = new EventBus(this->myIdentity->getIpAddress(), this->configManager);
 
-  stackUpperOnLower(this->tunTap, multicast);
+  stackUpperOnLower(tunTap, multicast);
   stackUpperOnLower(multicast, compression);
   stackUpperOnLower(compression, securityLayer);
   stackUpperOnLower(securityLayer, ngsocket);

@@ -155,8 +155,7 @@ namespace OsSocket {
     }
     auto sa = makeSockaddr(address);
     socklen_t socklen = sizeof(sa);
-    auto ret = SOCKFUNC(sendto)(fd, data.data(), data.size(), 0, (sockaddr*)&sa, socklen);
-    LOG_INFO("sendto (udpSend) returned %d", ret);
+    SOCKFUNC(sendto)(fd, data.data(), data.size(), 0, (sockaddr*)&sa, socklen);
   }
 
   bool udpListenMulticast(InetAddress address, PacketCallback callback)
@@ -378,6 +377,17 @@ namespace OsSocket {
         size_t newSize = (read > 0) ? size + read : size;
         conn->readBuffer.resize(newSize);
 
+#ifdef PORT_WINDOWS
+        if(read < 0 && (WSAGetLastError() == WSAEWOULDBLOCK)) {
+          return;
+        }
+
+        if(read <= 0) {
+          LOG_ERROR("TCP recv failed: %d", WSAGetLastError());
+          TcpConnection::close(conn);
+          return;
+        }
+#else
         if(read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
           return;
         }
@@ -387,6 +397,7 @@ namespace OsSocket {
           TcpConnection::close(conn);
           return;
         }
+#endif
       }
 
       // Pass data directly to the callback if no encapsulation is used
@@ -478,10 +489,7 @@ namespace OsSocket {
     auto sa = makeSockaddr(address);
     socklen_t socklen = sizeof(sa);
 
-    char* addrstr = new char[50];
-    RtlIpv6AddressToStringA(&sa.sin6_addr, addrstr);
-
-    // neccessary for windows unless useV6 is proper
+    // neccessary for Windows
     int off = 0;
     setsockopt(conn->fd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&off, sizeof(off));
 
@@ -541,7 +549,6 @@ namespace OsSocket {
 
   void runOnce(int timeout)
   {
-    LOG_INFO("potatoes: runOnce() called")
     fd_set readset;
     FD_ZERO(&readset);
     int maxfd = 0;
