@@ -28,28 +28,31 @@ static void CALLBACK WintunLoggerToHusarnetLogger(WINTUN_LOGGER_LEVEL Level, DWO
   FileTimeToSystemTime((FILETIME*)&Timestamp, &SystemTime);
   switch(Level) {
     case WINTUN_LOG_WARN:
-      LOG_WARNING("wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
-      SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
+      LOG_WARNING(
+          "wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
+          SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
       break;
     case WINTUN_LOG_ERR:
-      LOG_ERROR("wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
-      SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
+      LOG_ERROR(
+          "wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
+          SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
       break;
     default:
-      LOG_DEBUG("wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
-SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
+      LOG_DEBUG(
+          "wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
+          SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
       break;
   }
 
   free(logLineBuffer);
 }
 
-TunTap::TunTap(const HusarnetAddress address) : valid(false), husarnetAddress(address)
+Tun::Tun(const HusarnetAddress address) : valid(false), husarnetAddress(address)
 {
   this->init();
 }
 
-TunTap::~TunTap()
+Tun::~Tun()
 {
   if(this->wintunSession) {
     WintunEndSession(this->wintunSession);
@@ -62,7 +65,7 @@ TunTap::~TunTap()
   }
 }
 
-bool TunTap::init()
+bool Tun::init()
 {
   this->wintunLib =
       LoadLibraryExW(L"wintun.dll", NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
@@ -98,7 +101,7 @@ bool TunTap::init()
   return true;
 }
 
-bool TunTap::start()
+bool Tun::start()
 {
   this->acquireWintunAdapter();
   if(!this->wintunAdapter) {
@@ -117,31 +120,33 @@ bool TunTap::start()
   return true;
 }
 
-void TunTap::startReaderThread()
+void Tun::startReaderThread()
 {
-  Port::threadStart([this]() {
-    HANDLE WaitHandles[] = {WintunGetReadWaitEvent(this->wintunSession)};
-    while(true) {
-      DWORD packetSize;
-      BYTE* Packet = WintunReceivePacket(this->wintunSession, &packetSize);
-      if(Packet) {
-        this->sendToLowerLayer(IpAddress(), string_view(reinterpret_cast<const char*>(Packet), packetSize));
-        WintunReleaseReceivePacket(this->wintunSession, Packet);
-      } else {
-        DWORD LastError = GetLastError();
-        switch(LastError) {
-          case ERROR_NO_MORE_ITEMS:
-            if(WaitForMultipleObjects(_countof(WaitHandles), WaitHandles, FALSE, INFINITE) == WAIT_OBJECT_0)
-              continue; // TODO wait for single object actually
-          default:
-            LOG_ERROR("TunLayer: packet read failed")
+  Port::threadStart(
+      [this]() {
+        HANDLE WaitHandles[] = {WintunGetReadWaitEvent(this->wintunSession)};
+        while(true) {
+          DWORD packetSize;
+          BYTE* Packet = WintunReceivePacket(this->wintunSession, &packetSize);
+          if(Packet) {
+            this->sendToLowerLayer(IpAddress(), string_view(reinterpret_cast<const char*>(Packet), packetSize));
+            WintunReleaseReceivePacket(this->wintunSession, Packet);
+          } else {
+            DWORD LastError = GetLastError();
+            switch(LastError) {
+              case ERROR_NO_MORE_ITEMS:
+                if(WaitForMultipleObjects(_countof(WaitHandles), WaitHandles, FALSE, INFINITE) == WAIT_OBJECT_0)
+                  continue;  // TODO wait for single object actually
+              default:
+                LOG_ERROR("TunLayer: packet read failed")
+            }
+          }
         }
-      }
-    }
-  }, "wintun-reader", 8000, WINTUN_READER_TASK_PRIORITY);
+      },
+      "wintun-reader", 8000, WINTUN_READER_TASK_PRIORITY);
 }
 
-void TunTap::acquireWintunAdapter()
+void Tun::acquireWintunAdapter()
 {
   this->wintunAdapter = WintunOpenAdapter(networkAdapterNameSz);
   if(!this->wintunAdapter) {
@@ -163,9 +168,8 @@ void TunTap::acquireWintunAdapter()
         this->wintunAdapter = WintunOpenAdapter(networkAdapterNameSz);
         if(!this->wintunAdapter) {
           LOG_INFO("can't open adapter");
-        } // TODO: figure out why this sometimes happens (wintun does not teardown cleanly after killing process?)
-      }
-      else {
+        }  // TODO: figure out why this sometimes happens (wintun does not teardown cleanly after killing process?)
+      } else {
         LOG_ERROR("Unable to create wintun adapter. Error code : %d", errorCode);
       }
     } else {
@@ -176,7 +180,7 @@ void TunTap::acquireWintunAdapter()
   }
 }
 
-void TunTap::assignIpAddressToAdapter(HusarnetAddress addr)
+void Tun::assignIpAddressToAdapter(HusarnetAddress addr)
 {
   MIB_UNICASTIPADDRESS_ROW AddressRow;
   InitializeUnicastIpAddressEntry(&AddressRow);
@@ -191,12 +195,12 @@ void TunTap::assignIpAddressToAdapter(HusarnetAddress addr)
   }
 }
 
-void TunTap::closeWintunAdapter()
+void Tun::closeWintunAdapter()
 {
   WintunCloseAdapter(this->wintunAdapter);
 }
 
-void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
+void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   BYTE* Packet = WintunAllocateSendPacket(this->wintunSession, data.size());
   if(Packet) {
@@ -209,12 +213,12 @@ void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
   }
 }
 
-std::string TunTap::getAdapterName()
+std::string Tun::getAdapterName()
 {
   return networkAdapterNameStr;
 }
 
-bool TunTap::isValid() const
+bool Tun::isValid() const
 {
   return this->valid;
 }

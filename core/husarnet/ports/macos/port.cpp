@@ -129,11 +129,11 @@ namespace Port {
     return ret;
   }
 
-  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
+  UpperLayer* startTun(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
     (void)interfaceName;  // ignore Linux-centric hnet0, setup utunX
 
-    auto tunTap = new TunTap();
+    auto tunTap = new Tun();
     auto utunName = tunTap->getName();
     LOG_INFO("our utun interface name is %s", utunName.c_str());
 

@@ -25,7 +25,7 @@ class HusarnetManager {
   PeerFlags* myFlags = nullptr;
   PeerContainer* peerContainer = nullptr;
 
-  TunTap* tunTap = nullptr;
+  Tun* tun = nullptr;
   SecurityLayer* securityLayer = nullptr;
   NgSocket* ngsocket = nullptr;
 

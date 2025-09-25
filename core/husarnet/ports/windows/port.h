@@ -50,5 +50,4 @@ namespace Port {
 
   void setupRoutingTable(const std::string& netshName);
   void setupFirewall(const std::string& netshName);
-}
-
+}  // namespace Port

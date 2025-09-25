@@ -3,7 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 
 // Husarnet TUN adapter implementation for the ESP32 platform consists of three
-// abstraction layers (from the bottom): LwIP, ESP-NETIF and TunTap.
+// abstraction layers (from the bottom): LwIP, ESP-NETIF and Tun.
 //
 // Most of the code is related to the LwIP layer, which is responsible for
 // routing packets. The ESP-NETIF layer serves only as a compatibility layer
@@ -13,7 +13,7 @@
 // Outgoing packets are handled via ip_route hook and passed to the Husarnet
 // stack via a pbuf queue.
 // Incoming packets are processed by the Husarnet stack directly and are
-// outputted to the network stack by the TunTap::onLowerLayerData() function.
+// outputted to the network stack by the Tun::onLowerLayerData() function.
 
 #include "husarnet/ports/esp32/tun.h"
 
@@ -38,7 +38,7 @@
 
 typedef struct {
   esp_netif_driver_base_t base;
-  TunTap* tunTap;
+  Tun* tunTap;
 } husarnet_esp_netif_driver_t;
 
 // --- LwIP layer ---
@@ -194,7 +194,7 @@ static husarnet_esp_netif_driver_t* husarnet_esp_netif_driver_init()
 
 // --- TunTap layer ---
 
-TunTap::TunTap(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
+Tun::Tun(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
 {
   // Create message queue for pbuf packets
   tunTapMsgQueue = xQueueCreate(queueSize, sizeof(pbuf*));
@@ -255,7 +255,7 @@ TunTap::TunTap(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
   this->conn->pcb.raw->flags = RAW_FLAGS_HDRINCL;
 }
 
-void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
+void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   // Input packet should contain IPv4/IPv6 header
   if(data.size() < 40) {
@@ -283,12 +283,12 @@ void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
   netbuf_delete(buf);
 }
 
-void TunTap::close()
+void Tun::close()
 {
   // TODO: implement
 }
 
-void TunTap::processQueuedPackets()
+void Tun::processQueuedPackets()
 {
   pbuf* p;
 
@@ -301,7 +301,7 @@ void TunTap::processQueuedPackets()
   }
 }
 
-ip6_addr_t TunTap::getIp6Addr()
+ip6_addr_t Tun::getIp6Addr()
 {
   return ipAddr;
 }

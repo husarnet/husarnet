@@ -310,19 +310,19 @@ namespace Port {
   }
 
   // On the ESP32 platform network interface name is always "hn0"
-  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
+  UpperLayer* startTun(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
     ip6_addr_t ip;
     memcpy(ip.addr, myAddress.data.data(), 16);
 
-    auto tunTap = new TunTap(ip, 32);
+    auto tunTap = new Tun(ip, 32);
     return tunTap;
   }
 
   void processSocketEvents(void* tuntap)
   {
     OsSocket::runOnce(20);  // process socket events for at most so many ms
-    static_cast<TunTap*>(tuntap)->processQueuedPackets();
+    static_cast<Tun*>(tuntap)->processQueuedPackets();
   }
 
   std::string getSelfHostname()

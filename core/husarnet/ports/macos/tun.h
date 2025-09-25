@@ -8,7 +8,7 @@
 #include "husarnet/ngsocket.h"
 #include "husarnet/string_view.h"
 
-class TunTap : public UpperLayer {
+class Tun : public UpperLayer {
  private:
   int fd;
   std::string name;
@@ -18,10 +18,10 @@ class TunTap : public UpperLayer {
   bool isRunning();
 
   // This is called by the OsSocket as a callback
-  void onTunTapData();
+  void onTunData();
 
  public:
-  TunTap();
+  Tun();
   // name getter because the name will be utun%d and we must find out which slot
   // is available...
   std::string getName();

@@ -46,17 +46,17 @@ static int openTun(const std::string& name, bool isTap)
   return fd;
 }
 
-void TunTap::close()
+void Tun::close()
 {
   SOCKFUNC_close(fd);
 }
 
-bool TunTap::isRunning()
+bool Tun::isRunning()
 {
   return fd != -1;
 }
 
-void TunTap::onTunTapData()
+void Tun::onTunData()
 {
   long size = read(fd, &tunBuffer[0], tunBuffer.size());
 
@@ -73,15 +73,15 @@ void TunTap::onTunTapData()
   sendToLowerLayer(IpAddress{}, packet);
 }
 
-TunTap::TunTap(std::string name, bool isTap)
+Tun::Tun(std::string name, bool isTap)
 {
   tunBuffer.resize(4096);
 
   fd = openTun(name, isTap);
-  OsSocket::bindCustomFd(fd, std::bind(&TunTap::onTunTapData, this));
+  OsSocket::bindCustomFd(fd, std::bind(&Tun::onTunData, this));
 }
 
-void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
+void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   long wr = write(fd, data.data(), data.size());
   if(wr != data.size()) {

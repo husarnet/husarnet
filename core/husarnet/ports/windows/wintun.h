@@ -1,3 +1,9 @@
+// Copyright (c) 2025 Husarnet sp. z o.o.
+// Authors: listed in project_root/README.md
+// License: specified in project_root/LICENSE.txt
+
+// This header is distributed with wintun. See https://www.wintun.net/
+
 /* SPDX-License-Identifier: GPL-2.0 OR MIT
  *
  * Copyright (C) 2018-2021 WireGuard LLC. All Rights Reserved.
@@ -32,8 +38,8 @@ extern "C" {
 #endif
 
 //<ympek> #pragma warning is MSVC thing, I comment it out so it don't spam during build
-//#pragma warning(push)
-//#pragma warning(disable : 4324) /* structure was padded due to alignment specifier */
+// #pragma warning(push)
+// #pragma warning(disable : 4324) /* structure was padded due to alignment specifier */
 
 /**
  * A handle representing Wintun adapter
@@ -58,6 +64,8 @@ typedef struct _WINTUN_ADAPTER* WINTUN_ADAPTER_HANDLE;
  * WintunCloseAdapter. If the function fails, the return value is NULL. To get extended error information, call
  * GetLastError.
  */
+
+// cppcheck-suppress syntaxError
 typedef _Must_inspect_result_ _Return_type_success_(return != NULL) _Post_maybenull_
     WINTUN_ADAPTER_HANDLE(WINAPI WINTUN_CREATE_ADAPTER_FUNC)(
         _In_z_ LPCWSTR Name,
@@ -252,7 +260,7 @@ typedef _Must_inspect_result_ _Return_type_success_(return != NULL) _Post_mayben
 typedef VOID(WINAPI WINTUN_SEND_PACKET_FUNC)(_In_ WINTUN_SESSION_HANDLE Session, _In_ const BYTE* Packet);
 
 //<ympek> #pragma warning is MSVC thing, I comment it out so it don't spam during build
-//#pragma warning(pop)
+// #pragma warning(pop)
 
 #ifdef __cplusplus
 }

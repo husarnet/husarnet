@@ -73,8 +73,8 @@ void HusarnetManager::runHusarnet()
   // ngsocket layers)
   this->peerContainer = new PeerContainer(this->configManager, this->myIdentity);
 
-  auto tt = Port::startTunTap(this->myIdentity->getIpAddress(), this->configEnv->getDaemonInterface());
-  this->tunTap = static_cast<TunTap*>(tt);
+  auto tt = Port::startTun(this->myIdentity->getIpAddress(), this->configEnv->getDaemonInterface());
+  this->tun = static_cast<Tun*>(tt);
 
   auto multicast = new MulticastLayer(this->myIdentity->getDeviceId(), this->configManager);
   auto compression = new CompressionLayer(this->peerContainer, this->myFlags);
@@ -82,7 +82,7 @@ void HusarnetManager::runHusarnet()
   this->ngsocket = new NgSocket(this->myIdentity, this->peerContainer, this->configManager);
   this->eventBus = new EventBus(this->myIdentity->getIpAddress(), this->configManager);
 
-  stackUpperOnLower(tunTap, multicast);
+  stackUpperOnLower(tun, multicast);
   stackUpperOnLower(multicast, compression);
   stackUpperOnLower(compression, securityLayer);
   stackUpperOnLower(securityLayer, ngsocket);
@@ -132,7 +132,7 @@ void HusarnetManager::runHusarnet()
   while(true) {
     ngsocket->periodic();
 
-    Port::processSocketEvents(this->tunTap);
+    Port::processSocketEvents(this->tun);
   }
 }
 

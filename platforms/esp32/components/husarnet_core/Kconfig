@@ -55,9 +55,9 @@ menu "Husarnet"
             Sets websocket event bus task priority. Should be set lower than ngsocket and config task priorities.
 
     config HUSARNET_HEARTBEAT_TASK_PRIORITY
-        int "Websetup connection task priority"
+        int "Heartbeat task priority"
         range 1 15
         default 5
         help
-            Periodic hearbeat task. Should be set lower than ngsocket and config task priorities.
+            Periodic heartbeat task. Should be set lower than ngsocket and config task priorities.
 endmenu

@@ -2,12 +2,12 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
-#include "husarnet/ports/windows/wintun.h"
 #include <windows.h>
+
+#include "husarnet/ports/windows/wintun.h"
 
 #include "husarnet/ipaddress.h"
 #include "husarnet/layer_interfaces.h"
-
 
 static WINTUN_CREATE_ADAPTER_FUNC* WintunCreateAdapter;
 static WINTUN_CLOSE_ADAPTER_FUNC* WintunCloseAdapter;
@@ -34,21 +34,21 @@ constexpr char networkAdapterNameStr[] = NETWORK_ADAPTER_NAME;
 // Must be a power of two.
 constexpr int ringCapacity = 0x400000;
 
-class TunTap : public UpperLayer {
-public:
-  TunTap(HusarnetAddress address);
-  TunTap(const TunTap&) = delete;
-  TunTap(TunTap&&) = delete;
-  TunTap& operator=(const TunTap&) = delete;
-  TunTap& operator=(TunTap&&) = delete;
-  ~TunTap();
+class Tun : public UpperLayer {
+ public:
+  Tun(HusarnetAddress address);
+  Tun(const Tun&) = delete;
+  Tun(Tun&&) = delete;
+  Tun& operator=(const Tun&) = delete;
+  Tun& operator=(Tun&&) = delete;
+  ~Tun();
   bool init();
   bool start();
-  void startReaderThread(); // this is separate from interface bringup to reduce noise
+  void startReaderThread();  // this is separate from interface bringup to reduce noise
   bool isValid() const;
   std::string getAdapterName();
 
-private:
+ private:
   void acquireWintunAdapter();
   void assignIpAddressToAdapter(HusarnetAddress addr);
   void closeWintunAdapter();

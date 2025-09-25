@@ -14,7 +14,7 @@
 #include "lwip/ip6_addr.h"
 #include "lwip/raw.h"
 
-class TunTap : public UpperLayer {
+class Tun : public UpperLayer {
  private:
   void close();
   ip6_addr_t ipAddr;
@@ -23,7 +23,7 @@ class TunTap : public UpperLayer {
  public:
   QueueHandle_t tunTapMsgQueue;
 
-  TunTap(ip6_addr_t ip, size_t queueSize);
+  Tun(ip6_addr_t ip, size_t queueSize);
   void processQueuedPackets();
   void onLowerLayerData(HusarnetAddress source, string_view data) override;
   ip6_addr_t getIp6Addr();

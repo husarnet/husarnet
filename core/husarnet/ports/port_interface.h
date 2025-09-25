@@ -75,7 +75,7 @@ namespace Port {
   IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName);
   std::vector<IpAddress> getLocalAddresses();
 
-  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName);
+  UpperLayer* startTun(const HusarnetAddress& myAddress, const std::string& interfaceName);
 
   void processSocketEvents(void* tuntap);
 

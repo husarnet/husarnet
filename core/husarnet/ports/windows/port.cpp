@@ -2,6 +2,8 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 
+#include "husarnet/ports/port.h"
+
 #include <chrono>
 #include <condition_variable>
 #include <fstream>
@@ -9,7 +11,6 @@
 #include <thread>
 #include <vector>
 
-#include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
 
 #include "husarnet/husarnet_manager.h"
@@ -126,10 +127,10 @@ namespace Port {
     return result;
   }
 
-  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
+  UpperLayer* startTun(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
-    auto tunTap = new TunTap(myAddress);
-    auto started = tunTap->start();
+    auto tun = new Tun(myAddress);
+    auto started = tun->start();
 
     if(!started) {
       LOG_CRITICAL("TUN bringup failed; Husarnet won't work");
@@ -140,14 +141,14 @@ namespace Port {
     // these can take quite a few seconds
     // but at the same time they're required for this stuff to even work,
     // so we do it before starting reading from TUN
-    LOG_INFO("netsh adapter name is %s", tunTap->getAdapterName().c_str());
-    setupRoutingTable(tunTap->getAdapterName());
-    setupFirewall(tunTap->getAdapterName());
+    LOG_INFO("netsh adapter name is %s", tun->getAdapterName().c_str());
+    setupRoutingTable(tun->getAdapterName());
+    setupFirewall(tun->getAdapterName());
 
-    tunTap->startReaderThread();
+    tun->startReaderThread();
     LOG_INFO("started reading from TUN adapter")
 
-    return tunTap;
+    return tun;
   }
 
   std::string getSelfHostname()
@@ -209,7 +210,8 @@ namespace Port {
     std::string insertCmd = "powershell \"New-NetFirewallRule -DisplayName " + firewallRuleName +
                             " -Direction Inbound -Action Allow"
                             " -LocalAddress fc94::/16 -RemoteAddress fc94::/16 "
-                            "-InterfaceAlias " + netshName + " | Out-Null\"";
+                            "-InterfaceAlias " +
+                            netshName + " | Out-Null\"";
 
     callWindowsCmd(insertCmd);
   }
@@ -223,7 +225,7 @@ namespace Port {
 
   void setupFirewall(const std::string& netshName)
   {
-    const std::string firewallRuleName { "AllowHusarnet" };
+    const std::string firewallRuleName{"AllowHusarnet"};
     // Due to bug in earlier versions of Windows client, the rule was inserted
     // on each start of the service, which means users could have a lot of
     // redundant rules in their firewall; that's why we start with the cleanup
