@@ -169,7 +169,7 @@ jobs:
       - "build_windows"
       - "bump_version"
       - "build_builder"
-    runs-on: "windows-latest"
+    runs-on: "windows-2022"
     steps:
       - name: "Check out the repo"
         uses: "actions/checkout@v4"

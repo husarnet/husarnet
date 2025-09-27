@@ -182,7 +182,7 @@ jobs:
   build_windows_installer:
     needs:
       - "build_windows"
-    runs-on: "windows-latest"
+    runs-on: "windows-2022"
     steps:
       - name: "Check out the repo"
         uses: "actions/checkout@v4"
