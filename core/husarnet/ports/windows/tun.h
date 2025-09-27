@@ -45,7 +45,6 @@ class Tun : public UpperLayer {
   bool init();
   bool start();
   void startReaderThread();  // this is separate from interface bringup to reduce noise
-  bool isValid() const;
   std::string getAdapterName();
 
  private:
@@ -54,9 +53,8 @@ class Tun : public UpperLayer {
   void closeWintunAdapter();
   void onLowerLayerData(HusarnetAddress source, string_view data) override;
 
-  bool valid;
-  HMODULE wintunLib;
-  WINTUN_ADAPTER_HANDLE wintunAdapter;
-  WINTUN_SESSION_HANDLE wintunSession;
+  HMODULE wintunLib{NULL};
+  WINTUN_ADAPTER_HANDLE wintunAdapter{NULL};
+  WINTUN_SESSION_HANDLE wintunSession{NULL};
   HusarnetAddress husarnetAddress;
 };

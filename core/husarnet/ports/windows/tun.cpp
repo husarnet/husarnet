@@ -47,7 +47,7 @@ static void CALLBACK WintunLoggerToHusarnetLogger(WINTUN_LOGGER_LEVEL Level, DWO
   free(logLineBuffer);
 }
 
-Tun::Tun(const HusarnetAddress address) : valid(false), husarnetAddress(address)
+Tun::Tun(const HusarnetAddress address) : husarnetAddress(address)
 {
   this->init();
 }
@@ -116,6 +116,7 @@ bool Tun::start()
   this->wintunSession = WintunStartSession(this->wintunAdapter, ringCapacity);
   if(!this->wintunSession) {
     LOG_CRITICAL("TunLayer: unable to start wintun session")
+    return false;
   }
   return true;
 }
@@ -176,7 +177,7 @@ void Tun::acquireWintunAdapter()
       LOG_INFO("wintun adapter created");
     }
   } else {
-    LOG_INFO("Opened Wintun adapter!")
+    LOG_INFO("Opened Wintun adapter!");
   }
 }
 
@@ -186,12 +187,12 @@ void Tun::assignIpAddressToAdapter(HusarnetAddress addr)
   InitializeUnicastIpAddressEntry(&AddressRow);
   WintunGetAdapterLUID(this->wintunAdapter, &AddressRow.InterfaceLuid);
   AddressRow.Address.Ipv6.sin6_family = AF_INET6;
-  memcpy(AddressRow.Address.Ipv6.sin6_addr.s6_addr, addr.data.data(), sizeof(addr));
+  memcpy(AddressRow.Address.Ipv6.sin6_addr.s6_addr, addr.data.data(), 16);
   AddressRow.OnLinkPrefixLength = 32;
   AddressRow.DadState = IpDadStatePreferred;
   auto LastError = CreateUnicastIpAddressEntry(&AddressRow);
   if(LastError != ERROR_SUCCESS && LastError != ERROR_OBJECT_ALREADY_EXISTS) {
-    std::cout << "WintunManager: cannot assign IP addr to interface" << std::endl;
+    LOG_ERROR("TunLayer: cannot assign IP addr to interface, error %lu", LastError);
   }
 }
 
@@ -206,7 +207,7 @@ void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
   if(Packet) {
     memcpy(Packet, data.data(), data.size());
     WintunSendPacket(this->wintunSession, Packet);
-  } else if(GetLastError() != ERROR_BUFFER_OVERFLOW) {
+  } else if(GetLastError() == ERROR_BUFFER_OVERFLOW) {
     LOG_ERROR("packet write failed - buffer overflow")
   } else {
     LOG_ERROR("packet write failed %d", GetLastError())
@@ -216,9 +217,4 @@ void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
 std::string Tun::getAdapterName()
 {
   return networkAdapterNameStr;
-}
-
-bool Tun::isValid() const
-{
-  return this->valid;
 }
