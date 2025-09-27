@@ -40,7 +40,7 @@ namespace OsSocket {
       struct sockaddr_in* st4 = (sockaddr_in*)(&st);
       InetAddress r{};
       r.ip.data[0] = 0;  // ipv4-mapped ipv6
-      r.ip.data[0] = 0;
+      r.ip.data[1] = 0;
       r.ip.data[10] = 0xFF;
       r.ip.data[11] = 0xFF;
       memcpy((char*)r.ip.data.data() + 12, &st4->sin_addr, 4);
