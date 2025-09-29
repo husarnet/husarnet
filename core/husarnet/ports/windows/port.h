@@ -42,3 +42,12 @@ inline int renameFile(const char* src, const char* dst)
 }
 
 void fixPermissions(std::string path);
+
+namespace Port {
+  int callWindowsCmd(std::string cmd);
+  void insertFirewallRule(const std::string& firewallRuleName);
+  void deleteFirewallRules(const std::string& firewallRuleName);
+
+  void setupRoutingTable(const std::string& netshName);
+  void setupFirewall(const std::string& netshName);
+}  // namespace Port

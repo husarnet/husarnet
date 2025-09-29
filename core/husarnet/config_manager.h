@@ -105,7 +105,7 @@ class ConfigManager {
   json cacheJson = json({});
 
   bool allowEveryone = false;  // flipped to true if control plane is disabled
-  bool claimed = false;  // true if the device is claimed by a user
+  bool claimed = false;        // true if the device is claimed by a user
 
   // synchronization primitives
   mutable etl::mutex mutexFast;  // protects internal sets and vectors

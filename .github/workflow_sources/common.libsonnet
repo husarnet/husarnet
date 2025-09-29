@@ -215,7 +215,7 @@
     build_windows_installer:: function(ref) {
       needs: ['build_windows'],
 
-      'runs-on': 'windows-latest',
+      'runs-on': 'windows-2022',
 
       steps: [
         $.steps.checkout(ref),

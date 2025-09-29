@@ -48,7 +48,7 @@ void HusarnetManager::prepareHusarnet()
 
   this->hooksManager = new HooksManager(this->configEnv->getEnableHooks());
 
-  if (this->hooksManager->isEnabled()) { 
+  if(this->hooksManager->isEnabled()) {
     Port::threadStart([this]() { this->hooksManager->periodicThread(); }, "hooks", 8000);
   }
 
@@ -73,8 +73,8 @@ void HusarnetManager::runHusarnet()
   // ngsocket layers)
   this->peerContainer = new PeerContainer(this->configManager, this->myIdentity);
 
-  auto tt = Port::startTunTap(this->myIdentity->getIpAddress(), this->configEnv->getDaemonInterface());
-  this->tunTap = static_cast<TunTap*>(tt);
+  auto tt = Port::startTun(this->myIdentity->getIpAddress(), this->configEnv->getDaemonInterface());
+  this->tun = static_cast<Tun*>(tt);
 
   auto multicast = new MulticastLayer(this->myIdentity->getDeviceId(), this->configManager);
   auto compression = new CompressionLayer(this->peerContainer, this->myFlags);
@@ -82,7 +82,7 @@ void HusarnetManager::runHusarnet()
   this->ngsocket = new NgSocket(this->myIdentity, this->peerContainer, this->configManager);
   this->eventBus = new EventBus(this->myIdentity->getIpAddress(), this->configManager);
 
-  stackUpperOnLower(tunTap, multicast);
+  stackUpperOnLower(tun, multicast);
   stackUpperOnLower(multicast, compression);
   stackUpperOnLower(compression, securityLayer);
   stackUpperOnLower(securityLayer, ngsocket);
@@ -98,8 +98,7 @@ void HusarnetManager::runHusarnet()
           }
         },
         "eb",
-        /*stack=*/16000,
-        EVENTBUS_TASK_PRIORITY);
+        /*stack=*/16000, EVENTBUS_TASK_PRIORITY);
   }
 
   // Spin off another thread for heartbeats - report being alive to Dashboard every now and then
@@ -114,9 +113,7 @@ void HusarnetManager::runHusarnet()
             Port::threadSleep(heartbeatPeriodMs);
           }
         },
-        "heartbeat",
-        16000,
-        HEARTBEAT_TASK_PRIORITY);
+        "heartbeat", 16000, HEARTBEAT_TASK_PRIORITY);
   }
 
 // In case of a "fat" platform - start the API server
@@ -135,7 +132,7 @@ void HusarnetManager::runHusarnet()
   while(true) {
     ngsocket->periodic();
 
-    Port::processSocketEvents(this->tunTap);
+    Port::processSocketEvents(this->tun);
   }
 }
 

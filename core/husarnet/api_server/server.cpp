@@ -150,7 +150,8 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
   std::string query = httplib::detail::params_to_query_str(params);
   std::string pathWithQuery(path + "?" + query);
 
-  // we allow a couple of retries in case the Dashboard API connection is not well established at the time of Daemon API request
+  // we allow a couple of retries in case the Dashboard API connection is not well established at the time of Daemon API
+  // request
   auto attemptRequest = [apiAddress, method, pathWithQuery](const httplib::Request& req) {
     httplib::Client httpClient(apiAddress.toString());
     httpClient.set_connection_timeout(0, 5 * 1000000);  // 5 sec

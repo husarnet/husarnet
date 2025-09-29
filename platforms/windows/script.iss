@@ -116,17 +116,13 @@ end;
 [Files]
 Source: "husarnet-daemon.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; BeforeInstall: BeforeReplaceService
 Source: "husarnet.exe"; DestDir: "{app}\bin"; Flags: ignoreversion;
-Source: "addtap.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "tap-windows.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "wintun.dll"; DestDir: "{app}\bin"; Flags: ignoreversion;
 Source: "nssm.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "installservice.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "uninstallservice.bat"; DestDir: "{app}"; Flags: ignoreversion
 
 ;Source: "*.o"; DestDir: "{app}"; Flags: ignoreversion
 ;Source: "*.png"; DestDir: "{app}"; Flags: ignoreversion
-
-[Run]
-Filename: "{app}\tap-windows.exe"; Parameters: "/S"; StatusMsg: "Installing TAP driver..."
 
 [Run]
 Filename: "{app}\installservice.bat"; StatusMsg: "Installing service..."; Flags: runhidden

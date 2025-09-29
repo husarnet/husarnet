@@ -12,7 +12,7 @@
 // Each layer communicates with others through a producer and consumer system.
 // Layers are ordered like this:
 //
-// TunTap (top) (think - this is your "raw data")
+// Tun (top) (think - this is your "raw data")
 // Multicast
 // Compression
 // Security

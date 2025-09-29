@@ -5,189 +5,230 @@
 
 #include <functional>
 
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include "husarnet/ports/port.h"
-#include "husarnet/ports/sockets.h"
-#include "husarnet/ports/windows/networking.h"
+#include <iphlpapi.h>
+#include <netioapi.h>
+#include <process.h>
+#include <winternl.h>
+#include <ws2ipdef.h>
+#include <ws2tcpip.h>
 
 #include "husarnet/logging.h"
-#include "husarnet/util.h"
 
-// From OpenVPN tap driver, common.h
-#define TAP_CONTROL_CODE(request, method) CTL_CODE(FILE_DEVICE_UNKNOWN, request, method, FILE_ANY_ACCESS)
-#define TAP_IOCTL_GET_MAC TAP_CONTROL_CODE(1, METHOD_BUFFERED)
-#define TAP_IOCTL_GET_VERSION TAP_CONTROL_CODE(2, METHOD_BUFFERED)
-#define TAP_IOCTL_GET_MTU TAP_CONTROL_CODE(3, METHOD_BUFFERED)
-#define TAP_IOCTL_GET_INFO TAP_CONTROL_CODE(4, METHOD_BUFFERED)
-#define TAP_IOCTL_CONFIG_POINT_TO_POINT TAP_CONTROL_CODE(5, METHOD_BUFFERED)
-#define TAP_IOCTL_SET_MEDIA_STATUS TAP_CONTROL_CODE(6, METHOD_BUFFERED)
-#define TAP_IOCTL_CONFIG_DHCP_MASQ TAP_CONTROL_CODE(7, METHOD_BUFFERED)
-#define TAP_IOCTL_GET_LOG_LINE TAP_CONTROL_CODE(8, METHOD_BUFFERED)
-#define TAP_IOCTL_CONFIG_DHCP_SET_OPT TAP_CONTROL_CODE(9, METHOD_BUFFERED)
-#define TAP_IOCTL_CONFIG_TUN TAP_CONTROL_CODE(10, METHOD_BUFFERED)
+#include "dummy_task_priorities.h"
+#include "port_interface.h"
 
-static const std::string peerMacAddr = decodeHex("525400fc944d");
-static const std::string defaultSelfMacAddr = decodeHex("525400fc944c");
+static WINTUN_CREATE_ADAPTER_FUNC* WintunCreateAdapter;
+static WINTUN_CLOSE_ADAPTER_FUNC* WintunCloseAdapter;
+static WINTUN_OPEN_ADAPTER_FUNC* WintunOpenAdapter;
+static WINTUN_GET_ADAPTER_LUID_FUNC* WintunGetAdapterLUID;
+static WINTUN_GET_RUNNING_DRIVER_VERSION_FUNC* WintunGetRunningDriverVersion;
+static WINTUN_DELETE_DRIVER_FUNC* WintunDeleteDriver;
+static WINTUN_SET_LOGGER_FUNC* WintunSetLogger;
+static WINTUN_START_SESSION_FUNC* WintunStartSession;
+static WINTUN_END_SESSION_FUNC* WintunEndSession;
+static WINTUN_GET_READ_WAIT_EVENT_FUNC* WintunGetReadWaitEvent;
+static WINTUN_RECEIVE_PACKET_FUNC* WintunReceivePacket;
+static WINTUN_RELEASE_RECEIVE_PACKET_FUNC* WintunReleaseReceivePacket;
+static WINTUN_ALLOCATE_SEND_PACKET_FUNC* WintunAllocateSendPacket;
+static WINTUN_SEND_PACKET_FUNC* WintunSendPacket;
 
-static HANDLE openTun(const std::string& name)
+static void CALLBACK WintunLoggerToHusarnetLogger(WINTUN_LOGGER_LEVEL Level, DWORD64 Timestamp, const WCHAR* LogLine)
 {
-  HANDLE tun_fd;
+  constexpr size_t bufferSize = 512;
+  auto logLineBuffer = static_cast<char*>(malloc(bufferSize));
+  wcstombs(logLineBuffer, LogLine, _TRUNCATE);
 
-  std::string path = "\\\\.\\Global\\" + name + ".tap";
-  tun_fd = CreateFile(
-      path.c_str(), GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING,
-      FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
-  if(tun_fd == INVALID_HANDLE_VALUE) {
-    int errcode = GetLastError();
-
-    LOG_ERROR("failed to open tap device: %d", errcode);
-    return INVALID_HANDLE_VALUE;
+  SYSTEMTIME SystemTime;
+  FileTimeToSystemTime((FILETIME*)&Timestamp, &SystemTime);
+  switch(Level) {
+    case WINTUN_LOG_WARN:
+      LOG_WARNING(
+          "wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
+          SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
+      break;
+    case WINTUN_LOG_ERR:
+      LOG_ERROR(
+          "wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
+          SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
+      break;
+    default:
+      LOG_DEBUG(
+          "wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
+          SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
+      break;
   }
-  LOG_INFO("success: tap device opened");
 
-  return tun_fd;
+  free(logLineBuffer);
 }
 
-void TunTap::close()
+Tun::Tun(const HusarnetAddress address) : husarnetAddress(address)
 {
-  CloseHandle(tap_fd);
+  this->init();
 }
 
-bool TunTap::isRunning()
+Tun::~Tun()
 {
-  return tap_fd != INVALID_HANDLE_VALUE;
+  if(this->wintunSession) {
+    WintunEndSession(this->wintunSession);
+  }
+  if(this->wintunAdapter) {
+    WintunCloseAdapter(this->wintunAdapter);
+  }
+  if(this->wintunLib) {
+    FreeLibrary(this->wintunLib);
+  }
 }
 
-void TunTap::onTunTapData()
+bool Tun::init()
 {
-  // This is NOOP, as reading from TunTap is handled by separate
-  // thread on Windows. We don't handle it via bindCustomFd and select()
+  this->wintunLib =
+      LoadLibraryExW(L"wintun.dll", NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
+  if(!this->wintunLib) {
+    LOG_CRITICAL("TunLayer: wintun.dll not found");
+    return false;
+  }
+
+  // clang-format off
+  if(((*(FARPROC*)&WintunCreateAdapter =           GetProcAddress(this->wintunLib, "WintunCreateAdapter")) == NULL) ||
+     ((*(FARPROC*)&WintunCloseAdapter =            GetProcAddress(this->wintunLib, "WintunCloseAdapter")) == NULL) ||
+     ((*(FARPROC*)&WintunOpenAdapter =             GetProcAddress(this->wintunLib, "WintunOpenAdapter")) == NULL) ||
+     ((*(FARPROC*)&WintunGetAdapterLUID =          GetProcAddress(this->wintunLib, "WintunGetAdapterLUID")) == NULL) ||
+     ((*(FARPROC*)&WintunGetRunningDriverVersion = GetProcAddress(this->wintunLib, "WintunGetRunningDriverVersion")) == NULL) ||
+     ((*(FARPROC*)&WintunDeleteDriver =            GetProcAddress(this->wintunLib, "WintunDeleteDriver")) == NULL) ||
+     ((*(FARPROC*)&WintunSetLogger =               GetProcAddress(this->wintunLib, "WintunSetLogger")) == NULL) ||
+     ((*(FARPROC*)&WintunStartSession =            GetProcAddress(this->wintunLib, "WintunStartSession")) == NULL) ||
+     ((*(FARPROC*)&WintunEndSession =              GetProcAddress(this->wintunLib, "WintunEndSession")) == NULL) ||
+     ((*(FARPROC*)&WintunGetReadWaitEvent =        GetProcAddress(this->wintunLib, "WintunGetReadWaitEvent")) == NULL) ||
+     ((*(FARPROC*)&WintunReceivePacket =           GetProcAddress(this->wintunLib, "WintunReceivePacket")) == NULL) ||
+     ((*(FARPROC*)&WintunReleaseReceivePacket =    GetProcAddress(this->wintunLib, "WintunReleaseReceivePacket")) == NULL) ||
+     ((*(FARPROC*)&WintunAllocateSendPacket =      GetProcAddress(this->wintunLib, "WintunAllocateSendPacket")) == NULL) ||
+     ((*(FARPROC*)&WintunSendPacket =              GetProcAddress(this->wintunLib, "WintunSendPacket")) == NULL))
+  {
+    DWORD LastError = GetLastError();
+    FreeLibrary(this->wintunLib);
+    SetLastError(LastError);
+    LOG_CRITICAL("TunLayer: failed to initialize wintun library");
+    return false;
+  }
+  // clang-format on
+
+  return true;
 }
 
-void TunTap::startReaderThread()
+bool Tun::start()
+{
+  this->acquireWintunAdapter();
+  if(!this->wintunAdapter) {
+    LOG_CRITICAL("TunLayer: failed to open/create wintun adapter")
+    return false;
+  }
+
+  WintunSetLogger(WintunLoggerToHusarnetLogger);
+  DWORD Version = WintunGetRunningDriverVersion();
+  LOG_INFO("TunLayer: wintun v%u.%u loaded", (Version >> 16) & 0xff, (Version >> 0) & 0xff);
+  this->assignIpAddressToAdapter(this->husarnetAddress);
+  this->wintunSession = WintunStartSession(this->wintunAdapter, ringCapacity);
+  if(!this->wintunSession) {
+    LOG_CRITICAL("TunLayer: unable to start wintun session")
+    return false;
+  }
+  return true;
+}
+
+void Tun::startReaderThread()
 {
   Port::threadStart(
-      [&] {
-        std::string buf;
-        buf.resize(4096);
-
-        threadMutex.lock();
-
+      [this]() {
+        HANDLE WaitHandles[] = {WintunGetReadWaitEvent(this->wintunSession)};
         while(true) {
-          string_view packet = read(buf);
-
-          if(packet.substr(0, 6) == peerMacAddr && packet.substr(6, 6) == selfMacAddr &&
-             packet.substr(12, 2) == string_view("\x86\xdd", 2)) {
-            sendToLowerLayer(IpAddress(), packet.substr(14));
+          DWORD packetSize;
+          BYTE* Packet = WintunReceivePacket(this->wintunSession, &packetSize);
+          if(Packet) {
+            this->sendToLowerLayer(IpAddress(), string_view(reinterpret_cast<const char*>(Packet), packetSize));
+            WintunReleaseReceivePacket(this->wintunSession, Packet);
+          } else {
+            DWORD LastError = GetLastError();
+            switch(LastError) {
+              case ERROR_NO_MORE_ITEMS:
+                if(WaitForMultipleObjects(_countof(WaitHandles), WaitHandles, FALSE, INFINITE) == WAIT_OBJECT_0)
+                  continue;  // TODO wait for single object actually
+              default:
+                LOG_ERROR("TunLayer: packet read failed")
+            }
           }
         }
       },
-      "wintap-read");
+      "wintun-reader", 8000, WINTUN_READER_TASK_PRIORITY);
 }
 
-TunTap::TunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
+void Tun::acquireWintunAdapter()
 {
-  tap_fd = openTun(interfaceName);
-  tunBuffer.resize(4096);
-
-  bringUp();
-
-  WindowsNetworking windowsNetworking;
-  windowsNetworking.setupNetworkInterface(myAddress, interfaceName);
-  windowsNetworking.allowHusarnetThroughWindowsFirewall("AllowHusarnet");
-
-  selfMacAddr = getMac();
-  startReaderThread();
-}
-
-string_view TunTap::read(std::string& buffer)
-{
-  threadMutex.unlock();
-
-  OVERLAPPED overlapped = {0, 0, {{0}}, 0};
-  overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-  if(ReadFile(tap_fd, &buffer[0], (DWORD)buffer.size(), NULL, &overlapped) == 0) {
-    if(GetLastError() != ERROR_IO_PENDING) {
-      LOG_ERROR("tap read failed %d", (int)GetLastError());
-      assert(false);
+  this->wintunAdapter = WintunOpenAdapter(networkAdapterNameSz);
+  if(!this->wintunAdapter) {
+    LOG_INFO("TunLayer: existing wintun adapter not found, creating new one... %d", GetLastError());
+    // since GUIDs are 128-bit values, IMO we can simply provide Husarnet IPv6 here
+    // according to the Wintun docs GUID parameter is a suggestion anyway
+    // byte order will be not exactly what you expect but not important
+    // TODO: consider the case when we regenerate ID (does the old GUID stay in the system and clutter somehow?)
+    GUID myGuid;
+    memcpy(&myGuid, &this->husarnetAddress, 16);
+    this->wintunAdapter = WintunCreateAdapter(networkAdapterNameSz, L"WintunHusarnetTodoChange", &myGuid);
+    if(!this->wintunAdapter) {
+      DWORD errorCode = GetLastError();
+      if(errorCode == ERROR_ACCESS_DENIED) {
+        LOG_ERROR("ACCESS_DENIED while trying to open tunnel, are you Administrator? Error code: %d", errorCode);
+      } else if(errorCode == ERROR_ALREADY_EXISTS) {
+        LOG_ERROR("ALREADY_EXISTS while trying to create wintun adapter");
+        // one last try to open it
+        this->wintunAdapter = WintunOpenAdapter(networkAdapterNameSz);
+        if(!this->wintunAdapter) {
+          LOG_INFO("can't open adapter");
+        }  // TODO: figure out why this sometimes happens (wintun does not teardown cleanly after killing process?)
+      } else {
+        LOG_ERROR("Unable to create wintun adapter. Error code : %d", errorCode);
+      }
+    } else {
+      LOG_INFO("wintun adapter created");
     }
-  }
-
-  WaitForSingleObject(overlapped.hEvent, INFINITE);
-  CloseHandle(overlapped.hEvent);
-
-  threadMutex.lock();
-
-  int len = overlapped.InternalHigh;
-  return string_view(buffer).substr(0, len);
-}
-
-void TunTap::write(string_view data)
-{
-  threadMutex.unlock();
-
-  OVERLAPPED overlapped = {0, 0, {{0}}, 0};
-  overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-  if(WriteFile(tap_fd, data.data(), (DWORD)data.size(), NULL, &overlapped)) {
-    auto error = GetLastError();
-    if(error != ERROR_IO_PENDING) {
-      LOG_ERROR("tap write failed");
-    }
-  }
-
-  WaitForSingleObject(overlapped.hEvent, INFINITE);
-  CloseHandle(overlapped.hEvent);
-
-  threadMutex.lock();
-}
-
-void TunTap::bringUp()
-{
-  DWORD len;
-
-  ULONG flag = 1;
-  if(DeviceIoControl(tap_fd, TAP_IOCTL_SET_MEDIA_STATUS, &flag, sizeof(flag), &flag, sizeof(flag), &len, NULL) == 0) {
-    LOG_ERROR("failed to bring up the tap device");
-    return;
-  }
-
-  LOG_INFO("tap config OK");
-}
-
-std::string TunTap::getMac()
-{
-  std::string hwaddr;
-  hwaddr.resize(6);
-  DWORD len;
-
-  if(DeviceIoControl(tap_fd, TAP_IOCTL_GET_MAC, &hwaddr[0], hwaddr.size(), &hwaddr[0], hwaddr.size(), &len, NULL) ==
-     0) {
-    LOG_ERROR("failed to retrieve MAC address");
-    assert(false);
   } else {
-    LOG_DEBUG(
-        "MAC address: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 0xFF & hwaddr[0], 0xFF & hwaddr[1], 0xFF & hwaddr[2],
-        0xFF & hwaddr[3], 0xFF & hwaddr[4], 0xFF & hwaddr[5]);
+    LOG_INFO("Opened Wintun adapter!");
   }
-  return hwaddr;
 }
 
-void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
+void Tun::assignIpAddressToAdapter(HusarnetAddress addr)
 {
-  (void)source;
-  std::string wrapped;
+  MIB_UNICASTIPADDRESS_ROW AddressRow;
+  InitializeUnicastIpAddressEntry(&AddressRow);
+  WintunGetAdapterLUID(this->wintunAdapter, &AddressRow.InterfaceLuid);
+  AddressRow.Address.Ipv6.sin6_family = AF_INET6;
+  memcpy(AddressRow.Address.Ipv6.sin6_addr.s6_addr, addr.data.data(), 16);
+  AddressRow.OnLinkPrefixLength = 32;
+  AddressRow.DadState = IpDadStatePreferred;
+  auto LastError = CreateUnicastIpAddressEntry(&AddressRow);
+  if(LastError != ERROR_SUCCESS && LastError != ERROR_OBJECT_ALREADY_EXISTS) {
+    LOG_ERROR("TunLayer: cannot assign IP addr to interface, error %lu", LastError);
+  }
+}
 
-  wrapped += selfMacAddr;
-  wrapped += peerMacAddr;
-  wrapped += string_view("\x86\xdd", 2);
-  wrapped += data;
-  write(wrapped);
+void Tun::closeWintunAdapter()
+{
+  WintunCloseAdapter(this->wintunAdapter);
+}
+
+void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
+{
+  BYTE* Packet = WintunAllocateSendPacket(this->wintunSession, data.size());
+  if(Packet) {
+    memcpy(Packet, data.data(), data.size());
+    WintunSendPacket(this->wintunSession, Packet);
+  } else if(GetLastError() == ERROR_BUFFER_OVERFLOW) {
+    LOG_ERROR("packet write failed - buffer overflow")
+  } else {
+    LOG_ERROR("packet write failed %d", GetLastError())
+  }
+}
+
+std::string Tun::getAdapterName()
+{
+  return networkAdapterNameStr;
 }

@@ -496,8 +496,7 @@ void NgSocket::init()
   // Passing std::bind crashes mingw_thread. The reason is not apparent.
   Port::threadStart(
       [this]() { this->workerLoop(); }, "hnet_ng",
-      /*stack=*/8000,
-      NGSOCKET_TASK_PRIORITY);
+      /*stack=*/8000, NGSOCKET_TASK_PRIORITY);
 
   LOG_INFO("ngsocket %s listening on %d", this->myIdentity->getDeviceId().toString().c_str(), sourcePort);
 }

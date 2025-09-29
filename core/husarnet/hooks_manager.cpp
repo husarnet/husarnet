@@ -18,7 +18,7 @@ HooksManager::HooksManager(bool enableHooks)
 void HooksManager::scheduleHook(const HookType hookType)
 {
   etl::lock_guard<etl::mutex> lock(this->mutex);
-  
+
   if(!this->enabled) {
     return;
   }

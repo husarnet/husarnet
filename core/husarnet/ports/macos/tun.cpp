@@ -71,17 +71,17 @@ static int openTun(std::string& name)
   return -1;
 }
 
-void TunTap::close()
+void Tun::close()
 {
   SOCKFUNC_close(fd);
 }
 
-bool TunTap::isRunning()
+bool Tun::isRunning()
 {
   return fd != -1;
 }
 
-void TunTap::onTunTapData()
+void Tun::onTunData()
 {
   long size = read(fd, &tunBuffer[0], tunBuffer.size());
 
@@ -98,7 +98,7 @@ void TunTap::onTunTapData()
   sendToLowerLayer(IpAddress(), packet.substr(4));
 }
 
-TunTap::TunTap()
+Tun::Tun()
 {
   tunBuffer.resize(4096);
   std::string tunName{};
@@ -109,10 +109,10 @@ TunTap::TunTap()
   } else {
     LOG_INFO("utun device opened successfully");
   }
-  OsSocket::bindCustomFd(fd, std::bind(&TunTap::onTunTapData, this));
+  OsSocket::bindCustomFd(fd, std::bind(&Tun::onTunData, this));
 }
 
-void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
+void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   std::string wrapped{};
   // prepend bytes specific for utun/macos
@@ -125,7 +125,7 @@ void TunTap::onLowerLayerData(HusarnetAddress source, string_view data)
   }
 }
 
-std::string TunTap::getName()
+std::string Tun::getName()
 {
   return this->name;
 }

@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Husarnet sp. z o.o.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
+
 #include "husarnet/ports/port.h"
 
 #include <chrono>
@@ -10,9 +11,7 @@
 #include <thread>
 #include <vector>
 
-#include "husarnet/ports/port.h"
 #include "husarnet/ports/sockets.h"
-#include "husarnet/ports/windows/tun.h"
 
 #include "husarnet/husarnet_manager.h"
 #include "husarnet/logging.h"
@@ -21,99 +20,6 @@
 #include "process.h"
 #include "shlwapi.h"
 #include "sysinfoapi.h"
-
-// Based on code from libtuntap (https://github.com/LaKabane/libtuntap, ISC
-// License)
-#define MAX_KEY_LENGTH 255
-#define NETWORK_ADAPTERS                                                 \
-  "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-" \
-  "08002BE10318}"
-
-static std::vector<std::string> getExistingDeviceNames()
-{
-  std::vector<std::string> names;
-  const char* key_name = NETWORK_ADAPTERS;
-  HKEY adapters, adapter;
-  DWORD i, ret, len;
-  DWORD sub_keys = 0;
-
-  ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(key_name), 0, KEY_READ, &adapters);
-  if(ret != ERROR_SUCCESS) {
-    LOG_ERROR("RegOpenKeyEx returned error");
-    return {};
-  }
-
-  ret = RegQueryInfoKey(adapters, NULL, NULL, NULL, &sub_keys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-  if(ret != ERROR_SUCCESS) {
-    LOG_ERROR("RegQueryInfoKey returned error %u", ret);
-    return {};
-  }
-
-  if(sub_keys <= 0) {
-    LOG_ERROR("Wrong registry key");
-    return {};
-  }
-
-  /* Walk through all adapters */
-  for(i = 0; i < sub_keys; i++) {
-    char new_key[MAX_KEY_LENGTH];
-    char data[256];
-    TCHAR key[MAX_KEY_LENGTH];
-    DWORD keylen = MAX_KEY_LENGTH;
-
-    /* Get the adapter key name */
-    ret = RegEnumKeyEx(adapters, i, key, &keylen, NULL, NULL, NULL, NULL);
-    if(ret != ERROR_SUCCESS) {
-      continue;
-    }
-
-    /* Append it to NETWORK_ADAPTERS and open it */
-    snprintf(new_key, sizeof new_key, "%s\\%s", key_name, key);
-    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(new_key), 0, KEY_READ, &adapter);
-    if(ret != ERROR_SUCCESS) {
-      continue;
-    }
-
-    /* Check its values */
-    len = sizeof data;
-    ret = RegQueryValueEx(adapter, "ComponentId", NULL, NULL, (LPBYTE)data, &len);
-    if(ret != ERROR_SUCCESS) {
-      /* This value doesn't exist in this adapter tree */
-      goto clean;
-    }
-    /* If its a tap adapter, its all good */
-    if(strncmp(data, "tap", 3) == 0) {
-      DWORD type;
-
-      len = sizeof data;
-      ret = RegQueryValueEx(adapter, "NetCfgInstanceId", NULL, &type, (LPBYTE)data, &len);
-      if(ret != ERROR_SUCCESS) {
-        LOG_ERROR("RegQueryValueEx returned error %u", ret);
-        goto clean;
-      }
-      LOG_WARNING("found tap device: %s", data);
-
-      names.push_back(std::string(data));
-      // break;
-    }
-  clean:
-    RegCloseKey(adapter);
-  }
-  RegCloseKey(adapters);
-  return names;
-}
-
-static std::string whatNewDeviceWasCreated(std::vector<std::string> previousNames)
-{
-  for(std::string name : getExistingDeviceNames()) {
-    if(std::find(previousNames.begin(), previousNames.end(), name) == previousNames.end()) {
-      LOG_INFO("new device: %s", name.c_str());
-      return name;
-    }
-  }
-  LOG_WARNING("no new device was created?");
-  abort();
-}
 
 thread_local const char* threadName = nullptr;
 
@@ -221,26 +127,28 @@ namespace Port {
     return result;
   }
 
-  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
+  UpperLayer* startTun(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
-    // TODO: change this to wintun initialization
-    (void)interfaceName;  // ignore Linux-centric hnet0, setup OpenVPN adapter
-    auto existingDevices = getExistingDeviceNames();
-    auto deviceName = readStorage(StorageKey::windowsDeviceGuid);
-    // this should also work if deviceName is ""
-    if(std::find(existingDevices.begin(), existingDevices.end(), deviceName) == existingDevices.end()) {
-      LOG_INFO("Creating new TAP adapter");
-      system("addtap.bat");
-      deviceName = whatNewDeviceWasCreated(existingDevices);
-      auto success = writeStorage(StorageKey::windowsDeviceGuid, deviceName);
-      if(!success) {
-        LOG_ERROR("Saving Windows interface ID failed")
-      }
+    auto tun = new Tun(myAddress);
+    auto started = tun->start();
+
+    if(!started) {
+      LOG_CRITICAL("TUN bringup failed; Husarnet won't work");
+    } else {
+      LOG_INFO("TUN config OK");
     }
 
-    LOG_INFO("Windows interface ID is %s", deviceName.c_str());
-    auto tunTap = new TunTap(myAddress, deviceName);
-    return tunTap;
+    // these can take quite a few seconds
+    // but at the same time they're required for this stuff to even work,
+    // so we do it before starting reading from TUN
+    LOG_INFO("netsh adapter name is %s", tun->getAdapterName().c_str());
+    setupRoutingTable(tun->getAdapterName());
+    setupFirewall(tun->getAdapterName());
+
+    tun->startReaderThread();
+    LOG_INFO("started reading from TUN adapter")
+
+    return tun;
   }
 
   std::string getSelfHostname()
@@ -269,6 +177,11 @@ namespace Port {
     return true;
   }
 
+  int callWindowsCmd(std::string cmd)
+  {
+    return std::system(("\"" + cmd + "\"").c_str());
+  }
+
   bool runScripts(const std::string& eventName)
   {
     for(const auto& scriptPath : getAvailableScripts(eventName)) {
@@ -282,5 +195,41 @@ namespace Port {
   bool checkScriptsExist(const std::string& eventName)
   {
     return !getAvailableScripts(eventName).empty();
+  }
+
+  void setupRoutingTable(const std::string& netshName)
+  {
+    std::string quotedName = "\"" + netshName + "\"";
+    callWindowsCmd("netsh interface ipv6 add route fc94::/16 " + quotedName);
+  }
+
+  void insertFirewallRule(const std::string& netshName, const std::string& firewallRuleName)
+  {
+    LOG_INFO("Installing rule: %s in Windows Firewall", firewallRuleName.c_str());
+
+    std::string insertCmd = "powershell \"New-NetFirewallRule -DisplayName " + firewallRuleName +
+                            " -Direction Inbound -Action Allow"
+                            " -LocalAddress fc94::/16 -RemoteAddress fc94::/16 "
+                            "-InterfaceAlias " +
+                            netshName + " | Out-Null\"";
+
+    callWindowsCmd(insertCmd);
+  }
+
+  void deleteFirewallRules(const std::string& firewallRuleName)
+  {
+    // Remove-NetFirewallRule will remove ALL matching rules
+    std::string deleteCmd = "powershell \"Remove-NetFirewallRule -DisplayName " + firewallRuleName + " | Out-Null \"";
+    callWindowsCmd(deleteCmd);
+  }
+
+  void setupFirewall(const std::string& netshName)
+  {
+    const std::string firewallRuleName{"AllowHusarnet"};
+    // Due to bug in earlier versions of Windows client, the rule was inserted
+    // on each start of the service, which means users could have a lot of
+    // redundant rules in their firewall; that's why we start with the cleanup
+    deleteFirewallRules(firewallRuleName);
+    insertFirewallRule(netshName, firewallRuleName);
   }
 }  // namespace Port

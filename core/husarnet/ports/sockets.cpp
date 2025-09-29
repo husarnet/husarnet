@@ -10,14 +10,8 @@
 
 namespace OsSocket {
 
-//TODO: remove INET
-// #ifdef ENABLE_IPV6
 #define AF_INETx AF_INET6
-const bool useV6 = true;
-// #else
-// #define AF_INETx AF_INET
-//   const bool useV6 = false;
-// #endif
+  const bool useV6 = true;
 
   struct sockaddr_in6 makeSockaddr(InetAddress addr, bool v6 = useV6)
   {
@@ -45,8 +39,8 @@ const bool useV6 = true;
     if(st.ss_family == AF_INET) {
       struct sockaddr_in* st4 = (sockaddr_in*)(&st);
       InetAddress r{};
-      r.ip.data[0]  = 0; // ipv4-mapped ipv6
-      r.ip.data[0]  = 0;
+      r.ip.data[0] = 0;  // ipv4-mapped ipv6
+      r.ip.data[1] = 0;
       r.ip.data[10] = 0xFF;
       r.ip.data[11] = 0xFF;
       memcpy((char*)r.ip.data.data() + 12, &st4->sin_addr, 4);
@@ -120,6 +114,9 @@ const bool useV6 = true;
     }
 
     set_nonblocking(fd);
+
+    int off = 0;
+    setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&off, sizeof(off));
 
     auto sa = makeSockaddr(addr, useV6);
     socklen_t socklen = sizeof(sa);
@@ -380,6 +377,17 @@ const bool useV6 = true;
         size_t newSize = (read > 0) ? size + read : size;
         conn->readBuffer.resize(newSize);
 
+#ifdef PORT_WINDOWS
+        if(read < 0 && (WSAGetLastError() == WSAEWOULDBLOCK)) {
+          return;
+        }
+
+        if(read <= 0) {
+          LOG_ERROR("TCP recv failed: %d", WSAGetLastError());
+          TcpConnection::close(conn);
+          return;
+        }
+#else
         if(read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
           return;
         }
@@ -389,6 +397,7 @@ const bool useV6 = true;
           TcpConnection::close(conn);
           return;
         }
+#endif
       }
 
       // Pass data directly to the callback if no encapsulation is used
@@ -480,10 +489,19 @@ const bool useV6 = true;
     auto sa = makeSockaddr(address);
     socklen_t socklen = sizeof(sa);
 
+    // neccessary for Windows
+    int off = 0;
+    setsockopt(conn->fd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&off, sizeof(off));
+
     int res = SOCKFUNC(connect)(conn->fd, (sockaddr*)(&sa), socklen);
 
+#ifndef PORT_WINDOWS
     if(res < 0 && errno != EINPROGRESS) {
-      LOG_ERROR("connection with the server (%s) failed", address.str().c_str());
+      LOG_ERROR("connection with the server (%s) failed, res %d, errno %d", address.str().c_str(), errno);
+#else
+    if(res < 0 && WSAGetLastError() != WSAEINPROGRESS && WSAGetLastError() != WSAEWOULDBLOCK) {
+      LOG_ERROR("connection with the server (%s) failed, errno %d", address.str().c_str(), WSAGetLastError());
+#endif
       SOCKFUNC_close(conn->fd);
       return nullptr;
     }
@@ -497,7 +515,7 @@ const bool useV6 = true;
     };
 
     // Wait for the socket to become writable i.e. connect has succeeded
-    res = select(conn->fd + 1, NULL, &fdset, NULL, &tv);
+    res = SOCKFUNC(select)(conn->fd + 1, &fdset, &fdset, NULL, &tv);
 
     if(res <= 0) {
       LOG_ERROR("connection with the server (%s) failed (timeout)", address.str().c_str());

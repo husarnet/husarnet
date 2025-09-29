@@ -38,10 +38,9 @@ enum class StorageKey
   config,
   cache,
   daemonApiToken,
-  windowsDeviceGuid,  // TODO: temporary (until migration to wintun)
 };
 
-#define STORAGE_KEY_OPTIONS 5
+#define STORAGE_KEY_OPTIONS 4
 
 enum class HookType
 {
@@ -76,7 +75,7 @@ namespace Port {
   IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName);
   std::vector<IpAddress> getLocalAddresses();
 
-  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName);
+  UpperLayer* startTun(const HusarnetAddress& myAddress, const std::string& interfaceName);
 
   void processSocketEvents(void* tuntap);
 

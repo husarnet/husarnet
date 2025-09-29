@@ -50,7 +50,6 @@
 #include "nvs_flash.h"
 #include "nvs_handle.hpp"
 
-
 static const char* LOG_TAG = "husarnet";
 static const char NVS_HOSTNAME_KEY[] = "hostname";
 
@@ -59,7 +58,6 @@ static const etl::map<StorageKey, std::string, STORAGE_KEY_OPTIONS> storageMap =
     etl::pair{StorageKey::config, std::string("config.json")},
     etl::pair{StorageKey::daemonApiToken, std::string("daemon_api_token")},
     etl::pair{StorageKey::cache, std::string("cache.json")},
-    etl::pair{StorageKey::windowsDeviceGuid, std::string("guid")},
 };
 
 std::unique_ptr<nvs::NVSHandle> nvsHandle;
@@ -192,9 +190,7 @@ namespace Port {
   etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentOverrides()
   {
     // {EnvKey::tldFqdn, CONFIG_HUSARNET_FQDN};
-    return etl::map<EnvKey, std::string, ENV_KEY_OPTIONS>{
-        {EnvKey::tldFqdn, CONFIG_HUSARNET_FQDN}
-    };
+    return etl::map<EnvKey, std::string, ENV_KEY_OPTIONS>{{EnvKey::tldFqdn, CONFIG_HUSARNET_FQDN}};
   }
 
   void notifyReady()
@@ -314,19 +310,19 @@ namespace Port {
   }
 
   // On the ESP32 platform network interface name is always "hn0"
-  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
+  UpperLayer* startTun(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
     ip6_addr_t ip;
     memcpy(ip.addr, myAddress.data.data(), 16);
 
-    auto tunTap = new TunTap(ip, 32);
+    auto tunTap = new Tun(ip, 32);
     return tunTap;
   }
 
   void processSocketEvents(void* tuntap)
   {
     OsSocket::runOnce(20);  // process socket events for at most so many ms
-    static_cast<TunTap*>(tuntap)->processQueuedPackets();
+    static_cast<Tun*>(tuntap)->processQueuedPackets();
   }
 
   std::string getSelfHostname()
@@ -401,17 +397,16 @@ namespace Port {
 
   static HttpResult httpSendRecv(const IpAddress& ip, HTTPMessage& message)
   {
-    if (ip.isInvalid()) {
+    if(ip.isInvalid()) {
       LOG_ERROR("Invalid ip address");
       return {-1, ""};
     }
-    
+
     InetAddress address{ip, 80};
 
     // TODO: streaming write to socket
     etl::vector<char, 4096> buffer;
-    if (!message.encode(buffer))
-    {
+    if(!message.encode(buffer)) {
       LOG_ERROR("Failed to encode HTTP message");
       return {-1, ""};
     }
@@ -459,11 +454,7 @@ namespace Port {
     auto result = message.parse(buffer_view);
 
     if(result == HTTPMessage::Result::OK) {
-      return
-      {
-        static_cast<int>(message.response.statusCode),
-        std::string(message.body.data(), message.body.size())
-      };
+      return {static_cast<int>(message.response.statusCode), std::string(message.body.data(), message.body.size())};
     }
 
     LOG_ERROR("Failed to parse HTTP response");

@@ -9,7 +9,7 @@
 #include "husarnet/ngsocket.h"
 #include "husarnet/string_view.h"
 
-class TunTap : public UpperLayer {
+class Tun : public UpperLayer {
  private:
   int fd;
   std::string tunBuffer;
@@ -18,10 +18,10 @@ class TunTap : public UpperLayer {
   bool isRunning();
 
   // This is called by the OsSocket as a callback
-  void onTunTapData();
+  void onTunData();
 
  public:
-  TunTap(std::string name, bool isTap = false);
+  Tun(std::string name, bool isTap = false);
 
   void onLowerLayerData(HusarnetAddress source, string_view data) override;
 };

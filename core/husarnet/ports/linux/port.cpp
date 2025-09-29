@@ -302,7 +302,7 @@ namespace Port {
     return ret;
   }
 
-  UpperLayer* startTunTap(const HusarnetAddress& myAddress, const std::string& interfaceName)
+  UpperLayer* startTun(const HusarnetAddress& myAddress, const std::string& interfaceName)
   {
     struct nl_sock* ns;
     struct rtnl_link* link;
@@ -325,7 +325,7 @@ namespace Port {
     }
 
     // Initialize TUN device
-    auto tunTap = new TunTap(interfaceName);
+    auto tun = new Tun(interfaceName);
 
     // Ensure that IPv6 is enabled on lo and TUN interfaces
     std::string loName = "lo";
@@ -444,6 +444,6 @@ namespace Port {
 
     netlinkMutex.unlock();
 
-    return tunTap;
+    return tun;
   }
 }  // namespace Port
