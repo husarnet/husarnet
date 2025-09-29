@@ -16,6 +16,8 @@ bin\nssm set husarnet AppRotateBytes 1000000
 bin\nssm set husarnet AppRotateSeconds 86400
 bin\nssm set husarnet AppStdout "%PROGRAMDATA%\Husarnet\husarnet.log"
 bin\nssm set husarnet AppStderr "%PROGRAMDATA%\Husarnet\husarnet.log"
+:: this is the default value anyway, but this makes changing it easier for users (the key will be already there)
+bin\nssm set husarnet AppEnvironmentExtra "HUSARNET_INSTANCE_FQDN=prod.husarnet.com
 
 bin\nssm set husarnet Start SERVICE_AUTO_START
 bin\nssm start husarnet
