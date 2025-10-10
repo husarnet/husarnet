@@ -34,14 +34,14 @@ Peer* PeerContainer::getPeer(HusarnetAddress id)
   if(cachedPeerId == id)
     return cachedPeer;
 
+  // Prevent self-connection (i.e. in case of multicast issue)
+  if(id == identity->getDeviceId())
+    return nullptr;
+
   if(!this->configManager->isPeerAllowed(id)) {
     LOG_INFO("peer %s is not allowed", id.toString().c_str());
     return nullptr;
   }
-
-  // Prevent self-connection (i.e. in case of multicast issue)
-  if(id == identity->getDeviceId())
-    return nullptr;
 
   auto it = peers.find(id);
   if(it == peers.end())
