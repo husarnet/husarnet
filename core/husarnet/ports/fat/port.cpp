@@ -211,6 +211,70 @@ namespace Port {
       etl::pair{std::string("HUSARNET_DAEMON_API_PORT"), EnvKey::daemonApiPort},
   };
 
+  __attribute__((weak)) etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentDefaultsFromIniFile()
+  {
+    etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> commonSection;
+    etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> daemonSection;
+    auto contents = readStorage(StorageKey::defaults);
+
+    if(contents.empty()) {
+      return {};
+    }
+
+    auto iniStream = std::istringstream(contents);
+    std::string line;
+    enum class Section
+    {
+      Unknown,
+      Daemon,
+      Common,
+    } section = Section::Unknown;
+
+    while(std::getline(iniStream, line)) {
+      if(line.empty() || line[0] == ';') {
+        continue;
+      }
+
+      if(line.starts_with("[")) {
+        if(strToLower(line).starts_with("[common]")) {
+          section = Section::Common;
+        } else if(strToLower(line).starts_with("[daemon]")) {
+          section = Section::Daemon;
+        } else {
+          section = Section::Unknown;
+        }
+        continue;
+      }
+
+      if(section == Section::Unknown) {
+        continue;
+      }
+
+      std::vector<std::string> splitted = split(line, '=', 1);
+      if(splitted.size() == 1) {
+        continue;
+      }
+
+      auto key = strToUpper("HUSARNET_" + trim(splitted[0]));
+      auto value = trim(splitted[1]);
+
+      if(envMap.contains(key)) {
+        if(section == Section::Common) {
+          commonSection[envMap[key]] = value;
+        } else {
+          daemonSection[envMap[key]] = value;
+        }
+      }
+    }
+
+    // in case of a conflict, [daemon] section takes precedence over [common], like this:
+    for(auto& [k, v] : daemonSection) {
+      commonSection[k] = v;
+    }
+
+    return commonSection;
+  }
+
   __attribute__((weak)) etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentOverrides()
   {
     etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> result;
@@ -402,6 +466,7 @@ namespace Port {
       etl::pair{StorageKey::config, std::string("config.json")},
       etl::pair{StorageKey::daemonApiToken, std::string("daemon_api_token")},
       etl::pair{StorageKey::cache, std::string("cache.json")},
+      etl::pair{StorageKey::defaults, std::string("defaults.ini")},
   };
 
   __attribute__((weak)) std::string readStorage(StorageKey key)

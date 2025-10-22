@@ -6,11 +6,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/husarnet/husarnet/cli/v2/config"
-	"github.com/husarnet/husarnet/cli/v2/utils"
 	"log"
 	"net"
 	"os"
+
+	"github.com/husarnet/husarnet/cli/v2/config"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 
 	"github.com/urfave/cli/v3"
 )
@@ -115,6 +116,7 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 			tokenCommand,
 			groupCommands,
 			deviceCommands,
+			defaultsCommands,
 
 			versionCommand,
 		},

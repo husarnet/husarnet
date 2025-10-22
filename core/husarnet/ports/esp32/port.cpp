@@ -187,6 +187,11 @@ namespace Port {
     vTaskDelay(pdMS_TO_TICKS(ms));
   }
 
+  etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentDefaultsFromIniFile()
+  {
+    return {};
+  }
+
   etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentOverrides()
   {
     // {EnvKey::tldFqdn, CONFIG_HUSARNET_FQDN};

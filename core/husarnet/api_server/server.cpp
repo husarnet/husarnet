@@ -154,9 +154,9 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
   // request
   auto attemptRequest = [apiAddress, method, pathWithQuery](const httplib::Request& req) {
     httplib::Client httpClient(apiAddress.toString());
-    httpClient.set_connection_timeout(5, 0);            // 5 seconds
-    httpClient.set_read_timeout(5, 0);                  // 5 seconds
-    httpClient.set_write_timeout(5, 0);                 // 5 seconds
+    httpClient.set_connection_timeout(5, 0);  // 5 seconds
+    httpClient.set_read_timeout(5, 0);        // 5 seconds
+    httpClient.set_write_timeout(5, 0);       // 5 seconds
 
     httplib::Result result;
 

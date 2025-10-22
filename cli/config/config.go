@@ -5,9 +5,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/urfave/cli/v3"
 	"os"
 	"runtime"
+
+	"github.com/urfave/cli/v3"
 )
 
 var defaultDaemonAPIIp = "127.0.0.1"
@@ -50,8 +51,31 @@ func GetDaemonApiSecretPath() string {
 		sep := string(os.PathSeparator)
 		return os.ExpandEnv("${programdata}") + sep + "husarnet" + sep + "daemon_api_token"
 	}
-	// TODO: this path should be configurable
 	return "/var/lib/husarnet/daemon_api_token"
+}
+
+func GetDefaultsIniPath() string {
+	if runtime.GOOS == "windows" {
+		sep := string(os.PathSeparator)
+		return os.ExpandEnv("${programdata}") + sep + "husarnet" + sep + "defaults.ini"
+	}
+	return "/var/lib/husarnet/defaults.ini"
+}
+
+func GetDefaultEditorPath() string {
+	if runtime.GOOS == "windows" {
+		return "notepad.exe"
+	}
+	var editor string
+	editor, _ = os.LookupEnv("VISUAL")
+	if editor != "" {
+		return editor
+	}
+	editor, _ = os.LookupEnv("EDITOR")
+	if editor != "" {
+		return editor
+	}
+	return "vi" // just hope for the best:)
 }
 
 func GetDaemonApiUrl() string {

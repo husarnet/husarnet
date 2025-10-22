@@ -33,3 +33,13 @@ var groupCommands = &cli.Command{
 		dashboardGroupDeleteCommand,
 	},
 }
+
+var defaultsCommands = &cli.Command{
+	Name:     "defaults",
+	Usage:    "Manage defaults.ini file (advanced)",
+	Category: CategoryUtils,
+	Commands: []*cli.Command{
+		editDefaultsCommand,
+		restoreDefaultsCommand,
+	},
+}

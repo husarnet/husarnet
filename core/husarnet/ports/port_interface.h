@@ -38,9 +38,10 @@ enum class StorageKey
   config,
   cache,
   daemonApiToken,
+  defaults,
 };
 
-#define STORAGE_KEY_OPTIONS 4
+#define STORAGE_KEY_OPTIONS 5
 
 enum class HookType
 {
@@ -61,6 +62,7 @@ namespace Port {
   void threadStart(std::function<void()> func, const char* name, int stack = -1, int priority = 2);
   void threadSleep(Time ms);
 
+  etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentDefaultsFromIniFile();
   etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentOverrides();
 
   void notifyReady();

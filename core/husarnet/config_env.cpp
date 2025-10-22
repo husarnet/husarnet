@@ -12,14 +12,18 @@ envPresentOrDefault(etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> env, const En
 {
   if(env.contains(key)) {
     return env.at(key);
-  } else {
-    return def;
   }
+  return def;
 }
 
 ConfigEnv::ConfigEnv()
 {
-  this->env = Port::getEnvironmentOverrides();
+  this->env = Port::getEnvironmentDefaultsFromIniFile();
+  auto envOverrides = Port::getEnvironmentOverrides();
+
+  for(const auto& [k, v] : envOverrides) {
+    this->env[k] = v;
+  }
 }
 
 json ConfigEnv::getJson() const
