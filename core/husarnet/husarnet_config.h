@@ -10,7 +10,7 @@
 #include "sdkconfig.h"
 #endif
 
-#define HUSARNET_VERSION "2.0.328"
+#define HUSARNET_VERSION "2.0.329"
 #define HUSARNET_USER_AGENT "Husarnet," PORT_NAME "," PORT_ARCH "," HUSARNET_VERSION
 
 #define BASESERVER_PORT 443
