@@ -64,10 +64,7 @@ func makeService() service.Service {
 		}
 	case "darwin":
 		serviceConfig.Option = service.KeyValue{
-			"LogDirectory": "/tmp",
-		}
-		serviceConfig.EnvVars = map[string]string{
-			"HUSARNET_INSTANCE_FQDN": "prod.husarnet.com", // this is the default value anyway, but this makes changing it easier for users (the key will be already there)
+			"LogDirectory": "/Library/LaunchDaemons/husarnet",
 		}
 	case "windows":
 		// serviceConfig.Executable = "husarnet-daemon.exe" // must be in %PATH%, which is not obvious I guess
