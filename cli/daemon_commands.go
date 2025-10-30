@@ -35,16 +35,10 @@ var daemonStartCommand = &cli.Command{
 			return nil
 		}
 
-		// Temporary solution for Windows, until we get rid of nssm
-		if onWindows() {
-			runSubcommand(false, "nssm", "start", "husarnet")
-			return nil
-		}
-
-		ensureServiceInstalled()
-		err := ServiceObject.Start()
+		err := startDaemon()
 		if err != nil {
 			printError("Error starting husarnet-daemon: %s", err)
+			return err
 		} else {
 			printSuccess("Started husarnet-daemon")
 		}
@@ -99,19 +93,12 @@ var daemonStopCommand = &cli.Command{
 	Category:  CategoryDaemon,
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		if onWindows() {
-			runSubcommand(false, "nssm", "stop", "husarnet")
-			return nil
-		}
-
-		ensureServiceInstalled()
-		err := ServiceObject.Stop()
+		err := stopDaemon()
 		if err != nil {
 			printError("Error stopping husarnet-daemon: %s", err)
-		} else {
-			printSuccess("Stopped husarnet-daemon")
+			return err
 		}
-
+		printSuccess("Stopped husarnet-daemon")
 		return nil
 	},
 }

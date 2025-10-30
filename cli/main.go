@@ -117,6 +117,7 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 			groupCommands,
 			deviceCommands,
 			defaultsCommands,
+			resetCommand,
 
 			versionCommand,
 		},

@@ -6,13 +6,14 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/husarnet/husarnet/cli/v2/config"
 	"io"
 	"net/http"
 	"net/netip"
 	"net/url"
 	"os"
 	"syscall"
+
+	"github.com/husarnet/husarnet/cli/v2/config"
 
 	"github.com/pterm/pterm"
 )
@@ -167,6 +168,14 @@ func getDaemonIdPath() string {
 		return os.ExpandEnv("${programdata}") + sep + "husarnet" + sep + "id"
 	}
 	return "/var/lib/husarnet/id"
+}
+
+func getFullPath(file string) string {
+	if onWindows() {
+		sep := string(os.PathSeparator)
+		return os.ExpandEnv("${programdata}") + sep + "husarnet" + sep + file
+	}
+	return "/var/lib/husarnet/" + file
 }
 
 func getApiErrorString[ResultType any](response DaemonResponse[ResultType]) string {

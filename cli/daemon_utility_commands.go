@@ -5,7 +5,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 
@@ -54,29 +56,11 @@ var versionCommand = &cli.Command{
 	},
 }
 
-var defaultsIniTemplate = `; consult the documentation before editing. See https://husarnet.com/docs/defaults-ini
-
-; Husarnet INI file, which is read both by the Daemon and the CLI on startup
-; this is convenient way of providing a default value for an environment variable used by Husarnet
-; the values that are provided here are the defaults, which means env vars set directly on the running process
-; (for example via /etc/default/husarnet on Linux) will override them.
-
-[common]
-; instance_fqdn = prod.husarnet.com
-; log_verbosity = info
-; enable_hooks = false
-
-[daemon]
-; daemon_interface = hnet0
-
-[cli]
-; daemon_api_secret = some-secret`
-
 var restoreDefaultsCommand = &cli.Command{
 	Name:  "restore",
 	Usage: "Restore defaults.ini file to initial state",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		path := config.GetDefaultsIniPath()
+		path := getFullPath("defaults.ini")
 		if !askForConfirmation(fmt.Sprintf("This operation will overwrite the contents of %s. Are you sure?", path)) {
 			dieEmpty()
 		}
@@ -102,7 +86,7 @@ var editDefaultsCommand = &cli.Command{
 	Name:  "edit",
 	Usage: "Open default editor to examine (or edit) default values for environment variables",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		path := config.GetDefaultsIniPath()
+		path := getFullPath("defaults.ini")
 		file, err := os.OpenFile(path, os.O_RDWR, 0644)
 		if err != nil {
 			printError("can't open file %s - you need administrative privileges to open this file (or the file does not exist, in this case run `husarnet defaults restore` to restore the file", path)
@@ -133,4 +117,100 @@ var editDefaultsCommand = &cli.Command{
 
 		return nil
 	},
+}
+
+var resetCommand = &cli.Command{
+	Name:  "reset",
+	Usage: "Reset the daemon to initial state. This command will restart the daemon.",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "soft",
+			Usage: "only clear caches, peer and license information, don't change the environment defaults and service files. Daemon will restart",
+		},
+		&cli.BoolFlag{
+			Name:  "hard",
+			Usage: "clear everything",
+		},
+	},
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		softFlag := cmd.Bool("soft")
+		hardFlag := cmd.Bool("hard")
+		if softFlag && hardFlag {
+			printError("set only one of (--soft, --hard) flags")
+			return nil
+		}
+
+		// TODO this does not play well with rerunWithSudoOrDie(), as it blocks
+		// maybe consider adding --yes flag or sth
+		if !askForConfirmation("This command will briefly stop Husarnet Daemon and change some of the files in Husarnet data folder. Administrator privileges are required. Are you sure you want to proceed?") {
+			printInfo("Aborted.")
+			return nil
+		}
+
+		err := stopDaemon()
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(getFullPath("cache.json"), []byte("{}"), 0660)
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(getFullPath("config.json"), []byte("{}"), 0660)
+		if err != nil {
+			return err
+		}
+
+		if hardFlag {
+			err = os.WriteFile(getFullPath("defaults.ini"), []byte(defaultsIniTemplate), 0660)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = startDaemon()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	},
+}
+
+// tries to write the file, if fails with permission error displays rerun with sudo prompt
+func writeFileWithSudoAttempt(path, contents string, perm os.FileMode) error {
+	err := os.WriteFile(path, []byte(contents), perm)
+	if err != nil {
+		printError("Error: could not write to %s - %s", path, err)
+		if errors.Is(err, fs.ErrPermission) {
+			rerunWithSudoOrDie()
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
+func stopDaemon() error {
+	if onWindows() {
+		runSubcommand(false, "nssm", "stop", "husarnet")
+		return nil
+	}
+
+	ensureServiceInstalled()
+	err := ServiceObject.Stop()
+	return err
+}
+
+func startDaemon() error {
+	// Temporary solution for Windows, until we get rid of nssm
+	if onWindows() {
+		runSubcommand(false, "nssm", "start", "husarnet")
+		return nil
+	}
+
+	ensureServiceInstalled()
+	err := ServiceObject.Start()
+	return err
 }
