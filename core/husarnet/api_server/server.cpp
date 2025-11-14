@@ -22,6 +22,10 @@
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 
+#ifndef HUSARNET_SECRET_HTTP_HEADER_NAME
+#define HUSARNET_SECRET_HTTP_HEADER_NAME "x-husarnet-secret"
+#endif
+
 using namespace nlohmann;  // json
 
 ApiServer::ApiServer(
@@ -88,6 +92,11 @@ static const std::string getOrCreateDaemonApiToken()
 
 bool ApiServer::validateSecret(const httplib::Request& req, httplib::Response& res)
 {
+  if(req.has_header(HUSARNET_SECRET_HTTP_HEADER_NAME) &&
+     req.get_header_value(HUSARNET_SECRET_HTTP_HEADER_NAME) == this->daemonApiToken) {
+    return true;
+  }
+
   if(!req.has_param("secret") || req.get_param_value("secret") != this->daemonApiToken) {
     returnInvalidQuery(req, res, "invalid control secret");
     return false;
