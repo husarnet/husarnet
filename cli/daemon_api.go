@@ -85,7 +85,8 @@ type DeviceFeatures struct {
 }
 
 type DashboardConfig struct {
-	IsClaimed bool                `json:"is_claimed"`
+	IsClaimed bool `json:"is_claimed"`
+
 	ClaimInfo ClaimInfo           `json:"claim_info"`
 	Features  DeviceFeatures      `json:"features"`
 	Peers     []DashboardPeerInfo `json:"peers"`

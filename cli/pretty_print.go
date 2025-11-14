@@ -5,9 +5,10 @@ package main
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/husarnet/husarnet/cli/v2/types"
 	"github.com/pterm/pterm"
-	"strings"
 )
 
 func prettyPrintGroups(groups types.Groups) {
@@ -54,6 +55,6 @@ func prettyPrintDevice(dev types.Device) {
 	fmt.Println("ip of this device:", dev.Ip)
 	fmt.Println("known as:", dev.Hostname, strings.Join(dev.Aliases, ", "))
 	fmt.Println("User agent:", dev.UserAgent)
-	fmt.Println("Husarnet version installed:", dev.Version)
+	fmt.Println("Status", dev.Status)
 	fmt.Println("Last contact:", dev.LastContact)
 }

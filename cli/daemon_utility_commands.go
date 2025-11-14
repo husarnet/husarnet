@@ -140,8 +140,6 @@ var resetCommand = &cli.Command{
 			return nil
 		}
 
-		// TODO this does not play well with rerunWithSudoOrDie(), as it blocks
-		// maybe consider adding --yes flag or sth
 		if !askForConfirmation("This command will briefly stop Husarnet Daemon and change some of the files in Husarnet data folder. Administrator privileges are required. Are you sure you want to proceed?") {
 			printInfo("Aborted.")
 			return nil
@@ -163,10 +161,16 @@ var resetCommand = &cli.Command{
 		}
 
 		if hardFlag {
+			// reset defaults
+			// delete older, unused files
 			err = os.WriteFile(getFullPath("defaults.ini"), []byte(defaultsIniTemplate), 0660)
 			if err != nil {
 				return err
 			}
+
+			// files used by older versions, not needed anymore
+			_ = os.Remove(getFullPath("license.json"))
+			_ = os.Remove(getFullPath("notifications.json"))
 		}
 
 		err = startDaemon()

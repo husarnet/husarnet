@@ -32,9 +32,9 @@ type Device struct {
 	Emoji       string    `json:"emoji"`
 	Hostname    string    `json:"hostname"`
 	UserAgent   string    `json:"userAgent"`
-	Version     string    `json:"version"`
 	Comment     string    `json:"comment"`
 	Aliases     []string  `json:"aliases"`
+	Status      string    `json:"status"`
 	LastContact time.Time `json:"lastContact"`
 }
 
