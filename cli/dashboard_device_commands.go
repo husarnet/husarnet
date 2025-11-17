@@ -29,7 +29,7 @@ var dashboardDeviceListCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp)
+			output.PrintJsonOrError(resp, indentJson)
 			return nil
 		}
 
@@ -58,7 +58,7 @@ var dashboardDeviceShowCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp)
+			output.PrintJsonOrError(resp, indentJson)
 		} else {
 			prettyPrintDevice(resp.Payload)
 		}
@@ -146,7 +146,7 @@ var dashboardDeviceUpdateCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp)
+			output.PrintJsonOrError(resp, indentJson)
 		} else {
 			prettyPrintDevice(resp.Payload)
 		}
@@ -178,7 +178,7 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 			}
 
 			if rawJson {
-				output.PrintJsonOrError(resp)
+				output.PrintJsonOrError(resp, indentJson)
 			}
 			return nil
 		}
@@ -196,7 +196,7 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp)
+			output.PrintJsonOrError(resp, indentJson)
 		} else {
 			printSuccess("device successfully unclaimed.")
 		}
@@ -261,7 +261,7 @@ func handleDeviceGroupOperation(cmd *cli.Command, op constants.DeviceOp) error {
 	}
 
 	if rawJson {
-		output.PrintJsonOrError(resp)
+		output.PrintJsonOrError(resp, indentJson)
 	} else {
 		printSuccess("device successfully %sed", op)
 	}

@@ -20,6 +20,7 @@ var verboseLogs bool
 var wait bool
 var nonInteractive bool
 var rawJson bool
+var indentJson bool
 
 const (
 	CategoryDaemon = "DAEMON MANAGEMENT"
@@ -89,8 +90,16 @@ For the details on what can be done with the CLI, visit: https://husarnet.com/do
 			// TODO: not every command respects this flag
 			&cli.BoolFlag{
 				Name:        "json",
+				Aliases:     []string{"j"},
 				Usage:       "return raw json response from the API. This is useful for scripts or piping to other tools",
 				Destination: &rawJson,
+				Value:       false,
+			},
+			&cli.BoolFlag{
+				Name:        "indent-json",
+				Aliases:     []string{"i"},
+				Usage:       "use in conjunction with --json flag to output pretty (indented) formatting of JSON",
+				Destination: &indentJson,
 				Value:       false,
 			},
 		},

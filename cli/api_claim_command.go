@@ -5,11 +5,12 @@ package main
 
 import (
 	"context"
+	"strings"
+
 	"github.com/husarnet/husarnet/cli/v2/output"
 	"github.com/husarnet/husarnet/cli/v2/requests"
 	"github.com/husarnet/husarnet/cli/v2/types"
 	"github.com/husarnet/husarnet/cli/v2/utils"
-	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -62,7 +63,7 @@ var claimCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp)
+			output.PrintJsonOrError(resp, indentJson)
 			return nil
 		}
 

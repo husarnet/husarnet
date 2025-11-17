@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/husarnet/husarnet/cli/v2/output"
 	"github.com/husarnet/husarnet/cli/v2/requests"
 	"github.com/husarnet/husarnet/cli/v2/types"
@@ -27,7 +28,7 @@ var dashboardGroupListCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp)
+			output.PrintJsonOrError(resp, indentJson)
 		} else {
 			prettyPrintGroups(resp.Payload)
 		}
@@ -55,7 +56,7 @@ var dashboardGroupShowCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp)
+			output.PrintJsonOrError(resp, indentJson)
 		} else {
 			prettyPrintGroup(resp.Payload.Group)
 		}
@@ -65,7 +66,7 @@ var dashboardGroupShowCommand = &cli.Command{
 
 var dashboardGroupCreateCommand = &cli.Command{
 	Name:      "create",
-	Usage:     "Create a new group",
+	Usage:     "Create new group",
 	ArgsUsage: "<name>",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -93,7 +94,7 @@ var dashboardGroupCreateCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp)
+			output.PrintJsonOrError(resp, indentJson)
 		} else {
 			prettyPrintGroup(resp.Payload)
 		}
@@ -141,7 +142,7 @@ var dashboardGroupUpdateCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp)
+			output.PrintJsonOrError(resp, indentJson)
 		} else {
 			prettyPrintGroup(resp.Payload)
 		}
@@ -179,7 +180,7 @@ var dashboardGroupDeleteCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp)
+			output.PrintJsonOrError(resp, indentJson)
 		} else {
 			printSuccess("Group was deleted successfully")
 		}

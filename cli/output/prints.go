@@ -6,6 +6,7 @@ package output
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/husarnet/husarnet/cli/v2/types"
 	"github.com/pterm/pterm"
 )
@@ -41,12 +42,14 @@ func PrintGenericApiResponse(resp *types.ApiResponse[any], textIfSuccess, textIf
 
 }
 
-func PrintJsonOrError(data any) {
-	jsonBytes, err := json.Marshal(data)
-	if err != nil {
-		// we will use this function only with data previously successfully unmarshalled
-		// so this should never happen in practice; checking doesn't hurt though
-		fmt.Println(err)
+func PrintJsonOrError(data any, pretty bool) {
+	var jsonBytes []byte
+	// we will use this function only with data previously successfully unmarshalled
+	// so the error can be safely ignored
+	if pretty {
+		jsonBytes, _ = json.MarshalIndent(data, "", "  ")
+	} else {
+		jsonBytes, _ = json.Marshal(data)
 	}
 	fmt.Println(string(jsonBytes))
 }
