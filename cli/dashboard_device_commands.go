@@ -5,11 +5,12 @@ package main
 
 import (
 	"context"
+	"slices"
+
 	"github.com/husarnet/husarnet/cli/v2/constants"
 	"github.com/husarnet/husarnet/cli/v2/output"
 	"github.com/husarnet/husarnet/cli/v2/requests"
 	"github.com/husarnet/husarnet/cli/v2/types"
-	"slices"
 
 	"github.com/urfave/cli/v3"
 )
@@ -169,7 +170,10 @@ var dashboardDeviceUnclaimCommand = &cli.Command{
 
 		if cmd.Args().Len() == 0 {
 			if !cmd.Bool("yes") {
-				askForConfirmation("Are you sure you want to unclaim this device?")
+				if !askForConfirmation("Are you sure you want to unclaim this device?") {
+					printInfo("Aborted.")
+					return nil
+				}
 			}
 			resp, err := requests.UnclaimSelf()
 			if err != nil {

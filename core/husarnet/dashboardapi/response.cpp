@@ -57,7 +57,7 @@ namespace dashboardapi {
 
   Response getConfig(HusarnetAddress apiAddress)
   {
-    auto [statusCode, bytes] = Port::httpGet(apiAddress, "/device/get_config");
+    auto [statusCode, bytes] = Port::httpGet(apiAddress, "/v3/device/get_config");
     return {statusCode, bytes};
   }
 
@@ -68,7 +68,7 @@ namespace dashboardapi {
   // TODO: generalize it
   Response postHeartbeat(HusarnetAddress apiAddress, Identity* identity)
   {
-    std::string path("/device/manage/heartbeat");
+    std::string path("/v3/device/manage/heartbeat");
 
     std::string body(R"({"user_agent":")");
     body.append(HUSARNET_USER_AGENT);
@@ -95,7 +95,7 @@ namespace dashboardapi {
       const etl::string_view& code,
       const etl::string_view& hostname)
   {
-    std::string path("/device/manage/claim");
+    std::string path("/v3/device/manage/claim");
 
     std::string body(R"({"code":")");
     body.append(code.data(), code.size());

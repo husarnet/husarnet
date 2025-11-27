@@ -170,7 +170,10 @@ var dashboardGroupDeleteCommand = &cli.Command{
 		}
 
 		if !cmd.Bool("yes") {
-			askForConfirmation("Are you sure you want to delete this group?")
+			if !askForConfirmation("Are you sure you want to delete this group?") {
+				printInfo("Aborted.")
+				return nil
+			}
 		}
 
 		resp, err := requests.DeleteGroup(uuid)
