@@ -55,7 +55,7 @@ using namespace nlohmann;  // json
 // On Linux it's generally up to 63 chars but Windows can go bit crazy about them afair
 
 // JSON map keys
-#define USERCONFIG_KEY_WHITELIST "whitelist"
+#define USERCONFIG_KEY_WHITELIST "local-whitelist"
 
 #define CACHE_KEY_LICENSE "license"
 #define CACHE_KEY_GETCONFIG "get_config"
