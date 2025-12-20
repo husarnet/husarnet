@@ -48,6 +48,7 @@ class Peer {
 
   Time lastLatencyReceived = 0;
   Time lastLatencySent = 0;
+  Time lastValidPacket = 0;
   fstring<8> heartbeatIdent;
 
   PeerFlags flags;

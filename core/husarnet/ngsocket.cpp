@@ -125,6 +125,13 @@ void NgSocket::refresh()
 
 void NgSocket::periodicPeer(Peer* peer)
 {
+  if(peer->negotiated && peer->lastValidPacket < Port::getCurrentTime() - RENEGOTIATION_TIMEOUT) {
+    LOG_INFO("session with peer %s timed out", peer->getIpAddressString().c_str());
+    peer->negotiated = false;
+    peer->connected = false;
+    return;
+  }
+
   if(!peer->isActive()) {
     peer->connected = false;
     // TODO long term - send unsubscribe to base
