@@ -31,4 +31,5 @@ class ConfigEnv {
   const std::string getDaemonApiInterface() const;
   const InternetAddress getDaemonApiHost() const;
   int getDaemonApiPort() const;
+  int getWorkerQueueSize() const;
 };

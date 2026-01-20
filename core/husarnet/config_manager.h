@@ -181,4 +181,6 @@ class ConfigManager {
 
   HusarnetAddress getApiAddress() const;
   HusarnetAddress getEbAddress() const;
+
+  int getWorkerQueueSize() const;
 };

@@ -62,6 +62,7 @@ class NgSocket : public LowerLayer {
   Time lastBaseTcpAction = 0;
 
   int baseConnectRetries = 0;
+  int workerQueueSize = 256;
   InetAddress baseAddress;
 
   // Transient base addresses.

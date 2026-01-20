@@ -427,3 +427,8 @@ void ConfigManager::triggerGetConfig()
   this->nextGetConfigUpdate = std::chrono::steady_clock::now();
   this->cv.notify_one();
 }
+
+int ConfigManager::getWorkerQueueSize() const
+{
+  return this->configEnv->getWorkerQueueSize();
+}

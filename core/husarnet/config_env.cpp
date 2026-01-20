@@ -99,3 +99,15 @@ int ConfigEnv::getDaemonApiPort() const
 {
   return std::stoi(envPresentOrDefault(this->env, EnvKey::daemonApiPort, "16216"));
 }
+
+int ConfigEnv::getWorkerQueueSize() const
+{
+#if defined(ESP_PLATFORM)
+  constexpr int defaultWorkerQueueSize = 16;
+#else
+  constexpr int defaultWorkerQueueSize = 256;
+#endif
+
+  return std::stoi(
+      envPresentOrDefault(this->env, EnvKey::daemonWorkerQueueSize, std::to_string(defaultWorkerQueueSize)));
+}

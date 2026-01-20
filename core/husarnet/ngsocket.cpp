@@ -21,12 +21,6 @@
 #include "husarnet/ngsocket_crypto.h"
 #include "husarnet/util.h"
 
-#if defined(ESP_PLATFORM)
-const int WORKER_QUEUE_SIZE = 16;
-#else
-const int WORKER_QUEUE_SIZE = 256;
-#endif
-
 using namespace OsSocket;
 
 NgSocket::NgSocket(Identity* myIdentity, PeerContainer* peerContainer, ConfigManager* configManager)
@@ -95,7 +89,7 @@ InetAddress NgSocket::getCurrentBaseAddress()
 
 void NgSocket::requestRefresh()
 {
-  if(workerQueue.qsize() < WORKER_QUEUE_SIZE) {
+  if(workerQueue.qsize() < this->workerQueueSize) {
     workerQueue.push(std::bind(&NgSocket::refresh, this));
   } else {
     LOG_ERROR("ngsocket worker queue full");
@@ -482,6 +476,8 @@ void NgSocket::init()
 {
   assert(NgSocketCrypto::pubkeyToDeviceId(this->myIdentity->getPubkey()) == this->myIdentity->getDeviceId());
 
+  this->workerQueueSize = this->configManager->getWorkerQueueSize();
+
   auto cb = [this](InetAddress address, string_view packet) { udpPacketReceived(address, packet); };
 
   sourcePort = 5582;  // TODO make this a macro definition
@@ -779,7 +775,7 @@ void NgSocket::udpPacketReceived(InetAddress source, string_view data)
   } else {
     if(data[0] == (char)PeerToPeerMessageKind::HELLO || data[0] == (char)PeerToPeerMessageKind::HELLO_REPLY) {
       // "slow" messages are handled on the worker thread to reduce latency
-      if(workerQueue.qsize() < WORKER_QUEUE_SIZE) {
+      if(workerQueue.qsize() < this->workerQueueSize) {
         std::string dataCopy = data;
         workerQueue.push([this, source, dataCopy]() { peerMessageReceived(source, parsePeerToPeerMessage(dataCopy)); });
       } else {

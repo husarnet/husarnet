@@ -28,9 +28,10 @@ enum class EnvKey
   daemonApiInterface,
   daemonApiHost,
   daemonApiPort,
+  daemonWorkerQueueSize
 };
 
-#define ENV_KEY_OPTIONS 8
+#define ENV_KEY_OPTIONS 9
 
 enum class StorageKey
 {

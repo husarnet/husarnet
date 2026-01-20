@@ -209,6 +209,7 @@ namespace Port {
       etl::pair{std::string("HUSARNET_DAEMON_API_INTERFACE"), EnvKey::daemonApiInterface},
       etl::pair{std::string("HUSARNET_DAEMON_API_HOST"), EnvKey::daemonApiHost},
       etl::pair{std::string("HUSARNET_DAEMON_API_PORT"), EnvKey::daemonApiPort},
+      etl::pair{std::string("HUSARNET_DAEMON_WORKER_QUEUE_SIZE"), EnvKey::daemonWorkerQueueSize},
   };
 
   __attribute__((weak)) etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentDefaultsFromIniFile()
