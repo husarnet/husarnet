@@ -105,19 +105,19 @@ Identity* Identity::init()
 
   std::string id_string = Port::readStorage(StorageKey::id);
   if(id_string.empty()) {
-    LOG_WARNING("No identity found!");
+    LOG_WARNING(logger, "No identity found!");
   } else {
     identity = Identity::deserialize(id_string);
   }
 
   if(!identity->isValid()) {
-    LOG_WARNING("Identity is invalid, generating a new one");
+    LOG_WARNING(logger, "Identity is invalid, generating a new one");
 
     identity = Identity::create();
 
     auto success = Port::writeStorage(StorageKey::id, identity->serialize());
     if(!success) {
-      LOG_CRITICAL("Failed to save identity to storage, will run with a volatile one!");
+      LOG_CRITICAL(logger, "Failed to save identity to storage, will run with a volatile one!");
     }
   }
 

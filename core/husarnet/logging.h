@@ -26,47 +26,50 @@ void log(LogLevel level, const std::string& filename, int lineno, const std::str
 
 // New log level aliases
 
-#define LOG_DEBUG(fmt, x...)                                \
+#define HUSARNET_LOG_DEBUG(fmt, x...)                                \
   {                                                         \
     log(LogLevel::DEBUG, __FILE__, __LINE__, "", fmt, ##x); \
   }
 
-#define LOG_INFO(fmt, x...)                                \
+#define HUSARNET_LOG_INFO(fmt, x...)                                \
   {                                                        \
     log(LogLevel::INFO, __FILE__, __LINE__, "", fmt, ##x); \
   }
 
-#define LOG_WARNING(fmt, x...)                                \
+#define HUSARNET_LOG_WARNING(fmt, x...)                                \
   {                                                           \
     log(LogLevel::WARNING, __FILE__, __LINE__, "", fmt, ##x); \
   }
 
-#define LOG_ERROR(fmt, x...)                                \
+#define HUSARNET_LOG_ERROR(fmt, x...)                                \
   {                                                         \
     log(LogLevel::ERROR, __FILE__, __LINE__, "", fmt, ##x); \
   }
 
-#define LOG_CRITICAL(fmt, x...)                                \
+#define HUSARNET_LOG_CRITICAL(fmt, x...)                                \
   {                                                            \
     log(LogLevel::CRITICAL, __FILE__, __LINE__, "", fmt, ##x); \
   }
 
-#define LOG_SOCKETERR(fmt, x...)                                         \
-  {                                                                      \
-    log(LogLevel::ERROR, __FILE__, __LINE__, strerror(errno), fmt, ##x); \
-  }
+#include "quill/Backend.h"
+#include "quill/Frontend.h"
+#include "quill/LogMacros.h"
+#include "quill/Logger.h"
+#include "quill/sinks/JsonSink.h"
 
-#define LOG_NEGATIVE(ret, fmt, x...)                                       \
-  {                                                                        \
-    if(ret < 0) {                                                          \
-      log(LogLevel::ERROR, __FILE__, __LINE__, strerror(errno), fmt, ##x); \
-    }                                                                      \
-  }
+class HusarnetLoggingSink : public quill::JsonConsoleSink
+{
+  void generate_json_message(quill::MacroMetadata const* /** log_metadata **/, uint64_t log_timestamp,
+                             std::string_view /** thread_id **/, std::string_view /** thread_name **/,
+                             std::string const& /** process_id **/, std::string_view /** logger_name **/,
+                             quill::LogLevel /** log_level **/, std::string_view log_level_description,
+                             std::string_view /** log_level_short_code **/,
+                             std::vector<std::pair<std::string, std::string>> const* named_args,
+                             std::string_view /** log_message **/,
+                             std::string_view /** log_statement **/, char const* message_format) override;
+};
 
-#define error_negative(ret, fmt, x...)                                   \
-  {                                                                      \
-    if(ret == 0)                                                         \
-      return;                                                            \
-                                                                         \
-    log(LogLevel::ERROR, __FILE__, __LINE__, strerror(errno), fmt, ##x); \
-  }
+quill::Logger* initLogging();
+quill::LogLevel husarnetLogLevelToQuill(LogLevel level);
+
+extern quill::Logger* logger;

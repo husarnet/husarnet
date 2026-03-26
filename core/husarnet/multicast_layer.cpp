@@ -50,7 +50,7 @@ void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
     packet += mcastAddr;
     packet += data.substr(19);
 
-    LOG_INFO("received multicast from %s", source.toString().c_str());
+    LOG_INFO(logger, "received multicast packet // {source}", source.toString());
 
     sendToUpperLayer(IpAddress(), packet);
   } else {
@@ -75,12 +75,12 @@ void MulticastLayer::onLowerLayerData(HusarnetAddress source, string_view data)
 void MulticastLayer::onUpperLayerData(HusarnetAddress target, string_view packet)
 {
   if(packet.size() <= 40) {
-    LOG_WARNING("truncated packet from %s", target.toString().c_str());
+    LOG_WARNING(logger, "truncated packet // {peer}", target.toString());
     return;
   }
   int version = packet[0] >> 4;
   if(version != 6) {
-    LOG_WARNING("bad IP version %d", version);
+    LOG_WARNING(logger, "bad IP version // {ip_version}", version);
     return;
   }
 
@@ -101,7 +101,7 @@ void MulticastLayer::onUpperLayerData(HusarnetAddress target, string_view packet
     }
 
     if(dst.size() > 0) {
-      LOG_INFO("send multicast to %d destinations", (int)dst.size());
+      LOG_INFO(logger, "send multicast to multiple destinations // {num_destinations}", (int)dst.size());
     }
   }
 

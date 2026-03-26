@@ -2,6 +2,7 @@
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #pragma once
+#include <string_view>
 #include "husarnet/config_env.h"
 #include "husarnet/config_manager.h"
 #include "husarnet/eventbus.h"
@@ -10,6 +11,12 @@
 #include "husarnet/ngsocket.h"
 #include "husarnet/peer_container.h"
 #include "husarnet/security_layer.h"
+
+#include "quill/Backend.h"
+#include "quill/Frontend.h"
+#include "quill/LogMacros.h"
+#include "quill/Logger.h"
+#include "quill/sinks/JsonSink.h"
 
 constexpr int heartbeatPeriodMs = 1000 * 60;  // send heartbeat every minute
 
@@ -44,3 +51,4 @@ class HusarnetManager {
   json getDataForStatus() const;
 #endif
 };
+

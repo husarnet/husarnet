@@ -65,13 +65,13 @@ err_t husarnet_netif_init(struct netif* netif)
 
   err = esp_read_mac(mac, mac_type);
   if(err != ESP_OK) {
-    LOG_ERROR("Failed to read MAC address");
+    HUSARNET_LOG_ERROR("Failed to read MAC address");
     return err;
   }
 
   err = esp_derive_local_mac(netif->hwaddr, mac);
   if(err != ESP_OK) {
-    LOG_ERROR("Failed to derive local MAC address");
+    HUSARNET_LOG_ERROR("Failed to derive local MAC address");
     return err;
   }
 
@@ -88,7 +88,7 @@ err_t husarnet_netif_init(struct netif* netif)
   // Misc
   NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_ENABLE_ALL);
 
-  LOG_INFO("Husarnet TUN interface initialized");
+  HUSARNET_LOG_INFO("Husarnet TUN interface initialized");
 
   return ERR_OK;
 }
@@ -102,7 +102,7 @@ void husarnet_netif_input(void* netif, void* buffer, size_t len, void* eb)
 err_t husarnet_netif_output(struct netif* netif, struct pbuf* p, const ip6_addr_t* ipaddr)
 {
   if(p->next != NULL) {
-    LOG_ERROR("Packet chain is not supported");
+    HUSARNET_LOG_ERROR("Packet chain is not supported");
     return ESP_FAIL;
   }
 
@@ -110,7 +110,7 @@ err_t husarnet_netif_output(struct netif* netif, struct pbuf* p, const ip6_addr_
   auto driver =
       static_cast<husarnet_esp_netif_driver_t*>(esp_netif_get_io_driver(esp_netif_get_handle_from_netif_impl(netif)));
   if(xQueueSend(driver->tunTap->tunTapMsgQueue, &p, 0) != pdPASS) {
-    LOG_ERROR("Failed to send packet to the Husarnet stack");
+    HUSARNET_LOG_ERROR("Failed to send packet to the Husarnet stack");
     return ESP_FAIL;
   }
 
@@ -199,14 +199,14 @@ Tun::Tun(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
   // Create message queue for pbuf packets
   tunTapMsgQueue = xQueueCreate(queueSize, sizeof(pbuf*));
   if(tunTapMsgQueue == NULL) {
-    LOG_ERROR("Failed to create message queue");
+    HUSARNET_LOG_ERROR("Failed to create message queue");
     abort();
   }
 
   // Create and setup Husarnet network interface
   esp_netif_t* husarnet_esp_netif = esp_netif_new(&husarnet_netif_config);
   if(husarnet_esp_netif == NULL) {
-    LOG_ERROR("Failed to create Husarnet ESP-NETIF interface");
+    HUSARNET_LOG_ERROR("Failed to create Husarnet ESP-NETIF interface");
     abort();
   }
 
@@ -215,13 +215,13 @@ Tun::Tun(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
   husarnet_esp_netif_driver_t* driver = husarnet_esp_netif_driver_init();
   driver->tunTap = this;
   if(driver == NULL) {
-    LOG_ERROR("Failed to create Husarnet ESP-NETIF driver");
+    HUSARNET_LOG_ERROR("Failed to create Husarnet ESP-NETIF driver");
     abort();
   }
 
   driver->base.post_attach = husarnet_esp_netif_post_attach;
   if(esp_netif_attach(husarnet_esp_netif, driver) != ESP_OK) {
-    LOG_ERROR("Failed to attach Husarnet ESP-NETIF interface");
+    HUSARNET_LOG_ERROR("Failed to attach Husarnet ESP-NETIF interface");
     abort();
   }
 
@@ -231,7 +231,7 @@ Tun::Tun(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
   esp_ip6_addr_t ip6_addr_esp;
   memcpy(&ip6_addr_esp, &(this->ipAddr), sizeof(esp_ip6_addr_t));
   if(esp_netif_add_ip6_address(husarnet_esp_netif, ip6_addr_esp, true) != ESP_OK) {
-    LOG_ERROR("Failed to add IPv6 address");
+    HUSARNET_LOG_ERROR("Failed to add IPv6 address");
     abort();
   }
 
@@ -241,13 +241,13 @@ Tun::Tun(ip6_addr_t ipAddr, size_t queueSize) : ipAddr(ipAddr)
   ip_addr_t ipSrc = IPADDR6_INIT(0, 0, 0, 0);
   memcpy(ipSrc.u_addr.ip6.addr, this->getIp6Addr().addr, 16);
   if(netconn_bind(this->conn, &ipSrc, 0) != ERR_OK) {
-    LOG_ERROR("Failed to bind netconn");
+    HUSARNET_LOG_ERROR("Failed to bind netconn");
     abort();
   }
 
   int netifIdx = esp_netif_get_netif_impl_index(husarnet_esp_netif);
   if(netconn_bind_if(this->conn, static_cast<u8_t>(netifIdx)) != ERR_OK) {
-    LOG_ERROR("Failed to bind netconn");
+    HUSARNET_LOG_ERROR("Failed to bind netconn");
     abort();
   }
 
@@ -259,7 +259,7 @@ void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   // Input packet should contain IPv4/IPv6 header
   if(data.size() < 40) {
-    LOG_ERROR("Packet too short");
+    HUSARNET_LOG_ERROR("Packet too short");
     return;
   }
 
@@ -269,14 +269,14 @@ void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
   struct netbuf* buf = netbuf_new();
 
   if(netbuf_ref(buf, data.data(), data.size()) != ERR_OK) {
-    LOG_ERROR("Failed to create netbuf");
+    HUSARNET_LOG_ERROR("Failed to create netbuf");
     return;
   }
 
   ip_addr_t ipDest = IPADDR6_INIT(0, 0, 0, 0);
   memcpy(ipDest.u_addr.ip6.addr, data.data() + 8, 16);
   if(netconn_sendto(this->conn, buf, &ipDest, 0) != ERR_OK) {
-    LOG_ERROR("Failed to send packet");
+    HUSARNET_LOG_ERROR("Failed to send packet");
     return;
   }
 

@@ -23,6 +23,7 @@
 #include "husarnet/security_layer.h"
 #include "husarnet/util.h"
 
+
 #ifdef HTTP_CONTROL_API
 #include <magic_enum/magic_enum.hpp>
 
@@ -38,13 +39,16 @@ void HusarnetManager::prepareHusarnet()
 {
   this->configEnv = new ConfigEnv();
 
+  int var_a = 123;
+  std::string var_b = "test";
+
   // Initialize logging and print some essential debugging information
   globalLogLevel = this->configEnv->getLogVerbosity();
+  logger->set_log_level(husarnetLogLevelToQuill(globalLogLevel));
 
-  LOG_INFO("Running %s", HUSARNET_USER_AGENT);
-  LOG_DEBUG("Running a nightly/debugging build");  // This macro has all the
-                                                   // logic for not printing
-                                                   // if not a debug build
+  LOG_INFO(logger, "starting up Husarnet Daemon // {version} {ua}", HUSARNET_VERSION, HUSARNET_USER_AGENT);
+  LOG_INFO(logger, "test logging //{something} {something_else} {a_number}", var_a, var_b, 1235);
+  LOG_DEBUG(logger, "running a nightly/debugging build");
 
   this->hooksManager = new HooksManager(this->configEnv->getEnableHooks());
 
@@ -140,7 +144,6 @@ void HusarnetManager::runHusarnet()
 
 json HusarnetManager::getDataForStatus() const
 {
-  LOG_INFO("HusarnetManager: getDataForStatus");
   json result;
 
   result[STATUS_KEY_LOCALIP] = this->myIdentity->getIpAddress().toString();

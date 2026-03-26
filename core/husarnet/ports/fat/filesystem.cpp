@@ -19,13 +19,13 @@ __attribute__((weak)) bool isFile(const std::string& path)
 __attribute__((weak)) const std::string readFile(const std::string& path)
 {
   if(!isFile(path)) {
-    LOG_ERROR("file %s does not exist", path.c_str());
+    LOG_ERROR(logger, "file does not exist // {path}", path);
     return "";
   }
 
   std::ifstream f(path);
   if(!f.good()) {
-    LOG_ERROR("failed to open %s for reading", path.c_str());
+    LOG_ERROR(logger, "failed to open file for reading // {path}", path);
     exit(1);
   }
 
@@ -39,13 +39,13 @@ __attribute__((weak)) bool writeFile(const std::string& path, const std::string&
 {
   std::ofstream f(path);
   if(!f.good()) {
-    LOG_ERROR("failed to open %s for writing", path.c_str());
+    LOG_ERROR(logger, "failed to open file for writing // {path}", path);
     return false;
   }
 
   f << data;
 
-  LOG_DEBUG("Written to file %s directly", path.c_str());
+  LOG_DEBUG(logger, "written to file directly // {path}", path);
   return true;
 }
 
@@ -53,10 +53,10 @@ __attribute__((weak)) bool transformFile(
     const std::string& path,
     std::function<std::string(const std::string&)> transform)
 {
-  LOG_DEBUG("Naively transforming %s", path.c_str());
+  LOG_DEBUG(logger, "naively transforming file // {path}", path);
 
   if(!isFile(path)) {
-    LOG_ERROR("file %s does not exist", path.c_str());
+    LOG_ERROR(logger, "file does not exist // {path}", path);
     return false;
   }
 

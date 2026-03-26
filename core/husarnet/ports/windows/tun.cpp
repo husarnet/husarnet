@@ -37,24 +37,17 @@ static void CALLBACK WintunLoggerToHusarnetLogger(WINTUN_LOGGER_LEVEL Level, DWO
   constexpr size_t bufferSize = 512;
   auto logLineBuffer = static_cast<char*>(malloc(bufferSize));
   wcstombs(logLineBuffer, LogLine, _TRUNCATE);
+  (void)Timestamp;
 
-  SYSTEMTIME SystemTime;
-  FileTimeToSystemTime((FILETIME*)&Timestamp, &SystemTime);
   switch(Level) {
     case WINTUN_LOG_WARN:
-      LOG_WARNING(
-          "wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
-          SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
+      LOG_WARNING(logger, "wintun warning // {message}", logLineBuffer);
       break;
     case WINTUN_LOG_ERR:
-      LOG_ERROR(
-          "wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
-          SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
+      LOG_ERROR(logger, "wintun error // {message}", logLineBuffer);
       break;
     default:
-      LOG_DEBUG(
-          "wintun: %04u-%02u-%02u %02u:%02u:%02u.%04u %s", SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay,
-          SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond, SystemTime.wMilliseconds, logLineBuffer)
+      LOG_DEBUG(logger, "wintun message // {message}", logLineBuffer);
       break;
   }
 
@@ -84,7 +77,7 @@ bool Tun::init()
   this->wintunLib =
       LoadLibraryExW(L"wintun.dll", NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
   if(!this->wintunLib) {
-    LOG_CRITICAL("TunLayer: wintun.dll not found");
+    LOG_CRITICAL(logger, "TunLayer: wintun.dll not found");
     return false;
   }
 
@@ -107,7 +100,7 @@ bool Tun::init()
     DWORD LastError = GetLastError();
     FreeLibrary(this->wintunLib);
     SetLastError(LastError);
-    LOG_CRITICAL("TunLayer: failed to initialize wintun library");
+    LOG_CRITICAL(logger, "TunLayer: failed to initialize wintun library");
     return false;
   }
   // clang-format on
@@ -119,17 +112,18 @@ bool Tun::start()
 {
   this->acquireWintunAdapter();
   if(!this->wintunAdapter) {
-    LOG_CRITICAL("TunLayer: failed to open/create wintun adapter")
+    LOG_CRITICAL(logger, "TunLayer: failed to open/create wintun adapter")
     return false;
   }
 
   WintunSetLogger(WintunLoggerToHusarnetLogger);
   DWORD Version = WintunGetRunningDriverVersion();
-  LOG_INFO("TunLayer: wintun v%u.%u loaded", (Version >> 16) & 0xff, (Version >> 0) & 0xff);
+  std::string wintunVersion = std::to_string((Version >> 16) & 0xff) + "." + std::to_string((Version >> 0) & 0xff);
+  LOG_INFO(logger, "TunLayer: wintun loaded // {wintun_version}", wintunVersion);
   this->assignIpAddressToAdapter(this->husarnetAddress);
   this->wintunSession = WintunStartSession(this->wintunAdapter, ringCapacity);
   if(!this->wintunSession) {
-    LOG_CRITICAL("TunLayer: unable to start wintun session")
+    LOG_CRITICAL(logger, "TunLayer: unable to start wintun session")
     return false;
   }
   return true;
@@ -153,7 +147,7 @@ void Tun::startReaderThread()
                 if(WaitForMultipleObjects(_countof(WaitHandles), WaitHandles, FALSE, INFINITE) == WAIT_OBJECT_0)
                   continue;  // TODO wait for single object actually
               default:
-                LOG_ERROR("TunLayer: packet read failed")
+                LOG_ERROR(logger, "TunLayer: packet read failed")
             }
           }
         }
@@ -165,7 +159,7 @@ void Tun::acquireWintunAdapter()
 {
   this->wintunAdapter = WintunOpenAdapter(networkAdapterNameSz);
   if(!this->wintunAdapter) {
-    LOG_INFO("TunLayer: existing wintun adapter not found, creating new one... %d", GetLastError());
+    LOG_INFO(logger, "TunLayer: existing wintun adapter not found, creating new one // {errno}", GetLastError());
     // since GUIDs are 128-bit values, IMO we can simply provide Husarnet IPv6 here
     // according to the Wintun docs GUID parameter is a suggestion anyway
     // byte order will be not exactly what you expect but not important
@@ -176,22 +170,22 @@ void Tun::acquireWintunAdapter()
     if(!this->wintunAdapter) {
       DWORD errorCode = GetLastError();
       if(errorCode == ERROR_ACCESS_DENIED) {
-        LOG_ERROR("ACCESS_DENIED while trying to open tunnel, are you Administrator? Error code: %d", errorCode);
+        LOG_ERROR(logger, "ACCESS_DENIED while trying to open tunnel, are you Administrator? // {errno}", errorCode);
       } else if(errorCode == ERROR_ALREADY_EXISTS) {
-        LOG_ERROR("ALREADY_EXISTS while trying to create wintun adapter");
+        LOG_ERROR(logger, "ALREADY_EXISTS while trying to create wintun adapter");
         // one last try to open it
         this->wintunAdapter = WintunOpenAdapter(networkAdapterNameSz);
         if(!this->wintunAdapter) {
-          LOG_INFO("can't open adapter");
+          LOG_INFO(logger, "can't open adapter");
         }  // TODO: figure out why this sometimes happens (wintun does not teardown cleanly after killing process?)
       } else {
-        LOG_ERROR("Unable to create wintun adapter. Error code : %d", errorCode);
+        LOG_ERROR(logger, "unable to create wintun adapter. // {error_code}", errorCode);
       }
     } else {
-      LOG_INFO("wintun adapter created");
+      LOG_INFO(logger, "wintun adapter created");
     }
   } else {
-    LOG_INFO("Opened Wintun adapter!");
+    LOG_INFO(logger, "wintun adapter opened");
   }
 }
 
@@ -206,7 +200,7 @@ void Tun::assignIpAddressToAdapter(HusarnetAddress addr)
   AddressRow.DadState = IpDadStatePreferred;
   auto LastError = CreateUnicastIpAddressEntry(&AddressRow);
   if(LastError != ERROR_SUCCESS && LastError != ERROR_OBJECT_ALREADY_EXISTS) {
-    LOG_ERROR("TunLayer: cannot assign IP addr to interface, error %lu", LastError);
+    LOG_ERROR(logger, "TunLayer: cannot assign IP addr to interface // {errno}", LastError);
   }
 }
 
@@ -222,9 +216,9 @@ void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
     memcpy(Packet, data.data(), data.size());
     WintunSendPacket(this->wintunSession, Packet);
   } else if(GetLastError() == ERROR_BUFFER_OVERFLOW) {
-    LOG_ERROR("packet write failed - buffer overflow")
+    LOG_ERROR(logger, "packet write failed - buffer overflow")
   } else {
-    LOG_ERROR("packet write failed %d", GetLastError())
+    LOG_ERROR(logger, "packet write failed // {errno}", GetLastError())
   }
 }
 

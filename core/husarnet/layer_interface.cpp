@@ -7,7 +7,7 @@
 
 ForUpperProducer::ForUpperProducer()
     : fromUpperConsumer([](HusarnetAddress peerId, string_view data) {
-        LOG_DEBUG("dropping frame for upper layer, peer: %s", peerId.toString().c_str());
+        LOG_DEBUG(logger, "dropping frame for upper layer // {peer}", peerId.toString());
       })
 {
 }
@@ -24,7 +24,7 @@ void ForUpperProducer::sendToUpperLayer(HusarnetAddress peerId, string_view data
 
 ForLowerProducer::ForLowerProducer()
     : fromLowerConsumer([](HusarnetAddress peerId, string_view data) {
-        LOG_DEBUG("dropping frame for lower layer, peer: %s", peerId.toString().c_str());
+        LOG_DEBUG(logger, "dropping frame for lower layer // {peer}", peerId.toString().c_str());
       }){};
 
 void ForLowerProducer::setLowerLayerConsumer(std::function<void(HusarnetAddress peerId, string_view data)> func)
