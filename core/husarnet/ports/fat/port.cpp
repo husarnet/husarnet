@@ -205,6 +205,7 @@ namespace Port {
       etl::pair{std::string("HUSARNET_LOG_VERBOSITY"), EnvKey::logVerbosity},
       etl::pair{std::string("HUSARNET_ENABLE_HOOKS"), EnvKey::enableHooks},
       etl::pair{std::string("HUSARNET_ENABLE_CONTROLPLANE"), EnvKey::enableControlPlane},
+      etl::pair{std::string("HUSARNET_ENABLE_JSON_LOGGING"), EnvKey::enableJsonLogging},
       etl::pair{std::string("HUSARNET_DAEMON_INTERFACE"), EnvKey::daemonInterface},
       etl::pair{std::string("HUSARNET_DAEMON_API_INTERFACE"), EnvKey::daemonApiInterface},
       etl::pair{std::string("HUSARNET_DAEMON_API_HOST"), EnvKey::daemonApiHost},
@@ -212,12 +213,20 @@ namespace Port {
       etl::pair{std::string("HUSARNET_DAEMON_WORKER_QUEUE_SIZE"), EnvKey::daemonWorkerQueueSize},
   };
 
+  static const etl::map<StorageKey, std::string, STORAGE_KEY_OPTIONS> storageMap = {
+      etl::pair{StorageKey::id, std::string("id")},
+      etl::pair{StorageKey::config, std::string("config.json")},
+      etl::pair{StorageKey::daemonApiToken, std::string("daemon_api_token")},
+      etl::pair{StorageKey::cache, std::string("cache.json")},
+      etl::pair{StorageKey::defaults, std::string("defaults.ini")},
+  };
+
   __attribute__((weak)) etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentDefaultsFromIniFile()
   {
     etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> commonSection;
     etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> daemonSection;
-    auto contents = readStorage(StorageKey::defaults);
 
+    auto contents = readFileSilent(configDir + storageMap.at(StorageKey::defaults));
     if(contents.empty()) {
       return {};
     }
@@ -461,13 +470,6 @@ namespace Port {
     return true;
   }
 
-  static const etl::map<StorageKey, std::string, STORAGE_KEY_OPTIONS> storageMap = {
-      etl::pair{StorageKey::id, std::string("id")},
-      etl::pair{StorageKey::config, std::string("config.json")},
-      etl::pair{StorageKey::daemonApiToken, std::string("daemon_api_token")},
-      etl::pair{StorageKey::cache, std::string("cache.json")},
-      etl::pair{StorageKey::defaults, std::string("defaults.ini")},
-  };
 
   __attribute__((weak)) std::string readStorage(StorageKey key)
   {

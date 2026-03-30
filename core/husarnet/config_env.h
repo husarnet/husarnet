@@ -27,6 +27,7 @@ class ConfigEnv {
   LogLevel getLogVerbosity() const;
   bool getEnableHooks() const;
   bool getEnableControlplane() const;
+  bool getEnableJsonLogging() const;
   const std::string getDaemonInterface() const;
   const std::string getDaemonApiInterface() const;
   const InternetAddress getDaemonApiHost() const;

@@ -32,22 +32,22 @@
 
 HusarnetManager::HusarnetManager()
 {
-  Port::init();
 }
 
 void HusarnetManager::prepareHusarnet()
 {
+  // Grab environment variables
   this->configEnv = new ConfigEnv();
 
-  int var_a = 123;
-  std::string var_b = "test";
-
-  // Initialize logging and print some essential debugging information
-  globalLogLevel = this->configEnv->getLogVerbosity();
+  // Initialize logging
+  globalLogLevel = this->configEnv->getLogVerbosity(); // TODO eventually remove gloabl
+  logger = initLogging(this->configEnv->getEnableJsonLogging());
   logger->set_log_level(husarnetLogLevelToQuill(globalLogLevel));
 
+  // Port init here (after logging) as stuff need logs
+  Port::init();
+
   LOG_INFO(logger, "starting up Husarnet Daemon // {version} {ua}", HUSARNET_VERSION, HUSARNET_USER_AGENT);
-  LOG_INFO(logger, "test logging //{something} {something_else} {a_number}", var_a, var_b, 1235);
   LOG_DEBUG(logger, "running a nightly/debugging build");
 
   this->hooksManager = new HooksManager(this->configEnv->getEnableHooks());

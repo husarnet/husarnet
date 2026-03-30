@@ -16,6 +16,24 @@ __attribute__((weak)) bool isFile(const std::string& path)
   return std::filesystem::exists(path);
 }
 
+// readFile version with no logging for best-effort reading (for example for reading before logger is set up)
+__attribute__((weak)) const std::string readFileSilent(const std::string& path)
+{
+  if(!isFile(path)) {
+    return "";
+  }
+
+  std::ifstream f(path);
+  if(!f.good()) {
+    return "";
+  }
+
+  std::stringstream buffer;
+  buffer << f.rdbuf();
+
+  return buffer.str();
+}
+
 __attribute__((weak)) const std::string readFile(const std::string& path)
 {
   if(!isFile(path)) {
