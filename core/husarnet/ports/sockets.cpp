@@ -430,7 +430,9 @@ namespace OsSocket {
 
           size_t packetLen = etl::distance(conn->readBuffer.begin(), iter) + expectedSize;
           if(packetLen >= conn->readBuffer.capacity()) {
-            LOG_INFO(logger, "TCP message too large // {expected_size} {actual_size}", expectedSize, conn->readBuffer.size());
+            LOG_INFO(
+                logger, "TCP message too large // {expected_size} {actual_size}", expectedSize,
+                conn->readBuffer.size());
             TcpConnection::close(conn);
             return;
           }

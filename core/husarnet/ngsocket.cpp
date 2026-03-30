@@ -256,7 +256,8 @@ void NgSocket::helloReceived(InetAddress source, const PeerToPeerMessage& msg)
   Peer* peer = peerContainer->getOrCreatePeer(msg.myId);
   if(peer == nullptr)
     return;
-  LOG_DEBUG(logger, "HELLO received // {source} {peer} {isActive}", source.str(), msg.myId.toString(), peer->isActive());
+  LOG_DEBUG(
+      logger, "HELLO received // {source} {peer} {isActive}", source.str(), msg.myId.toString(), peer->isActive());
 
   addSourceAddress(peer, source);
 
@@ -364,7 +365,9 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
       LOG_DEBUG(logger, "received base UDP address // {address}", baseUdpAddress.str());
 
       if(msg.natTransientRange.first != 0 && msg.natTransientRange.second >= msg.natTransientRange.first) {
-        LOG_DEBUG(logger, "received base transient range // {range_from} {range_to}", msg.natTransientRange.first, msg.natTransientRange.second);
+        LOG_DEBUG(
+            logger, "received base transient range // {range_from} {range_to}", msg.natTransientRange.first,
+            msg.natTransientRange.second);
         baseTransientRange = msg.natTransientRange;
         if(baseTransientPort == 0) {
           baseTransientPort = baseTransientRange.first;
@@ -459,8 +462,9 @@ void NgSocket::multicastPacketReceived(InetAddress address, string_view packetVi
 
   Peer* peer = peerContainer->getPeer(devId);
 
-  LOG_DEBUG(logger,
-      "multicast received from %s, id %s, port %d, interesting: %s // {address} {peer} {port} {interesting}", address.str(), devId.toString(), port, (peer == NULL));
+  LOG_DEBUG(
+      logger, "multicast received from %s, id %s, port %d, interesting: %s // {address} {peer} {port} {interesting}",
+      address.str(), devId.toString(), port, (peer == NULL));
 
   InetAddress srcAddress = InetAddress{address.ip, port};
   if(peer != nullptr && peer->linkLocalAddress != srcAddress) {

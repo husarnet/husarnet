@@ -123,17 +123,17 @@ static bool transformLockFile(const std::string& path, std::function<std::string
 
   // Finally we can release the lock and file
   ret = fcntl(fd, F_SETLEASE, F_UNLCK);
-  if (ret < 0) {
+  if(ret < 0) {
     LOG_ERROR(logger, "Failed to release a write lock on file // {path}", path);
   }
 
   ret = fsync(fd);
-  if (ret < 0) {
+  if(ret < 0) {
     LOG_ERROR(logger, "Failed to sync file // {path}", path);
   }
 
   ret = close(fd);
-  if (ret < 0) {
+  if(ret < 0) {
     LOG_ERROR(logger, "Failed to close file // {path}", path);
   }
 
@@ -144,11 +144,11 @@ static bool transformLockFile(const std::string& path, std::function<std::string
 abort:
   ret = fcntl(fd, F_SETLEASE, F_UNLCK);
 
-  if (ret < 0) {
+  if(ret < 0) {
     LOG_ERROR(logger, "Failed to release a write lock on file // {path}", path);
   }
   ret = close(fd);
-  if (ret < 0) {
+  if(ret < 0) {
     LOG_ERROR(logger, "Failed to close file // {path}", path);
   }
 

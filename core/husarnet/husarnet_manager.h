@@ -3,6 +3,7 @@
 // License: specified in project_root/LICENSE.txt
 #pragma once
 #include <string_view>
+
 #include "husarnet/config_env.h"
 #include "husarnet/config_manager.h"
 #include "husarnet/eventbus.h"
@@ -51,4 +52,3 @@ class HusarnetManager {
   json getDataForStatus() const;
 #endif
 };
-

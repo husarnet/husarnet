@@ -155,7 +155,8 @@ namespace Port {
     const std::string command = "scutil --get LocalHostName > " + hostnamePath + " 2>/dev/null";
     std::system(command.c_str());
     if(!isFile(hostnamePath)) {
-      LOG_WARNING(logger,
+      LOG_WARNING(
+          logger,
           "Unable to retrieve hostname from scutil, defaulting to "
           "macos-device");
       return "macos-device";

@@ -76,7 +76,8 @@ static bool verifySignature(const json& licenseJson)
 {
   // This is mostly for checking if a minimum license version is present
   if(!licenseJson.contains(LICENSE_SIGNATURE_V2_KEY)) {
-    LOG_CRITICAL(logger,
+    LOG_CRITICAL(
+        logger,
         "license data is invalid - missing signature for the required license "
         "version");
     return false;

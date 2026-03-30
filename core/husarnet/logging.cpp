@@ -75,7 +75,8 @@ void log(LogLevel level, const std::string& filename, int lineno, const std::str
 // in HusarnetManager::prepareHusarnet()
 quill::Logger* logger;
 
-quill::Logger* initLogging(bool jsonLogging) {
+quill::Logger* initLogging(bool jsonLogging)
+{
   quill::BackendOptions backend_options;
   quill::Backend::start(backend_options);
 
@@ -83,33 +84,30 @@ quill::Logger* initLogging(bool jsonLogging) {
     // PatternFormatter is only used for non-structured logs formatting
     // When logging only json, it is ideal to set the logging pattern to empty to avoid unnecessary message formatting.
     auto jsonSink = quill::Frontend::create_or_get_sink<HusarnetJsonSink>("sink_1");
-    return quill::Frontend::create_or_get_logger(
-      "main_logger", std::move(jsonSink)
-      );
+    return quill::Frontend::create_or_get_logger("main_logger", std::move(jsonSink));
   }
 
   auto noJsonSink = quill::Frontend::create_or_get_sink<HusarnetNoJsonSink>("sink_1");
   return quill::Frontend::create_or_get_logger(
-    "main_logger", std::move(noJsonSink), quill::PatternFormatterOptions{"%(time) %(log_level:<7) %(short_source_location:<28) ",
-                                   "%H:%M:%S.%Qns"}
-    );
+      "main_logger", std::move(noJsonSink),
+      quill::PatternFormatterOptions{"%(time) %(log_level:<7) %(short_source_location:<28) ", "%H:%M:%S.%Qns"});
 }
 
-
-quill::LogLevel husarnetLogLevelToQuill(LogLevel level) {
-  if (level == LogLevel::NONE) {
+quill::LogLevel husarnetLogLevelToQuill(LogLevel level)
+{
+  if(level == LogLevel::NONE) {
     return quill::LogLevel::None;
   }
-  if (level == LogLevel::CRITICAL) {
+  if(level == LogLevel::CRITICAL) {
     return quill::LogLevel::Critical;
   }
-  if (level == LogLevel::ERROR) {
+  if(level == LogLevel::ERROR) {
     return quill::LogLevel::Error;
   }
-  if (level == LogLevel::WARNING) {
+  if(level == LogLevel::WARNING) {
     return quill::LogLevel::Warning;
   }
-  if (level == LogLevel::INFO) {
+  if(level == LogLevel::INFO) {
     return quill::LogLevel::Info;
   }
 

@@ -23,7 +23,6 @@
 #include "husarnet/security_layer.h"
 #include "husarnet/util.h"
 
-
 #ifdef HTTP_CONTROL_API
 #include <magic_enum/magic_enum.hpp>
 
@@ -40,7 +39,7 @@ void HusarnetManager::prepareHusarnet()
   this->configEnv = new ConfigEnv();
 
   // Initialize logging
-  globalLogLevel = this->configEnv->getLogVerbosity(); // TODO eventually remove gloabl
+  globalLogLevel = this->configEnv->getLogVerbosity();  // TODO eventually remove gloabl
   logger = initLogging(this->configEnv->getEnableJsonLogging());
   logger->set_log_level(husarnetLogLevelToQuill(globalLogLevel));
 

@@ -223,8 +223,8 @@ void SecurityLayer::handleHelloPacket(HusarnetAddress target, string_view data, 
   }
 
   if(r == 0) {
-    LOG_DEBUG(logger,
-        "negotiated session keys // {rxKey} {txKey}", encodeHex(peer->rxKey.substr(0, 6)),
+    LOG_DEBUG(
+        logger, "negotiated session keys // {rxKey} {txKey}", encodeHex(peer->rxKey.substr(0, 6)),
         encodeHex(peer->txKey.substr(0, 6)));
     finishNegotiation(peer);
   } else {

@@ -81,7 +81,8 @@ static const std::string getOrCreateDaemonApiToken()
     auto newToken = generateRandomString(32);
     auto success = Port::writeStorage(StorageKey::daemonApiToken, newToken);
     if(!success) {
-      LOG_CRITICAL(logger,
+      LOG_CRITICAL(
+          logger,
           "Failed to write daemon API token to storage, you won't be able to "
           "use CLI (or daemon's API) to control the daemon!");
     }
@@ -134,7 +135,8 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
   LOG_INFO(logger, "Forwarding request to Dashboard API // {method} {path}", method, path);
   auto apiAddress = configManager->getApiAddress();
   if(!apiAddress.isFC94()) {
-    LOG_WARNING(logger,
+    LOG_WARNING(
+        logger,
         "Not forwarding the request, as proxy does not have valid "
         "Dashboard API address");
 
@@ -309,21 +311,22 @@ void ApiServer::runThread()
   if(configEnv->getDaemonApiInterface() != "") {
     // Deduce bind address from the provided interface
     bindAddress = Port::getIpAddressFromInterfaceName(configEnv->getDaemonApiInterface());
-    LOG_INFO(logger,
-        "Deducing bind address from the provided interface // {address} {interface}", bindAddress.toString().c_str(),
-        configEnv->getDaemonApiInterface().c_str());
+    LOG_INFO(
+        logger, "Deducing bind address from the provided interface // {address} {interface}",
+        bindAddress.toString().c_str(), configEnv->getDaemonApiInterface().c_str());
   } else {
     // Use provided/default bind address
     bindAddress = configEnv->getDaemonApiHost();
   }
 
   if(!svr.bind_to_port(bindAddress.toString().c_str(), configEnv->getDaemonApiPort())) {
-    LOG_CRITICAL(logger,
-        "unable to bind HTTP thread to port. Exiting! // {address} {port}", bindAddress.toString().c_str(),
+    LOG_CRITICAL(
+        logger, "unable to bind HTTP thread to port. Exiting! // {address} {port}", bindAddress.toString().c_str(),
         configEnv->getDaemonApiPort());
     exit(1);
   } else {
-    LOG_INFO(logger, "HTTP thread bound Will start handling the connections. // {address} {port}",
+    LOG_INFO(
+        logger, "HTTP thread bound Will start handling the connections. // {address} {port}",
         bindAddress.toString().c_str(), configEnv->getDaemonApiPort());
   }
 

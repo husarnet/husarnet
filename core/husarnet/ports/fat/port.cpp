@@ -462,14 +462,12 @@ namespace Port {
 
           auto ret = pclose(pipe);
 
-
           LOG_INFO(logger, "hook finished // {hook} {status}", hookName, ret);
         },
         hookName.c_str());
 
     return true;
   }
-
 
   __attribute__((weak)) std::string readStorage(StorageKey key)
   {

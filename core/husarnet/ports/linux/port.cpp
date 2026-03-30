@@ -335,7 +335,8 @@ namespace Port {
     // Setup netlink socket
     ns = nl_socket_alloc();
     if((err = nl_connect(ns, NETLINK_ROUTE)) < 0) {
-      LOG_CRITICAL(logger, "Failed to setup TUN device. Unable to connect to netlink socket // {error}", nl_geterror(err));
+      LOG_CRITICAL(
+          logger, "Failed to setup TUN device. Unable to connect to netlink socket // {error}", nl_geterror(err));
       nl_socket_free(ns);
       exit(1);
     }
@@ -348,7 +349,9 @@ namespace Port {
     rtnl_addr_set_local(link_addr, addr);
 
     if((err = rtnl_link_get_kernel(ns, 0, interfaceName.c_str(), &link)) < 0) {
-      LOG_CRITICAL(logger, "Failed to setup TUN device. Unable to get interface information // {interface} {error}", interfaceName, nl_geterror(err));
+      LOG_CRITICAL(
+          logger, "Failed to setup TUN device. Unable to get interface information // {interface} {error}",
+          interfaceName, nl_geterror(err));
 
       rtnl_link_put(link);
       rtnl_addr_put(link_addr);
@@ -361,7 +364,8 @@ namespace Port {
     rtnl_addr_set_link(link_addr, link);
 
     if((err = rtnl_addr_add(ns, link_addr, 0)) < 0) {
-      LOG_CRITICAL(logger,
+      LOG_CRITICAL(
+          logger,
           "Failed to setup TUN device. Unable to add address to interface %s "
           "(err: %s)",
           interfaceName.c_str(), nl_geterror(err));
@@ -384,8 +388,9 @@ namespace Port {
 
     // Apply link changes, bring up interface
     if((err = rtnl_link_change(ns, link, change, 0)) < 0) {
-      LOG_CRITICAL(logger,
-          "Failed to setup TUN device. Unable to apply link changes // {interface} {error}", interfaceName, nl_geterror(err));
+      LOG_CRITICAL(
+          logger, "Failed to setup TUN device. Unable to apply link changes // {interface} {error}", interfaceName,
+          nl_geterror(err));
 
       rtnl_link_put(change);
       rtnl_link_put(link);
