@@ -463,7 +463,7 @@ void NgSocket::multicastPacketReceived(InetAddress address, string_view packetVi
   Peer* peer = peerContainer->getPeer(devId);
 
   LOG_DEBUG(
-      logger, "multicast received from %s, id %s, port %d, interesting: %s // {address} {peer} {port} {interesting}",
+      logger, "multicast received // {address} {peer} {port} {interesting}",
       address.str(), devId.toString(), port, (peer == NULL));
 
   InetAddress srcAddress = InetAddress{address.ip, port};

@@ -39,7 +39,7 @@ Peer* PeerContainer::getPeer(HusarnetAddress id)
     return nullptr;
 
   if(!this->configManager->isPeerAllowed(id)) {
-    LOG_INFO(logger, "peer is not allowed {peer}", id.toString());
+    LOG_INFO(logger, "peer is not allowed // {peer}", id.toString());
     return nullptr;
   }
 
