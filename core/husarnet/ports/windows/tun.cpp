@@ -112,7 +112,7 @@ bool Tun::start()
 {
   this->acquireWintunAdapter();
   if(!this->wintunAdapter) {
-    LOG_CRITICAL(logger, "TunLayer: failed to open/create wintun adapter")
+    LOG_CRITICAL(logger, "TunLayer: failed to open/create wintun adapter");
     return false;
   }
 
@@ -123,7 +123,7 @@ bool Tun::start()
   this->assignIpAddressToAdapter(this->husarnetAddress);
   this->wintunSession = WintunStartSession(this->wintunAdapter, ringCapacity);
   if(!this->wintunSession) {
-    LOG_CRITICAL(logger, "TunLayer: unable to start wintun session")
+    LOG_CRITICAL(logger, "TunLayer: unable to start wintun session");
     return false;
   }
   return true;
@@ -147,7 +147,7 @@ void Tun::startReaderThread()
                 if(WaitForMultipleObjects(_countof(WaitHandles), WaitHandles, FALSE, INFINITE) == WAIT_OBJECT_0)
                   continue;  // TODO wait for single object actually
               default:
-                LOG_ERROR(logger, "TunLayer: packet read failed")
+                LOG_ERROR(logger, "TunLayer: packet read failed");
             }
           }
         }
@@ -216,9 +216,9 @@ void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
     memcpy(Packet, data.data(), data.size());
     WintunSendPacket(this->wintunSession, Packet);
   } else if(GetLastError() == ERROR_BUFFER_OVERFLOW) {
-    LOG_ERROR(logger, "packet write failed - buffer overflow")
+    LOG_ERROR(logger, "packet write failed - buffer overflow");
   } else {
-    LOG_ERROR(logger, "packet write failed // {errno}", GetLastError())
+    LOG_ERROR(logger, "packet write failed // {errno}", GetLastError());
   }
 }
 

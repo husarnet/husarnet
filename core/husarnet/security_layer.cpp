@@ -223,12 +223,10 @@ void SecurityLayer::handleHelloPacket(HusarnetAddress target, string_view data, 
   }
 
   if(r == 0) {
-    LOG_DEBUG(
-        logger, "negotiated session keys // {rxKey} {txKey}", encodeHex(peer->rxKey.substr(0, 6)),
-        encodeHex(peer->txKey.substr(0, 6)));
+    LOG_DEBUG(logger, "negotiated session keys");
     finishNegotiation(peer);
   } else {
-    LOG_INFO(logger, "key exchange failed // {peer}", peer->getIpAddressString());
+    LOG_WARNING(logger, "key exchange failed // {peer}", peer->getIpAddressString());
     return;
   }
 

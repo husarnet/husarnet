@@ -40,18 +40,18 @@ static std::list<std::string> getAvailableScripts(const std::string& path)
   LOG_INFO(logger, "checking directory for valid hooks // {path}", fullPath);
 
   if(!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
-    LOG_INFO(logger, "path does not exist or is not a directory // {fullPath}");
+    LOG_INFO(logger, "path does not exist or is not a directory // {fullPath}", fullPath);
     return results;
   }
 
   for(const auto& entry : std::filesystem::directory_iterator(dir)) {
     if(entry.path().extension() != ".ps1") {
-      LOG_WARNING(logger, "script has wrong extension", entry.path().string());
+      LOG_WARNING(logger, "script has wrong extension // {path}", entry.path().string());
       continue;
     }
 
     if((entry.status().permissions() & std::filesystem::perms::owner_exec) != std::filesystem::perms::owner_exec) {
-      LOG_WARNING(logger, "script file is not executable", entry.path().string());
+      LOG_WARNING(logger, "script file is not executable // {path}", entry.path().string());
       continue;
     }
 
@@ -135,7 +135,7 @@ namespace Port {
     if(!started) {
       LOG_CRITICAL(logger, "TUN bringup failed; Husarnet won't work");
     } else {
-      LOG_INFO(logger, "TUN config OK // {adapter_name}", tun->getAdapterName();
+      LOG_INFO(logger, "TUN config OK // {adapter_name}", tun->getAdapterName());
     }
 
     // these can take quite a few seconds
@@ -145,7 +145,7 @@ namespace Port {
     setupFirewall(tun->getAdapterName());
 
     tun->startReaderThread();
-    LOG_INFO(logger, "started reading from TUN adapter")
+    LOG_INFO(logger, "started reading from TUN adapter");
 
     return tun;
   }

@@ -6,6 +6,16 @@
 
 #include "husarnet/util.h"
 
+#include "quill/Backend.h"
+#include "quill/Frontend.h"
+#include "quill/LogMacros.h"
+#include "quill/Logger.h"
+#include "quill/backend/PatternFormatter.h"
+#include "quill/core/Attributes.h"
+#include "quill/sinks/ConsoleSink.h"
+#include "quill/sinks/JsonSink.h"
+#include "quill/sinks/StreamSink.h"
+
 // Windows API is broken
 #undef ERROR
 
@@ -53,15 +63,6 @@ void log(LogLevel level, const std::string& filename, int lineno, const std::str
     log(LogLevel::CRITICAL, __FILE__, __LINE__, "", fmt, ##x); \
   }
 
-#include "quill/Backend.h"
-#include "quill/Frontend.h"
-#include "quill/LogMacros.h"
-#include "quill/Logger.h"
-#include "quill/backend/PatternFormatter.h"
-#include "quill/core/Attributes.h"
-#include "quill/sinks/ConsoleSink.h"
-#include "quill/sinks/JsonSink.h"
-#include "quill/sinks/StreamSink.h"
 
 class HusarnetSink : public quill::StreamSink {
  public:
@@ -76,17 +77,12 @@ class HusarnetSink : public quill::StreamSink {
  protected:
   size_t getMessageUpperBound(char const* message_format)
   {
-    size_t i = 0;
-    size_t upperBound = 0;
-    while(message_format[i] != '\0') {
-      i++;
-      if(message_format[i - 1] == '/' && message_format[i] == '/') {
-        upperBound = i - 2;
-        break;
-      }
-      upperBound = i;
+    std::string_view format{message_format};
+    size_t const pos = format.find("//");
+    if(pos == std::string_view::npos) {
+      return format.size();
     }
-    return upperBound;
+    return (pos > 0 && format[pos - 1] == ' ') ? pos - 1 : pos;
   }
   fmtquill::memory_buffer _message;
   std::string _format;

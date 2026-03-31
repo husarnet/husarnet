@@ -69,7 +69,7 @@ void EventBus::_handleMessage(WebSocket::Message& message)
   if(data.compare("get_config") == 0) {
     this->configManager->triggerGetConfig();
   } else {
-    LOG_WARNING(logger, "Unknown EB message // {message}", data.data());
+    LOG_WARNING(logger, "Unknown EB message // {message}", std::string(data.begin(), data.size()));
   }
 }
 

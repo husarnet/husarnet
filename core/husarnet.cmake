@@ -240,6 +240,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(quill)
 target_include_directories(${husarnet_core} PUBLIC ${quill_SOURCE_DIR}/include)
+target_link_libraries(${husarnet_core} quill::quill)
 
 # Include linux port libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Darwin OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows)))

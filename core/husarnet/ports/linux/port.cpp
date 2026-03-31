@@ -366,8 +366,7 @@ namespace Port {
     if((err = rtnl_addr_add(ns, link_addr, 0)) < 0) {
       LOG_CRITICAL(
           logger,
-          "Failed to setup TUN device. Unable to add address to interface %s "
-          "(err: %s)",
+          "Failed to setup TUN device. Unable to add address to interface // {interface} {error}",
           interfaceName.c_str(), nl_geterror(err));
 
       rtnl_link_put(link);
@@ -422,7 +421,7 @@ namespace Port {
     rtnl_route_add_nexthop(route, nh);
 
     if((err = rtnl_route_add(ns, route, NLM_F_REPLACE)) < 0) {
-      LOG_CRITICAL(logger, "Failed to setup TUN device. Unable to add multicast route (err: %s)", nl_geterror(err));
+      LOG_CRITICAL(logger, "Failed to setup TUN device. Unable to add multicast route // {error}", nl_geterror(err));
 
       rtnl_route_put(route);
       rtnl_link_put(link);

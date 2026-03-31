@@ -676,14 +676,14 @@ PeerToPeerMessage NgSocket::parsePeerToPeerMessage(string_view data)
     std::string signature = data.substr(17 + 64, 64);
 
     if(NgSocketCrypto::pubkeyToDeviceId(pubkey) != msg.myId) {
-      LOG_ERROR(logger, "invalid pubkey // {pubkey}", pubkey);
+      LOG_ERROR(logger, "invalid pubkey // {pubkey}", encodeHex(pubkey));
       return msg;
     }
 
     bool ok = NgSocketCrypto::verifySignature(data.substr(0, 17 + 64), "ng-p2p-msg", pubkey, signature);
 
     if(!ok) {
-      LOG_ERROR(logger, "invalid signature // {signature}", signature);
+      LOG_ERROR(logger, "invalid signature // {signature}", encodeHex(signature));
       return msg;
     }
     msg.kind = PeerToPeerMessageKind::_from_index_unchecked(data[0]);

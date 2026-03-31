@@ -34,7 +34,7 @@ HusarnetClient::HusarnetClient()
       [](void* manager) { husarnetTask(manager); }, "husarnet_task", 16384, manager, 7, &husarnetTaskHandle);
 
   if(res != pdPASS) {
-    LOG_ERROR(logger, "Failed to create Husarnet task");
+    HUSARNET_LOG_ERROR("Failed to create Husarnet task");
     abort();
   }
 }
@@ -50,12 +50,12 @@ void HusarnetClient::join(const char* hostname, const char* joinCode)
     HusarnetManager* husarnetManager = this->husarnetManager;
 
     if(started) {
-      LOG_ERROR(logger, "Cannot join the network twice");
+      HUSARNET_LOG_ERROR("Cannot join the network twice");
       return;
     }
 
     if(strlen(joinCode) == 0) {
-      LOG_ERROR(logger, "Join code cannot be empty");
+      HUSARNET_LOG_ERROR("Join code cannot be empty");
       return;
     }
 

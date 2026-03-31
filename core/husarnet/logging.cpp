@@ -12,7 +12,7 @@
 #include "husarnet/util.h"
 
 #include "magic_enum/magic_enum.hpp"
-#include "quill/sinks/ConsoleSink.h"
+
 // This is merely a starting/bootstrap log level. As soon as the config is
 // loaded, proper one will be set
 #ifdef DEBUG_BUILD
