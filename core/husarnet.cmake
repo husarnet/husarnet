@@ -232,7 +232,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(magic_enum)
 target_include_directories(${husarnet_core} PUBLIC ${magic_enum_SOURCE_DIR}/include)
 
-# Logging library - testing
+# Structured logging lib for fat platforms
 if(NOT DEFINED ESP_PLATFORM)
   FetchContent_Declare(
     quill

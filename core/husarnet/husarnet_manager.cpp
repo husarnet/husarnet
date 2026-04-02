@@ -40,9 +40,6 @@ void HusarnetManager::prepareHusarnet()
 
   // Initialize logging
   initLogging(this->configEnv->getLogVerbosity(), this->configEnv->getEnableJsonLogging());
-  // globalLogLevel = this->configEnv->getLogVerbosity();  // TODO eventually remove gloabl
-  // logger = initLogging(this->configEnv->getEnableJsonLogging());
-  // logger->set_log_level(husarnetLogLevelToQuill(globalLogLevel));
 
   // Port init here (after logging) as stuff need logs
   Port::init();
