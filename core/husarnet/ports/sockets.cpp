@@ -383,7 +383,7 @@ namespace OsSocket {
         }
 
         if(read <= 0) {
-          HLOG_ERROR("TCP recv failed {errno}", WSAGetLastError());
+          HLOG_ERROR("TCP recv failed // {errno}", WSAGetLastError());
           TcpConnection::close(conn);
           return;
         }
