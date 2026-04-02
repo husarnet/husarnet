@@ -150,16 +150,16 @@ static void linkEnableIPv6(const std::string& interface)
   std::string path("/proc/sys/net/ipv6/conf/" + interface + "/disable_ipv6");
 
   if((fd = open(path.c_str(), O_WRONLY)) < 0) {
-    LOG_WARNING(logger, "Unable to open file. Might be harmless. // {path} {error}", path, strerror(errno));
+    HLOG_WARNING("Unable to open file. Might be harmless. // {path} {error}", path, strerror(errno));
     return;
   }
 
   if(dprintf(fd, "0") < 0) {
-    LOG_CRITICAL(logger, "Unable to write to file. Might be harmless. // {path} {error}", path, strerror(errno));
+    HLOG_CRITICAL("Unable to write to file. Might be harmless. // {path} {error}", path, strerror(errno));
   }
 
   if(close(fd) < 0) {
-    LOG_CRITICAL(logger, "Unable to close the file. Might be harmless. // {path} {error}", path, strerror(errno));
+    HLOG_CRITICAL("Unable to close the file. Might be harmless. // {path} {error}", path, strerror(errno));
   }
 }
 
@@ -171,7 +171,7 @@ namespace Port {
     if_inet6 = fopen("/proc/self/net/if_inet6", "r");
 
     if(if_inet6 == nullptr) {
-      LOG_WARNING(logger, "failed to open if_inet6 file");
+      HLOG_WARNING("failed to open if_inet6 file");
       return;
     }
   }
@@ -204,7 +204,7 @@ namespace Port {
         perror("systemd close");
       }
 
-      LOG_INFO(logger, "Systemd notification end");
+      HLOG_INFO("Systemd notification end");
     }
   }
 
@@ -220,27 +220,27 @@ namespace Port {
     // Setup netlink socket
     ns = nl_socket_alloc();
     if((err = nl_connect(ns, NETLINK_ROUTE)) < 0) {
-      LOG_ERROR(logger, "Unable to connect to netlink socket // {error}", nl_geterror(err));
+      HLOG_ERROR("Unable to connect to netlink socket // {error}", nl_geterror(err));
       nl_socket_free(ns);
       return IpAddress();
     }
 
     // Get network interface by name
     if((err = rtnl_link_get_kernel(ns, 0, interfaceName.c_str(), &link)) < 0) {
-      LOG_ERROR(logger, "Unable to get interface information // {interface} {error}", interfaceName, nl_geterror(err));
+      HLOG_ERROR("Unable to get interface information // {interface} {error}", interfaceName, nl_geterror(err));
       nl_socket_free(ns);
       return IpAddress();
     }
 
     // Get interface addresses into cache
     if((err = rtnl_addr_alloc_cache(ns, &addr_cache)) < 0) {
-      LOG_ERROR(logger, "Unable to get interface addresses // {interface} {error}", interfaceName, nl_geterror(err));
+      HLOG_ERROR("Unable to get interface addresses // {interface} {error}", interfaceName, nl_geterror(err));
       nl_socket_free(ns);
       return IpAddress();
     }
 
     if((ifindex = rtnl_link_get_ifindex(link)) < 0) {
-      LOG_ERROR(logger, "Unable to get interface index // {interface} {error}", interfaceName, nl_geterror(ifindex));
+      HLOG_ERROR("Unable to get interface index // {interface} {error}", interfaceName, nl_geterror(ifindex));
       nl_socket_free(ns);
       return IpAddress();
     }
@@ -314,12 +314,12 @@ namespace Port {
 
     // Create TUN device if it doesn't exist
     if(access("/dev/net/tun", F_OK) == -1) {
-      LOG_INFO(logger, "TUN device does not exist, creating it");
+      HLOG_INFO("TUN device does not exist, creating it");
 
       mkdir("/dev/net", 0755);
 
       if(mknod("/dev/net/tun", S_IFCHR | 0666, makedev(10, 200)) == -1) {
-        LOG_CRITICAL(logger, "Failed to create TUN device");
+        HLOG_CRITICAL("Failed to create TUN device");
         exit(1);
       }
     }
@@ -335,8 +335,7 @@ namespace Port {
     // Setup netlink socket
     ns = nl_socket_alloc();
     if((err = nl_connect(ns, NETLINK_ROUTE)) < 0) {
-      LOG_CRITICAL(
-          logger, "Failed to setup TUN device. Unable to connect to netlink socket // {error}", nl_geterror(err));
+      HLOG_CRITICAL("Failed to setup TUN device. Unable to connect to netlink socket // {error}", nl_geterror(err));
       nl_socket_free(ns);
       exit(1);
     }
@@ -349,9 +348,9 @@ namespace Port {
     rtnl_addr_set_local(link_addr, addr);
 
     if((err = rtnl_link_get_kernel(ns, 0, interfaceName.c_str(), &link)) < 0) {
-      LOG_CRITICAL(
-          logger, "Failed to setup TUN device. Unable to get interface information // {interface} {error}",
-          interfaceName, nl_geterror(err));
+      HLOG_CRITICAL(
+          "Failed to setup TUN device. Unable to get interface information // {interface} {error}", interfaceName,
+          nl_geterror(err));
 
       rtnl_link_put(link);
       rtnl_addr_put(link_addr);
@@ -364,8 +363,7 @@ namespace Port {
     rtnl_addr_set_link(link_addr, link);
 
     if((err = rtnl_addr_add(ns, link_addr, 0)) < 0) {
-      LOG_CRITICAL(
-          logger,
+      HLOG_CRITICAL(
           "Failed to setup TUN device. Unable to add address to interface // {interface} {error}",
           interfaceName.c_str(), nl_geterror(err));
 
@@ -387,8 +385,8 @@ namespace Port {
 
     // Apply link changes, bring up interface
     if((err = rtnl_link_change(ns, link, change, 0)) < 0) {
-      LOG_CRITICAL(
-          logger, "Failed to setup TUN device. Unable to apply link changes // {interface} {error}", interfaceName,
+      HLOG_CRITICAL(
+          "Failed to setup TUN device. Unable to apply link changes // {interface} {error}", interfaceName,
           nl_geterror(err));
 
       rtnl_link_put(change);
@@ -421,7 +419,7 @@ namespace Port {
     rtnl_route_add_nexthop(route, nh);
 
     if((err = rtnl_route_add(ns, route, NLM_F_REPLACE)) < 0) {
-      LOG_CRITICAL(logger, "Failed to setup TUN device. Unable to add multicast route // {error}", nl_geterror(err));
+      HLOG_CRITICAL("Failed to setup TUN device. Unable to add multicast route // {error}", nl_geterror(err));
 
       rtnl_route_put(route);
       rtnl_link_put(link);

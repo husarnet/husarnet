@@ -233,14 +233,16 @@ FetchContent_MakeAvailable(magic_enum)
 target_include_directories(${husarnet_core} PUBLIC ${magic_enum_SOURCE_DIR}/include)
 
 # Logging library - testing
-FetchContent_Declare(
-  quill
-  URL https://github.com/odygrd/quill/archive/refs/tags/v11.1.0.zip
-  DOWNLOAD_EXTRACT_TIMESTAMP true
-)
-FetchContent_MakeAvailable(quill)
-target_include_directories(${husarnet_core} PUBLIC ${quill_SOURCE_DIR}/include)
-target_link_libraries(${husarnet_core} quill::quill)
+if(NOT DEFINED ESP_PLATFORM)
+  FetchContent_Declare(
+    quill
+    URL https://github.com/odygrd/quill/archive/refs/tags/v11.1.0.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP true
+  )
+  FetchContent_MakeAvailable(quill)
+  target_include_directories(${husarnet_core} PUBLIC ${quill_SOURCE_DIR}/include)
+  target_link_libraries(${husarnet_core} quill::quill)
+endif()
 
 # Include linux port libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Darwin OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows)))

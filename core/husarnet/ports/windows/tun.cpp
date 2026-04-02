@@ -41,13 +41,13 @@ static void CALLBACK WintunLoggerToHusarnetLogger(WINTUN_LOGGER_LEVEL Level, DWO
 
   switch(Level) {
     case WINTUN_LOG_WARN:
-      LOG_WARNING(logger, "wintun warning // {message}", logLineBuffer);
+      HLOG_WARNING("wintun warning // {message}", logLineBuffer);
       break;
     case WINTUN_LOG_ERR:
-      LOG_ERROR(logger, "wintun error // {message}", logLineBuffer);
+      HLOG_ERROR("wintun error // {message}", logLineBuffer);
       break;
     default:
-      LOG_DEBUG(logger, "wintun message // {message}", logLineBuffer);
+      HLOG_DEBUG("wintun message // {message}", logLineBuffer);
       break;
   }
 
@@ -77,7 +77,7 @@ bool Tun::init()
   this->wintunLib =
       LoadLibraryExW(L"wintun.dll", NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
   if(!this->wintunLib) {
-    LOG_CRITICAL(logger, "TunLayer: wintun.dll not found");
+    HLOG_CRITICAL("TunLayer: wintun.dll not found");
     return false;
   }
 
@@ -100,7 +100,7 @@ bool Tun::init()
     DWORD LastError = GetLastError();
     FreeLibrary(this->wintunLib);
     SetLastError(LastError);
-    LOG_CRITICAL(logger, "TunLayer: failed to initialize wintun library");
+    HLOG_CRITICAL("TunLayer: failed to initialize wintun library");
     return false;
   }
   // clang-format on
@@ -112,18 +112,18 @@ bool Tun::start()
 {
   this->acquireWintunAdapter();
   if(!this->wintunAdapter) {
-    LOG_CRITICAL(logger, "TunLayer: failed to open/create wintun adapter");
+    HLOG_CRITICAL("TunLayer: failed to open/create wintun adapter");
     return false;
   }
 
   WintunSetLogger(WintunLoggerToHusarnetLogger);
   DWORD Version = WintunGetRunningDriverVersion();
   std::string wintunVersion = std::to_string((Version >> 16) & 0xff) + "." + std::to_string((Version >> 0) & 0xff);
-  LOG_INFO(logger, "TunLayer: wintun loaded // {wintun_version}", wintunVersion);
+  HLOG_INFO("TunLayer: wintun loaded // {wintun_version}", wintunVersion);
   this->assignIpAddressToAdapter(this->husarnetAddress);
   this->wintunSession = WintunStartSession(this->wintunAdapter, ringCapacity);
   if(!this->wintunSession) {
-    LOG_CRITICAL(logger, "TunLayer: unable to start wintun session");
+    HLOG_CRITICAL("TunLayer: unable to start wintun session");
     return false;
   }
   return true;
@@ -147,7 +147,7 @@ void Tun::startReaderThread()
                 if(WaitForMultipleObjects(_countof(WaitHandles), WaitHandles, FALSE, INFINITE) == WAIT_OBJECT_0)
                   continue;  // TODO wait for single object actually
               default:
-                LOG_ERROR(logger, "TunLayer: packet read failed");
+                HLOG_ERROR("TunLayer: packet read failed");
             }
           }
         }
@@ -159,7 +159,7 @@ void Tun::acquireWintunAdapter()
 {
   this->wintunAdapter = WintunOpenAdapter(networkAdapterNameSz);
   if(!this->wintunAdapter) {
-    LOG_INFO(logger, "TunLayer: existing wintun adapter not found, creating new one // {errno}", GetLastError());
+    HLOG_INFO("TunLayer: existing wintun adapter not found, creating new one // {errno}", GetLastError());
     // since GUIDs are 128-bit values, IMO we can simply provide Husarnet IPv6 here
     // according to the Wintun docs GUID parameter is a suggestion anyway
     // byte order will be not exactly what you expect but not important
@@ -170,22 +170,22 @@ void Tun::acquireWintunAdapter()
     if(!this->wintunAdapter) {
       DWORD errorCode = GetLastError();
       if(errorCode == ERROR_ACCESS_DENIED) {
-        LOG_ERROR(logger, "ACCESS_DENIED while trying to open tunnel, are you Administrator? // {errno}", errorCode);
+        HLOG_ERROR("ACCESS_DENIED while trying to open tunnel, are you Administrator? // {errno}", errorCode);
       } else if(errorCode == ERROR_ALREADY_EXISTS) {
-        LOG_ERROR(logger, "ALREADY_EXISTS while trying to create wintun adapter");
+        HLOG_ERROR("ALREADY_EXISTS while trying to create wintun adapter");
         // one last try to open it
         this->wintunAdapter = WintunOpenAdapter(networkAdapterNameSz);
         if(!this->wintunAdapter) {
-          LOG_INFO(logger, "can't open adapter");
+          HLOG_INFO("can't open adapter");
         }  // TODO: figure out why this sometimes happens (wintun does not teardown cleanly after killing process?)
       } else {
-        LOG_ERROR(logger, "unable to create wintun adapter. // {error_code}", errorCode);
+        HLOG_ERROR("unable to create wintun adapter. // {error_code}", errorCode);
       }
     } else {
-      LOG_INFO(logger, "wintun adapter created");
+      HLOG_INFO("wintun adapter created");
     }
   } else {
-    LOG_INFO(logger, "wintun adapter opened");
+    HLOG_INFO("wintun adapter opened");
   }
 }
 
@@ -200,7 +200,7 @@ void Tun::assignIpAddressToAdapter(HusarnetAddress addr)
   AddressRow.DadState = IpDadStatePreferred;
   auto LastError = CreateUnicastIpAddressEntry(&AddressRow);
   if(LastError != ERROR_SUCCESS && LastError != ERROR_OBJECT_ALREADY_EXISTS) {
-    LOG_ERROR(logger, "TunLayer: cannot assign IP addr to interface // {errno}", LastError);
+    HLOG_ERROR("TunLayer: cannot assign IP addr to interface // {errno}", LastError);
   }
 }
 
@@ -216,9 +216,9 @@ void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
     memcpy(Packet, data.data(), data.size());
     WintunSendPacket(this->wintunSession, Packet);
   } else if(GetLastError() == ERROR_BUFFER_OVERFLOW) {
-    LOG_ERROR(logger, "packet write failed - buffer overflow");
+    HLOG_ERROR("packet write failed - buffer overflow");
   } else {
-    LOG_ERROR(logger, "packet write failed // {errno}", GetLastError());
+    HLOG_ERROR("packet write failed // {errno}", GetLastError());
   }
 }
 

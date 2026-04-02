@@ -22,7 +22,7 @@ ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* config
   std::lock_guard lgFast(this->mutexFast);
   if(!configEnv->getEnableControlplane()) {
     this->allowEveryone = true;
-    LOG_WARNING(logger, "config manager: control plane is disabled, any peer will be let through");
+    HLOG_WARNING("config manager: control plane is disabled, any peer will be let through");
   }
 }
 
@@ -32,13 +32,13 @@ void ConfigManager::getLicense()
   auto [statusCode, bytes] = Port::httpGet(tldAddress, "/license.json");
 
   if(statusCode != 200) {
-    LOG_ERROR(logger, "failed to download license file // {tld_address}", tldAddress);
+    HLOG_ERROR("failed to download license file // {tld_address}", tldAddress);
     return;
   }
 
   auto licenseJson = json::parse(bytes, nullptr, false);
   if(!isLicenseValid(licenseJson)) {
-    LOG_ERROR(logger, "dowloaded license file is invalid // {tld_address}", tldAddress);
+    HLOG_ERROR("dowloaded license file is invalid // {tld_address}", tldAddress);
     return;
   }
 
@@ -60,7 +60,7 @@ void ConfigManager::updateLicenseData()
   std::lock_guard lgFast(this->mutexFast);
   const auto& licenseJson = this->cacheJson[CACHE_KEY_LICENSE];
   if(licenseJson.is_discarded() || licenseJson.is_null()) {
-    LOG_ERROR(logger, "config manager: no license information available");
+    HLOG_ERROR("config manager: no license information available");
     return;
   }
 
@@ -117,7 +117,7 @@ void ConfigManager::getGetConfig()
     this->updateGetConfigData();
     this->nextGetConfigUpdate = std::chrono::steady_clock::now() + getConfigRefreshPeriod;
   } else {
-    LOG_ERROR(logger, "config manager: API responded with error // {response}", apiResponse.toString());
+    HLOG_ERROR("config manager: API responded with error // {response}", apiResponse.toString());
   }
 }
 
@@ -125,7 +125,7 @@ void ConfigManager::updateGetConfigData()
 {
   std::lock_guard lgSlow(this->mutexSlow);
   std::lock_guard lgFast(this->mutexFast);
-  LOG_INFO(logger, "config manager: updateGetConfigData started");
+  HLOG_INFO("config manager: updateGetConfigData started");
   const auto& latestConfig = this->cacheJson[CACHE_KEY_GETCONFIG];
 
   if(latestConfig.contains(GETCONFIG_KEY_PEERS) && latestConfig[GETCONFIG_KEY_PEERS].is_array()) {
@@ -163,7 +163,7 @@ void ConfigManager::updateGetConfigData()
       auto peerHostname = peerInfo[GETCONFIG_KEY_PEERINFO_HOSTNAME].get<std::string>();
       auto aliases = peerInfo[GETCONFIG_KEY_PEERINFO_ALIASES].get<std::vector<std::string>>();
 
-      LOG_DEBUG(logger, "parsing address from get_config // {address}", addrStr);
+      HLOG_DEBUG("parsing address from get_config // {address}", addrStr);
       auto addr = HusarnetAddress::parse(addrStr);
       this->allowedPeers.insert(addr);  // TODO: handle set is full
       hostsEntries.insert({peerHostname, addr});
@@ -178,7 +178,7 @@ void ConfigManager::updateGetConfigData()
     Port::updateHostsFile(hostsEntries);
   }
 
-  LOG_INFO(logger, "updateGetConfigData finished");
+  HLOG_INFO("updateGetConfigData finished");
 }
 
 void ConfigManager::storeGetConfig(const json& jsonDoc)
@@ -191,12 +191,12 @@ bool ConfigManager::readUserConfig()
 {
   auto contents = Port::readStorage(StorageKey::config);
   if(contents.empty()) {
-    LOG_INFO(logger, "saved config.json is empty/nonexistent");
+    HLOG_INFO("saved config.json is empty/nonexistent");
     return false;
   }
   auto parsedContents = json::parse(contents, nullptr, false);
   if(parsedContents.is_discarded()) {
-    LOG_INFO(logger, "saved config.json is not a valid JSON, not reading");
+    HLOG_INFO("saved config.json is not a valid JSON, not reading");
     return false;
   }
   this->storeUserConfig(parsedContents);
@@ -224,7 +224,7 @@ void ConfigManager::updateUserConfigData()
       if(addr.isFC94()) {
         this->userWhitelist.insert(addr);
       } else {
-        LOG_WARNING(logger, "user whitelist contains invalid Husarnet address // {address}", entry);
+        HLOG_WARNING("user whitelist contains invalid Husarnet address // {address}", entry);
       }
     }
   }
@@ -234,12 +234,12 @@ bool ConfigManager::readCache()
 {
   auto contents = Port::readStorage(StorageKey::cache);
   if(contents.empty()) {
-    LOG_INFO(logger, "config manager: saved cache.json is empty/nonexistent");
+    HLOG_INFO("config manager: saved cache.json is empty/nonexistent");
     return false;
   }
   auto parsedContents = json::parse(contents, nullptr, false);
   if(parsedContents.is_discarded()) {
-    LOG_INFO(logger, "config manager: saved cache.json is not a valid JSON, not reading");
+    HLOG_INFO("config manager: saved cache.json is not a valid JSON, not reading");
     return false;
   }
 
@@ -347,10 +347,10 @@ void ConfigManager::periodicThread()
 {
   // start with disk reads and slurp json docs into ram
   if(this->readCache()) {
-    LOG_INFO(logger, "cache.json read from disk successful");
+    HLOG_INFO("cache.json read from disk successful");
   }
   if(this->readUserConfig()) {
-    LOG_INFO(logger, "config.json read from disk successful");
+    HLOG_INFO("config.json read from disk successful");
     updateUserConfigData();
   }
 
@@ -363,19 +363,19 @@ void ConfigManager::periodicThread()
     TimePoint now = std::chrono::steady_clock::now();
 
     if(now >= this->nextLicenseUpdate) {
-      LOG_DEBUG(logger, "config manager: periodic thread: will redownload the license");
+      HLOG_DEBUG("config manager: periodic thread: will redownload the license");
       this->getLicense();
     }
 
     if(this->configEnv->getEnableControlplane() && now >= this->nextGetConfigUpdate) {
-      LOG_DEBUG(logger, "config manager: periodic thread: will request the config from the control plane");
+      HLOG_DEBUG("config manager: periodic thread: will request the config from the control plane");
       this->getGetConfig();
 
       // Flush to disk
       if(this->writeConfig()) {
-        LOG_DEBUG(logger, "config write successful");
+        HLOG_DEBUG("config write successful");
       } else {
-        LOG_ERROR(logger, "config write failed");
+        HLOG_ERROR("config write failed");
       }
 
       this->writeCache();  // best-effort
@@ -385,24 +385,24 @@ void ConfigManager::periodicThread()
 
 void ConfigManager::waitInit() const
 {
-  LOG_INFO(logger, "config manager: wait init started");
+  HLOG_INFO("config manager: wait init started");
   // we need to at least have license information, like for example base server to connect to.
   // wait until license is downloaded and base addresses are known
   while(this->baseAddresses.empty()) {
     Port::threadSleep(20);
   }
-  LOG_INFO(logger, "config manager: wait init finished");
+  HLOG_INFO("config manager: wait init finished");
 }
 
 bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 {
   std::lock_guard lock(this->mutexFast);
   if(this->userWhitelist.contains(address)) {
-    LOG_ERROR(logger, "config manager: IP is already whitelisted");
+    HLOG_ERROR("config manager: IP is already whitelisted");
     return false;
   }
   if(this->userWhitelist.full()) {
-    LOG_ERROR(logger, "config manager: userWhitelist is full");
+    HLOG_ERROR("config manager: userWhitelist is full");
     return false;
   }
 
@@ -417,13 +417,13 @@ bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
     this->userWhitelist.erase(address);
     return true;
   }
-  LOG_ERROR(logger, "config manager: IP is not on the whitelist");
+  HLOG_ERROR("config manager: IP is not on the whitelist");
   return false;
 }
 
 void ConfigManager::triggerGetConfig()
 {
-  LOG_INFO(logger, "config manager: get_config ordered by control plane, resetting timer");
+  HLOG_INFO("config manager: get_config ordered by control plane, resetting timer");
   this->nextGetConfigUpdate = std::chrono::steady_clock::now();
   this->cv.notify_one();
 }

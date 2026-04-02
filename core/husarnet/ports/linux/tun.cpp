@@ -41,7 +41,7 @@ static int openTun(const std::string& name, bool isTap)
     exit(1);
   }
 
-  LOG_INFO(logger, "allocated tun // {interface}", ifr.ifr_name);
+  HLOG_INFO("allocated tun // {interface}", ifr.ifr_name);
 
   return fd;
 }
@@ -85,6 +85,6 @@ void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
 {
   long wr = write(fd, data.data(), data.size());
   if(wr != data.size()) {
-    LOG_INFO(logger, "short tun write");
+    HLOG_INFO("short tun write");
   }
 }

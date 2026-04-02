@@ -34,7 +34,7 @@ HusarnetClient::HusarnetClient()
       [](void* manager) { husarnetTask(manager); }, "husarnet_task", 16384, manager, 7, &husarnetTaskHandle);
 
   if(res != pdPASS) {
-    HUSARNET_LOG_ERROR("Failed to create Husarnet task");
+    HLOG_ERROR("Failed to create Husarnet task");
     abort();
   }
 }
@@ -50,12 +50,12 @@ void HusarnetClient::join(const char* hostname, const char* joinCode)
     HusarnetManager* husarnetManager = this->husarnetManager;
 
     if(started) {
-      HUSARNET_LOG_ERROR("Cannot join the network twice");
+      HLOG_ERROR("Cannot join the network twice");
       return;
     }
 
     if(strlen(joinCode) == 0) {
-      HUSARNET_LOG_ERROR("Join code cannot be empty");
+      HLOG_ERROR("Join code cannot be empty");
       return;
     }
 
@@ -65,7 +65,7 @@ void HusarnetClient::join(const char* hostname, const char* joinCode)
     xSemaphoreTake(Port::notifyReadySemaphore, portMAX_DELAY);
 
     if(husarnetManager->configManager->getApiAddress().isInvalid()) {
-      HUSARNET_LOG_ERROR("API address is not set. Cannot join the network.");
+      HLOG_ERROR("API address is not set. Cannot join the network.");
       return;
     }
 
@@ -79,11 +79,11 @@ void HusarnetClient::join(const char* hostname, const char* joinCode)
         etl::string_view(hostname_view));
 
     if(!response.isSuccessful()) {
-      HUSARNET_LOG_ERROR("Failed to join the network: %s", response.toString().c_str());
+      HLOG_ERROR("Failed to join the network: %s", response.toString().c_str());
       return;
     }
 
-    HUSARNET_LOG_INFO("Device claim successful");
+    HLOG_INFO("Device claim successful");
   };
 
   Port::threadStart(callback, "husarnet_join_task", 16384, 7);

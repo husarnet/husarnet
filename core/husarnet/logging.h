@@ -6,16 +6,6 @@
 
 #include "husarnet/util.h"
 
-#include "quill/Backend.h"
-#include "quill/Frontend.h"
-#include "quill/LogMacros.h"
-#include "quill/Logger.h"
-#include "quill/backend/PatternFormatter.h"
-#include "quill/core/Attributes.h"
-#include "quill/sinks/ConsoleSink.h"
-#include "quill/sinks/JsonSink.h"
-#include "quill/sinks/StreamSink.h"
-
 // Windows API is broken
 #undef ERROR
 
@@ -29,49 +19,32 @@ enum class LogLevel
   DEBUG = 5,
 };
 
+void initLogging(LogLevel level, bool jsonLogging);
 extern LogLevel globalLogLevel;
 
-// Do not use this function directly
-// Do not use Port::log function directly either
-// Do use the LOG_* macros below
-void log(LogLevel level, const std::string& filename, int lineno, const std::string& extra, const char* format, ...);
+#if not defined(ESP_PLATFORM)
 
-// New log level aliases
+#include "quill/Backend.h"
+#include "quill/Frontend.h"
+#include "quill/LogMacros.h"
+#include "quill/Logger.h"
+#include "quill/core/Attributes.h"
+#include "quill/sinks/StreamSink.h"
 
-#define HUSARNET_LOG_DEBUG(fmt, x...)                       \
-  {                                                         \
-    log(LogLevel::DEBUG, __FILE__, __LINE__, "", fmt, ##x); \
-  }
+extern quill::Logger* logger;
 
-#define HUSARNET_LOG_INFO(fmt, x...)                       \
-  {                                                        \
-    log(LogLevel::INFO, __FILE__, __LINE__, "", fmt, ##x); \
-  }
-
-#define HUSARNET_LOG_WARNING(fmt, x...)                       \
-  {                                                           \
-    log(LogLevel::WARNING, __FILE__, __LINE__, "", fmt, ##x); \
-  }
-
-#define HUSARNET_LOG_ERROR(fmt, x...)                       \
-  {                                                         \
-    log(LogLevel::ERROR, __FILE__, __LINE__, "", fmt, ##x); \
-  }
-
-#define HUSARNET_LOG_CRITICAL(fmt, x...)                       \
-  {                                                            \
-    log(LogLevel::CRITICAL, __FILE__, __LINE__, "", fmt, ##x); \
-  }
-
+#define HLOG_DEBUG(...) LOG_DEBUG(logger, __VA_ARGS__)
+#define HLOG_INFO(...) LOG_INFO(logger, __VA_ARGS__)
+#define HLOG_WARNING(...) LOG_WARNING(logger, __VA_ARGS__)
+#define HLOG_ERROR(...) LOG_ERROR(logger, __VA_ARGS__)
+#define HLOG_CRITICAL(...) LOG_CRITICAL(logger, __VA_ARGS__)
 
 class HusarnetSink : public quill::StreamSink {
  public:
   using quill::StreamSink::StreamSink;
-
   HusarnetSink() : quill::StreamSink("stdout", nullptr)
   {
   }
-
   ~HusarnetSink() override = default;
 
  protected:
@@ -179,7 +152,37 @@ class HusarnetNoJsonSink : public HusarnetSink {
   }
 };
 
-quill::Logger* initLogging(bool jsonLogging);
-quill::LogLevel husarnetLogLevelToQuill(LogLevel level);
+#else  // non-FAT platforms
 
-extern quill::Logger* logger;
+namespace quill {
+  class Logger;
+}
+
+void log(LogLevel level, const std::string& filename, int lineno, const std::string& extra, const char* format, ...);
+
+#define HLOG_DEBUG(fmt, x...)                               \
+  {                                                         \
+    log(LogLevel::DEBUG, __FILE__, __LINE__, "", fmt, ##x); \
+  }
+
+#define HLOG_INFO(fmt, x...)                               \
+  {                                                        \
+    log(LogLevel::INFO, __FILE__, __LINE__, "", fmt, ##x); \
+  }
+
+#define HLOG_WARNING(fmt, x...)                               \
+  {                                                           \
+    log(LogLevel::WARNING, __FILE__, __LINE__, "", fmt, ##x); \
+  }
+
+#define HLOG_ERROR(fmt, x...)                               \
+  {                                                         \
+    log(LogLevel::ERROR, __FILE__, __LINE__, "", fmt, ##x); \
+  }
+
+#define HLOG_CRITICAL(fmt, x...)                               \
+  {                                                            \
+    log(LogLevel::CRITICAL, __FILE__, __LINE__, "", fmt, ##x); \
+  }
+
+#endif

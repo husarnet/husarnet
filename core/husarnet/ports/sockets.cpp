@@ -104,7 +104,7 @@ namespace OsSocket {
   {
     int fd = SOCKFUNC(socket)(useV6 ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
     if(fd < 0) {
-      LOG_CRITICAL(logger, "creating socket failed // {errno}", (int)errno);
+      HLOG_CRITICAL("creating socket failed // {errno}", (int)errno);
       return -1;
     }
     if(reuse) {
@@ -234,7 +234,7 @@ namespace OsSocket {
   {
     int fd = SOCKFUNC(socket)(AF_INETx, SOCK_STREAM, 0);
     if(fd < 0) {
-      LOG_CRITICAL(logger, "creating socket failed // {errno}", (int)errno);
+      HLOG_CRITICAL("creating socket failed // {errno}", (int)errno);
       return -1;
     }
 
@@ -247,7 +247,7 @@ namespace OsSocket {
     int res = SOCKFUNC(connect)(fd, (sockaddr*)&sa, socklen);
 
     if(res < 0 && errno != EINPROGRESS) {
-      LOG_ERROR(logger, "connection with the server failed // {address}", addr.str());
+      HLOG_ERROR("connection with the server failed // {address}", addr.str());
       SOCKFUNC_close(fd);
       return -1;
     }
@@ -264,7 +264,7 @@ namespace OsSocket {
     res = select(fd + 1, NULL, &fdset, NULL, &tv);
 
     if(res <= 0) {
-      LOG_ERROR(logger, "connection with the server failed (timeout) // {address}", addr.str());
+      HLOG_ERROR("connection with the server failed (timeout) // {address}", addr.str());
       SOCKFUNC_close(fd);
       return -1;
     }
@@ -281,7 +281,7 @@ namespace OsSocket {
       SOCKFUNC(getsockopt)(fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
       if(so_error != 0) {
-        LOG_ERROR(logger, "connection with the server failed (error) // {address}", addr.str().c_str());
+        HLOG_ERROR("connection with the server failed (error) // {address}", addr.str().c_str());
         SOCKFUNC_close(fd);
         return -1;
       }
@@ -314,7 +314,7 @@ namespace OsSocket {
       ssize_t n = SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
 
       if(n <= 0) {
-        LOG_ERROR(logger, "websocket send failed // {error}", strerror(errno));
+        HLOG_ERROR("websocket send failed // {error}", strerror(errno));
         return false;
       }
 
@@ -335,7 +335,7 @@ namespace OsSocket {
       std::string header = "\x17\x03\x03" + pack((uint16_t)packet.size());
 
       if(packet.size() + header.size() > packet.capacity()) {
-        LOG_ERROR(logger, "TCP message too large // {packet_size} {packet_max_size}", packet.size(), packet.capacity());
+        HLOG_ERROR("TCP message too large // {packet_size} {packet_max_size}", packet.size(), packet.capacity());
         return false;
       }
 
@@ -350,7 +350,7 @@ namespace OsSocket {
       ssize_t n = SOCKFUNC(send)(conn->fd, packet.data() + bytes_written, remaining, 0);
 
       if(n <= 0) {
-        LOG_ERROR(logger, "TCP send failed // {error}", strerror(errno));
+        HLOG_ERROR("TCP send failed // {error}", strerror(errno));
         return false;
       }
 
@@ -383,7 +383,7 @@ namespace OsSocket {
         }
 
         if(read <= 0) {
-          LOG_ERROR(logger, "TCP recv failed {errno}", WSAGetLastError());
+          HLOG_ERROR("TCP recv failed {errno}", WSAGetLastError());
           TcpConnection::close(conn);
           return;
         }
@@ -393,7 +393,7 @@ namespace OsSocket {
         }
 
         if(read <= 0) {
-          LOG_ERROR(logger, "TCP recv failed // {error}", strerror(errno));
+          HLOG_ERROR("TCP recv failed // {error}", strerror(errno));
           TcpConnection::close(conn);
           return;
         }
@@ -417,7 +417,7 @@ namespace OsSocket {
 
           // Is packet masquerading as SSL?
           if(etl::string_view(iter, 3) != conn->TLS_HEADER) {
-            LOG_ERROR(logger, "TCP socket format error (1)");
+            HLOG_ERROR("TCP socket format error (1)");
             TcpConnection::close(conn);
             return;
           }
@@ -430,9 +430,7 @@ namespace OsSocket {
 
           size_t packetLen = etl::distance(conn->readBuffer.begin(), iter) + expectedSize;
           if(packetLen >= conn->readBuffer.capacity()) {
-            LOG_INFO(
-                logger, "TCP message too large // {expected_size} {actual_size}", expectedSize,
-                conn->readBuffer.size());
+            HLOG_INFO("TCP message too large // {expected_size} {actual_size}", expectedSize, conn->readBuffer.size());
             TcpConnection::close(conn);
             return;
           }
@@ -478,7 +476,7 @@ namespace OsSocket {
     conn->fd = SOCKFUNC(socket)(AF_INETx, SOCK_STREAM, 0);
 
     if(conn->fd < 0) {
-      LOG_CRITICAL(logger, "creating socket failed // {errno}", (int)errno);
+      HLOG_CRITICAL("creating socket failed // {errno}", (int)errno);
       return nullptr;
     }
 
@@ -499,10 +497,10 @@ namespace OsSocket {
 
 #ifndef PORT_WINDOWS
     if(res < 0 && errno != EINPROGRESS) {
-      LOG_ERROR(logger, "connection with the server failed // {address} {errno}", address.str(), errno);
+      HLOG_ERROR("connection with the server failed // {address} {errno}", address.str(), errno);
 #else
     if(res < 0 && WSAGetLastError() != WSAEINPROGRESS && WSAGetLastError() != WSAEWOULDBLOCK) {
-      LOG_ERROR(logger, "connection with the server failed // {address} {errno}", address.str(), WSAGetLastError());
+      HLOG_ERROR("connection with the server failed // {address} {errno}", address.str(), WSAGetLastError());
 #endif
       SOCKFUNC_close(conn->fd);
       return nullptr;
@@ -520,7 +518,7 @@ namespace OsSocket {
     res = SOCKFUNC(select)(conn->fd + 1, &fdset, &fdset, NULL, &tv);
 
     if(res <= 0) {
-      LOG_ERROR(logger, "connection with the server failed (timeout) // {address}", address.str());
+      HLOG_ERROR("connection with the server failed (timeout) // {address}", address.str());
       SOCKFUNC_close(conn->fd);
       return nullptr;
     }
@@ -537,7 +535,7 @@ namespace OsSocket {
       SOCKFUNC(getsockopt)(conn->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
       if(so_error != 0) {
-        LOG_ERROR(logger, "connection with the server failed (error) // {address}", address.str());
+        HLOG_ERROR("connection with the server failed (error) // {address}", address.str());
         SOCKFUNC_close(conn->fd);
         return nullptr;
       }
@@ -581,7 +579,7 @@ namespace OsSocket {
     int res = SOCKFUNC(select)(maxfd + 1, &readset, NULL, NULL, &timeoutval);
 
     if(res < 0 && errno != EINTR) {
-      LOG_ERROR(logger, "select failed // {errno}", strerror(errno));
+      HLOG_ERROR("select failed // {errno}", strerror(errno));
       return;
     }
 

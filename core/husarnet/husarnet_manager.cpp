@@ -39,15 +39,16 @@ void HusarnetManager::prepareHusarnet()
   this->configEnv = new ConfigEnv();
 
   // Initialize logging
-  globalLogLevel = this->configEnv->getLogVerbosity();  // TODO eventually remove gloabl
-  logger = initLogging(this->configEnv->getEnableJsonLogging());
-  logger->set_log_level(husarnetLogLevelToQuill(globalLogLevel));
+  initLogging(this->configEnv->getLogVerbosity(), this->configEnv->getEnableJsonLogging());
+  // globalLogLevel = this->configEnv->getLogVerbosity();  // TODO eventually remove gloabl
+  // logger = initLogging(this->configEnv->getEnableJsonLogging());
+  // logger->set_log_level(husarnetLogLevelToQuill(globalLogLevel));
 
   // Port init here (after logging) as stuff need logs
   Port::init();
 
-  LOG_INFO(logger, "starting up Husarnet Daemon // {version} {ua}", HUSARNET_VERSION, HUSARNET_USER_AGENT);
-  LOG_DEBUG(logger, "running a nightly/debugging build");
+  HLOG_INFO("starting up Husarnet Daemon // {version} {ua}", HUSARNET_VERSION, HUSARNET_USER_AGENT);
+  HLOG_DEBUG("running a nightly/debugging build");
 
   this->hooksManager = new HooksManager(this->configEnv->getEnableHooks());
 

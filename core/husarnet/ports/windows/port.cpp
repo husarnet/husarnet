@@ -37,21 +37,21 @@ static std::list<std::string> getAvailableScripts(const std::string& path)
   std::filesystem::path dir(fullPath);
   std::list<std::string> results;
 
-  LOG_INFO(logger, "checking directory for valid hooks // {path}", fullPath);
+  HLOG_INFO("checking directory for valid hooks // {path}", fullPath);
 
   if(!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
-    LOG_INFO(logger, "path does not exist or is not a directory // {fullPath}", fullPath);
+    HLOG_INFO("path does not exist or is not a directory // {fullPath}", fullPath);
     return results;
   }
 
   for(const auto& entry : std::filesystem::directory_iterator(dir)) {
     if(entry.path().extension() != ".ps1") {
-      LOG_WARNING(logger, "script has wrong extension // {path}", entry.path().string());
+      HLOG_WARNING("script has wrong extension // {path}", entry.path().string());
       continue;
     }
 
     if((entry.status().permissions() & std::filesystem::perms::owner_exec) != std::filesystem::perms::owner_exec) {
-      LOG_WARNING(logger, "script file is not executable // {path}", entry.path().string());
+      HLOG_WARNING("script file is not executable // {path}", entry.path().string());
       continue;
     }
 
@@ -83,7 +83,7 @@ namespace Port {
 
   IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName)
   {
-    LOG_ERROR(logger, "getIpAddressFromInterfaceName is not implemented");
+    HLOG_ERROR("getIpAddressFromInterfaceName is not implemented");
     return IpAddress();
   }
 
@@ -133,9 +133,9 @@ namespace Port {
     auto started = tun->start();
 
     if(!started) {
-      LOG_CRITICAL(logger, "TUN bringup failed; Husarnet won't work");
+      HLOG_CRITICAL("TUN bringup failed; Husarnet won't work");
     } else {
-      LOG_INFO(logger, "TUN config OK // {adapter_name}", tun->getAdapterName());
+      HLOG_INFO("TUN config OK // {adapter_name}", tun->getAdapterName());
     }
 
     // these can take quite a few seconds
@@ -145,7 +145,7 @@ namespace Port {
     setupFirewall(tun->getAdapterName());
 
     tun->startReaderThread();
-    LOG_INFO(logger, "started reading from TUN adapter");
+    HLOG_INFO("started reading from TUN adapter");
 
     return tun;
   }
@@ -158,7 +158,7 @@ namespace Port {
     if(result) {
       return std::string(buf);
     }
-    LOG_WARNING(logger, "Cant retrieve hostname");
+    HLOG_WARNING("Cant retrieve hostname");
 
     // TODO long-term: implement some sort of a fallback based on hardware
     // numbers
@@ -184,7 +184,7 @@ namespace Port {
   bool runScripts(const std::string& eventName)
   {
     for(const auto& scriptPath : getAvailableScripts(eventName)) {
-      LOG_INFO(logger, "running script // {script}", scriptPath);
+      HLOG_INFO("running script // {script}", scriptPath);
       std::system(("powershell.exe -File " + scriptPath).c_str());
     }
 
@@ -204,7 +204,7 @@ namespace Port {
 
   void insertFirewallRule(const std::string& netshName, const std::string& firewallRuleName)
   {
-    LOG_INFO(logger, "Installing rule in Windows Firewall // {name}", firewallRuleName);
+    HLOG_INFO("Installing rule in Windows Firewall // {name}", firewallRuleName);
 
     std::string insertCmd = "powershell \"New-NetFirewallRule -DisplayName " + firewallRuleName +
                             " -Direction Inbound -Action Allow"

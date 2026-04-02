@@ -31,21 +31,21 @@ static bool transformTmpFile(const std::string& path, std::function<std::string(
 
   // We assume that there's no traffic on a temporary file
   if(!writeFile(tmpPath, newContent)) {
-    LOG_DEBUG(logger, "Failed to write to a temporary file // {path}", tmpPath);
+    HLOG_DEBUG("Failed to write to a temporary file // {path}", tmpPath);
     return false;
   }
 
   // RENAME_EXCHANGE makes this an atomic operation
   // Using syscall directly as musl has not yet added a wrapper for this
   if(syscall(SYS_renameat2, 0, tmpPath.c_str(), 0, path.c_str(), RENAME_EXCHANGE) != 0) {
-    LOG_DEBUG(logger, "Failed to rename file // {source_path} {target_path}", tmpPath, path);
+    HLOG_DEBUG("Failed to rename file // {source_path} {target_path}", tmpPath, path);
     return false;
   }
 
   // This is a best effort operation, as in the worst case tmp file can stay
   std::filesystem::remove(tmpPath);
 
-  LOG_DEBUG(logger, "file successfully transformed using temporary file // {path}", path);
+  HLOG_DEBUG("file successfully transformed using temporary file // {path}", path);
 
   return true;
 }
@@ -57,7 +57,7 @@ static bool transformLockFile(const std::string& path, std::function<std::string
   int ret;
   int fd = open(path.c_str(), O_RDWR);
   if(fd < 0) {
-    LOG_ERROR(logger, "Failed to open file // {path}", path);
+    HLOG_ERROR("Failed to open file // {path}", path);
     return false;
   }
 
@@ -67,7 +67,7 @@ static bool transformLockFile(const std::string& path, std::function<std::string
   // though, our goal is to release such lock as soon as possible either way, so
   // we won't be handling it explicitly
   if(fcntl(fd, F_SETLEASE, F_WRLCK) != 0) {
-    LOG_ERROR(logger, "Failed to take a write lock // {path}", path);
+    HLOG_ERROR("Failed to take a write lock // {path}", path);
     close(fd);
     return false;
   }
@@ -89,7 +89,7 @@ static bool transformLockFile(const std::string& path, std::function<std::string
     ssize_t bytesRead = read(fd, ptr, sizeLeft);
 
     if(bytesRead < 0) {
-      LOG_ERROR(logger, "Failed to read from file // {path}", path);
+      HLOG_ERROR("Failed to read from file // {path}", path);
       goto abort;
     }
     ptr += bytesRead;
@@ -107,37 +107,37 @@ static bool transformLockFile(const std::string& path, std::function<std::string
 
   // Generic C-style file replacement
   if(lseek(fd, 0, SEEK_SET) != 0) {
-    LOG_ERROR(logger, "Failed to seek to the beginning of file // {path}", path);
+    HLOG_ERROR("Failed to seek to the beginning of file // {path}", path);
     goto abort;
   }
 
   if(write(fd, newContent.c_str(), newContent.size()) != newContent.size()) {
-    LOG_ERROR(logger, "Failed to write to file // {path}", path);
+    HLOG_ERROR("Failed to write to file // {path}", path);
     goto abort;
   }
 
   if(ftruncate(fd, newContent.size()) != 0) {
-    LOG_ERROR(logger, "Failed to write truncate file // {path}", path);
+    HLOG_ERROR("Failed to write truncate file // {path}", path);
     goto abort;
   }
 
   // Finally we can release the lock and file
   ret = fcntl(fd, F_SETLEASE, F_UNLCK);
   if(ret < 0) {
-    LOG_ERROR(logger, "Failed to release a write lock on file // {path}", path);
+    HLOG_ERROR("Failed to release a write lock on file // {path}", path);
   }
 
   ret = fsync(fd);
   if(ret < 0) {
-    LOG_ERROR(logger, "Failed to sync file // {path}", path);
+    HLOG_ERROR("Failed to sync file // {path}", path);
   }
 
   ret = close(fd);
   if(ret < 0) {
-    LOG_ERROR(logger, "Failed to close file // {path}", path);
+    HLOG_ERROR("Failed to close file // {path}", path);
   }
 
-  LOG_DEBUG(logger, "Transformed file using lock file // {path}", path);
+  HLOG_DEBUG("Transformed file using lock file // {path}", path);
 
   return true;
 
@@ -145,11 +145,11 @@ abort:
   ret = fcntl(fd, F_SETLEASE, F_UNLCK);
 
   if(ret < 0) {
-    LOG_ERROR(logger, "Failed to release a write lock on file // {path}", path);
+    HLOG_ERROR("Failed to release a write lock on file // {path}", path);
   }
   ret = close(fd);
   if(ret < 0) {
-    LOG_ERROR(logger, "Failed to close file // {path}", path);
+    HLOG_ERROR("Failed to close file // {path}", path);
   }
 
   return false;
@@ -157,7 +157,7 @@ abort:
 
 bool transformFile(const std::string& path, std::function<std::string(const std::string&)> transform)
 {
-  LOG_DEBUG(logger, "transforming file // {path}", path);
+  HLOG_DEBUG("transforming file // {path}", path);
 
   // Simplest case - file does not exist so we can assume nobody's waiting on it
   // and do a naive write
