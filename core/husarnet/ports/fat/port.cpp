@@ -142,7 +142,7 @@ static void ares_local_callback(void* arg, int status, int timeouts, struct ares
   result->status = status;
 
   if(status != ARES_SUCCESS) {
-    LOG_ERROR("DNS resolution failed. c-ares status code: %i (%s)", status, ares_strerror(status));
+    HLOG_ERROR("DNS resolution failed // {ares_code} {ares_error}", status, ares_strerror(status));
     return;
   }
 
@@ -175,7 +175,7 @@ namespace Port {
       try {
         std::filesystem::create_directory(configDir);
       } catch(const std::exception& e) {
-        LOG_WARNING("Unable to create config directory: %s", e.what());
+        HLOG_WARNING("unable to create config directory // {error}", e.what());
       }
     }
   }
@@ -186,11 +186,11 @@ namespace Port {
       try {
         func();
       } catch(const std::exception& exc) {
-        LOG_CRITICAL("unhandled exception in thread %s: %s", name, exc.what());
+        HLOG_CRITICAL("unhandled exception in thread // {thread_name} {error}", name, exc.what());
       } catch(const std::string& exc) {
-        LOG_CRITICAL("unhandled exception in thread %s: %s", name, exc.c_str());
+        HLOG_CRITICAL("unhandled exception in thread // {thread_name} {error}", name, exc);
       } catch(...) {
-        LOG_CRITICAL("unknown and unhandled exception in thread %s", name);
+        HLOG_CRITICAL("unknown and unhandled exception in thread // {thread_name}", name);
       }
     });
   }
@@ -205,6 +205,7 @@ namespace Port {
       etl::pair{std::string("HUSARNET_LOG_VERBOSITY"), EnvKey::logVerbosity},
       etl::pair{std::string("HUSARNET_ENABLE_HOOKS"), EnvKey::enableHooks},
       etl::pair{std::string("HUSARNET_ENABLE_CONTROLPLANE"), EnvKey::enableControlPlane},
+      etl::pair{std::string("HUSARNET_ENABLE_JSON_LOGGING"), EnvKey::enableJsonLogging},
       etl::pair{std::string("HUSARNET_DAEMON_INTERFACE"), EnvKey::daemonInterface},
       etl::pair{std::string("HUSARNET_DAEMON_API_INTERFACE"), EnvKey::daemonApiInterface},
       etl::pair{std::string("HUSARNET_DAEMON_API_HOST"), EnvKey::daemonApiHost},
@@ -212,12 +213,20 @@ namespace Port {
       etl::pair{std::string("HUSARNET_DAEMON_WORKER_QUEUE_SIZE"), EnvKey::daemonWorkerQueueSize},
   };
 
+  static const etl::map<StorageKey, std::string, STORAGE_KEY_OPTIONS> storageMap = {
+      etl::pair{StorageKey::id, std::string("id")},
+      etl::pair{StorageKey::config, std::string("config.json")},
+      etl::pair{StorageKey::daemonApiToken, std::string("daemon_api_token")},
+      etl::pair{StorageKey::cache, std::string("cache.json")},
+      etl::pair{StorageKey::defaults, std::string("defaults.ini")},
+  };
+
   __attribute__((weak)) etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> getEnvironmentDefaultsFromIniFile()
   {
     etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> commonSection;
     etl::map<EnvKey, std::string, ENV_KEY_OPTIONS> daemonSection;
-    auto contents = readStorage(StorageKey::defaults);
 
+    auto contents = readFileSilent(configDir + storageMap.at(StorageKey::defaults));
     if(contents.empty()) {
       return {};
     }
@@ -336,9 +345,7 @@ namespace Port {
       return rtrim(hostname);
 
     // On some platforms (i.e. OpenWRT) the hostname file does not exist
-    LOG_WARNING(
-        "hostname file does not exist on this system, deriving one from the "
-        "host id");
+    HLOG_WARNING("hostname file does not exist on this system, deriving one from the host id");
 
     // Use unique hostid as a hostname
     long hostid = gethostid();
@@ -373,7 +380,7 @@ namespace Port {
     transformFile(hostnamePath, [newHostname](const std::string& oldContent) { return newHostname; });
 
     if(system("hostname -F /etc/hostname") != 0) {
-      LOG_ERROR("cannot update hostname to %s", newHostname.c_str());
+      HLOG_ERROR("cannot update hostname // {hostname}", newHostname.c_str());
       return false;
     }
 
@@ -395,7 +402,7 @@ namespace Port {
   __attribute__((weak)) IpAddress resolveToIp(const std::string& hostname)
   {
     if(hostname.empty()) {
-      LOG_ERROR("Empty hostname provided for a DNS search");
+      HLOG_ERROR("Empty hostname provided for a DNS search");
       return IpAddress();
     }
 
@@ -403,7 +410,7 @@ namespace Port {
     ares_channel channel;
 
     if(ares_init(&channel) != ARES_SUCCESS) {
-      LOG_ERROR("Unable to init ARES/DNS channel for domain: %s", hostname.c_str());
+      HLOG_ERROR("Unable to init ARES/DNS channel // {hostname}", hostname);
       return IpAddress();
     }
 
@@ -413,7 +420,7 @@ namespace Port {
     ares_getaddrinfo(channel, hostname.c_str(), "443", &hints, ares_local_callback, (void*)&result);
     ares_wait(channel);
 
-    LOG_DEBUG("DNS resolution for %s done, result: %s", hostname.c_str(), result.address.toString().c_str());
+    HLOG_DEBUG("DNS resolution done // {hostname} {address}", hostname, result.address.toString());
 
     return result.address;
   }
@@ -424,18 +431,18 @@ namespace Port {
     auto path = filesDir + "hook_" + hookName;
 
     if(access(path.c_str(), X_OK) != 0) {
-      LOG_INFO(("hook " + path + " not found or not executable").c_str());
+      HLOG_INFO("hook not found or not executable // {hook}", hookName);
       return false;
     }
 
     Port::threadStart(
         [path, hookName]() {
           // TODO probably can be replaced with execve or similar
-          LOG_DEBUG(("running " + hookName).c_str());
+          HLOG_DEBUG("running hook // {hook}", hookName);
 
           FILE* pipe = popen((path + " 2>&1").c_str(), "r");
           if(!pipe) {
-            LOG_ERROR(("failed to run " + path).c_str());
+            HLOG_ERROR("failed to run hook // {hook} {path}", hookName, path);
             return;
           }
 
@@ -450,25 +457,17 @@ namespace Port {
           std::istringstream iss(output);
           std::string line;
           while(std::getline(iss, line)) {
-            LOG_INFO((hookName + ": " + line).c_str());
+            HLOG_INFO("hookk output // {hook} {line}", hookName, line);
           }
 
           auto ret = pclose(pipe);
 
-          LOG_INFO((hookName + " finished with exit code: " + std::to_string(ret)).c_str());
+          HLOG_INFO("hook finished // {hook} {status}", hookName, ret);
         },
         hookName.c_str());
 
     return true;
   }
-
-  static const etl::map<StorageKey, std::string, STORAGE_KEY_OPTIONS> storageMap = {
-      etl::pair{StorageKey::id, std::string("id")},
-      etl::pair{StorageKey::config, std::string("config.json")},
-      etl::pair{StorageKey::daemonApiToken, std::string("daemon_api_token")},
-      etl::pair{StorageKey::cache, std::string("cache.json")},
-      etl::pair{StorageKey::defaults, std::string("defaults.ini")},
-  };
 
   __attribute__((weak)) std::string readStorage(StorageKey key)
   {
@@ -491,7 +490,7 @@ namespace Port {
       return {result->status, result->body};
     } else {
       auto err = result.error();
-      LOG_ERROR("Can't contact host %s (error: %s)", host.c_str(), httplib::to_string(err).c_str());
+      HLOG_ERROR("Can't contact host // {host} {error}", host, httplib::to_string(err));
     }
     return {};
   }
@@ -510,7 +509,7 @@ namespace Port {
       return {result->status, result->body};
     } else {
       auto err = result.error();
-      LOG_ERROR("Can't contact host %s (error: %s)", host.c_str(), httplib::to_string(err).c_str());
+      HLOG_ERROR("Can't contact host // {host} {error}", host, httplib::to_string(err));
     }
     return {};
   }

@@ -115,7 +115,7 @@ namespace Port {
 
   IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName)
   {
-    LOG_ERROR("getIpAddressFromInterfaceName is not implemented");
+    HLOG_ERROR("getIpAddressFromInterfaceName is not implemented");
     return IpAddress();
   }
 
@@ -135,11 +135,11 @@ namespace Port {
 
     auto tunTap = new Tun();
     auto utunName = tunTap->getName();
-    LOG_INFO("our utun interface name is %s", utunName.c_str());
+    HLOG_INFO("starting utun // {interface}", utunName.c_str());
 
     if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||
        system(("sysctl net.ipv6.conf." + utunName + ".disable_ipv6=0").c_str()) != 0) {
-      LOG_WARNING("failed to enable IPv6 (may be harmless)");
+      HLOG_WARNING("failed to enable IPv6 (may be harmless)");
     }
 
     system(("ifconfig " + utunName + " inet6 " + myAddress.toString()).c_str());
@@ -155,7 +155,7 @@ namespace Port {
     const std::string command = "scutil --get LocalHostName > " + hostnamePath + " 2>/dev/null";
     std::system(command.c_str());
     if(!isFile(hostnamePath)) {
-      LOG_WARNING(
+      HLOG_WARNING(
           "Unable to retrieve hostname from scutil, defaulting to "
           "macos-device");
       return "macos-device";

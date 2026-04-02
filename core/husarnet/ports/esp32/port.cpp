@@ -80,7 +80,7 @@ static std::string readNVS(const std::string& path)
   }
 
   if(err != ESP_OK) {
-    LOG_ERROR("Unable to access NVS. (Error: %s)", esp_err_to_name(err));
+    HLOG_ERROR("Unable to access NVS. (Error: %s)", esp_err_to_name(err));
     return "";
   }
 
@@ -90,7 +90,7 @@ static std::string readNVS(const std::string& path)
   err = nvsHandle->get_string(path.c_str(), value.data(), len);
 
   if(err != ESP_OK) {
-    LOG_ERROR("Unable to access NVS. (Error: %s)", esp_err_to_name(err));
+    HLOG_ERROR("Unable to access NVS. (Error: %s)", esp_err_to_name(err));
     return "";
   }
 
@@ -101,12 +101,12 @@ static bool writeNVS(const std::string& path, const std::string& data)
 {
   esp_err_t err = nvsHandle->set_string(path.c_str(), data.c_str());
   if(err != ESP_OK) {
-    LOG_ERROR("Unable to update NVS. (Error: %s)", esp_err_to_name(err));
+    HLOG_ERROR("Unable to update NVS. (Error: %s)", esp_err_to_name(err));
     return false;
   }
 
   if(nvsHandle->commit() != ESP_OK) {
-    LOG_ERROR("Unable to commit NVS. (Error: %s)", esp_err_to_name(err));
+    HLOG_ERROR("Unable to commit NVS. (Error: %s)", esp_err_to_name(err));
     return false;
   }
 
@@ -125,28 +125,28 @@ namespace Port {
 
     // If NVS is not initialized, try to initialize it
     if(err == ESP_ERR_NVS_NOT_INITIALIZED) {
-      LOG_INFO("NVS not initialized. Initializing...");
+      HLOG_INFO("NVS not initialized. Initializing...");
       err = nvs_flash_init();
 
       // NVS partition was truncated and needs to be erased
       // Erase and retry init
       if(err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        LOG_INFO("Erasing NVS partition...");
+        HLOG_INFO("Erasing NVS partition...");
         err = nvs_flash_erase();
         if(err != ESP_OK) {
-          LOG_CRITICAL("Unable to erase NVS. (Error: %s)", esp_err_to_name(err));
+          HLOG_CRITICAL("Unable to erase NVS. (Error: %s)", esp_err_to_name(err));
           abort();
         }
 
         err = nvs_flash_init();
         if(err != ESP_OK) {
-          LOG_CRITICAL("Unable to reinitialize NVS. (Error: %s)", esp_err_to_name(err));
+          HLOG_CRITICAL("Unable to reinitialize NVS. (Error: %s)", esp_err_to_name(err));
           abort();
         }
       }
 
       else if(err != ESP_OK) {
-        LOG_CRITICAL("Unable to initialize NVS. (Error: %s)", esp_err_to_name(err));
+        HLOG_CRITICAL("Unable to initialize NVS. (Error: %s)", esp_err_to_name(err));
         abort();
       }
 
@@ -154,21 +154,21 @@ namespace Port {
     }
 
     if(err != ESP_OK) {
-      LOG_ERROR("Unable to open NVS. (Error: %s)", esp_err_to_name(err));
+      HLOG_ERROR("Unable to open NVS. (Error: %s)", esp_err_to_name(err));
       abort();
     }
 
     notifyReadySemaphore = xSemaphoreCreateBinary();
 
     if(notifyReadySemaphore == NULL) {
-      LOG_CRITICAL("Unable to create semaphore");
+      HLOG_CRITICAL("Unable to create semaphore");
       abort();
     }
   }
 
   void die(std::string msg)
   {
-    LOG_CRITICAL("Fatal error: %s", msg.c_str());
+    HLOG_CRITICAL("Fatal error: %s", msg.c_str());
     abort();
   }
 
@@ -177,7 +177,7 @@ namespace Port {
     std::function<void()>* func1 = new std::function<void()>;
     *func1 = std::move(func);
     if(xTaskCreate(taskProc, name, stack, func1, priority, NULL) != pdTRUE) {
-      LOG_CRITICAL("Unable to create task");
+      HLOG_CRITICAL("Unable to create task");
       abort();
     }
   }
@@ -247,7 +247,7 @@ namespace Port {
 
   IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName)
   {
-    LOG_ERROR("getIpAddressFromInterfaceName is not implemented");
+    HLOG_ERROR("getIpAddressFromInterfaceName is not implemented");
     return IpAddress();
   }
 
@@ -275,7 +275,7 @@ namespace Port {
 
         // Append to valid addresses
         ip6addr_ntoa_r(ipv6, buf, IP6ADDR_STRLEN_MAX);
-        LOG_DEBUG("netif: %s, ip6: %s", netif->name, buf);
+        HLOG_DEBUG("netif: %s, ip6: %s", netif->name, buf);
         result->push_back(IpAddress::fromBinary(buf));
       }
 
@@ -292,7 +292,7 @@ namespace Port {
 
       // Append to valid addresses
       ip4addr_ntoa_r(ipv4, buf, IP4ADDR_STRLEN_MAX);
-      LOG_DEBUG("netif: %s, ip4: %s", netif->name, buf);
+      HLOG_DEBUG("netif: %s, ip4: %s", netif->name, buf);
       result->push_back(IpAddress::fromBinary4(buf));
     }
 
@@ -308,7 +308,7 @@ namespace Port {
     esp_err_t res = esp_netif_tcpip_exec(_getLocalAddressesTcpipFunc, &ret);
 
     if(res != ESP_OK) {
-      LOG_ERROR("Failed to get local addresses");
+      HLOG_ERROR("Failed to get local addresses");
     }
 
     return ret;
@@ -381,7 +381,7 @@ namespace Port {
   // TODO long-term: implement hooks using FreeRTOS notifications
   bool runScripts(const std::string& path)
   {
-    LOG_ERROR("runScripts not supported on ESP32");
+    HLOG_ERROR("runScripts not supported on ESP32");
     return false;
   }
 
@@ -403,7 +403,7 @@ namespace Port {
   static HttpResult httpSendRecv(const IpAddress& ip, HTTPMessage& message)
   {
     if(ip.isInvalid()) {
-      LOG_ERROR("Invalid ip address");
+      HLOG_ERROR("Invalid ip address");
       return {-1, ""};
     }
 
@@ -412,14 +412,14 @@ namespace Port {
     // TODO: streaming write to socket
     etl::vector<char, 4096> buffer;
     if(!message.encode(buffer)) {
-      LOG_ERROR("Failed to encode HTTP message");
+      HLOG_ERROR("Failed to encode HTTP message");
       return {-1, ""};
     }
 
     int sockfd = OsSocket::connectUnmanagedTcpSocket(address);
 
     if(sockfd < 0) {
-      LOG_ERROR("can't contact %s - is DNS resolution working properly?", ip.toString().c_str());
+      HLOG_ERROR("can't contact %s - is DNS resolution working properly?", ip.toString().c_str());
       return {-1, ""};
     }
 
@@ -433,7 +433,7 @@ namespace Port {
       ssize_t n = SOCKFUNC(send)(sockfd, buffer.data() + bytes_written, remaining, 0);
 
       if(n <= 0) {
-        LOG_ERROR("Failed to send HTTP request");
+        HLOG_ERROR("Failed to send HTTP request");
         SOCKFUNC(close)(sockfd);
         return {-1, ""};
       }
@@ -446,7 +446,7 @@ namespace Port {
     buffer.resize(buffer.capacity());
     ssize_t n = SOCKFUNC(recv)(sockfd, buffer.data(), buffer.size(), 0);
     if(n <= 0) {
-      LOG_ERROR("Failed to receive HTTP response");
+      HLOG_ERROR("Failed to receive HTTP response");
       SOCKFUNC(close)(sockfd);
       return {-1, ""};
     }
@@ -462,7 +462,7 @@ namespace Port {
       return {static_cast<int>(message.response.statusCode), std::string(message.body.data(), message.body.size())};
     }
 
-    LOG_ERROR("Failed to parse HTTP response");
+    HLOG_ERROR("Failed to parse HTTP response");
     return {-1, ""};
   }
 
@@ -482,7 +482,7 @@ namespace Port {
     }
 
     if(ip.isInvalid()) {
-      LOG_ERROR("Can't resolve %s to IP", host.c_str());
+      HLOG_ERROR("Can't resolve %s to IP", host.c_str());
       return {-1, ""};
     }
 
@@ -520,7 +520,7 @@ namespace Port {
     }
 
     if(ip.isInvalid()) {
-      LOG_ERROR("Can't resolve %s to IP", host.c_str());
+      HLOG_ERROR("Can't resolve %s to IP", host.c_str());
       return {-1, ""};
     }
 

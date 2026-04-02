@@ -8,8 +8,8 @@ source $(dirname "$0")/../utils.sh
 
 start_daemon
 
-api=$(curl beta.husarnet.com/license.json | jq -r '.api_servers[0]')
-eb=$(curl beta.husarnet.com/license.json | jq -r '.eb_servers[0]')
+api=$(curl prod.husarnet.com/license.json | jq -r '.api_servers[0]')
+eb=$(curl prod.husarnet.com/license.json | jq -r '.eb_servers[0]')
 
 ping -c 10 ${api}
 ping -c 10 ${eb}

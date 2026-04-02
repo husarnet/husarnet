@@ -21,15 +21,56 @@ LogLevel globalLogLevel = LogLevel::DEBUG;
 LogLevel globalLogLevel = LogLevel::INFO;
 #endif
 
-// This needs to live in a .cpp file due to __FILE__ macro usage and the way we
-// handle tempIncludes in CMake
-// cppcheck-suppress unusedFunction
-const static std::string stripLogPathPrefix(const std::string& filename)
+#if not defined(ESP_PLATFORM)
+
+// Windows API is broken
+#undef ERROR
+
+quill::Logger* logger;
+quill::LogLevel husarnetLogLevelToQuill(LogLevel level)
 {
-  auto loggingFile = std::string(__FILE__);
-  auto prefix = loggingFile.substr(0, loggingFile.length() - std::string("/core/husarnet/logging.cpp").length() + 1);
-  return filename.substr(prefix.length());
+  if(level == LogLevel::NONE) {
+    return quill::LogLevel::None;
+  }
+  if(level == LogLevel::CRITICAL) {
+    return quill::LogLevel::Critical;
+  }
+  if(level == LogLevel::ERROR) {
+    return quill::LogLevel::Error;
+  }
+  if(level == LogLevel::WARNING) {
+    return quill::LogLevel::Warning;
+  }
+  if(level == LogLevel::INFO) {
+    return quill::LogLevel::Info;
+  }
+
+  return quill::LogLevel::Debug;
 }
+
+void initLogging(LogLevel husarnetLogLevel, bool jsonLogging)
+{
+  quill::BackendOptions backend_options;
+  quill::Backend::start(backend_options);
+
+  if(jsonLogging) {
+    // PatternFormatter is only used for non-structured logs formatting
+    // When logging only json, it is ideal to set the logging pattern to empty to avoid unnecessary message formatting.
+    auto jsonSink = quill::Frontend::create_or_get_sink<HusarnetJsonSink>("sink_1");
+    logger = quill::Frontend::create_or_get_logger("main_logger", std::move(jsonSink));
+    logger->set_log_level(husarnetLogLevelToQuill(husarnetLogLevel));
+    return;
+  }
+
+  auto noJsonSink = quill::Frontend::create_or_get_sink<HusarnetNoJsonSink>("sink_1");
+  logger = quill::Frontend::create_or_get_logger(
+      "main_logger", std::move(noJsonSink),
+      quill::PatternFormatterOptions{"%(time) %(log_level:<7) %(short_source_location:<28) ", "%H:%M:%S.%Qns"});
+  logger->set_log_level(husarnetLogLevelToQuill(husarnetLogLevel));
+  return;
+}
+
+#else  // non-FAT platforms
 
 // TODO: replace buffer with std::string
 void log(LogLevel level, const std::string& filename, int lineno, const std::string& extra, const char* format, ...)
@@ -54,19 +95,14 @@ void log(LogLevel level, const std::string& filename, int lineno, const std::str
 
   std::string message;
 
-  // ESP-IDF exposes human readable time internally so there's no point in
-  // duplicating it
-#ifndef ESP_PLATFORM
-  message = Port::getHumanTime();
-  message += " " + padRight(8, std::string(magic_enum::enum_name(level)));
-#endif
-
-#if defined(DEBUG_BUILD) && not defined(ESP_PLATFORM)
-  message += " " + padRight(80, userMessage);
-  message += " (" + stripLogPathPrefix(filename) + ":" + std::to_string(lineno) + ")";
-#else
   message += userMessage;
-#endif
-
   Port::log(level, message);
 }
+
+void initLogging(LogLevel husarnetLogLevel, bool jsonLogging)
+{
+  globalLogLevel = husarnetLogLevel;
+  (void)jsonLogging;  // json logging is not supported on non-FAT platforms
+}
+
+#endif  // PORT_FAT

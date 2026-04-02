@@ -24,6 +24,7 @@ enum class EnvKey
   logVerbosity,
   enableHooks,
   enableControlPlane,
+  enableJsonLogging,
   daemonInterface,
   daemonApiInterface,
   daemonApiHost,
@@ -31,7 +32,7 @@ enum class EnvKey
   daemonWorkerQueueSize
 };
 
-#define ENV_KEY_OPTIONS 9
+#define ENV_KEY_OPTIONS 10
 
 enum class StorageKey
 {

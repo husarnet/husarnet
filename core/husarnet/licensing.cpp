@@ -58,14 +58,14 @@ static std::string generateSignatureData(const json& licenseJson)
 static bool isJsonValid(const json& licenseJson)
 {
   if(licenseJson.empty() || licenseJson.is_discarded()) {
-    LOG_CRITICAL("license data is invalid - malformed or empty JSON");
+    HLOG_CRITICAL("license data is invalid - malformed or empty JSON");
     return false;
   }
 
   // These fields are actually needed as the metadata
   if(!licenseJson.contains(LICENSE_DASHBOARD_URL_KEY) || !licenseJson.contains(LICENSE_BASE_SERVER_ADDRESSES_KEY) ||
      !licenseJson.contains(LICENSE_API_SERVERS_KEY) || !licenseJson.contains(LICENSE_EB_SERVERS_KEY)) {
-    LOG_CRITICAL("license data is invalid - missing required fields");
+    HLOG_CRITICAL("license data is invalid - missing required fields");
     return false;
   }
 
@@ -76,7 +76,7 @@ static bool verifySignature(const json& licenseJson)
 {
   // This is mostly for checking if a minimum license version is present
   if(!licenseJson.contains(LICENSE_SIGNATURE_V2_KEY)) {
-    LOG_CRITICAL(
+    HLOG_CRITICAL(
         "license data is invalid - missing signature for the required license "
         "version");
     return false;

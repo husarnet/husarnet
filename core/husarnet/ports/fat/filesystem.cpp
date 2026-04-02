@@ -16,16 +16,34 @@ __attribute__((weak)) bool isFile(const std::string& path)
   return std::filesystem::exists(path);
 }
 
-__attribute__((weak)) const std::string readFile(const std::string& path)
+// readFile version with no logging for best-effort reading (for example for reading before logger is set up)
+__attribute__((weak)) const std::string readFileSilent(const std::string& path)
 {
   if(!isFile(path)) {
-    LOG_ERROR("file %s does not exist", path.c_str());
     return "";
   }
 
   std::ifstream f(path);
   if(!f.good()) {
-    LOG_ERROR("failed to open %s for reading", path.c_str());
+    return "";
+  }
+
+  std::stringstream buffer;
+  buffer << f.rdbuf();
+
+  return buffer.str();
+}
+
+__attribute__((weak)) const std::string readFile(const std::string& path)
+{
+  if(!isFile(path)) {
+    HLOG_ERROR("file does not exist // {path}", path);
+    return "";
+  }
+
+  std::ifstream f(path);
+  if(!f.good()) {
+    HLOG_ERROR("failed to open file for reading // {path}", path);
     exit(1);
   }
 
@@ -39,13 +57,13 @@ __attribute__((weak)) bool writeFile(const std::string& path, const std::string&
 {
   std::ofstream f(path);
   if(!f.good()) {
-    LOG_ERROR("failed to open %s for writing", path.c_str());
+    HLOG_ERROR("failed to open file for writing // {path}", path);
     return false;
   }
 
   f << data;
 
-  LOG_DEBUG("Written to file %s directly", path.c_str());
+  HLOG_DEBUG("written to file directly // {path}", path);
   return true;
 }
 
@@ -53,10 +71,10 @@ __attribute__((weak)) bool transformFile(
     const std::string& path,
     std::function<std::string(const std::string&)> transform)
 {
-  LOG_DEBUG("Naively transforming %s", path.c_str());
+  HLOG_DEBUG("naively transforming file // {path}", path);
 
   if(!isFile(path)) {
-    LOG_ERROR("file %s does not exist", path.c_str());
+    HLOG_ERROR("file does not exist // {path}", path);
     return false;
   }
 

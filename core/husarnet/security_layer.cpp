@@ -100,7 +100,7 @@ void SecurityLayer::onLowerLayerData(HusarnetAddress peerAddress, string_view da
 
 void SecurityLayer::handleDataPacket(HusarnetAddress peerId, string_view data)
 {
-  LOG_DEBUG("received data packet from peer: %s", peerId.toString().c_str())
+  HLOG_DEBUG("received data packet from peer // {peer}", peerId.toString());
   const int headerSize = 1 + 24 + 16;
   if(data.size() <= headerSize + 8)
     return;
@@ -111,7 +111,7 @@ void SecurityLayer::handleDataPacket(HusarnetAddress peerId, string_view data)
 
   if(!peer->negotiated) {
     sendHelloPacket(peer);
-    LOG_WARNING("received data packet before hello from peer: %s", peerId.toString().c_str());
+    HLOG_WARNING("received data packet before hello // {peer}", peerId.toString());
     return;
   }
 
@@ -134,7 +134,7 @@ void SecurityLayer::handleDataPacket(HusarnetAddress peerId, string_view data)
     peer->lastValidPacket = Port::getCurrentTime();
     sendToUpperLayer(peerId, decryptedData);
   } else {
-    LOG_INFO("received forged message from peer: %s", peerId.toString().c_str());
+    HLOG_INFO("received forged message from peer // {peer}", peerId.toString());
   }
 }
 
@@ -158,7 +158,7 @@ void SecurityLayer::handleHelloPacket(HusarnetAddress target, string_view data, 
   constexpr int dataLen = 65 + 16 + 16;
   if(data.size() < dataLen + 64)
     return;
-  LOG_INFO("hello %d from %s", helloNum, target.toString().c_str());
+  HLOG_INFO("handle hello packet // {peer} {hello_num}", target.toString(), helloNum);
 
   Peer* peer = peerContainer->getOrCreatePeer(target);
   if(peer == nullptr)
@@ -174,20 +174,20 @@ void SecurityLayer::handleHelloPacket(HusarnetAddress target, string_view data, 
   if(data.size() >= 64 + 65 + 32 + 8) {
     flags_bin = unpack<uint64_t>(substr<65 + 32, 8>(data));
   }
-  LOG_DEBUG("peer flags: %llx (bits, not count)", (unsigned long long)flags_bin);
+  HLOG_DEBUG("peer flags // {peer} {flags}", target.toString(), (unsigned long long)flags_bin);
 
   if(targetId != this->myIdentity->getDeviceId()) {
-    LOG_INFO("misdirected hello packet received from peer: %s", std::string(targetId).c_str());
+    HLOG_INFO("misdirected hello packet received // {peer}", std::string(targetId));
     return;
   }
 
   if(NgSocketCrypto::pubkeyToDeviceId(incomingPubkey) != target) {
-    LOG_INFO("forged hello packet received (invalid pubkey: %s)", std::string(incomingPubkey).c_str());
+    HLOG_INFO("forged hello packet received (invalid pubkey) // {pubkey}", std::string(incomingPubkey));
     return;
   }
 
   if(!NgSocketCrypto::verifySignature(data.substr(0, data.size() - 64), "ng-kx-pubkey", incomingPubkey, signature)) {
-    LOG_CRITICAL("forged hello packet (invalid signature: %s)", std::string(signature).c_str());
+    HLOG_CRITICAL("forged hello packet (invalid signature) // {signature}", std::string(signature));
     return;
   }
 
@@ -199,7 +199,7 @@ void SecurityLayer::handleHelloPacket(HusarnetAddress target, string_view data, 
   if(myHelloseq != this->helloseq) {  // prevents replay DoS
     // this will occur under normal operation, if both sides attempt to
     // initialize at once or two handshakes are interleaved
-    LOG_DEBUG("invalid helloseq from %s", peer->getIpAddressString().c_str());
+    HLOG_DEBUG("invalid helloseq // {peer}", peer->getIpAddressString());
     return;
   }
 
@@ -223,12 +223,10 @@ void SecurityLayer::handleHelloPacket(HusarnetAddress target, string_view data, 
   }
 
   if(r == 0) {
-    LOG_DEBUG(
-        "negotiated session keys %s %s", encodeHex(peer->rxKey.substr(0, 6)).c_str(),
-        encodeHex(peer->txKey.substr(0, 6)).c_str());
+    HLOG_DEBUG("negotiated session keys");
     finishNegotiation(peer);
   } else {
-    LOG_INFO("key exchange failed with %s", peer->getIpAddressString().c_str());
+    HLOG_WARNING("key exchange failed // {peer}", peer->getIpAddressString());
     return;
   }
 
@@ -240,7 +238,7 @@ void SecurityLayer::handleHelloPacket(HusarnetAddress target, string_view data, 
 
 void SecurityLayer::finishNegotiation(Peer* peer)
 {
-  LOG_INFO("established secure connection to %s", peer->getIpAddressString().c_str());
+  HLOG_INFO("established secure connection // {peer}", peer->getIpAddressString());
   peer->negotiated = true;
   for(auto& packet : peer->packetQueue) {
     queuedPackets--;

@@ -54,7 +54,7 @@ void ApiServer::returnSuccess(const httplib::Request& req, httplib::Response& re
 
 void ApiServer::returnInvalidQuery(const httplib::Request& req, httplib::Response& res, std::string errorString)
 {
-  LOG_ERROR("httpApi: returning invalid query: %s", errorString.c_str());
+  HLOG_ERROR("httpApi: returning invalid query // {error}", errorString);
   json doc;
 
   doc["status"] = "invalid";
@@ -65,7 +65,7 @@ void ApiServer::returnInvalidQuery(const httplib::Request& req, httplib::Respons
 
 void ApiServer::returnError(const httplib::Request& req, httplib::Response& res, std::string errorString)
 {
-  LOG_ERROR("httpApi: returning error: %s", errorString.c_str());
+  HLOG_ERROR("httpApi: returning error // {error}", errorString.c_str());
   json doc;
 
   doc["status"] = "error";
@@ -81,7 +81,7 @@ static const std::string getOrCreateDaemonApiToken()
     auto newToken = generateRandomString(32);
     auto success = Port::writeStorage(StorageKey::daemonApiToken, newToken);
     if(!success) {
-      LOG_CRITICAL(
+      HLOG_CRITICAL(
           "Failed to write daemon API token to storage, you won't be able to "
           "use CLI (or daemon's API) to control the daemon!");
     }
@@ -118,7 +118,7 @@ bool ApiServer::requireParams(const httplib::Request& req, httplib::Response& re
 
 void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httplib::Response& res)
 {
-  LOG_INFO("received request to forward");
+  HLOG_INFO("received request to forward");
   if(!validateSecret(req, res)) {
     return;
   }
@@ -131,10 +131,10 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
 
   auto method = req.method;
   auto path = "/" + route;
-  LOG_INFO("Forwarding request %s %s", method.c_str(), path.c_str());
+  HLOG_INFO("Forwarding request to Dashboard API // {method} {path}", method, path);
   auto apiAddress = configManager->getApiAddress();
   if(!apiAddress.isFC94()) {
-    LOG_WARNING(
+    HLOG_WARNING(
         "Not forwarding the request, as proxy does not have valid "
         "Dashboard API address");
 
@@ -178,7 +178,7 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
     } else if(method == "DELETE") {
       result = httpClient.Delete(pathWithQuery);
     } else {
-      LOG_ERROR("Unsupported HTTP method: %s", method.c_str());
+      HLOG_ERROR("Unsupported HTTP method {method}", method);
     }
     return result;
   };
@@ -189,20 +189,19 @@ void ApiServer::forwardRequestToDashboardApi(const httplib::Request& req, httpli
   httplib::Result attemptResult;
   while(retriesLeft > 0) {
     retriesLeft--;
-    LOG_DEBUG("api_server: request to API, attempt no. %d", maxRetries - retriesLeft)
     attemptResult = attemptRequest(req);
 
     if(attemptResult) {
       res.set_content(attemptResult->body,
                       "application/json");  // Dashboard API always returns valid JSON
-      LOG_DEBUG("API request successful, needed attempts: %d", maxRetries - retriesLeft)
+      HLOG_DEBUG("API request successful // {needed_attempts}", maxRetries - retriesLeft);
       return;
     }
     Port::threadSleep(1500);
   }
 
   auto err = attemptResult.error();
-  LOG_ERROR("Can't contact Dashboard API, number of retries exhausted: %s", httplib::to_string(err).c_str());
+  HLOG_ERROR("Can't contact Dashboard API, number of retries exhausted // {error}", httplib::to_string(err));
   res.status = 503;
   nlohmann::json jsonResponse{
       {"type", "server_error"},
@@ -239,7 +238,7 @@ void ApiServer::runThread()
 
   this->daemonApiToken = getOrCreateDaemonApiToken();
   if(this->daemonApiToken.empty()) {
-    LOG_ERROR("was unable to generate daemon api token");
+    HLOG_ERROR("unable to generate daemon api token");
   }
 
   // Test endpoint
@@ -310,8 +309,8 @@ void ApiServer::runThread()
   if(configEnv->getDaemonApiInterface() != "") {
     // Deduce bind address from the provided interface
     bindAddress = Port::getIpAddressFromInterfaceName(configEnv->getDaemonApiInterface());
-    LOG_INFO(
-        "Deducing bind address %s from the provided interface: %s", bindAddress.toString().c_str(),
+    HLOG_INFO(
+        "Deducing bind address from the provided interface // {address} {interface}", bindAddress.toString().c_str(),
         configEnv->getDaemonApiInterface().c_str());
   } else {
     // Use provided/default bind address
@@ -319,15 +318,14 @@ void ApiServer::runThread()
   }
 
   if(!svr.bind_to_port(bindAddress.toString().c_str(), configEnv->getDaemonApiPort())) {
-    LOG_CRITICAL(
-        "Unable to bind HTTP thread to port %s:%d. Exiting!", bindAddress.toString().c_str(),
+    HLOG_CRITICAL(
+        "unable to bind HTTP thread to port. Exiting! // {address} {port}", bindAddress.toString().c_str(),
         configEnv->getDaemonApiPort());
     exit(1);
   } else {
-    LOG_INFO(
-        "HTTP thread bound to %s:%d. Will start handling the "
-        "connections.",
-        bindAddress.toString().c_str(), configEnv->getDaemonApiPort());
+    HLOG_INFO(
+        "HTTP thread bound Will start handling the connections. // {address} {port}", bindAddress.toString().c_str(),
+        configEnv->getDaemonApiPort());
   }
 
   isReady = true;
@@ -335,7 +333,7 @@ void ApiServer::runThread()
   cv.notify_all();
 
   if(!svr.listen_after_bind()) {
-    LOG_CRITICAL("HTTP thread finished unexpectedly. Exiting!");
+    HLOG_CRITICAL("HTTP thread finished unexpectedly. Exiting!");
     exit(1);
   }
 }

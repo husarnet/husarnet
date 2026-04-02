@@ -206,6 +206,7 @@ endif()
 FetchContent_Declare(
   nlohmann_json
   URL https://github.com/nlohmann/json/archive/refs/tags/v3.11.3.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 set(JSON_BuildTests OFF)
 FetchContent_MakeAvailable(nlohmann_json)
@@ -216,6 +217,7 @@ target_link_libraries(${husarnet_core} nlohmann_json)
 FetchContent_Declare(
   better_enums
   URL https://github.com/aantron/better-enums/archive/refs/tags/0.11.3.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 FetchContent_MakeAvailable(better_enums)
 target_include_directories(${husarnet_core} PUBLIC ${better_enums_SOURCE_DIR})
@@ -225,15 +227,29 @@ target_compile_options(${husarnet_core} PUBLIC -DBETTER_ENUMS_STRICT_CONVERSION=
 FetchContent_Declare(
   magic_enum
   URL https://github.com/Neargye/magic_enum/archive/refs/tags/v0.9.7.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 FetchContent_MakeAvailable(magic_enum)
 target_include_directories(${husarnet_core} PUBLIC ${magic_enum_SOURCE_DIR}/include)
+
+# Structured logging lib for fat platforms
+if(NOT DEFINED ESP_PLATFORM)
+  FetchContent_Declare(
+    quill
+    URL https://github.com/odygrd/quill/archive/refs/tags/v11.1.0.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP true
+  )
+  FetchContent_MakeAvailable(quill)
+  target_include_directories(${husarnet_core} PUBLIC ${quill_SOURCE_DIR}/include)
+  target_link_libraries(${husarnet_core} quill::quill)
+endif()
 
 # Include linux port libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR (${CMAKE_SYSTEM_NAME} STREQUAL Darwin OR (${CMAKE_SYSTEM_NAME} STREQUAL Windows)))
   FetchContent_Declare(
     c-ares
     URL https://github.com/c-ares/c-ares/releases/download/cares-1_22_0/c-ares-1.22.0.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP true
   )
   set(CARES_SHARED OFF)
   set(CARES_STATIC ON)
@@ -253,8 +269,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     libnl
     # This is a bit past 3.9.0
     URL https://github.com/thom311/libnl/archive/46cae1bfc2ee435fed7c73a15d0b6979fe6d43a3.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP true
   )
-
   FetchContent_MakeAvailable(libnl)
 
   # Locking is handled by a port-wide mutex around libnl calls. Pthread
@@ -355,6 +371,7 @@ if(${BUILD_HTTP_CONTROL_API})
   FetchContent_Declare(
     httplib
     URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.15.3.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP true
   )
   set(BUILD_SHARED_LIBS OFF)
   set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF)
@@ -376,6 +393,7 @@ endif()
 FetchContent_Declare(
   etl
   URL https://github.com/ETLCPP/etl/archive/refs/tags/20.42.2.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 
 FetchContent_MakeAvailable(etl)

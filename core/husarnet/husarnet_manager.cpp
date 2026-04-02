@@ -31,20 +31,21 @@
 
 HusarnetManager::HusarnetManager()
 {
-  Port::init();
 }
 
 void HusarnetManager::prepareHusarnet()
 {
+  // Grab environment variables
   this->configEnv = new ConfigEnv();
 
-  // Initialize logging and print some essential debugging information
-  globalLogLevel = this->configEnv->getLogVerbosity();
+  // Initialize logging
+  initLogging(this->configEnv->getLogVerbosity(), this->configEnv->getEnableJsonLogging());
 
-  LOG_INFO("Running %s", HUSARNET_USER_AGENT);
-  LOG_DEBUG("Running a nightly/debugging build");  // This macro has all the
-                                                   // logic for not printing
-                                                   // if not a debug build
+  // Port init here (after logging) as stuff need logs
+  Port::init();
+
+  HLOG_INFO("starting up Husarnet Daemon // {version} {ua}", HUSARNET_VERSION, HUSARNET_USER_AGENT);
+  HLOG_DEBUG("running a nightly/debugging build");
 
   this->hooksManager = new HooksManager(this->configEnv->getEnableHooks());
 
@@ -140,7 +141,6 @@ void HusarnetManager::runHusarnet()
 
 json HusarnetManager::getDataForStatus() const
 {
-  LOG_INFO("HusarnetManager: getDataForStatus");
   json result;
 
   result[STATUS_KEY_LOCALIP] = this->myIdentity->getIpAddress().toString();

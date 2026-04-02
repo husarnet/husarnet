@@ -46,7 +46,7 @@ void NgSocket::periodic()
         addresses += iter->str();
       }
 
-      LOG_INFO("Local IP address change detected, new addresses: %s", addresses.c_str());
+      HLOG_INFO("Local IP address change detected // {addresses}", addresses.c_str());
     }
     requestRefresh();
     if(Port::getCurrentTime() - lastBaseTcpAction > NAT_INIT_TIMEOUT)
@@ -92,7 +92,7 @@ void NgSocket::requestRefresh()
   if(workerQueue.qsize() < this->workerQueueSize) {
     workerQueue.push(std::bind(&NgSocket::refresh, this));
   } else {
-    LOG_ERROR("ngsocket worker queue full");
+    HLOG_ERROR("ngsocket worker queue full");
   }
 }
 
@@ -120,7 +120,7 @@ void NgSocket::refresh()
 void NgSocket::periodicPeer(Peer* peer)
 {
   if(peer->negotiated && peer->lastValidPacket < Port::getCurrentTime() - RENEGOTIATION_TIMEOUT) {
-    LOG_INFO("session with peer %s timed out", peer->getIpAddressString().c_str());
+    HLOG_INFO("session with peer timed out // {peer}", peer->getIpAddressString());
     peer->negotiated = false;
     peer->connected = false;
     return;
@@ -133,7 +133,7 @@ void NgSocket::periodicPeer(Peer* peer)
     if(peer->reestablishing && peer->connected &&
        Port::getCurrentTime() - peer->lastReestablish > REESTABLISH_TIMEOUT) {
       peer->connected = false;
-      LOG_WARNING("falling back to relay (peer: %s)", peer->getIpAddressString().c_str());
+      HLOG_WARNING("falling back to relay // {peer}", peer->getIpAddressString());
     }
 
     attemptReestablish(peer);
@@ -160,14 +160,14 @@ void NgSocket::sendDataToPeer(Peer* peer, string_view data)
         .data = data,
     };
 
-    LOG_DEBUG("send to peer %s (%d bytes)", peer->targetAddress.str().c_str(), data.size());
+    HLOG_DEBUG("send to peer // {peer} {num_bytes}", peer->targetAddress.str(), data.size());
     sendToPeer(peer->targetAddress, msg);
   } else {
     if(!peer->reestablishing || (Port::getCurrentTime() - peer->lastReestablish > REESTABLISH_TIMEOUT &&
                                  peer->failedEstablishments <= MAX_FAILED_ESTABLISHMENTS))
       attemptReestablish(peer);
 
-    LOG_DEBUG("send to peer %s tunnelled", peer->getIpAddressString().c_str());
+    HLOG_DEBUG("send to peer tunnelled // {peer}", peer->getIpAddressString());
     // Not (yet) connected, relay via base.
     PeerToBaseMessage msg = {
         .kind = PeerToBaseMessageKind::DATA,
@@ -196,7 +196,7 @@ void NgSocket::attemptReestablish(Peer* peer)
   peer->reestablishing = true;
   peer->helloCookie = generateRandomString(16);
 
-  LOG_INFO("reestablish connection to [%s]", peer->getIpAddressString().c_str());
+  HLOG_INFO("reestablish connection to peer // {peer}", peer->getIpAddressString());
 
   std::vector<InetAddress> addresses = peer->targetAddresses;
   if(peer->linkLocalAddress)
@@ -227,7 +227,7 @@ void NgSocket::attemptReestablish(Peer* peer)
       // send the heartbeat twice to the active address
       sendToPeer(address, response);
   }
-  LOG_DEBUG("attempt reestablish %s addresses: %s", peer->getIpAddressString().c_str(), msg.c_str());
+  HLOG_DEBUG("attempt reestablish // {peer} {addresses}", peer->getIpAddressString(), msg);
 }
 
 void NgSocket::peerMessageReceived(InetAddress source, const PeerToPeerMessage& msg)
@@ -243,7 +243,7 @@ void NgSocket::peerMessageReceived(InetAddress source, const PeerToPeerMessage& 
       helloReplyReceived(source, msg);
       break;
     default:
-      LOG_ERROR("unknown message received from peer %s", source.str().c_str());
+      HLOG_ERROR("unknown message received from peer // {peer}", source.str());
   }
 }
 
@@ -256,9 +256,7 @@ void NgSocket::helloReceived(InetAddress source, const PeerToPeerMessage& msg)
   Peer* peer = peerContainer->getOrCreatePeer(msg.myId);
   if(peer == nullptr)
     return;
-  LOG_DEBUG(
-      "HELLO from %s (id: %s, active: %s)", source.str().c_str(), msg.myId.toString().c_str(),
-      peer->isActive() ? "YES" : "NO");
+  HLOG_DEBUG("HELLO received // {source} {peer} {isActive}", source.str(), msg.myId.toString(), peer->isActive());
 
   addSourceAddress(peer, source);
 
@@ -282,7 +280,7 @@ void NgSocket::helloReplyReceived(InetAddress source, const PeerToPeerMessage& m
     return;
   }
 
-  LOG_DEBUG("HELLO-REPLY from %s (%s)", source.str().c_str(), msg.myId.toString().c_str());
+  HLOG_DEBUG("HELLO-REPLY received // {source} {peer}", source.str(), msg.myId.toString());
   Peer* peer = peerContainer->getPeer(msg.myId);
   if(peer == nullptr) {
     return;
@@ -295,7 +293,7 @@ void NgSocket::helloReplyReceived(InetAddress source, const PeerToPeerMessage& m
   }
 
   int latency = Port::getCurrentTime() - peer->lastReestablish;
-  LOG_DEBUG(" - using this address as target (reply received after %d ms)", latency);
+  HLOG_DEBUG("using this address as target // {latency_ms}", latency);
   peer->targetAddress = source;
   peer->connected = true;
   peer->failedEstablishments = 0;
@@ -309,7 +307,7 @@ void NgSocket::peerDataPacketReceived(InetAddress source, string_view data)
   if(peer != nullptr)
     sendToUpperLayer(peer->id, data);
   else {
-    LOG_ERROR("unknown UDP data packet (source: %s)", source.str().c_str());
+    HLOG_ERROR("unknown UDP data packet // {source}", source.str());
   }
 }
 
@@ -321,7 +319,7 @@ void NgSocket::baseMessageReceivedUdp(const BaseToPeerMessage& msg)
       break;
     case +BaseToPeerMessageKind::NAT_OK: {
       if(lastNatInitConfirmation == 0) {
-        LOG_INFO("UDP connection to base server established, server address: %s", baseAddress.str().c_str());
+        HLOG_INFO("UDP connection to base server established // {address}", baseAddress.str());
       }
       lastNatInitConfirmation = Port::getCurrentTime();
       natInitConfirmed = true;
@@ -332,7 +330,7 @@ void NgSocket::baseMessageReceivedUdp(const BaseToPeerMessage& msg)
       sendToBaseUdp(resp);
     } break;
     default:
-      LOG_ERROR("received invalid UDP message from base (kind: %s)", msg.kind._to_string());
+      HLOG_ERROR("received invalid UDP message from base // {kind}", msg.kind._to_string());
   }
 }
 
@@ -348,8 +346,8 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
       sendToUpperLayer(msg.source, msg.data);
       break;
     case +BaseToPeerMessageKind::HELLO:
-      LOG_INFO("TCP connection to base server established, server address: %s", baseAddress.str().c_str());
-      LOG_DEBUG("received hello cookie %s", encodeHex(msg.cookie).c_str());
+      HLOG_INFO("TCP connection to base server established // {address}", baseAddress.str());
+      HLOG_DEBUG("received hello cookie // {hello_cookie}", encodeHex(msg.cookie));
       cookie = msg.cookie;
       resendInfoRequests();
       sendLocalAddressesToBase();
@@ -363,10 +361,12 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
     case +BaseToPeerMessageKind::STATE:
       allBaseUdpAddresses = msg.udpAddress;
       baseUdpAddress = msg.udpAddress[0];
-      LOG_DEBUG("received base UDP address: %s", baseUdpAddress.str().c_str());
+      HLOG_DEBUG("received base UDP address // {address}", baseUdpAddress.str());
 
       if(msg.natTransientRange.first != 0 && msg.natTransientRange.second >= msg.natTransientRange.first) {
-        LOG_DEBUG("received base transient range: %d %d", msg.natTransientRange.first, msg.natTransientRange.second);
+        HLOG_DEBUG(
+            "received base transient range // {range_from} {range_to}", msg.natTransientRange.first,
+            msg.natTransientRange.second);
         baseTransientRange = msg.natTransientRange;
         if(baseTransientPort == 0) {
           baseTransientPort = baseTransientRange.first;
@@ -375,11 +375,11 @@ void NgSocket::baseMessageReceivedTcp(const BaseToPeerMessage& msg)
       break;
     case +BaseToPeerMessageKind::REDIRECT:
       baseAddress = msg.newBaseAddress;
-      LOG_INFO("redirected to new base server: %s", baseAddress.str().c_str());
+      HLOG_INFO("redirected to new base server // {address}", baseAddress.str());
       connectToBase();
       break;
     default:
-      LOG_ERROR("received invalid TCP message from base (kind: %s)", msg.kind._to_string());
+      HLOG_ERROR("received invalid TCP message from base // {kind}", msg.kind._to_string());
   }
 }
 
@@ -461,9 +461,9 @@ void NgSocket::multicastPacketReceived(InetAddress address, string_view packetVi
 
   Peer* peer = peerContainer->getPeer(devId);
 
-  LOG_DEBUG(
-      "multicast received from %s, id %s, port %d, interesting: %s", address.str().c_str(), devId.toString().c_str(),
-      port, peer == NULL ? "NO" : "YES");
+  HLOG_DEBUG(
+      "multicast received // {address} {peer} {port} {interesting}", address.str(), devId.toString(), port,
+      (peer == NULL));
 
   InetAddress srcAddress = InetAddress{address.ip, port};
   if(peer != nullptr && peer->linkLocalAddress != srcAddress) {
@@ -484,7 +484,7 @@ void NgSocket::init()
 
   for(;; sourcePort++) {
     if(sourcePort == 7000) {  // TODO this too
-      LOG_CRITICAL("failed to bind UDP port");
+      HLOG_CRITICAL("failed to bind UDP port");
       abort();
     }
     if(udpListenUnicast(sourcePort, cb)) {
@@ -501,7 +501,7 @@ void NgSocket::init()
       [this]() { this->workerLoop(); }, "hnet_ng",
       /*stack=*/8000, NGSOCKET_TASK_PRIORITY);
 
-  LOG_INFO("ngsocket %s listening on %d", this->myIdentity->getDeviceId().toString().c_str(), sourcePort);
+  HLOG_INFO("ngsocket listening // {device} {port}", this->myIdentity->getDeviceId().toString(), sourcePort);
 }
 
 void NgSocket::resendInfoRequests()
@@ -514,7 +514,7 @@ void NgSocket::resendInfoRequests()
 
 void NgSocket::sendInfoRequestToBase(HusarnetAddress id)
 {
-  LOG_DEBUG("info request %s", id.toString().c_str());
+  HLOG_DEBUG("info request // {peer}", id.toString().c_str());
   PeerToBaseMessage msg = {
       .kind = PeerToBaseMessageKind::REQUEST_INFO,
       .deviceId = id.data,
@@ -651,7 +651,7 @@ BaseToPeerMessage NgSocket::parseBaseToPeerMessage(string_view data)
   if(msgKind) {
     msg.kind = msgKind.value();
   } else {
-    LOG_DEBUG("invalid message kind: %d", data[0]);
+    HLOG_DEBUG("invalid message // {kind}", data[0]);
   }
 
   return msg;
@@ -675,14 +675,14 @@ PeerToPeerMessage NgSocket::parsePeerToPeerMessage(string_view data)
     std::string signature = data.substr(17 + 64, 64);
 
     if(NgSocketCrypto::pubkeyToDeviceId(pubkey) != msg.myId) {
-      LOG_ERROR("invalid pubkey: %s", pubkey.c_str());
+      HLOG_ERROR("invalid pubkey // {pubkey}", encodeHex(pubkey));
       return msg;
     }
 
     bool ok = NgSocketCrypto::verifySignature(data.substr(0, 17 + 64), "ng-p2p-msg", pubkey, signature);
 
     if(!ok) {
-      LOG_ERROR("invalid signature: %s", signature.c_str());
+      HLOG_ERROR("invalid signature // {signature}", encodeHex(signature));
       return msg;
     }
     msg.kind = PeerToPeerMessageKind::_from_index_unchecked(data[0]);
@@ -758,7 +758,7 @@ std::string NgSocket::serializePeerToBaseMessage(const PeerToBaseMessage& msg)
       // No extra data needed
       break;
     default:
-      LOG_ERROR("tried to serialize unexpected peer to base message type: %s", msg.kind._to_string());
+      HLOG_ERROR("tried to serialize unexpected peer to base message // {kind}", msg.kind._to_string());
   }
 
   if(msg.kind != +PeerToBaseMessageKind::DATA)
@@ -769,7 +769,7 @@ std::string NgSocket::serializePeerToBaseMessage(const PeerToBaseMessage& msg)
 
 void NgSocket::udpPacketReceived(InetAddress source, string_view data)
 {
-  LOG_DEBUG("udp received %s", source.str().c_str());
+  HLOG_DEBUG("udp received // {source}", source.str().c_str());
   if(source == baseUdpAddress) {
     baseMessageReceivedUdp(parseBaseToPeerMessage(data));
   } else {
@@ -779,7 +779,7 @@ void NgSocket::udpPacketReceived(InetAddress source, string_view data)
         std::string dataCopy = data;
         workerQueue.push([this, source, dataCopy]() { peerMessageReceived(source, parsePeerToPeerMessage(dataCopy)); });
       } else {
-        LOG_ERROR("ngsocket worker queue full");
+        HLOG_ERROR("ngsocket worker queue full");
       }
     } else {
       peerMessageReceived(source, parsePeerToPeerMessage(data));
@@ -794,7 +794,7 @@ void NgSocket::connectToBase()
 
   baseConnectRetries++;
 
-  LOG_INFO("establishing connection to base %s (try %d)", baseAddress.str().c_str(), baseConnectRetries);
+  HLOG_INFO("establishing connection to base // {address} {try_no}", baseAddress.str(), baseConnectRetries);
 
   auto dataCallback = [this](string_view data) {
     lastBaseTcpMessage = Port::getCurrentTime();
@@ -802,7 +802,7 @@ void NgSocket::connectToBase()
   };
 
   auto errorCallback = [this](std::shared_ptr<TcpConnection> conn) {
-    LOG_CRITICAL("base TCP connection closed");
+    HLOG_CRITICAL("base TCP connection closed");
 
     if(conn == baseConnection) {
       TcpConnection::close(baseConnection);

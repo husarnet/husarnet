@@ -59,7 +59,7 @@ static int openTun(std::string& name)
   while(unitNumber < 10) {
     sc.sc_unit = unitNumber;
     if(connect(fd, (struct sockaddr*)&sc, sizeof(sc)) == -1) {
-      LOG_WARNING("Can't bind to utun%d", unitNumber - 1);
+      HLOG_WARNING("Can't bind to utun // {utun_num}", unitNumber - 1);
       // perror ("connect(AF_SYS_CONTROL)");
       unitNumber++;
     } else {
@@ -105,9 +105,9 @@ Tun::Tun()
   fd = openTun(tunName);
   this->name = tunName;
   if(fd == -1) {
-    LOG_ERROR("Can't open utun device!");
+    HLOG_ERROR("Can't open utun device!");
   } else {
-    LOG_INFO("utun device opened successfully");
+    HLOG_INFO("utun device opened successfully");
   }
   OsSocket::bindCustomFd(fd, std::bind(&Tun::onTunData, this));
 }
@@ -121,7 +121,7 @@ void Tun::onLowerLayerData(HusarnetAddress source, string_view data)
 
   long wr = write(fd, wrapped.c_str(), wrapped.size());
   if(wr != wrapped.size()) {
-    LOG_INFO("short tun write");
+    HLOG_INFO("short tun write");
   }
 }
 

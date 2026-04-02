@@ -33,6 +33,7 @@ json ConfigEnv::getJson() const
   j["logVerbosity"] = magic_enum::enum_name(getLogVerbosity());
   j["enableHooks"] = getEnableHooks();
   j["enableControlPlane"] = getEnableControlplane();
+  j["enableJsonLogging"] = getEnableJsonLogging();
   j["daemonInterface"] = getDaemonInterface();
   j["daemonApiInterface"] = getDaemonApiInterface();
   j["daemonApiHost"] = getDaemonApiHost().toString();
@@ -71,6 +72,11 @@ bool ConfigEnv::getEnableHooks() const
 bool ConfigEnv::getEnableControlplane() const
 {
   return strToBool(envPresentOrDefault(this->env, EnvKey::enableControlPlane, "true"));
+}
+
+bool ConfigEnv::getEnableJsonLogging() const
+{
+  return strToBool(envPresentOrDefault(this->env, EnvKey::enableJsonLogging, "false"));
 }
 
 const std::string ConfigEnv::getDaemonInterface() const
