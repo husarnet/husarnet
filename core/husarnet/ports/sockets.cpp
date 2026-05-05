@@ -7,6 +7,7 @@
 
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
+#include "etl/mutex.h"
 
 namespace OsSocket {
 
@@ -68,6 +69,7 @@ namespace OsSocket {
   std::vector<UdpSocket> udpSockets;
   std::vector<CustomSocket> customSockets;
   std::vector<std::shared_ptr<TcpConnection>> tcpConnections;
+  etl::mutex tcpConnectionsMutex;
   int unicastUdpFd = -1;
   int multicastUdpFd4 = -1;
   int multicastUdpFd6 = -1;
@@ -541,7 +543,10 @@ namespace OsSocket {
       }
     }
 
+    tcpConnectionsMutex.lock();
     tcpConnections.push_back(conn);
+    tcpConnectionsMutex.unlock();
+
     return conn;
   }
 
@@ -549,6 +554,7 @@ namespace OsSocket {
 
   void runOnce(int timeout)
   {
+    std::lock_guard lg(tcpConnectionsMutex);
     fd_set readset;
     FD_ZERO(&readset);
     int maxfd = 0;
@@ -633,7 +639,7 @@ namespace OsSocket {
     tcpConnections.erase(
         std::remove_if(
             tcpConnections.begin(), tcpConnections.end(),
-            [](std::shared_ptr<TcpConnection> conn) {
+            [](std::shared_ptr<TcpConnection>& conn) {
               if(conn) {
                 return conn->_hasErrored;
               }
