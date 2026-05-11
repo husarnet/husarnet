@@ -8,7 +8,7 @@
 #include "etl/mutex.h"
 
 #ifndef HOOKS_MAP_SIZE
-#define HOOKS_MAP_SIZE 10  // Keep this in sync with size of HookType enum
+#define HOOKS_MAP_SIZE HOOK_TYPE_OPTIONS
 #endif
 
 #ifndef HOOKS_PERIOD
