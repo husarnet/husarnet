@@ -23,26 +23,29 @@ var daemonIpCommand = &cli.Command{
 	Category:  CategoryUtils,
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		requiredArgumentsRange(cmd, 0, 1)
+		status := getDaemonStatus()
 
 		if cmd.Args().Len() == 0 {
-			status := getDaemonStatus()
 			pterm.Println(status.LiveData.LocalIP.StringExpanded())
-		} else {
-			arg := cmd.Args().First()
-			// TODO we'll be using HostTable field, but it has to consider aliases too, which is not implemented
-			status := getDaemonStatus()
-			found := false
-			for k, v := range status.HostTable {
-				if k == arg {
-					pterm.Println(v)
-					found = true
-				}
+			return nil
+		}
+
+		arg := cmd.Args().First()
+		foundAtLeastOneMatch := false
+		for _, v := range status.Config.Dashboard.Peers {
+			if v.Hostname == arg {
+				pterm.Println(v.Hostname)
+				foundAtLeastOneMatch = true
 			}
-			if !found {
-				printError("no peer is known as %s", arg)
+			for _, alias := range v.Aliases {
+				pterm.Println(alias)
+				foundAtLeastOneMatch = true
 			}
 		}
 
+		if !foundAtLeastOneMatch {
+			printError("no peer is known as %s", arg)
+		}
 		return nil
 	},
 }

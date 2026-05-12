@@ -330,7 +330,10 @@ json ConfigManager::getDataForStatus() const
 
   combined[STATUS_KEY_ENVIRONMENT] = {
       {STATUS_KEY_ENVIRONMENT_INSTANCE_FQDN, this->configEnv->getTldFqdn()},
-      {STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY, this->configEnv->getLogVerbosity()}};
+      {STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY, this->configEnv->getLogVerbosityString()},
+      {STATUS_KEY_ENVIRONMENT_HOOKS_ENABLED, this->configEnv->getEnableHooks()},
+      {STATUS_KEY_ENVIRONMENT_DAEMON_API_HOST, this->configEnv->getDaemonApiHost().toString()},
+      {STATUS_KEY_ENVIRONMENT_DAEMON_API_PORT, this->configEnv->getDaemonApiPort()}};
 
   return combined;
 }

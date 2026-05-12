@@ -9,10 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/husarnet/husarnet/cli/v2/types"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 	"github.com/pterm/pterm"
 )
 
-func waitAction(message string, lambda func(*DaemonStatus) (bool, string)) error {
+func waitAction(message string, lambda func(*types.DaemonStatus) (bool, string)) error {
 	spinner := getSpinner(message, true)
 	observer := NewDumbObserver(func(old, new string) {
 		spinner.UpdateText(new)
@@ -46,43 +48,45 @@ func waitAction(message string, lambda func(*DaemonStatus) (bool, string)) error
 }
 
 func waitDaemon() error {
-	return waitAction("Waiting until we can communicate with husarnet daemon…", func(status *DaemonStatus) (bool, string) { return true, "" })
+	return waitAction("Waiting until we can communicate with husarnet daemon…", func(status *types.DaemonStatus) (bool, string) { return true, "" })
 }
 
 func waitBaseANY() error {
-	return waitAction("Waiting for Base server connection (any protocol)…", func(status *DaemonStatus) (bool, string) {
+	return waitAction("Waiting for Base server connection (any protocol)…", func(status *types.DaemonStatus) (bool, string) {
 		return status.LiveData.BaseConnection.Type == "TCP" || status.LiveData.BaseConnection.Type == "UDP", ""
 	})
 }
 
 func waitBaseUDP() error {
-	return waitAction("Waiting for Base server connection (UDP)…", func(status *DaemonStatus) (bool, string) { return status.LiveData.BaseConnection.Type == "UDP", "" })
+	return waitAction("Waiting for Base server connection (UDP)…", func(status *types.DaemonStatus) (bool, string) {
+		return status.LiveData.BaseConnection.Type == "UDP", ""
+	})
 }
 
 func waitJoined() error {
-	return waitAction("Waiting until the device is joined…", func(status *DaemonStatus) (bool, string) { return status.Config.Dashboard.IsClaimed, "" })
+	return waitAction("Waiting until the device is joined…", func(status *types.DaemonStatus) (bool, string) { return status.Config.Dashboard.IsClaimed, "" })
 }
 
 func waitHost(hostnameOrIp string) error {
-	hostname := ""
-	addr, err := netip.ParseAddr(hostnameOrIp)
-	if err != nil {
-		hostname = hostnameOrIp
-	}
-
 	printInfo("Remember that in order to consider a connection established there need to be at least 1 attempt of connection using the regular networking stack - i.e. a single ping to a given host")
 
-	return waitAction(pterm.Sprintf("Waiting until there's a connection to %s…", hostnameOrIp), func(status *DaemonStatus) (bool, string) {
-		hostIp, present := status.HostTable[hostname]
-		if hostname != "" && present {
-			addr = hostIp
+	return waitAction(pterm.Sprintf("Waiting until there's a connection to %s…", hostnameOrIp), func(status *types.DaemonStatus) (bool, string) {
+		var peerAddress netip.Addr
+		if utils.LooksLikeIpv6(hostnameOrIp) {
+			addr, err := netip.ParseAddr(hostnameOrIp)
+			if err != nil {
+				return false, "peer addr is invalid"
+			}
+			peerAddress = addr
+		} else {
+			maybePeerInfo := getDashboardPeerInfoByHostname(*status, hostnameOrIp)
+			if maybePeerInfo == nil {
+				return false, "peer addr is not known yet"
+			}
+			peerAddress = maybePeerInfo.Address
 		}
 
-		if !addr.IsValid() {
-			return false, "peer addr is not known yet" // Multiple paths - invalid addr + host not present in host table is the most important one
-		}
-
-		peer := status.getPeerByAddr(addr)
+		peer := getDaemonPeerInfoByAddr(*status, peerAddress)
 
 		if peer == nil {
 			return false, "unable to find peer in the peer list" // Unable to find peer
@@ -101,10 +105,10 @@ func waitHost(hostnameOrIp string) error {
 }
 
 func waitHostnames(hostnames []string) error {
-	return waitAction(pterm.Sprintf("Waiting until the following hostnames are known to: %s…", strings.Join(hostnames, ", ")), func(status *DaemonStatus) (bool, string) {
+	return waitAction(pterm.Sprintf("Waiting until the following hostnames are known to: %s…", strings.Join(hostnames, ", ")), func(status *types.DaemonStatus) (bool, string) {
 		for _, hostname := range hostnames {
-			_, present := status.HostTable[hostname]
-			if !present {
+			maybePeerInfo := getDashboardPeerInfoByHostname(*status, hostname)
+			if maybePeerInfo == nil {
 				return false, pterm.Sprintf("%s is unavailable", hostname)
 			}
 		}

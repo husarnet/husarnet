@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/husarnet/husarnet/cli/v2/output"
 	"github.com/pterm/pterm"
 	"github.com/urfave/cli/v3"
 )
@@ -112,22 +113,16 @@ var daemonStatusCommand = &cli.Command{
 			Aliases: []string{"v"},
 			Usage:   "show more information",
 		},
-		&cli.BoolFlag{
-			Name:    "follow",
-			Aliases: []string{"f"},
-			Usage:   "show more information",
-		},
 	},
 	ArgsUsage: " ", // No arguments needed
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		if cmd.Bool("follow") {
-			printStatusFollow(cmd)
+		status := getDaemonStatus()
+		if rawJson {
+			output.PrintAsJson(status, indentJson)
 		} else {
-			status := getDaemonStatus()
-			printStatus(cmd, status)
+			PrintStatus(cmd, status)
 		}
 		return nil
-
 	},
 }
 

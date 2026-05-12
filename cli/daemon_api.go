@@ -14,132 +14,29 @@ import (
 	"syscall"
 
 	"github.com/husarnet/husarnet/cli/v2/config"
+	"github.com/husarnet/husarnet/cli/v2/types"
 
 	"github.com/pterm/pterm"
 )
 
-type DaemonResponse[ResultType any] struct {
-	Status string
-	Error  string
-	Result ResultType
+func getDashboardPeerInfoByHostname(s types.DaemonStatus, hostname string) *types.DashboardPeerInfo {
+	// returns first matching one.
+	for _, dashboardPeerInfo := range s.Config.Dashboard.Peers {
+		if dashboardPeerInfo.Hostname == hostname {
+			return &dashboardPeerInfo
+		}
+		for _, alias := range dashboardPeerInfo.Aliases {
+			if alias == hostname {
+				return &dashboardPeerInfo
+			}
+		}
+	}
+	return nil
 }
 
-func (response *DaemonResponse[ResultType]) IsOk() bool {
-	return response.Status == "success" || response.Status == "ok"
-}
-
-type BaseConnectionStatus struct {
-	Address netip.Addr
-	Port    int
-	Type    string // TODO long-term - make it enum maybe
-}
-
-type PeerStatus struct {
-	HusarnetAddress  netip.Addr     `json:"husarnet_address"`
-	LinkLocalAddress netip.AddrPort `json:"link_local_address"`
-
-	IsActive         bool `json:"is_active"`
-	IsReestablishing bool `json:"is_reestablishing"`
-	IsSecure         bool `json:"is_secure"`
-	IsTunelled       bool `json:"is_tunelled"`
-
-	// TODO reenable this after latency support is readded
-	// LatencyMs int `json:"latency_ms"` // TODO long-term figure out how to convert it to time.Duration
-
-	SourceAddresses   []netip.AddrPort `json:"source_addresses"`
-	TargetAddresses   []netip.AddrPort `json:"target_addresses"`
-	UsedTargetAddress netip.AddrPort   `json:"used_target_address"`
-}
-
-type DaemonLiveData struct {
-	Health              DaemonHealth         `json:"health"`
-	BaseConnection      BaseConnectionStatus `json:"base_connection"`
-	DashboardConnection bool                 `json:"dashboard_connection"`
-	LocalIP             netip.Addr           `json:"local_ip"`
-	Peers               []DaemonPeerInfo     `json:"peers"`
-}
-
-type ClaimInfo struct {
-	Owner    string   `json:"owner"`
-	Hostname string   `json:"hostname"`
-	Aliases  []string `json:"aliases"`
-}
-
-type DashboardPeerInfo struct {
-	Address  netip.Addr `json:"address"`
-	Hostname string     `json:"hostname"`
-	Aliases  []string   `json:"aliases"`
-}
-
-type DaemonPeerInfo struct {
-	Address          netip.Addr `json:"address"`
-	IsActive         bool       `json:"is_active"`
-	IsReestablishing bool       `json:"is_reestablishing"`
-	IsTunelled       bool       `json:"is_tunelled"`
-	IsSecure         bool       `json:"is_secure"`
-}
-
-type DeviceFeatures struct {
-	AccountAdmin bool `json:"AccountAdmin"`
-	SyncHostname bool `json:"SyncHostname"`
-}
-
-type DashboardConfig struct {
-	IsClaimed bool `json:"is_claimed"`
-
-	ClaimInfo ClaimInfo           `json:"claim_info"`
-	Features  DeviceFeatures      `json:"features"`
-	Peers     []DashboardPeerInfo `json:"peers"`
-}
-
-type LicenseData struct {
-	BaseServers []netip.Addr `json:"base_server_addresses"`
-	ApiServers  []netip.Addr `json:"api_servers"`
-	EbServers   []netip.Addr `json:"eb_servers"`
-}
-
-type UserConfig struct {
-	Whitelist []netip.Addr `json:"whitelist"`
-}
-
-type EnvConfig struct {
-	InstanceFqdn string `json:"instance_fqdn"`
-	LogVerbosity int    `json:"log_verbosity"`
-}
-
-type DaemonConfig struct {
-	Dashboard DashboardConfig `json:"dashboard"`
-	Env       EnvConfig       `json:"env"`
-	License   LicenseData     `json:"license"`
-	User      UserConfig      `json:"user_config"`
-}
-
-type DaemonHealth struct {
-	Summary bool `json:"summary"`
-}
-
-type DaemonStatus struct {
-	Version   string         `json:"version"`
-	UserAgent string         `json:"user_agent"`
-	LiveData  DaemonLiveData `json:"live"`
-	Config    DaemonConfig   `json:"config"`
-
-	HooksEnabled  bool   `json:"hooks_enabled"`
-	LocalHostname string `json:"local_hostname"`
-
-	IsJoined         bool            `json:"is_joined"`
-	IsReady          bool            `json:"is_ready"`
-	IsReadyToJoin    bool            `json:"is_ready_to_join"`
-	ConnectionStatus map[string]bool `json:"connection_status"`
-
-	UserSettings map[string]string     `json:"user_settings"` // TODO long-term - think about a better structure (more importantly enums) to hold this if needed
-	HostTable    map[string]netip.Addr `json:"host_table"`
-	Peers        []PeerStatus
-}
-
-func (s DaemonStatus) getPeerByAddr(addr netip.Addr) *PeerStatus {
-	for _, peer := range s.Peers {
-		if peer.HusarnetAddress == addr {
+func getDaemonPeerInfoByAddr(s types.DaemonStatus, addr netip.Addr) *types.DaemonPeerInfo {
+	for _, peer := range s.LiveData.Peers {
+		if peer.Address == addr {
 			return &peer
 		}
 	}
@@ -179,7 +76,7 @@ func getFullPath(file string) string {
 	return "/var/lib/husarnet/" + file
 }
 
-func getApiErrorString[ResultType any](response DaemonResponse[ResultType]) string {
+func getApiErrorString[ResultType any](response types.DaemonResponse[ResultType]) string {
 	if response.Status == "success" {
 		return "status ok/no error"
 	}
@@ -187,7 +84,7 @@ func getApiErrorString[ResultType any](response DaemonResponse[ResultType]) stri
 	return pterm.Sprintf("response status: %s, error: %s", response.Status, response.Error)
 }
 
-func handlePotentialDaemonApiRequestError[ResultType any](response DaemonResponse[ResultType], err error) {
+func handlePotentialDaemonApiRequestError[ResultType any](response types.DaemonResponse[ResultType], err error) {
 	if err != nil {
 		dieE(err)
 	}
@@ -214,7 +111,7 @@ func readResponse[ResponseType any](resp *http.Response) ResponseType {
 	return response
 }
 
-func callDaemonRetryable[ResultType any](retryable bool, route string, urlencodedBody url.Values, lambda func(route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error)) (DaemonResponse[ResultType], error) {
+func callDaemonRetryable[ResultType any](retryable bool, route string, urlencodedBody url.Values, lambda func(route string, urlencodedBody url.Values) (types.DaemonResponse[ResultType], error)) (types.DaemonResponse[ResultType], error) {
 	response, err := lambda(route, urlencodedBody)
 	if err != nil {
 		printDebug("%v", err)
@@ -231,47 +128,47 @@ func callDaemonRetryable[ResultType any](retryable bool, route string, urlencode
 }
 
 // Technically those should not require auth tokens so can be run at any time
-func callDaemonGetRaw[ResultType any](retryable bool, route string) (DaemonResponse[ResultType], error) {
-	return callDaemonRetryable(retryable, route, url.Values{}, func(route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error) {
+func callDaemonGetRaw[ResultType any](retryable bool, route string) (types.DaemonResponse[ResultType], error) {
+	return callDaemonRetryable(retryable, route, url.Values{}, func(route string, urlencodedBody url.Values) (types.DaemonResponse[ResultType], error) {
 		response, err := http.Get(config.GetDaemonApiUrl() + route)
 		if err != nil {
-			return DaemonResponse[ResultType]{}, err
+			return types.DaemonResponse[ResultType]{}, err
 		}
 
-		return readResponse[DaemonResponse[ResultType]](response), nil
+		return readResponse[types.DaemonResponse[ResultType]](response), nil
 	})
 }
 
-func callDaemonGet[ResultType any](route string) DaemonResponse[ResultType] {
+func callDaemonGet[ResultType any](route string) types.DaemonResponse[ResultType] {
 	response, err := callDaemonGetRaw[ResultType](true, route)
 	handlePotentialDaemonApiRequestError(response, err)
 	return response
 }
 
 // Those will always require an auth token
-func callDaemonPostRaw[ResultType any](retryable bool, route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error) {
-	return callDaemonRetryable(retryable, route, urlencodedBody, func(route string, urlencodedBody url.Values) (DaemonResponse[ResultType], error) {
+func callDaemonPostRaw[ResultType any](retryable bool, route string, urlencodedBody url.Values) (types.DaemonResponse[ResultType], error) {
+	return callDaemonRetryable(retryable, route, urlencodedBody, func(route string, urlencodedBody url.Values) (types.DaemonResponse[ResultType], error) {
 		response, err := http.PostForm(config.GetDaemonApiUrl()+route, urlencodedBody)
 		if err != nil {
-			return DaemonResponse[ResultType]{}, err
+			return types.DaemonResponse[ResultType]{}, err
 		}
 
-		return readResponse[DaemonResponse[ResultType]](response), nil
+		return readResponse[types.DaemonResponse[ResultType]](response), nil
 	})
 }
 
-func callDaemonPost[ResultType any](route string, urlencodedBody url.Values) DaemonResponse[ResultType] {
+func callDaemonPost[ResultType any](route string, urlencodedBody url.Values) types.DaemonResponse[ResultType] {
 	addDaemonApiSecret(&urlencodedBody)
 	response, err := callDaemonPostRaw[ResultType](true, route, urlencodedBody)
 	handlePotentialDaemonApiRequestError(response, err)
 	return response
 }
 
-func getDaemonStatusRaw(retryable bool) (DaemonResponse[DaemonStatus], error) {
-	return callDaemonGetRaw[DaemonStatus](retryable, "/api/status")
+func getDaemonStatusRaw(retryable bool) (types.DaemonResponse[types.DaemonStatus], error) {
+	return callDaemonGetRaw[types.DaemonStatus](retryable, "/api/status")
 }
-func getDaemonStatus() DaemonStatus {
-	return callDaemonGet[DaemonStatus]("/api/status").Result
+func getDaemonStatus() types.DaemonStatus {
+	return callDaemonGet[types.DaemonStatus]("/api/status").Result
 }
 
 // isDaemonRunning returns true if daemon is returning sane response to /api/status
