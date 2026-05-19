@@ -83,6 +83,9 @@ using namespace nlohmann;  // json
 #define STATUS_KEY_ENVIRONMENT "env"
 #define STATUS_KEY_ENVIRONMENT_INSTANCE_FQDN "instance_fqdn"
 #define STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY "log_verbosity"
+#define STATUS_KEY_ENVIRONMENT_HOOKS_ENABLED "hooks_enabled"
+#define STATUS_KEY_ENVIRONMENT_DAEMON_API_HOST "daemon_api_host"
+#define STATUS_KEY_ENVIRONMENT_DAEMON_API_PORT "daemon_api_port"
 #define STATUS_KEY_LIVEPEERS "peers"
 #define STATUS_KEY_HEALTH "health"
 #define STATUS_KEY_HEALTH_SUMMARY "summary"
@@ -113,7 +116,7 @@ class ConfigManager {
   mutable etl::mutex cvMutex;    // used for condition_variable only
   std::condition_variable cv;
 
-  TimePoint nextLicenseUpdate;
+  TimePoint nextLicenseDownload;
   TimePoint nextGetConfigUpdate;
 
   etl::set<HusarnetAddress, ALLOWED_PEERS_LIMIT> allowedPeers;
@@ -125,23 +128,22 @@ class ConfigManager {
   etl::string<EMAIL_MAX_LENGTH> claimedBy;    // empty string if not claimed
   etl::string<HOSTNAME_MAX_LENGTH> hostname;  // the one changeable from the web interface
 
-  void getLicense();                       // HTTP call to TLD
+  bool fetchLicenseJson();                 // HTTP call to TLD
   void storeLicense(const json& jsonDoc);  // save JSON doc
   void updateLicenseData();                // Transform JSON to internal structures
 
-  void getGetConfig();                       // HTTP call to API
+  void fetchGetConfig();                     // HTTP call to API
   void storeGetConfig(const json& jsonDoc);  // save JSON doc
   void updateGetConfigData();                // Transform JSON to internal structures
 
   bool readUserConfig();
   void storeUserConfig(const json& jsonDoc);
   void updateUserConfigData();
+  bool writeUserConfig();  // If this fails we should propagate the error
 
   bool readCache();
   void storeCache(const json& jsonDoc);
-
-  bool writeConfig();  // If this fails we should propagate the error
-  bool writeCache();   // It does not matter whether this fails
+  bool writeCache();  // It does not matter whether this fails
 
   void resetLicenseTimer();
 

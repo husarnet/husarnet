@@ -48,9 +48,10 @@ enum class StorageKey
 enum class HookType
 {
   claimed,
+  unclaimed,
 };
 
-#define HOOK_TYPE_OPTIONS 1
+#define HOOK_TYPE_OPTIONS 2
 
 namespace Port {
   void init();                // This is called from HusarnetManager

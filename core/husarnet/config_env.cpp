@@ -46,6 +46,11 @@ std::string ConfigEnv::getTldFqdn() const
   return envPresentOrDefault(this->env, EnvKey::tldFqdn, "prod.husarnet.com");
 }
 
+std::string ConfigEnv::getLogVerbosityString() const
+{
+  return std::string(magic_enum::enum_name(this->getLogVerbosity()));
+}
+
 LogLevel ConfigEnv::getLogVerbosity() const
 {
 #if defined(ESP_PLATFORM)

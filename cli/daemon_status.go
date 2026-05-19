@@ -5,17 +5,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/husarnet/husarnet/cli/v2/constants"
-	"net/netip"
 	"strings"
-	"time"
+
+	"github.com/husarnet/husarnet/cli/v2/constants"
+	"github.com/husarnet/husarnet/cli/v2/types"
 
 	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
 	"github.com/urfave/cli/v3"
 )
 
-func printStatus(cmd *cli.Command, status DaemonStatus) {
+func PrintStatus(cmd *cli.Command, status types.DaemonStatus) {
 	isHealthy := status.LiveData.Health.Summary
 	verbose := verboseLogs || cmd.Bool("verbose")
 
@@ -52,13 +52,13 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 
 	// section THIS DEVICE
 	printStatusHeader("This device")
+	printStatusLine(neutralFormatter, "IP", pterm.Bold.Sprint(status.LiveData.LocalIP.StringExpanded()))
+	printStatusLine(neutralFormatter, "User agent", status.UserAgent)
 	if status.LiveData.Health.Summary {
 		printStatusLine(greenFormatter, "Health", "healthy")
 	} else {
 		printStatusLine(redFormatter, "Health", "unhealthy")
 	}
-	printStatusLine(neutralFormatter, "User agent", status.UserAgent)
-	printIndentedL1(pterm.Bold.Sprint(status.LiveData.LocalIP.StringExpanded()))
 	pterm.Println()
 
 	// section PEERS
@@ -82,7 +82,7 @@ func printStatus(cmd *cli.Command, status DaemonStatus) {
 	}
 }
 
-func printVerboseStatus(cmd *cli.Command, status DaemonStatus) {
+func printVerboseStatus(cmd *cli.Command, status types.DaemonStatus) {
 	printStatusHeader("Version")
 	printVersion(status.Version)
 	pterm.Println()
@@ -135,8 +135,8 @@ func printIndentedL2(line string) {
 	pterm.Printfln("    %s", line)
 }
 
-func mapifyPeers(peers []DaemonPeerInfo) map[string]DaemonPeerInfo {
-	out := make(map[string]DaemonPeerInfo)
+func mapifyPeers(peers []types.DaemonPeerInfo) map[string]types.DaemonPeerInfo {
+	out := make(map[string]types.DaemonPeerInfo)
 	for _, peer := range peers {
 		out[peer.Address.StringExpanded()] = peer
 	}
@@ -194,7 +194,7 @@ func printVersion(daemonVersion string) {
 	}
 }
 
-func formatPeerInfo(ip string, peerMap map[string]DaemonPeerInfo) string {
+func formatPeerInfo(ip string, peerMap map[string]types.DaemonPeerInfo) string {
 	line := ip
 	if info, ok := peerMap[ip]; ok {
 		activity := "inactive"
@@ -224,193 +224,27 @@ func formatHostnameWithAliases(hostname string, aliases []string) string {
 	return out
 }
 
-func printWhitelist(status DaemonStatus, peerMap map[string]DaemonPeerInfo) {
+func printWhitelist(status types.DaemonStatus, peerMap map[string]types.DaemonPeerInfo) {
 	printStatusHeader("Local whitelist")
 	for _, peerAddr := range status.Config.User.Whitelist {
 		printIndentedL1(formatPeerInfo(peerAddr.StringExpanded(), peerMap))
 	}
 }
 
-func printHooksStatus(status DaemonStatus) {
+func printHooksStatus(status types.DaemonStatus) {
 	var formatter FormatterFunc
 	var value, help string
 
-	if status.HooksEnabled {
+	if status.Config.Env.HooksEnabled {
 		formatter = greenFormatter
 		value = "enabled"
 	} else {
-		formatter = yellowFormatter
+		formatter = neutralFormatter
 		value = "disabled"
-		help = "Disabled hooks are not a reason to panic, unless your setup needs them"
 	}
 
 	printStatusLine(formatter, "Hooks", value)
 	if help != "" {
 		printIndentedL1(help)
 	}
-}
-
-func printStatusFollow(cmd *cli.Command) {
-	// Obtaining status twice is simpler than deep copy
-	prevStatus := getDaemonStatus()
-	prevStatus.Version = "temporary change to enable print"
-	var currStatus DaemonStatus
-	for {
-		currStatus = getDaemonStatus()
-		if !areStatusesEqual(prevStatus, currStatus) {
-			printStatus(cmd, currStatus)
-			prevStatus = currStatus
-		}
-		time.Sleep(800 * time.Millisecond)
-	}
-}
-
-func areStatusesEqual(prevStatus, currStatus DaemonStatus) bool {
-	if prevStatus.Version != currStatus.Version {
-		return false
-	}
-	if prevStatus.LiveData.BaseConnection.Address.Compare(currStatus.LiveData.BaseConnection.Address) != 0 {
-		return false
-	}
-	if prevStatus.LiveData.BaseConnection.Port != currStatus.LiveData.BaseConnection.Port {
-		return false
-	}
-	if prevStatus.LiveData.BaseConnection.Type != currStatus.LiveData.BaseConnection.Type {
-		return false
-	}
-	if prevStatus.LiveData.LocalIP.Compare(currStatus.LiveData.LocalIP) != 0 {
-		return false
-	}
-	if prevStatus.LocalHostname != currStatus.LocalHostname {
-		return false
-	}
-	if prevStatus.IsJoined != currStatus.IsJoined {
-		return false
-	}
-	if prevStatus.IsReady != currStatus.IsReady {
-		return false
-	}
-	if prevStatus.IsReadyToJoin != currStatus.IsReadyToJoin {
-		return false
-	}
-	if !areConnectionStatusesEqual(prevStatus.ConnectionStatus, currStatus.ConnectionStatus) {
-		return false
-	}
-	if !areAddressListsEqual(prevStatus.Config.User.Whitelist, currStatus.Config.User.Whitelist) {
-		return false
-	}
-	if !areUserSettingsEqual(prevStatus.UserSettings, currStatus.UserSettings) {
-		return false
-	}
-	if !areHostTablesEqual(prevStatus.HostTable, currStatus.HostTable) {
-		return false
-	}
-	if !arePeersEqual(prevStatus.Peers, currStatus.Peers) {
-		return false
-	}
-	return true
-
-}
-
-func areConnectionStatusesEqual(a, b map[string]bool) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for key, value := range a {
-		if value != b[key] {
-			return false
-		}
-	}
-	return true
-}
-
-func areAddressListsEqual(a, b []netip.Addr) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i].Compare(b[i]) != 0 {
-			return false
-		}
-	}
-	return true
-}
-
-func arePortAddressListsEqual(a, b []netip.AddrPort) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if (a[i].Addr().Compare(b[i].Addr()) != 0) || (a[i].Port() != b[i].Port()) {
-			return false
-		}
-	}
-	return true
-}
-
-func areUserSettingsEqual(a, b map[string]string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for key, value := range a {
-		if value != b[key] {
-			return false
-		}
-	}
-	return true
-}
-
-func areHostTablesEqual(a, b map[string]netip.Addr) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for key, value := range a {
-		if value.Compare(b[key]) != 0 {
-			return false
-		}
-	}
-	return true
-}
-
-func arePeerStatusesEqual(a, b PeerStatus) bool {
-	if a.HusarnetAddress.Compare(b.HusarnetAddress) != 0 {
-		return false
-	}
-	if (a.LinkLocalAddress.Addr().Compare(b.LinkLocalAddress.Addr()) != 0) || (a.LinkLocalAddress.Port() != b.LinkLocalAddress.Port()) {
-		return false
-	}
-	if a.IsActive != b.IsActive {
-		return false
-	}
-	if a.IsReestablishing != b.IsReestablishing {
-		return false
-	}
-	if a.IsSecure != b.IsSecure {
-		return false
-	}
-	if a.IsTunelled != b.IsTunelled {
-		return false
-	}
-	if !arePortAddressListsEqual(a.SourceAddresses, b.SourceAddresses) {
-		return false
-	}
-	if !arePortAddressListsEqual(a.TargetAddresses, b.TargetAddresses) {
-		return false
-	}
-	if (a.UsedTargetAddress.Addr().Compare(b.UsedTargetAddress.Addr()) != 0) || (a.UsedTargetAddress.Port() != b.UsedTargetAddress.Port()) {
-		return false
-	}
-	return true
-}
-
-func arePeersEqual(a, b []PeerStatus) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if !arePeerStatusesEqual(a[i], b[i]) {
-			return false
-		}
-	}
-	return true
 }

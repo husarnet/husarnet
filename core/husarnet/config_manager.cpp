@@ -16,8 +16,8 @@ ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* config
     : hooksManager(hooksManager),
       configEnv(configEnv),
       ourIp(ourIp),
-      nextLicenseUpdate(std::chrono::steady_clock::now()),
-      nextGetConfigUpdate(std::chrono::steady_clock::now())
+      nextLicenseDownload(std::chrono::steady_clock::now()),
+      nextGetConfigUpdate(std::chrono::steady_clock::now() + std::chrono::seconds(5))
 {
   std::lock_guard lgFast(this->mutexFast);
   if(!configEnv->getEnableControlplane()) {
@@ -26,25 +26,25 @@ ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* config
   }
 }
 
-void ConfigManager::getLicense()
+bool ConfigManager::fetchLicenseJson()
 {
   auto tldAddress = this->configEnv->getTldFqdn();
   auto [statusCode, bytes] = Port::httpGet(tldAddress, "/license.json");
 
   if(statusCode != 200) {
     HLOG_ERROR("failed to download license file // {tld_address}", tldAddress);
-    return;
+    return false;
   }
 
   auto licenseJson = json::parse(bytes, nullptr, false);
   if(!isLicenseValid(licenseJson)) {
-    HLOG_ERROR("dowloaded license file is invalid // {tld_address}", tldAddress);
-    return;
+    HLOG_CRITICAL("dowloaded license file is invalid // {tld_address}", tldAddress);
+    return false;
   }
 
   this->storeLicense(licenseJson);
-  this->updateLicenseData();
-  this->nextLicenseUpdate = std::chrono::steady_clock::now() + licenseRefreshPeriod;
+  this->nextLicenseDownload = std::chrono::steady_clock::now() + licenseRefreshPeriod;
+  return true;
 }
 
 void ConfigManager::storeLicense(const nlohmann::json& jsonDoc)
@@ -53,14 +53,13 @@ void ConfigManager::storeLicense(const nlohmann::json& jsonDoc)
   this->cacheJson[CACHE_KEY_LICENSE] = jsonDoc;
 }
 
-// TODO: discuss: might also be renamed to updateControlPlaneData
 void ConfigManager::updateLicenseData()
 {
   std::lock_guard lgSlow(this->mutexSlow);
   std::lock_guard lgFast(this->mutexFast);
   const auto& licenseJson = this->cacheJson[CACHE_KEY_LICENSE];
   if(licenseJson.is_discarded() || licenseJson.is_null()) {
-    HLOG_ERROR("config manager: no license information available");
+    HLOG_CRITICAL("config manager: no license information available");
     return;
   }
 
@@ -109,7 +108,7 @@ HusarnetAddress ConfigManager::getEbAddress() const
   return addr;
 }
 
-void ConfigManager::getGetConfig()
+void ConfigManager::fetchGetConfig()
 {
   auto apiResponse = dashboardapi::getConfig(this->getApiAddress());
   if(apiResponse.isSuccessful()) {
@@ -123,56 +122,61 @@ void ConfigManager::getGetConfig()
 
 void ConfigManager::updateGetConfigData()
 {
-  std::lock_guard lgSlow(this->mutexSlow);
-  std::lock_guard lgFast(this->mutexFast);
-  HLOG_INFO("config manager: updateGetConfigData started");
-  const auto& latestConfig = this->cacheJson[CACHE_KEY_GETCONFIG];
+  std::map<std::string, HusarnetAddress> hostsEntries;
+  {
+    std::lock_guard lgSlow(this->mutexSlow);
+    std::lock_guard lgFast(this->mutexFast);
+    HLOG_INFO("config manager: updateGetConfigData started");
+    const auto& latestConfig = this->cacheJson[CACHE_KEY_GETCONFIG];
 
-  if(latestConfig.contains(GETCONFIG_KEY_PEERS) && latestConfig[GETCONFIG_KEY_PEERS].is_array()) {
-    this->allowedPeers.clear();
+    if(latestConfig.contains(GETCONFIG_KEY_PEERS) && latestConfig[GETCONFIG_KEY_PEERS].is_array()) {
+      this->allowedPeers.clear();
 
-    etl::string<EMAIL_MAX_LENGTH> previousOwner = this->claimedBy;
-    // upack ClaimInfo
-    this->claimed = latestConfig[GETCONFIG_KEY_IS_CLAIMED].get<bool>();
-    if(this->claimed) {
-      auto claimInfo = latestConfig[GETCONFIG_KEY_CLAIMINFO];
-      auto ownerStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_OWNER].get<std::string>();
-      auto hostnameStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_HOSTNAME].get<std::string>();
-      this->claimedBy = etl::string<EMAIL_MAX_LENGTH>(ownerStr.c_str());
-      this->hostname = etl::string<HOSTNAME_MAX_LENGTH>(hostnameStr.c_str());
+      etl::string<EMAIL_MAX_LENGTH> previousOwner = this->claimedBy;
+      // upack ClaimInfo
+      this->claimed = latestConfig[GETCONFIG_KEY_IS_CLAIMED].get<bool>();
+      if(this->claimed) {
+        auto claimInfo = latestConfig[GETCONFIG_KEY_CLAIMINFO];
+        auto ownerStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_OWNER].get<std::string>();
+        auto hostnameStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_HOSTNAME].get<std::string>();
+        this->claimedBy = etl::string<EMAIL_MAX_LENGTH>(ownerStr.c_str());
+        this->hostname = etl::string<HOSTNAME_MAX_LENGTH>(hostnameStr.c_str());
 
-      auto featureFlags = latestConfig[GETCONFIG_KEY_FEATUREFLAGS];
-      // legacy sync hostname feature
-      auto shouldSyncHostname = featureFlags[GETCONFIG_KEY_FEATUREFLAGS_SYNCHOSTNAME].get<bool>();
-      if(shouldSyncHostname) {
-        Port::setSelfHostname(hostnameStr);
+        auto featureFlags = latestConfig[GETCONFIG_KEY_FEATUREFLAGS];
+        // legacy sync hostname feature
+        auto shouldSyncHostname = featureFlags[GETCONFIG_KEY_FEATUREFLAGS_SYNCHOSTNAME].get<bool>();
+        if(shouldSyncHostname) {
+          Port::setSelfHostname(hostnameStr);
+        }
+      } else {
+        this->claimedBy = "";
       }
-    } else {
-      this->claimedBy = "";
-    }
 
-    if(previousOwner.empty() && !this->claimedBy.empty()) {
-      this->hooksManager->scheduleHook(HookType::claimed);
-    }
-    // TODO: add unclaimed hook
-
-    std::map<std::string, HusarnetAddress> hostsEntries;
-    for(auto& peerInfo : latestConfig[GETCONFIG_KEY_PEERS]) {
-      // unpack PeerInfo structure
-      auto addrStr = peerInfo[GETCONFIG_KEY_PEERINFO_IP].get<std::string>();
-      auto peerHostname = peerInfo[GETCONFIG_KEY_PEERINFO_HOSTNAME].get<std::string>();
-      auto aliases = peerInfo[GETCONFIG_KEY_PEERINFO_ALIASES].get<std::vector<std::string>>();
-
-      HLOG_DEBUG("parsing address from get_config // {address}", addrStr);
-      auto addr = HusarnetAddress::parse(addrStr);
-      this->allowedPeers.insert(addr);  // TODO: handle set is full
-      hostsEntries.insert({peerHostname, addr});
-      for(auto& alias : aliases) {
-        hostsEntries.insert({alias, addr});
+      if(previousOwner.empty() && !this->claimedBy.empty()) {
+        this->hooksManager->scheduleHook(HookType::claimed);
       }
-      // TODO it would be best if the lock was freed before updateHostsFile
-      // but that's for later
-    }
+
+      if(!previousOwner.empty() && this->claimedBy.empty()) {
+        HLOG_INFO("device was unclaimed");
+        this->hooksManager->scheduleHook(HookType::unclaimed);
+      }
+
+      for(auto& peerInfo : latestConfig[GETCONFIG_KEY_PEERS]) {
+        // unpack PeerInfo structure
+        auto addrStr = peerInfo[GETCONFIG_KEY_PEERINFO_IP].get<std::string>();
+        auto peerHostname = peerInfo[GETCONFIG_KEY_PEERINFO_HOSTNAME].get<std::string>();
+        auto aliases = peerInfo[GETCONFIG_KEY_PEERINFO_ALIASES].get<std::vector<std::string>>();
+
+        HLOG_DEBUG("parsing address from get_config // {address}", addrStr);
+        auto addr = HusarnetAddress::parse(addrStr);
+        this->allowedPeers.insert(addr);  // TODO: handle set is full
+        hostsEntries.insert({peerHostname, addr});
+        for(auto& alias : aliases) {
+          hostsEntries.insert({alias, addr});
+        }
+      }
+    }  // release locks before doing file IO
+
     // add also our own address as husarnet-local
     hostsEntries.insert({"husarnet-local", this->ourIp});
     Port::updateHostsFile(hostsEntries);
@@ -192,11 +196,12 @@ bool ConfigManager::readUserConfig()
   auto contents = Port::readStorage(StorageKey::config);
   if(contents.empty()) {
     HLOG_INFO("saved config.json is empty/nonexistent");
-    return false;
+    contents = "{}";  // avoid parsing empty string, which results in discarded json
   }
   auto parsedContents = json::parse(contents, nullptr, false);
   if(parsedContents.is_discarded()) {
     HLOG_INFO("saved config.json is not a valid JSON, not reading");
+    this->storeUserConfig(json({}));  // reset to empty config
     return false;
   }
   this->storeUserConfig(parsedContents);
@@ -239,7 +244,7 @@ bool ConfigManager::readCache()
   }
   auto parsedContents = json::parse(contents, nullptr, false);
   if(parsedContents.is_discarded()) {
-    HLOG_INFO("config manager: saved cache.json is not a valid JSON, not reading");
+    HLOG_ERROR("config manager: saved cache.json is not a valid JSON");
     return false;
   }
 
@@ -326,12 +331,15 @@ json ConfigManager::getDataForStatus() const
 
   combined[STATUS_KEY_ENVIRONMENT] = {
       {STATUS_KEY_ENVIRONMENT_INSTANCE_FQDN, this->configEnv->getTldFqdn()},
-      {STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY, this->configEnv->getLogVerbosity()}};
+      {STATUS_KEY_ENVIRONMENT_LOG_VERBOSITY, this->configEnv->getLogVerbosityString()},
+      {STATUS_KEY_ENVIRONMENT_HOOKS_ENABLED, this->configEnv->getEnableHooks()},
+      {STATUS_KEY_ENVIRONMENT_DAEMON_API_HOST, this->configEnv->getDaemonApiHost().toString()},
+      {STATUS_KEY_ENVIRONMENT_DAEMON_API_PORT, this->configEnv->getDaemonApiPort()}};
 
   return combined;
 }
 
-bool ConfigManager::writeConfig()
+bool ConfigManager::writeUserConfig()
 {
   std::lock_guard lgSlow(this->mutexSlow);
   return Port::writeStorage(StorageKey::config, this->userConfigJson.dump(JSON_INDENT_SPACES));
@@ -351,34 +359,36 @@ void ConfigManager::periodicThread()
   }
   if(this->readUserConfig()) {
     HLOG_INFO("config.json read from disk successful");
-    updateUserConfigData();
+    this->updateUserConfigData();
   }
 
-  this->getLicense();
+  if(!this->fetchLicenseJson()) {
+    HLOG_INFO("license download failed, will use cached data if available");
+  }
+  this->updateLicenseData();
+  this->writeCache();
 
   while(true) {
     std::unique_lock lk(this->cvMutex);
     this->cv.wait_for(lk, std::chrono::milliseconds(periodicThreadIntervalMs));
 
     TimePoint now = std::chrono::steady_clock::now();
+    bool shouldWriteCache = false;
 
-    if(now >= this->nextLicenseUpdate) {
+    if(now >= this->nextLicenseDownload) {
       HLOG_DEBUG("config manager: periodic thread: will redownload the license");
-      this->getLicense();
+      this->fetchLicenseJson();
+      shouldWriteCache = true;
     }
 
     if(this->configEnv->getEnableControlplane() && now >= this->nextGetConfigUpdate) {
       HLOG_DEBUG("config manager: periodic thread: will request the config from the control plane");
-      this->getGetConfig();
+      this->fetchGetConfig();
+      shouldWriteCache = true;
+    }
 
-      // Flush to disk
-      if(this->writeConfig()) {
-        HLOG_DEBUG("config write successful");
-      } else {
-        HLOG_ERROR("config write failed");
-      }
-
-      this->writeCache();  // best-effort
+    if(shouldWriteCache) {
+      this->writeCache();
     }
   }
 }
@@ -396,17 +406,26 @@ void ConfigManager::waitInit() const
 
 bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 {
-  std::lock_guard lock(this->mutexFast);
-  if(this->userWhitelist.contains(address)) {
-    HLOG_ERROR("config manager: IP is already whitelisted");
-    return false;
-  }
-  if(this->userWhitelist.full()) {
-    HLOG_ERROR("config manager: userWhitelist is full");
-    return false;
+  {
+    std::lock_guard lock(this->mutexFast);
+    if(this->userWhitelist.contains(address)) {
+      HLOG_WARNING("config manager: IP is already whitelisted");
+      return false;
+    }
+    if(this->userWhitelist.full()) {
+      HLOG_ERROR("config manager: userWhitelist is full");
+      return false;
+    }
+    this->userWhitelist.insert(address);
+  }  // release fast lock before doing file IO
+
+  // Flush to disk
+  if(this->writeUserConfig()) {
+    HLOG_DEBUG("user config write successful");
+  } else {
+    HLOG_ERROR("user config write failed");
   }
 
-  this->userWhitelist.insert(address);
   return true;
 }
 
@@ -417,7 +436,7 @@ bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
     this->userWhitelist.erase(address);
     return true;
   }
-  HLOG_ERROR("config manager: IP is not on the whitelist");
+  HLOG_WARNING("config manager: IP is not on the whitelist");
   return false;
 }
 

@@ -42,7 +42,7 @@ func PrintGenericApiResponse(resp *types.ApiResponse[any], textIfSuccess, textIf
 
 }
 
-func PrintJsonOrError(data any, pretty bool) {
+func PrintAsJson(data any, pretty bool) {
 	var jsonBytes []byte
 	// we will use this function only with data previously successfully unmarshalled
 	// so the error can be safely ignored

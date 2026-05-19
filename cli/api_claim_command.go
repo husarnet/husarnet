@@ -63,7 +63,7 @@ var claimCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp, indentJson)
+			output.PrintAsJson(resp, indentJson)
 			return nil
 		}
 

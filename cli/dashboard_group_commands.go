@@ -28,7 +28,7 @@ var dashboardGroupListCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp, indentJson)
+			output.PrintAsJson(resp, indentJson)
 		} else {
 			prettyPrintGroups(resp.Payload)
 		}
@@ -56,7 +56,7 @@ var dashboardGroupShowCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp, indentJson)
+			output.PrintAsJson(resp, indentJson)
 		} else {
 			prettyPrintGroup(resp.Payload.Group)
 		}
@@ -94,7 +94,7 @@ var dashboardGroupCreateCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp, indentJson)
+			output.PrintAsJson(resp, indentJson)
 		} else {
 			prettyPrintGroup(resp.Payload)
 		}
@@ -142,7 +142,7 @@ var dashboardGroupUpdateCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp, indentJson)
+			output.PrintAsJson(resp, indentJson)
 		} else {
 			prettyPrintGroup(resp.Payload)
 		}
@@ -183,7 +183,7 @@ var dashboardGroupDeleteCommand = &cli.Command{
 		}
 
 		if rawJson {
-			output.PrintJsonOrError(resp, indentJson)
+			output.PrintAsJson(resp, indentJson)
 		} else {
 			printSuccess("Group was deleted successfully")
 		}

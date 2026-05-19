@@ -24,6 +24,7 @@ class ConfigEnv {
   json getJson() const;  // To be put i.e. in status/doctor
 
   std::string getTldFqdn() const;
+  std::string getLogVerbosityString() const;
   LogLevel getLogVerbosity() const;
   bool getEnableHooks() const;
   bool getEnableControlplane() const;
