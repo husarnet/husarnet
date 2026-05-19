@@ -17,7 +17,7 @@ ConfigManager::ConfigManager(HooksManager* hooksManager, const ConfigEnv* config
       configEnv(configEnv),
       ourIp(ourIp),
       nextLicenseDownload(std::chrono::steady_clock::now()),
-      nextGetConfigUpdate(std::chrono::steady_clock::now())
+      nextGetConfigUpdate(std::chrono::steady_clock::now() + std::chrono::seconds(5))
 {
   std::lock_guard lgFast(this->mutexFast);
   if(!configEnv->getEnableControlplane()) {
