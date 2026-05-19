@@ -7,6 +7,7 @@
 
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
+
 #include "etl/mutex.h"
 
 namespace OsSocket {
@@ -639,7 +640,7 @@ namespace OsSocket {
     tcpConnections.erase(
         std::remove_if(
             tcpConnections.begin(), tcpConnections.end(),
-            [](std::shared_ptr<TcpConnection>& conn) {
+            [](const std::shared_ptr<TcpConnection>& conn) {
               if(conn) {
                 return conn->_hasErrored;
               }

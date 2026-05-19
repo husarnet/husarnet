@@ -122,60 +122,61 @@ void ConfigManager::fetchGetConfig()
 
 void ConfigManager::updateGetConfigData()
 {
-  std::lock_guard lgSlow(this->mutexSlow);
-  std::lock_guard lgFast(this->mutexFast);
-  HLOG_INFO("config manager: updateGetConfigData started");
-  const auto& latestConfig = this->cacheJson[CACHE_KEY_GETCONFIG];
+  std::map<std::string, HusarnetAddress> hostsEntries;
+  {
+    std::lock_guard lgSlow(this->mutexSlow);
+    std::lock_guard lgFast(this->mutexFast);
+    HLOG_INFO("config manager: updateGetConfigData started");
+    const auto& latestConfig = this->cacheJson[CACHE_KEY_GETCONFIG];
 
-  if(latestConfig.contains(GETCONFIG_KEY_PEERS) && latestConfig[GETCONFIG_KEY_PEERS].is_array()) {
-    this->allowedPeers.clear();
+    if(latestConfig.contains(GETCONFIG_KEY_PEERS) && latestConfig[GETCONFIG_KEY_PEERS].is_array()) {
+      this->allowedPeers.clear();
 
-    etl::string<EMAIL_MAX_LENGTH> previousOwner = this->claimedBy;
-    // upack ClaimInfo
-    this->claimed = latestConfig[GETCONFIG_KEY_IS_CLAIMED].get<bool>();
-    if(this->claimed) {
-      auto claimInfo = latestConfig[GETCONFIG_KEY_CLAIMINFO];
-      auto ownerStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_OWNER].get<std::string>();
-      auto hostnameStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_HOSTNAME].get<std::string>();
-      this->claimedBy = etl::string<EMAIL_MAX_LENGTH>(ownerStr.c_str());
-      this->hostname = etl::string<HOSTNAME_MAX_LENGTH>(hostnameStr.c_str());
+      etl::string<EMAIL_MAX_LENGTH> previousOwner = this->claimedBy;
+      // upack ClaimInfo
+      this->claimed = latestConfig[GETCONFIG_KEY_IS_CLAIMED].get<bool>();
+      if(this->claimed) {
+        auto claimInfo = latestConfig[GETCONFIG_KEY_CLAIMINFO];
+        auto ownerStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_OWNER].get<std::string>();
+        auto hostnameStr = claimInfo[GETCONFIG_KEY_CLAIMINFO_HOSTNAME].get<std::string>();
+        this->claimedBy = etl::string<EMAIL_MAX_LENGTH>(ownerStr.c_str());
+        this->hostname = etl::string<HOSTNAME_MAX_LENGTH>(hostnameStr.c_str());
 
-      auto featureFlags = latestConfig[GETCONFIG_KEY_FEATUREFLAGS];
-      // legacy sync hostname feature
-      auto shouldSyncHostname = featureFlags[GETCONFIG_KEY_FEATUREFLAGS_SYNCHOSTNAME].get<bool>();
-      if(shouldSyncHostname) {
-        Port::setSelfHostname(hostnameStr);
+        auto featureFlags = latestConfig[GETCONFIG_KEY_FEATUREFLAGS];
+        // legacy sync hostname feature
+        auto shouldSyncHostname = featureFlags[GETCONFIG_KEY_FEATUREFLAGS_SYNCHOSTNAME].get<bool>();
+        if(shouldSyncHostname) {
+          Port::setSelfHostname(hostnameStr);
+        }
+      } else {
+        this->claimedBy = "";
       }
-    } else {
-      this->claimedBy = "";
-    }
 
-    if(previousOwner.empty() && !this->claimedBy.empty()) {
-      this->hooksManager->scheduleHook(HookType::claimed);
-    }
-
-    if(!previousOwner.empty() && this->claimedBy.empty()) {
-      HLOG_INFO("device was unclaimed");
-      this->hooksManager->scheduleHook(HookType::unclaimed);
-    }
-
-    std::map<std::string, HusarnetAddress> hostsEntries;
-    for(auto& peerInfo : latestConfig[GETCONFIG_KEY_PEERS]) {
-      // unpack PeerInfo structure
-      auto addrStr = peerInfo[GETCONFIG_KEY_PEERINFO_IP].get<std::string>();
-      auto peerHostname = peerInfo[GETCONFIG_KEY_PEERINFO_HOSTNAME].get<std::string>();
-      auto aliases = peerInfo[GETCONFIG_KEY_PEERINFO_ALIASES].get<std::vector<std::string>>();
-
-      HLOG_DEBUG("parsing address from get_config // {address}", addrStr);
-      auto addr = HusarnetAddress::parse(addrStr);
-      this->allowedPeers.insert(addr);  // TODO: handle set is full
-      hostsEntries.insert({peerHostname, addr});
-      for(auto& alias : aliases) {
-        hostsEntries.insert({alias, addr});
+      if(previousOwner.empty() && !this->claimedBy.empty()) {
+        this->hooksManager->scheduleHook(HookType::claimed);
       }
-      // TODO it would be best if the lock was freed before updateHostsFile
-      // but that's for later
-    }
+
+      if(!previousOwner.empty() && this->claimedBy.empty()) {
+        HLOG_INFO("device was unclaimed");
+        this->hooksManager->scheduleHook(HookType::unclaimed);
+      }
+
+      for(auto& peerInfo : latestConfig[GETCONFIG_KEY_PEERS]) {
+        // unpack PeerInfo structure
+        auto addrStr = peerInfo[GETCONFIG_KEY_PEERINFO_IP].get<std::string>();
+        auto peerHostname = peerInfo[GETCONFIG_KEY_PEERINFO_HOSTNAME].get<std::string>();
+        auto aliases = peerInfo[GETCONFIG_KEY_PEERINFO_ALIASES].get<std::vector<std::string>>();
+
+        HLOG_DEBUG("parsing address from get_config // {address}", addrStr);
+        auto addr = HusarnetAddress::parse(addrStr);
+        this->allowedPeers.insert(addr);  // TODO: handle set is full
+        hostsEntries.insert({peerHostname, addr});
+        for(auto& alias : aliases) {
+          hostsEntries.insert({alias, addr});
+        }
+      }
+    }  // release locks before doing file IO
+
     // add also our own address as husarnet-local
     hostsEntries.insert({"husarnet-local", this->ourIp});
     Port::updateHostsFile(hostsEntries);
@@ -405,17 +406,18 @@ void ConfigManager::waitInit() const
 
 bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 {
-  std::lock_guard lock(this->mutexFast);
-  if(this->userWhitelist.contains(address)) {
-    HLOG_WARNING("config manager: IP is already whitelisted");
-    return false;
-  }
-  if(this->userWhitelist.full()) {
-    HLOG_ERROR("config manager: userWhitelist is full");
-    return false;
-  }
-
-  this->userWhitelist.insert(address);
+  {
+    std::lock_guard lock(this->mutexFast);
+    if(this->userWhitelist.contains(address)) {
+      HLOG_WARNING("config manager: IP is already whitelisted");
+      return false;
+    }
+    if(this->userWhitelist.full()) {
+      HLOG_ERROR("config manager: userWhitelist is full");
+      return false;
+    }
+    this->userWhitelist.insert(address);
+  }  // release fast lock before doing file IO
 
   // Flush to disk
   if(this->writeUserConfig()) {
