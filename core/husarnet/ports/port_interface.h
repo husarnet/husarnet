@@ -22,6 +22,7 @@ enum class EnvKey
 {
   tldFqdn,
   logVerbosity,
+  logBackendSleepDurationMs,
   enableHooks,
   enableControlPlane,
   enableJsonLogging,
@@ -32,7 +33,7 @@ enum class EnvKey
   daemonWorkerQueueSize
 };
 
-#define ENV_KEY_OPTIONS 10
+#define ENV_KEY_OPTIONS 11
 
 enum class StorageKey
 {

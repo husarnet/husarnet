@@ -512,7 +512,7 @@
         $.steps.checkout(ref),
         $.steps.read_version_to_env(),
         {
-          uses: 'mislav/bump-homebrew-formula-action@v3',
+          uses: 'mislav/bump-homebrew-formula-action@v4',
           with: {
             'tag-name': '${{ env.VERSION }}',
             'homebrew-tap': 'husarnet/homebrew-tap-nightly',
