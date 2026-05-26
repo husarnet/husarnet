@@ -26,7 +26,6 @@ class ConfigEnv {
   std::string getTldFqdn() const;
   std::string getLogVerbosityString() const;
   LogLevel getLogVerbosity() const;
-  int getLogBackendSleepDurationMs() const;
   bool getEnableHooks() const;
   bool getEnableControlplane() const;
   bool getEnableJsonLogging() const;

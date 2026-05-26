@@ -48,10 +48,9 @@ quill::LogLevel husarnetLogLevelToQuill(LogLevel level)
   return quill::LogLevel::Debug;
 }
 
-void initLogging(LogLevel husarnetLogLevel, bool jsonLogging, int backendSleepDurationMs)
+void initLogging(LogLevel husarnetLogLevel, bool jsonLogging)
 {
   quill::BackendOptions backend_options;
-  backend_options.sleep_duration = std::chrono::milliseconds(backendSleepDurationMs);
   quill::Backend::start(backend_options);
 
   if(jsonLogging) {
@@ -100,11 +99,10 @@ void log(LogLevel level, const std::string& filename, int lineno, const std::str
   Port::log(level, message);
 }
 
-void initLogging(LogLevel husarnetLogLevel, bool jsonLogging, int backendSleepDurationMs)
+void initLogging(LogLevel husarnetLogLevel, bool jsonLogging)
 {
   globalLogLevel = husarnetLogLevel;
-  (void)jsonLogging;             // json logging is not supported on non-FAT platforms
-  (void)backendSleepDurationMs;  // quill disabled on non-FAT platforms
+  (void)jsonLogging;  // json logging is not supported on non-FAT platforms
 }
 
 #endif  // PORT_FAT

@@ -69,11 +69,6 @@ LogLevel ConfigEnv::getLogVerbosity() const
   return def;
 }
 
-int ConfigEnv::getLogBackendSleepDurationMs() const
-{
-  return std::stoi(envPresentOrDefault(this->env, EnvKey::logBackendSleepDurationMs, "100"));
-}
-
 bool ConfigEnv::getEnableHooks() const
 {
   return strToBool(envPresentOrDefault(this->env, EnvKey::enableHooks, "false"));

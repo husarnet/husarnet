@@ -22,7 +22,6 @@ enum class EnvKey
 {
   tldFqdn,
   logVerbosity,
-  logBackendSleepDurationMs,
   enableHooks,
   enableControlPlane,
   enableJsonLogging,

@@ -39,9 +39,7 @@ void HusarnetManager::prepareHusarnet()
   this->configEnv = new ConfigEnv();
 
   // Initialize logging
-  initLogging(
-      this->configEnv->getLogVerbosity(), this->configEnv->getEnableJsonLogging(),
-      this->configEnv->getLogBackendSleepDurationMs());
+  initLogging(this->configEnv->getLogVerbosity(), this->configEnv->getEnableJsonLogging());
 
   // Port init here (after logging) as stuff need logs
   Port::init();
