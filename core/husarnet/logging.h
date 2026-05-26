@@ -19,7 +19,7 @@ enum class LogLevel
   DEBUG = 5,
 };
 
-void initLogging(LogLevel level, bool jsonLogging);
+void initLogging(LogLevel level, bool jsonLogging, int backendSleepDurationMs);
 extern LogLevel globalLogLevel;
 
 #if not defined(ESP_PLATFORM)
