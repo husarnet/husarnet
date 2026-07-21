@@ -135,6 +135,12 @@ namespace Port {
 
     auto tunTap = new Tun();
     auto utunName = tunTap->getName();
+
+    if(!tunTap->isRunning() || utunName.empty()) {
+      HLOG_CRITICAL("could not create utun interface, networking will not work");
+      return tunTap;
+    }
+
     HLOG_INFO("starting utun // {interface}", utunName.c_str());
 
     if(system("sysctl net.ipv6.conf.lo.disable_ipv6=0") != 0 ||

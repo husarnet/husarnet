@@ -12,6 +12,10 @@
 #define CTLIOCGINFO _IOWR('N', 3, struct ctl_info) /* get id from name */
 #define MAX_KCTL_NAME 96
 
+/* getsockopt(fd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, ...) - from net/if_utun.h.
+   This is the only authoritative way to learn the name the kernel gave us. */
+#define UTUN_OPT_IFNAME 2
+
 struct ctl_info {
   u_int32_t ctl_id;             /* Kernel Controller ID  */
   char ctl_name[MAX_KCTL_NAME]; /* Kernel Controller Name (a C string) */

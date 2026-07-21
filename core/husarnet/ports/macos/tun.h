@@ -15,13 +15,13 @@ class Tun : public UpperLayer {
   std::string tunBuffer;
 
   void close();
-  bool isRunning();
 
   // This is called by the OsSocket as a callback
   void onTunData();
 
  public:
   Tun();
+  bool isRunning();
   // name getter because the name will be utun%d and we must find out which slot
   // is available...
   std::string getName();

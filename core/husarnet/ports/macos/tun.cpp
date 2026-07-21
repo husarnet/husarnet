@@ -23,52 +23,90 @@
 #include "husarnet/logging.h"
 #include "husarnet/util.h"
 
-static int openTun(std::string& name)
+static int createUtunSocket(uint32_t& ctlId)
 {
-  struct sockaddr_ctl sc;
   struct ctl_info ctlInfo;
-  int fd;
-
   memset(&ctlInfo, 0, sizeof(ctlInfo));
-  if(strlcpy(ctlInfo.ctl_name, UTUN_CONTROL_NAME, sizeof(ctlInfo.ctl_name)) >= sizeof(ctlInfo.ctl_name)) {
-    fprintf(stderr, "UTUN_CONTROL_NAME too long");
-    return -1;
-  }
-  fd = socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL);
 
-  if(fd == -1) {
-    perror("socket(SYSPROTO_CONTROL)");
+  if(strlcpy(ctlInfo.ctl_name, UTUN_CONTROL_NAME, sizeof(ctlInfo.ctl_name)) >= sizeof(ctlInfo.ctl_name)) {
+    HLOG_ERROR("UTUN_CONTROL_NAME too long");
     return -1;
   }
+
+  int fd = socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL);
+  if(fd == -1) {
+    HLOG_ERROR("socket(PF_SYSTEM, SYSPROTO_CONTROL) failed // {error}", strerror(errno));
+    return -1;
+  }
+
   if(ioctl(fd, CTLIOCGINFO, &ctlInfo) == -1) {
-    perror("ioctl(CTLIOCGINFO)");
+    HLOG_ERROR("ioctl(CTLIOCGINFO) failed // {error}", strerror(errno));
     close(fd);
     return -1;
   }
 
-  sc.sc_id = ctlInfo.ctl_id;
+  ctlId = ctlInfo.ctl_id;
+  return fd;
+}
+
+// Asks the kernel for the interface name it actually assigned to this socket.
+static bool queryUtunName(int fd, std::string& name)
+{
+  char ifname[IFNAMSIZ] = {};
+  socklen_t ifnameLen = sizeof(ifname);
+
+  if(getsockopt(fd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, ifname, &ifnameLen) == -1) {
+    HLOG_ERROR("getsockopt(UTUN_OPT_IFNAME) failed // {error}", strerror(errno));
+    return false;
+  }
+
+  name = std::string(ifname, strnlen(ifname, sizeof(ifname)));
+  return true;
+}
+
+// Opens utun device, letting the kernel pick the unit number.
+static int openTun(std::string& name)
+{
+  uint32_t ctlId = 0;
+  int fd = createUtunSocket(ctlId);
+  if(fd == -1) {
+    return -1;
+  }
+
+  struct sockaddr_ctl sc;
+  memset(&sc, 0, sizeof(sc));
+  sc.sc_id = ctlId;
   sc.sc_len = sizeof(sc);
   sc.sc_family = AF_SYSTEM;
   sc.ss_sysaddr = AF_SYS_CONTROL;
+  sc.sc_unit = 0;  // 0 means the kernel will pick the unit number for us
 
-  // If the connect is successful, a tun%d device will be created, where "%d"
-  // is our unit number -1
-  int unitNumber = 1;
+  if(connect(fd, (struct sockaddr*)&sc, sizeof(sc)) == -1) {
+    int connectErrno = errno;
+    close(fd);
 
-  // bruteforce... let's try until we hit free utun unit number:)
-  while(unitNumber < 10) {
-    sc.sc_unit = unitNumber;
-    if(connect(fd, (struct sockaddr*)&sc, sizeof(sc)) == -1) {
-      HLOG_WARNING("Can't bind to utun // {utun_num}", unitNumber - 1);
-      // perror ("connect(AF_SYS_CONTROL)");
-      unitNumber++;
-    } else {
-      name = "utun" + std::to_string(unitNumber - 1);
-      return fd;
+    switch(connectErrno) {
+      case EPERM:
+      case EACCES:
+        HLOG_ERROR(
+            "not permitted to create a utun device - is the daemon running as root? // {error}",
+            strerror(connectErrno));
+        break;
+      case EBUSY:
+        HLOG_ERROR("no free utun unit available on this system");
+        break;
+      default:
+        HLOG_ERROR("connect(AF_SYS_CONTROL) failed // {error}", strerror(connectErrno));
     }
+    return -1;
   }
-  close(fd);
-  return -1;
+
+  if(!queryUtunName(fd, name)) {
+    close(fd);
+    return -1;
+  }
+
+  return fd;
 }
 
 void Tun::close()
@@ -104,11 +142,20 @@ Tun::Tun()
   std::string tunName{};
   fd = openTun(tunName);
   this->name = tunName;
+
   if(fd == -1) {
     HLOG_ERROR("Can't open utun device!");
-  } else {
-    HLOG_INFO("utun device opened successfully");
+    return;
   }
+
+  // onTunData() relies on EAGAIN to detect a spurious wakeup, which only ever
+  // happens on a non-blocking fd.
+  int flags = fcntl(fd, F_GETFL, 0);
+  if(flags == -1 || fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+    HLOG_WARNING("failed to set utun fd non-blocking // {error}", strerror(errno));
+  }
+
+  HLOG_INFO("utun device opened successfully // {interface}", tunName.c_str());
   OsSocket::bindCustomFd(fd, std::bind(&Tun::onTunData, this));
 }
 

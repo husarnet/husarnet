@@ -573,6 +573,8 @@ namespace OsSocket {
     }
 
     for(auto conn : customSockets) {
+      if(conn.fd < 0)
+        continue;
       FD_SET(conn.fd, &readset);
       maxfd = std::max(conn.fd, maxfd);
     }
