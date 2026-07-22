@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <signal.h>
@@ -59,47 +60,22 @@ static bool isInterfaceBlacklisted(std::string name)
   return false;
 }
 
-static void getLocalIpv4Addresses(std::vector<IpAddress>& ret)
+static IpAddress ipAddressFromSockaddr(const struct sockaddr* addr)
 {
-  int fd = socket(AF_INET, SOCK_DGRAM, 0);
-  struct ifconf configuration {};
+  if(addr == nullptr)
+    return IpAddress();
 
-  if(fd < 0)
-    return;
-
-  if(ioctl(fd, SIOCGIFCONF, &configuration) < 0)
-    goto error;
-  configuration.ifc_buf = (char*)malloc(configuration.ifc_len);
-  if(ioctl(fd, SIOCGIFCONF, &configuration) < 0)
-    goto error;
-
-  for(int i = 0; i < (int)(configuration.ifc_len / sizeof(ifreq)); i++) {
-    struct ifreq& request = configuration.ifc_req[i];
-    std::string ifname = request.ifr_name;
-    if(isInterfaceBlacklisted(ifname))
-      continue;
-    struct sockaddr* addr = &request.ifr_ifru.ifru_addr;
-    if(addr->sa_family != AF_INET)
-      continue;
-
-    uint32_t addr32 = ((sockaddr_in*)addr)->sin_addr.s_addr;
-    IpAddress address = IpAddress::fromBinary4(addr32);
-
-    if(addr32 == 0x7f000001u)
-      continue;
-
-    ret.push_back(address);
+  if(addr->sa_family == AF_INET) {
+    uint32_t addr32 = ((const struct sockaddr_in*)addr)->sin_addr.s_addr;
+    return IpAddress::fromBinary4(addr32);
   }
-  free(configuration.ifc_buf);
-error:
-  close(fd);
-  return;
-}
 
-static void getLocalIpv6Addresses(std::vector<IpAddress>& ret)
-{
-  // on MacOS there is no /proc, so we can't use /proc/self/net/if_inet6
-  // like in linux port; need to figure out different way
+  if(addr->sa_family == AF_INET6) {
+    const struct in6_addr& a6 = ((const struct sockaddr_in6*)addr)->sin6_addr;
+    return IpAddress::fromBinary((const char*)a6.s6_addr);
+  }
+
+  return IpAddress();
 }
 
 namespace Port {
@@ -115,16 +91,64 @@ namespace Port {
 
   IpAddress getIpAddressFromInterfaceName(const std::string& interfaceName)
   {
-    HLOG_ERROR("getIpAddressFromInterfaceName is not implemented");
-    return IpAddress();
+    struct ifaddrs* ifAddrs = nullptr;
+    if(getifaddrs(&ifAddrs) != 0) {
+      HLOG_ERROR("getifaddrs failed // {error}", strerror(errno));
+      return IpAddress();
+    }
+
+    // Prefer an IPv4 address (this is used to pick a bind address for the API
+    // server), but fall back to a routable IPv6 one if that's all there is.
+    IpAddress v4, v6;
+    for(struct ifaddrs* ifa = ifAddrs; ifa != nullptr; ifa = ifa->ifa_next) {
+      if(ifa->ifa_addr == nullptr || ifa->ifa_name == nullptr)
+        continue;
+      if(interfaceName != ifa->ifa_name)
+        continue;
+
+      IpAddress address = ipAddressFromSockaddr(ifa->ifa_addr);
+      if(address.isInvalid() || address.isLinkLocal() || address.isLoopback())
+        continue;
+
+      if(ifa->ifa_addr->sa_family == AF_INET && v4.isInvalid())
+        v4 = address;
+      else if(ifa->ifa_addr->sa_family == AF_INET6 && v6.isInvalid())
+        v6 = address;
+    }
+
+    freeifaddrs(ifAddrs);
+
+    IpAddress result = v4.isValid() ? v4 : v6;
+    if(result.isInvalid())
+      HLOG_WARNING("no usable address found on interface // {interface}", interfaceName);
+    return result;
   }
 
   std::vector<IpAddress> getLocalAddresses()
   {
     std::vector<IpAddress> ret;
 
-    getLocalIpv4Addresses(ret);
-    getLocalIpv6Addresses(ret);
+    struct ifaddrs* ifAddrs = nullptr;
+    if(getifaddrs(&ifAddrs) != 0) {
+      HLOG_ERROR("getifaddrs failed // {error}", strerror(errno));
+      return ret;
+    }
+
+    for(struct ifaddrs* ifa = ifAddrs; ifa != nullptr; ifa = ifa->ifa_next) {
+      if(ifa->ifa_addr == nullptr || ifa->ifa_name == nullptr)
+        continue;
+      if(isInterfaceBlacklisted(ifa->ifa_name))
+        continue;
+
+      IpAddress address = ipAddressFromSockaddr(ifa->ifa_addr);
+
+      if(address.isInvalid() || address.isLoopback() || address.isLinkLocal() || address.isFC94())
+        continue;
+
+      ret.push_back(address);
+    }
+
+    freeifaddrs(ifAddrs);
 
     return ret;
   }

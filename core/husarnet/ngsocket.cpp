@@ -549,6 +549,18 @@ bool NgSocket::reloadLocalAddresses()
   if(newAddresses != localAddresses) {
     bool anyAddresses = localAddresses.size() > 0;
     localAddresses = newAddresses;
+
+    // Log the newly discovered set
+    {
+      std::string addresses;
+      for(auto iter = localAddresses.begin(); iter != localAddresses.end(); iter++) {
+        if(iter != localAddresses.begin())
+          addresses += " | ";
+        addresses += iter->str();
+      }
+      HLOG_DEBUG("local addresses reloaded // {count} {addresses}", localAddresses.size(), addresses.c_str());
+    }
+
     return anyAddresses;
   } else {
     return false;
