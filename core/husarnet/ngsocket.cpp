@@ -136,6 +136,11 @@ void NgSocket::periodicPeer(Peer* peer)
       HLOG_WARNING("falling back to relay // {peer}", peer->getIpAddressString());
     }
 
+    if(!peer->connected) {
+      // meantime peer's candidate addresses may have changed
+      sendInfoRequestToBase(peer->id);
+    }
+
     attemptReestablish(peer);
   }
 }
