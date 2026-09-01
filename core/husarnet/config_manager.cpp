@@ -342,6 +342,16 @@ json ConfigManager::getDataForStatus() const
 bool ConfigManager::writeUserConfig()
 {
   std::lock_guard lgSlow(this->mutexSlow);
+
+  {
+    std::lock_guard lgFast(this->mutexFast);
+    json whitelist = json::array();
+    for(const auto& address : this->userWhitelist) {
+      whitelist.push_back(address.toString());
+    }
+    this->userConfigJson[USERCONFIG_KEY_WHITELIST] = whitelist;
+  }
+
   return Port::writeStorage(StorageKey::config, this->userConfigJson.dump(JSON_INDENT_SPACES));
 }
 
@@ -431,13 +441,22 @@ bool ConfigManager::userWhitelistAdd(const HusarnetAddress& address)
 
 bool ConfigManager::userWhitelistRm(const HusarnetAddress& address)
 {
-  std::lock_guard lock(this->mutexFast);
-  if(this->userWhitelist.contains(address)) {
+  {
+    std::lock_guard lock(this->mutexFast);
+    if(!this->userWhitelist.contains(address)) {
+      HLOG_WARNING("config manager: IP is not on the whitelist");
+      return false;
+    }
     this->userWhitelist.erase(address);
-    return true;
+  }  // release fast lock before doing file IO
+
+  if(this->writeUserConfig()) {
+    HLOG_DEBUG("user config write successful");
+  } else {
+    HLOG_ERROR("user config write failed");
   }
-  HLOG_WARNING("config manager: IP is not on the whitelist");
-  return false;
+
+  return true;
 }
 
 void ConfigManager::triggerGetConfig()
