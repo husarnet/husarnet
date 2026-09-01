@@ -36,11 +36,21 @@
 #endif
 
 #ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+#define PORT_IOS
+#define PORT_FAT
+#define PORT_UNIX
+#define PORT_NAME "iOS"
+// TODO: husarnet/ports/ios
+#include "husarnet/ports/macos/port.h"
+#else
 #define PORT_MACOS
 #define PORT_FAT
 #define PORT_UNIX
 #define PORT_NAME "MacOS"
 #include "husarnet/ports/macos/port.h"
+#endif
 #endif
 
 #include "husarnet/ports/port_interface.h"
