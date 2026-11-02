@@ -1,10 +1,11 @@
-// Copyright (c) 2025 Husarnet sp. z o.o.
+// Copyright (c) 2026 Husarion S.A.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 package main
 
 import (
 	"context"
+
 	"github.com/husarnet/husarnet/cli/v2/requests"
 
 	"github.com/urfave/cli/v3"

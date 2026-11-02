@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2025 Husarnet sp. z o.o.
+# Copyright (c) 2026 Husarion S.A.
 # Authors: listed in project_root/README.md
 # License: specified in project_root/LICENSE.txt
 source $(dirname "$0")/../../util/bash-base.sh
@@ -28,7 +28,7 @@ if ! command -v husarnet &> /dev/null; then
 
   # Start husarnet daemon
   sudo husarnet-daemon &> /tmp/husarnet-daemon.log &
-  
+
   # Join to Husarnet network
   echo "INFO: Waiting for deamon connectivity"
   husarnet daemon wait daemon

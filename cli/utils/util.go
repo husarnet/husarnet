@@ -1,16 +1,17 @@
-// Copyright (c) 2025 Husarnet sp. z o.o.
+// Copyright (c) 2026 Husarion S.A.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 package utils
 
 import (
 	"fmt"
-	"github.com/husarnet/husarnet/cli/v2/output"
-	"github.com/husarnet/husarnet/cli/v2/types"
 	"net/netip"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/husarnet/husarnet/cli/v2/output"
+	"github.com/husarnet/husarnet/cli/v2/types"
 )
 
 // Replace only last occurrence of given substring in a string. Return new string.

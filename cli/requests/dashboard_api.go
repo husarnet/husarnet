@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Husarnet sp. z o.o.
+// Copyright (c) 2026 Husarion S.A.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 package requests
@@ -7,15 +7,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/husarnet/husarnet/cli/v2/config"
-	"github.com/husarnet/husarnet/cli/v2/constants"
-	"github.com/husarnet/husarnet/cli/v2/output"
-	"github.com/husarnet/husarnet/cli/v2/types"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"syscall"
+
+	"github.com/husarnet/husarnet/cli/v2/config"
+	"github.com/husarnet/husarnet/cli/v2/constants"
+	"github.com/husarnet/husarnet/cli/v2/output"
+	"github.com/husarnet/husarnet/cli/v2/types"
 )
 
 // TODO: currently the same function is used elsewhere, move it to utils

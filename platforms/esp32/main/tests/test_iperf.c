@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Husarnet sp. z o.o.
+// Copyright (c) 2026 Husarion S.A.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "common.h"
@@ -41,7 +41,7 @@ TEST_CASE("iperf_client", "[husarnet]")
 TEST_CASE("iperf_server", "[husarnet]")
 {
   husarnet_disable_extended_logging();
-  
+
   start_iperf_server(duration_s);
 
   // Wait for the server to finish
