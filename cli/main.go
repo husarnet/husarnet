@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Husarnet sp. z o.o.
+// Copyright (c) 2026 Husarion S.A.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 package main
@@ -34,9 +34,9 @@ func main() {
 	cmd := &cli.Command{
 		Name: "husarnet",
 		Description: `This is Husarnet CLI (command-line interface), which is invoked with 'husarnet' command.
-It's primary purpose is to query and manage daemon process ('husarnet-daemon') running 
-on the current machine. Additionally, given sufficient permissions, it can be also be used 
-to manage your other Husarnet devices and even your entire Husarnet network (possibly 
+It's primary purpose is to query and manage daemon process ('husarnet-daemon') running
+on the current machine. Additionally, given sufficient permissions, it can be also be used
+to manage your other Husarnet devices and even your entire Husarnet network (possibly
 eliminating the need to ever use the web interface under https://dashboard.husarnet.com).
 
 For the details on what can be done with the CLI, visit: https://husarnet.com/docs/cli-guide.`,

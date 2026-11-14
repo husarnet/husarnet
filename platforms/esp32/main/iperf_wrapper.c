@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Husarnet sp. z o.o.
+// Copyright (c) 2026 Husarion S.A.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "iperf_wrapper.h"
@@ -17,7 +17,7 @@ void start_iperf_client(struct ip_addr* addr, uint32_t duration) {
   // Set the source and destination IPs
   cfg.source_ip4 = INADDR_ANY;
   cfg.source_ip6 = "::"; // Currently ignored in the ESP iperf library
-  
+
   if (addr->type == IPADDR_TYPE_V4) {
     cfg.type = IPERF_IP_TYPE_IPV4;
     cfg.destination_ip4 = addr->u_addr.ip4.addr;
@@ -35,7 +35,7 @@ void start_iperf_client(struct ip_addr* addr, uint32_t duration) {
   // Set default port numbers
   cfg.sport = IPERF_DEFAULT_PORT;
   cfg.dport = IPERF_DEFAULT_PORT;
-  
+
   cfg.time = duration;
   cfg.interval = IPERF_DEFAULT_INTERVAL;
   cfg.bw_lim = IPERF_DEFAULT_NO_BW_LIMIT;

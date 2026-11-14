@@ -1,7 +1,7 @@
                       Husarnet Open Source Dual License
 
 1. [Copyright retention] All copyrights in the Husarnet project are retained by
-   Husarnet Sp. z o.o. (Polish limited liability company) or its successors. 
+   Husarion S.A. (Polish public limited company) or its successors.
 
 2. [Notices] Some files of Husarnet source code may include explicit copyright
    notices and/or license notices. For full authorship information, review the
@@ -9,7 +9,7 @@
 
 3. [Dual licensing] Husarnet source code is available for any third party under
    open source license terms – GNU General Public License 3.0 License or Mozilla
-   Public License 2.0 - depending its purpose according to sections hereunder. 
+   Public License 2.0 - depending its purpose according to sections hereunder.
 
 4. [Similar Product]. “Similar Product” shall mean any product or solution that
    is designed to create a VPN or other technology for the purpose of connecting
@@ -1091,5 +1091,3 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
   This Source Code Form is "Incompatible With Secondary Licenses", as
   defined by the Mozilla Public License, v. 2.0.
-
-

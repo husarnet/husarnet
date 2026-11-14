@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Husarnet sp. z o.o.
+// Copyright (c) 2026 Husarion S.A.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "common.h"
@@ -15,7 +15,7 @@ bool wait_for_join(size_t timeout_s) {
   for (int i = 0; i < timeout_s; i++) {
     ESP_LOGI(TAG, "Joining Husarnet network...");
 
-    // Check if the device has successfully joined the network  
+    // Check if the device has successfully joined the network
     if (husarnet_is_joined(husarnetClient))
       return true;
 
@@ -45,9 +45,9 @@ TEST_CASE("join", "[husarnet]")
 
   UNITY_TEST_ASSERT(
     wait_for_join(JOIN_TIMEOUT_S),
-    __LINE__, 
+    __LINE__,
     "Timed out while waiting for the device to join the network");
-  
+
   // Get Husarnet IP address
   char ip[HUSARNET_IP_STR_LEN];
   husarnet_get_ip_address(husarnetClient, ip, HUSARNET_IP_STR_LEN);

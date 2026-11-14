@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Husarnet sp. z o.o.
+// Copyright (c) 2026 Husarion S.A.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 #include "common.h"
@@ -71,7 +71,7 @@ TEST_CASE("ping", "[husarnet]")
   husarnet_disable_extended_logging();
 
   esp_ping_config_t ping_config = ESP_PING_DEFAULT_CONFIG();
-  
+
   // Reset RTT stats
   max_rtt = 0;
   min_rtt = UINT32_MAX;

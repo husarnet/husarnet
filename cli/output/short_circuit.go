@@ -1,12 +1,13 @@
-// Copyright (c) 2025 Husarnet sp. z o.o.
+// Copyright (c) 2026 Husarion S.A.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 package output
 
 import (
 	"fmt"
-	"github.com/pterm/pterm"
 	"os"
+
+	"github.com/pterm/pterm"
 )
 
 // Print an error message (text version)

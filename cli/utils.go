@@ -1,12 +1,10 @@
-// Copyright (c) 2025 Husarnet sp. z o.o.
+// Copyright (c) 2026 Husarion S.A.
 // Authors: listed in project_root/README.md
 // License: specified in project_root/LICENSE.txt
 package main
 
 import (
 	"fmt"
-	"github.com/husarnet/husarnet/cli/v2/requests"
-	"github.com/husarnet/husarnet/cli/v2/utils"
 	"net/netip"
 	"os"
 	"os/exec"
@@ -14,6 +12,9 @@ import (
 	"sort"
 	"strings"
 	"syscall"
+
+	"github.com/husarnet/husarnet/cli/v2/requests"
+	"github.com/husarnet/husarnet/cli/v2/utils"
 
 	"github.com/pterm/pterm"
 )
