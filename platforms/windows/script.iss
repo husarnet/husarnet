@@ -3,7 +3,7 @@
 
 #define MyAppName "Husarnet"
 #define HUSARNET_VERSION "2.0.347"
-#define MyAppPublisher ""
+#define MyAppPublisher "Husarion S.A."
 #define MyAppURL "https://husarnet.com"
 #define MyAppExeName "husarnet.exe"
 

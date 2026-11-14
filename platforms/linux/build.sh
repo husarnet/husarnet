@@ -55,8 +55,8 @@ for package_type in tar deb rpm pacman; do
         --version ${package_version} \
         --epoch 1 \
         --architecture ${declared_arch} \
-        --maintainer "Husarnet <support@husarnet.com>" \
-        --vendor Husarnet \
+        --maintainer "Husarion S.A. <support@husarnet.com>" \
+        --vendor "Husarion S.A." \
         --description "Global LAN network" \
         --url "https://husarnet.com" \
         $(if [ "${package_type}" == "deb" ]; then echo "--depends iproute2 --depends procps --deb-recommends sudo --deb-recommends systemd --deb-recommends fonts-noto-color-emoji"; fi) \
